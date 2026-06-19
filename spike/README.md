@@ -22,10 +22,13 @@ The word is rendered as **real, readable type** (Archivo Black, a glowing gradie
 effect *supports* the letters instead of replacing them. Each root also shows its meaning +
 example derived words, for concept association — the whole point is that students learn the root.
 
-- **PYRO → fire** — hot gradient type + flames/embers licking up off the letters.
-- **HYDRO → water** — glassy blue type + droplets running down and dripping off the letters.
-- **ASTRO → stars** — cosmic violet/white type over a starfield + nebula backdrop, stars twinkling around it.
-- **BIO → life** — green type over a recessed, rotating **DNA double-helix** backdrop (hybrid concept-imagery).
+- **PYRO → fire** — hot gradient type; flames/embers lick up off the letters (kept subtle).
+- **HYDRO → water** — type *filled* with moving water (caustic light sweeps the glyphs) + a few drips off the bottom.
+- **ASTRO → stars** — type *filled* with a twinkling starfield + nebula (the letters ARE the night sky), over deep space.
+- **BIO → life** — green type + drifting **cells** (membrane + nucleus) + a detailed rotating **DNA double-helix** behind it.
+
+The "filled with" treatments use a text-mask compose layer (`buildTextMask` + `fillTextWith`):
+animated content (`drawWater`/`drawGalaxy`) is clipped to the letterforms.
 
 ## What's inside (`index.html`, one file)
 
