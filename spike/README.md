@@ -19,13 +19,14 @@ first time. Switch words with the on-screen pills or keys **1 / 2 / 3 / 4**. PYR
 ## Words (v3 — text-first)
 
 The word is rendered as **real, readable type** (Archivo Black, a glowing gradient fill); the
-effect *supports* the letters instead of replacing them. Each root also shows its meaning +
-example derived words, for concept association — the whole point is that students learn the root.
+effect *supports* the letters instead of replacing them. Below each word an **instructional card**
+(on a legible scrim) shows the root's definition + origin and every derived word with its meaning —
+this is a teaching tool, so the definitions matter as much as the animation.
 
 - **PYRO → fire** — hot gradient type with **flame-tongue** sprites licking up off the letters.
 - **HYDRO → water** — type filled with moving water (undulating waterline + gloss) + **teardrop rain** falling off it.
-- **ASTRO → stars** — a glowing **sun** (disc + corona + flickering solar flares) behind warm readable type.
-- **BIO → life** — green type + drifting **cells** (membrane + nucleus) + a detailed rotating **DNA double-helix** behind it.
+- **ASTRO → star** — a glowing **sun** (disc + corona + flickering solar flares) behind warm readable type.
+- **BIO → life** — letters filled with green life (bubble-cells), **plants sprouting** out of their tops, a DNA helix behind, and drifting cells.
 
 Two techniques carry the realism: (1) **shaped sprites** — `buildFlameSprites`, `buildRainSprites`,
 cell sprites — so effects read as the element, not round dots; (2) **filling the letters** with

@@ -21,24 +21,34 @@
   }
   #stage { position: fixed; inset: 0; display: block; }
 
-  /* Meaning label + example words — teaches the root -> meaning association. */
+  /* Instructional card: root meaning + derived words with definitions.
+     A subtle scrim keeps the text legible over any effect (e.g. the ASTRO sun). */
   #label {
-    position: fixed; left: 0; right: 0; bottom: 13vh; text-align: center;
-    pointer-events: none; z-index: 4;
+    position: fixed; left: 50%; transform: translateX(-50%); bottom: 84px;
+    width: min(700px, 92vw); text-align: center; pointer-events: none; z-index: 4;
+    background: rgba(6,8,12,0.5); border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 16px; padding: 15px 24px 13px; backdrop-filter: blur(8px);
   }
   #meaning {
     font-family: "Archivo Black", Impact, "Arial Black", sans-serif;
-    font-size: clamp(30px, 5.6vw, 66px); letter-spacing: 0.16em;
-    text-transform: uppercase; color: #fff; line-height: 1;
-    text-shadow: 0 0 30px var(--accent), 0 0 8px var(--accent);
-    transition: text-shadow .4s ease;
+    font-size: clamp(22px, 3.4vw, 42px); letter-spacing: 0.12em;
+    text-transform: uppercase; line-height: 1; color: var(--ink, #fff);
+    text-shadow: 0 0 20px var(--accent); transition: color .4s ease;
   }
-  #examples {
-    margin-top: 1.1em; font-family: ui-sans-serif, system-ui, sans-serif;
-    font-weight: 500; font-size: clamp(12px, 1.5vw, 17px); letter-spacing: 0.22em;
-    text-transform: uppercase; color: rgba(255,255,255,0.46);
+  #rootline {
+    margin-top: 7px; font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(11px, 1.3vw, 14px); letter-spacing: 0.16em;
+    text-transform: uppercase; color: rgba(255,255,255,0.5);
   }
-  #examples b { color: rgba(255,255,255,0.78); font-weight: 700; }
+  #words {
+    margin: 12px 0 0; padding: 0; list-style: none;
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  #words li {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(12px, 1.35vw, 15px); color: rgba(255,255,255,0.64); line-height: 1.3;
+  }
+  #words b { color: var(--ink, #fff); font-weight: 700; }
 
   /* Word switcher */
   #bar {
@@ -76,7 +86,8 @@
   <canvas id="stage"></canvas>
   <div id="label">
     <div id="meaning">fire</div>
-    <div id="examples"></div>
+    <div id="rootline"></div>
+    <ul id="words"></ul>
   </div>
   <div id="hud">—</div>
   <div id="hint">keys 1 · 2 · 3 · 4</div>
@@ -103,8 +114,13 @@
   /* ---------- 1. PRESETS ---------- */
   const PRESETS = {
     pyro: {
-      label: "PYRO", meaning: "fire", text: "PYRO", accent: "rgba(255,120,30,0.6)",
-      examples: "pyro<b>technics</b> · funeral <b>pyre</b> · pyro<b>mania</b>",
+      label: "PYRO", meaning: "fire", text: "PYRO", accent: "rgba(255,120,30,0.6)", ink: "#ff9e4d",
+      origin: "Greek", rootForm: "pŷr", def: "fire",
+      words: [
+        { w: "pyrotechnics", d: "the art of making fireworks" },
+        { w: "pyre", d: "a pile of wood for a funeral fire" },
+        { w: "pyromania", d: "a compulsion to start fires" },
+      ],
       mode: "text", step: 12,    // readable TYPE + flames licking up (effect supports text)
       flameGlow: true, flame: true,   // flame-tongue sprites (not round dots); glow flickers
       textFill: ["#fff7df", "#ffd058", "#ff8a1e", "#e23a06", "#9a1f00"],  // top hot -> base ember
@@ -122,8 +138,13 @@
       colorRamp: ["#fff3cf", "#ffd24a", "#ff8a1e", "#ff3a08", "#a01400", "#2a0600"],
     },
     hydro: {
-      label: "HYDRO", meaning: "water", text: "HYDRO", accent: "rgba(60,160,255,0.6)",
-      examples: "<b>hydrate</b> · fire <b>hydrant</b> · de<b>hydrated</b>",
+      label: "HYDRO", meaning: "water", text: "HYDRO", accent: "rgba(60,160,255,0.6)", ink: "#5fb4ff",
+      origin: "Greek", rootForm: "hýdōr", def: "water",
+      words: [
+        { w: "hydrate", d: "to supply with water" },
+        { w: "hydrant", d: "a pipe for drawing water" },
+        { w: "dehydrate", d: "to remove water; dry out" },
+      ],
       mode: "text", step: 12, rain: true, fill: "water",   // letters FILLED with moving water + rain/waterfall drops
       textFill: ["#eaffff", "#a6e6ff", "#4fb0ff", "#1e74e6", "#0c4099"],
       glowColor: "rgba(60,150,255,0.85)", glowBlur: 24,
@@ -140,8 +161,13 @@
       colorRamp: ["#eaffff", "#a6e6ff", "#4fb0ff", "#1e74e6", "#0c4099"],
     },
     astro: {
-      label: "ASTRO", meaning: "stars", text: "ASTRO", accent: "rgba(150,120,255,0.6)",
-      examples: "<b>astro</b>naut · <b>astro</b>nomy · <b>aster</b>isk",
+      label: "ASTRO", meaning: "star", text: "ASTRO", accent: "rgba(255,170,60,0.6)", ink: "#ffc46b",
+      origin: "Greek", rootForm: "ástron", def: "star · celestial body",
+      words: [
+        { w: "astronaut", d: "a space traveler (“star sailor”)" },
+        { w: "astronomy", d: "the study of the stars and space" },
+        { w: "asterisk", d: "a star-shaped symbol (*)" },
+      ],
       mode: "text", step: 22, backdrop: "sun",   // a glowing sun (disc + corona + flares) behind warm type
       textFill: ["#fffaf0", "#ffeccc", "#ffd9a0", "#f7b86a", "#d98a3a"],
       glowColor: "rgba(255,170,70,0.85)", glowBlur: 26,
@@ -158,9 +184,14 @@
       colorRamp: ["#fff3cf", "#ffd24a", "#ff8a1e", "#ff3a08", "#a01400", "#2a0600"],
     },
     bio: {
-      label: "BIO", meaning: "life", text: "BIO", accent: "rgba(70,225,130,0.6)",
-      examples: "<b>bio</b>logy · <b>bio</b>graphy · sym<b>bio</b>sis",
-      mode: "text", step: 11, backdrop: "life", cell: true,   // green type + DNA helix + drifting cells
+      label: "BIO", meaning: "life", text: "BIO", accent: "rgba(70,225,130,0.6)", ink: "#6ee88a",
+      origin: "Greek", rootForm: "bíos", def: "life",
+      words: [
+        { w: "biology", d: "the study of life" },
+        { w: "biography", d: "the story of a person’s life" },
+        { w: "symbiosis", d: "organisms living together" },
+      ],
+      mode: "text", step: 14, backdrop: "life", cell: true, fill: "bio", sprouts: true,   // green-filled type + DNA + cells + sprouting plants
       textFill: ["#f0ffe8", "#a8f58a", "#4fd96a", "#1f9b4e", "#0c5a36"],
       glowColor: "rgba(70,220,120,0.8)", glowBlur: 22,
       bg: [3, 14, 8], blend: "lighter", trailFade: 0.2,
@@ -336,7 +367,7 @@
     preset: null, sprites: null, sample: null,
     stars: [], starPairs: [], starfield: [], nebula: [], cells: [], fillStars: [],
     maskCanvas: null, maskCtx: null, composeCanvas: null, composeCtx: null, cellSprites: null,
-    flameSprites: null, rainSprites: null, sunFlares: [],
+    flameSprites: null, rainSprites: null, sunFlares: [], bioBubbles: [], sprouts: [],
     textSize: 0, textCx: 0, textCy: 0, textScale: 1,
     gatherStrength: 0, intensity: 1, dissolve: 0,
     t: 0,
@@ -346,10 +377,11 @@
     layout(W, H) {
       const s = this.sample; if (!s) return;
       const scale = Math.min(W * 0.74 / s.w, H * 0.46 / s.h);
-      const ox = (W - s.w * scale) / 2, oy = (H - s.h * scale) / 2;
+      const CY = H * 0.42;                       // sit the word higher; card goes below
+      const ox = (W - s.w * scale) / 2, oy = CY - (s.h / 2) * scale;
       // Solid text shares the sample's scale + centre, so type and particles align.
       this.textScale = scale; this.textSize = REF_FONT * scale;
-      this.textCx = W / 2; this.textCy = H / 2;
+      this.textCx = W / 2; this.textCy = CY;
       for (let i = 0; i < this.count; i++) {
         const p = this.pool[i];
         p.hx = ox + s.xs[i*2] * scale;
@@ -361,6 +393,8 @@
       if (bd === "sun") this.buildSun();
       if (this.preset && this.preset.fill) this.buildTextMask(W, H);
       if (this.preset && this.preset.fill === "galaxy") this.buildFillStars(W, H);
+      if (this.preset && this.preset.fill === "bio") this.buildBioBubbles(W, H);
+      if (this.preset && this.preset.sprouts) this.buildSprouts(W, H);
     },
 
     // Background starfield + nebula clouds for the planetarium feel.
@@ -418,6 +452,28 @@
       for (let i = 0; i < N; i++) fs.push({ x: Math.random()*W, y: Math.random()*H, r: rand(0.5, 2.2), a: rand(0.4, 1), ph: Math.random()*TAU });
       this.fillStars = fs;
     },
+    buildBioBubbles(W, H) {
+      const N = Math.round((W * H) / 7000), bb = [];
+      for (let i = 0; i < N; i++) bb.push({ x: Math.random()*W, y: Math.random()*H, r: rand(3, 10), sp: rand(8, 22), ph: Math.random()*TAU });
+      this.bioBubbles = bb;
+    },
+    // Top-edge anchor points (scan the text mask) where plants sprout from.
+    buildSprouts(W, H) {
+      if (!this.maskCanvas) return;
+      const mw = this.maskCanvas.width, mh = this.maskCanvas.height;
+      const data = this.maskCtx.getImageData(0, 0, mw, mh).data;
+      const sprouts = [], stepX = Math.max(2, Math.round(40 * dpr));
+      for (let x = 0; x < mw; x += stepX) {
+        for (let y = 0; y < mh; y += 2) {
+          if (data[(y * mw + x) * 4 + 3] > 128) {
+            sprouts.push({ x: x / dpr, y: y / dpr, seed: Math.random(), h: rand(0.55, 1.0) });
+            break;
+          }
+        }
+      }
+      this.sprouts = sprouts;
+    },
+
     // Draw drawFn's content clipped to the letterforms, then blit onto ctx.
     fillTextWith(ctx, W, H, drawFn) {
       const cc = this.composeCtx;
@@ -588,7 +644,9 @@
       // the word as the hero — fill style depends on the element
       if (pr.fill === "water") this.renderWaterLetters(ctx, W, H);
       else if (pr.fill === "galaxy") this.renderGalaxyLetters(ctx, W, H);
+      else if (pr.fill === "bio") this.renderBioLetters(ctx, W, H);
       else this.renderSolidLetters(ctx);
+      if (pr.sprouts) this.drawSprouts(ctx, W, H);
 
       // supporting effect particles on top (flames / drips / stars / cells)
       ctx.globalCompositeOperation = pr.blend;
@@ -703,6 +761,67 @@
         cc.drawImage(white, s.x - s.r, s.y - s.r, s.r * 2, s.r * 2);
       }
       cc.globalAlpha = 1; cc.globalCompositeOperation = "source-over";
+    },
+
+    // BIO: letters filled with green "life" (bubble-cells in a green body).
+    renderBioLetters(ctx, W, H) {
+      const pr = this.preset, cx = this.textCx, cy = this.textCy;
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = this.gatherStrength;
+      this._setFont(ctx);
+      ctx.shadowColor = pr.glowColor; ctx.shadowBlur = pr.glowBlur * this._glowK();
+      ctx.fillStyle = "#0d7a3a"; ctx.fillText(pr.text, cx, cy);   // base body + glow halo
+      ctx.shadowBlur = 0;
+      this.fillTextWith(ctx, W, H, (cc, w, h) => this.drawBioFill(cc, w, h));
+      ctx.restore();
+    },
+    drawBioFill(cc, W, H) {
+      const t = this.t, size = this.textSize, cy = this.textCy;
+      const top = cy - size * 0.6, bot = cy + size * 0.6;
+      const g = cc.createLinearGradient(0, top, 0, bot);
+      g.addColorStop(0, "#d8ffcf"); g.addColorStop(0.5, "#46d268"); g.addColorStop(1, "#0c7a3a");
+      cc.fillStyle = g; cc.fillRect(0, top - 30, W, (bot - top) + 60);
+      cc.globalCompositeOperation = "lighter";
+      const range = size * 1.3;
+      for (let i = 0; i < this.bioBubbles.length; i++) {
+        const b = this.bioBubbles[i];
+        let yy = b.y - ((t * b.sp) % range);
+        if (yy < top - 30) yy += range;
+        const r = b.r;
+        cc.globalAlpha = 0.5; cc.fillStyle = "rgba(190,255,200,0.16)";
+        cc.beginPath(); cc.arc(b.x, yy, r, 0, TAU); cc.fill();
+        cc.strokeStyle = "rgba(180,255,190,0.5)"; cc.lineWidth = 1.2;
+        cc.beginPath(); cc.arc(b.x, yy, r, 0, TAU); cc.stroke();
+        cc.fillStyle = "rgba(255,255,255,0.6)";
+        cc.beginPath(); cc.arc(b.x - r * 0.3, yy - r * 0.3, r * 0.18, 0, TAU); cc.fill();
+      }
+      cc.globalAlpha = 1; cc.globalCompositeOperation = "source-over";
+    },
+    // Plants growing out of the top edges of the letters (stem + leaves + bud), swaying.
+    drawSprouts(ctx, W, H) {
+      const t = this.t, size = this.textSize, dis = 1 - this.dissolve;
+      ctx.globalCompositeOperation = "source-over";
+      ctx.lineCap = "round";
+      for (let i = 0; i < this.sprouts.length; i++) {
+        const s = this.sprouts[i];
+        ctx.globalAlpha = this.gatherStrength * dis;
+        const len = size * 0.34 * s.h;
+        const sway = Math.sin(t * 1.1 + s.seed * TAU) * size * 0.05;
+        const midX = s.x + sway * 0.4, midY = s.y - len * 0.55, tipX = s.x + sway, tipY = s.y - len;
+        ctx.strokeStyle = "#5fcf52"; ctx.lineWidth = Math.max(1.6, size * 0.012);
+        ctx.beginPath(); ctx.moveTo(s.x, s.y + 4); ctx.quadraticCurveTo(midX, midY, tipX, tipY); ctx.stroke();
+        this._leaf(ctx, midX, midY, -0.7, size * 0.11);
+        this._leaf(ctx, midX + sway * 0.2, midY - len * 0.16, 0.7, size * 0.1);
+        ctx.fillStyle = "#8df07a";
+        ctx.beginPath(); ctx.arc(tipX, tipY, Math.max(2.2, size * 0.018), 0, TAU); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    },
+    _leaf(ctx, x, y, ang, r) {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+      ctx.fillStyle = "#62d957";
+      ctx.beginPath(); ctx.ellipse(r * 0.9, 0, r, r * 0.5, 0, 0, TAU); ctx.fill();
+      ctx.restore();
     },
 
     renderField(ctx, W, H) {
@@ -932,7 +1051,8 @@
   const ctx = canvas.getContext("2d");
   const hud = document.getElementById("hud");
   const meaningEl = document.getElementById("meaning");
-  const examplesEl = document.getElementById("examples");
+  const rootlineEl = document.getElementById("rootline");
+  const wordsEl = document.getElementById("words");
   let W = 0, H = 0, dpr = 1, last = 0, fps = 60, fpsT = 0, fpsN = 0;
 
   function resize() {
@@ -967,8 +1087,10 @@
   function applyChrome(pr) {
     document.documentElement.style.setProperty("--bg", `rgb(${pr.bg[0]},${pr.bg[1]},${pr.bg[2]})`);
     document.documentElement.style.setProperty("--accent", pr.accent);
-    meaningEl.textContent = pr.meaning;
-    examplesEl.innerHTML = pr.examples;
+    document.documentElement.style.setProperty("--ink", pr.ink);
+    meaningEl.textContent = pr.def;
+    rootlineEl.textContent = `${pr.label} · from ${pr.origin} “${pr.rootForm}”`;
+    wordsEl.innerHTML = pr.words.map(x => `<li><b>${x.w}</b> — ${x.d}</li>`).join("");
     [...document.querySelectorAll(".pill")].forEach(b =>
       b.setAttribute("aria-pressed", String(b.dataset.key === keyOf(pr))));
   }
