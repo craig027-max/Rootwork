@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Word-Roots · animation spike</title>
+
+<!-- Chunky display face: lots of interior area for particles to fill. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet" />
+
+<style>
+  :root { --bg: #07040a; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; }
+  body {
+    font-family: "Archivo Black", Impact, "Arial Black", sans-serif;
+    color: #fff; -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
+  }
+  #stage { position: fixed; inset: 0; display: block; }
+
+  /* Meaning label — recedes so it never competes with the effect. */
+  #sub {
+    position: fixed; left: 0; right: 0; bottom: 16vh; text-align: center;
+    font-family: ui-sans-serif, system-ui, sans-serif; font-weight: 400;
+    letter-spacing: 0.5em; text-transform: uppercase; font-size: 13px;
+    color: rgba(255,255,255,0.34); pointer-events: none;
+    transition: color .4s ease; text-indent: 0.5em;
+  }
+
+  /* Word switcher */
+  #bar {
+    position: fixed; left: 50%; transform: translateX(-50%); bottom: 28px;
+    display: flex; gap: 10px; z-index: 5;
+  }
+  .pill {
+    font-family: ui-sans-serif, system-ui, sans-serif; font-weight: 600;
+    font-size: 13px; letter-spacing: 0.12em;
+    padding: 9px 18px; border-radius: 999px; cursor: pointer;
+    color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14); backdrop-filter: blur(6px);
+    transition: all .25s ease; user-select: none;
+  }
+  .pill:hover { color: #fff; background: rgba(255,255,255,0.12); }
+  .pill[aria-pressed="true"] {
+    color: #fff; border-color: rgba(255,255,255,0.55);
+    box-shadow: 0 0 18px var(--accent, rgba(255,255,255,0.4));
+    background: rgba(255,255,255,0.14);
+  }
+
+  #hud {
+    position: fixed; top: 12px; left: 14px; z-index: 5;
+    font-family: ui-monospace, monospace; font-size: 11px;
+    color: rgba(255,255,255,0.28); pointer-events: none;
+  }
+  #hint {
+    position: fixed; top: 12px; right: 14px; z-index: 5;
+    font-family: ui-sans-serif, system-ui, sans-serif; font-size: 11px;
+    letter-spacing: 0.08em; color: rgba(255,255,255,0.22); pointer-events: none;
+  }
+</style>
+</head>
+<body>
+  <canvas id="stage"></canvas>
+  <div id="sub">fire</div>
+  <div id="hud">—</div>
+  <div id="hint">keys 1 · 2 · 3</div>
+  <div id="bar"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
+          integrity="sha512-7eHRwcbYkK4d9g/6tD/mhkf++eoTHwpNM9woBxtPUBWm67zeAfFC+HrdoE2GanKeocly/VxeLvIqwvCdk7qScg=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+  "use strict";
+
+  /* =====================================================================
+   * Word-Roots — animation spike (THROWAWAY)
+   *
+   * One parametric particle engine + three preset objects. The bet of the
+   * whole product is "the animation IS the product"; the bet of THIS file is
+   * that one engine driven by data can express three different *meanings*
+   * (fire rises, water fills, stars orbit) with NO per-word branching in the
+   * hot loop. If that holds, the parametric path is validated.
+   * ===================================================================== */
+
+  /* ---------- 1. PRESETS — every per-word difference lives here as data ---------- */
+  const PRESETS = {
+    pyro: {
+      label: "PYRO", sub: "fire", text: "PYRO", accent: "rgba(255,120,30,0.55)",
+      bg: [12, 4, 2], blend: "lighter", trailFade: 0.16,
+      gravity: -0.5,             // negative = buoyant, rises
+      gather: 0.07,              // weak-ish: fire reads as PYRO but still flickers
+      drag: 0.90,
+      turbulence: 0.7, noiseScale: 0.020, noiseSpeed: 2.0,
+      orbit: 0,
+      lifetime: [0.45, 1.25],    // short-lived embers
+      size: [4, 10], core: 0.18, // soft glow
+      alphaShape: 1.0, twinkle: 0, twSpeed: 0,
+      colorRamp: ["#fff7cc", "#ffd24a", "#ff7a18", "#e02500", "#5c0a00"],
+    },
+    hydro: {
+      label: "HYDRO", sub: "water", text: "HYDRO", accent: "rgba(60,150,255,0.55)",
+      bg: [3, 9, 20], blend: "source-over", trailFade: 0.12,
+      gravity: 0.30,             // positive = settles / fills downward
+      gather: 0.13,              // strong: water fills the letterform cleanly
+      drag: 0.85,                // viscous
+      turbulence: 0.35, noiseScale: 0.025, noiseSpeed: 0.7,
+      orbit: 0,
+      lifetime: [3.0, 6.0],      // long-lived (water persists)
+      size: [4, 11], core: 0.24,
+      alphaShape: 0.30,          // low = flat-topped = stays solid most of life
+      twinkle: 0, twSpeed: 0,
+      colorRamp: ["#e6ffff", "#9fe8ff", "#46b3ff", "#1b6fe0", "#0a3a8f"],
+    },
+    astro: {
+      label: "ASTRO", sub: "stars", text: "ASTRO", accent: "rgba(150,120,255,0.55)",
+      bg: [4, 2, 16], blend: "lighter", trailFade: 0.07,
+      gravity: 0,                // weightless
+      gather: 0.028,             // loose orbit around home, not locked
+      drag: 0.985,               // almost frictionless drift
+      turbulence: 0.25, noiseScale: 0.010, noiseSpeed: 0.4,
+      orbit: 0.013,              // tangential force around home → swirl
+      lifetime: [2.0, 5.0],
+      size: [3, 9], core: 0.34,  // sharper core = crisp twinkle
+      alphaShape: 1.0, twinkle: 0.7, twSpeed: 4.0,
+      colorRamp: ["#ffffff", "#cfe0ff", "#a9b8ff", "#7b6cff", "#2a1c66"],
+    },
+  };
+
+  const MAX_PARTICLES = 4500;
+  const SAMPLE_STEP = 6;
+  const REF_FONT = 220;                 // offscreen sampling size (CSS px, fixed)
+  const FONT_FAMILY = '"Archivo Black", Impact, "Arial Black", sans-serif';
+  const LUT_N = 24;                     // colour-ramp resolution
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ---------- colour helpers ---------- */
+  function hexToRgb(h) {
+    const n = parseInt(h.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  // Expand a small ramp into an LUT of [r,g,b] (young -> old).
+  function buildLUT(ramp, n) {
+    const stops = ramp.map(hexToRgb), out = [];
+    for (let i = 0; i < n; i++) {
+      const t = i / (n - 1), s = t * (stops.length - 1);
+      const a = stops[Math.floor(s)], b = stops[Math.min(stops.length - 1, Math.ceil(s))];
+      const f = s - Math.floor(s);
+      out.push([
+        Math.round(a[0] + (b[0] - a[0]) * f),
+        Math.round(a[1] + (b[1] - a[1]) * f),
+        Math.round(a[2] + (b[2] - a[2]) * f),
+      ]);
+    }
+    return out;
+  }
+  // Pre-render one soft glow sprite per LUT colour. drawImage of these stacks
+  // into glow under 'lighter' blend — far cheaper than ctx.shadowBlur per dot.
+  function buildSprites(preset) {
+    const lut = buildLUT(preset.colorRamp, LUT_N), SPR = 64, sprites = [];
+    for (let i = 0; i < lut.length; i++) {
+      const c = document.createElement("canvas"); c.width = c.height = SPR;
+      const g = c.getContext("2d");
+      const grd = g.createRadialGradient(SPR/2, SPR/2, 0, SPR/2, SPR/2, SPR/2);
+      const [r, gr, b] = lut[i];
+      grd.addColorStop(0, `rgba(${r},${gr},${b},1)`);
+      grd.addColorStop(preset.core, `rgba(${r},${gr},${b},0.85)`);
+      grd.addColorStop(1, `rgba(${r},${gr},${b},0)`);
+      g.fillStyle = grd; g.fillRect(0, 0, SPR, SPR);
+      sprites.push(c);
+    }
+    return sprites;
+  }
+
+  /* ---------- 2. text -> particle home-points ---------- */
+  // Returns points in offscreen ("source") space; the field scales/centres them.
+  function sampleGlyphs(text) {
+    const off = document.createElement("canvas");
+    const o = off.getContext("2d", { willReadFrequently: true });
+    o.font = `${REF_FONT}px ${FONT_FAMILY}`;
+    const w = Math.ceil(o.measureText(text).width) + REF_FONT;
+    const h = Math.ceil(REF_FONT * 1.4);
+    off.width = w; off.height = h;
+    o.font = `${REF_FONT}px ${FONT_FAMILY}`;      // re-set: resize clears state
+    o.fillStyle = "#fff"; o.textBaseline = "middle"; o.textAlign = "center";
+    o.fillText(text, w / 2, h / 2);
+
+    const data = o.getImageData(0, 0, w, h).data, pts = [];
+    const j = SAMPLE_STEP / 2;
+    for (let y = 0; y < h; y += SAMPLE_STEP) {
+      for (let x = 0; x < w; x += SAMPLE_STEP) {
+        if (data[(y * w + x) * 4 + 3] > 128) {
+          pts.push(x + (Math.random() - 0.5) * SAMPLE_STEP,
+                   y + (Math.random() - 0.5) * SAMPLE_STEP);
+        }
+      }
+    }
+    // Strided downsample if a longer word blows the budget.
+    let xs = pts;
+    const count = pts.length / 2;
+    if (count > MAX_PARTICLES) {
+      const k = Math.ceil(count / MAX_PARTICLES); xs = [];
+      for (let i = 0; i < count; i += k) xs.push(pts[i*2], pts[i*2+1]);
+    }
+    return { xs, w, h };
+  }
+
+  /* ---------- 3. the engine ---------- */
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  // Flat struct-of-objects pool, preallocated once. No per-frame allocation.
+  function makeParticle() {
+    return { x:0,y:0, vx:0,vy:0, hx:0,hy:0, size:1, life:0, maxLife:1, seed:0 };
+  }
+
+  const field = {
+    pool: [], count: 0,
+    preset: null, sprites: null, sample: null,
+    // GSAP tweens ONLY these scalars; the rAF loop reads them for all particles.
+    gatherStrength: 0, intensity: 1, dissolve: 0,
+    t: 0,
+
+    init() { for (let i = 0; i < MAX_PARTICLES; i++) this.pool.push(makeParticle()); },
+
+    // Place homes by scaling the cached sample into the live canvas.
+    layout(W, H) {
+      const s = this.sample; if (!s) return;
+      const scale = Math.min(W * 0.74 / s.w, H * 0.46 / s.h);
+      const ox = (W - s.w * scale) / 2, oy = (H - s.h * scale) / 2;
+      for (let i = 0; i < this.count; i++) {
+        const p = this.pool[i];
+        p.hx = ox + s.xs[i*2] * scale;
+        p.hy = oy + s.xs[i*2+1] * scale;
+      }
+    },
+
+    load(preset, W, H, scatter) {
+      this.preset = preset;
+      this.sprites = preset.sprites;
+      this.sample = preset.sampleCache;
+      this.count = Math.min(this.sample.xs.length / 2, MAX_PARTICLES);
+      this.layout(W, H);
+      for (let i = 0; i < this.count; i++) {
+        const p = this.pool[i];
+        p.size = rand(preset.size[0], preset.size[1]);
+        p.maxLife = rand(preset.lifetime[0], preset.lifetime[1]);
+        p.life = Math.random() * p.maxLife;   // desync so they don't all die together
+        p.seed = Math.random();
+        if (scatter) { p.x = Math.random() * W; p.y = Math.random() * H; p.vx = 0; p.vy = 0; }
+        else { p.x = p.hx; p.y = p.hy; }
+      }
+    },
+
+    respawn(p, pr) {
+      p.maxLife = rand(pr.lifetime[0], pr.lifetime[1]);
+      p.life = p.maxLife;
+      p.x = p.hx + (Math.random() - 0.5) * 6;
+      p.y = p.hy + (Math.random() - 0.5) * 6;
+      p.vx = 0; p.vy = 0;
+    },
+
+    update(dt, f) {
+      const pr = this.preset; if (!pr) return;
+      this.t += dt;
+      const t = this.t, gs = this.gatherStrength;
+      const g = pr.gravity, gk = pr.gather, dragF = Math.pow(pr.drag, f);
+      const turb = pr.turbulence, ns = pr.noiseScale, nsp = pr.noiseSpeed, orb = pr.orbit;
+      for (let i = 0; i < this.count; i++) {
+        const p = this.pool[i];
+        const dx = p.hx - p.x, dy = p.hy - p.y;
+        // seek home (gather) — strength tweened by GSAP
+        p.vx += dx * gk * gs * f;
+        p.vy += dy * gk * gs * f;
+        // gravity / buoyancy (signed)
+        p.vy += g * f;
+        // tangential orbit around home (stars swirl; 0 for others)
+        p.vx += -dy * orb * f;
+        p.vy +=  dx * orb * f;
+        // turbulence via cheap layered-sine flow field
+        const ang = (Math.sin(p.x * ns + t * nsp) + Math.sin(p.y * ns * 1.3 - t * nsp * 0.8)) * 3.14159;
+        p.vx += Math.cos(ang) * turb * f;
+        p.vy += Math.sin(ang) * turb * f;
+        // drag + integrate
+        p.vx *= dragF; p.vy *= dragF;
+        p.x += p.vx * f; p.y += p.vy * f;
+        // lifecycle
+        p.life -= dt;
+        if (p.life <= 0) this.respawn(p, pr);
+      }
+    },
+
+    render(ctx, W, H) {
+      const pr = this.preset; if (!pr) return;
+      // trail-fade clear: paint low-alpha bg instead of clearRect -> motion streaks
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = `rgba(${pr.bg[0]},${pr.bg[1]},${pr.bg[2]},${pr.trailFade})`;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.globalCompositeOperation = pr.blend;
+      const spr = this.sprites, n = spr.length - 1;
+      const inten = this.intensity, dis = 1 - this.dissolve;
+      const shape = pr.alphaShape, tw = pr.twinkle, tsp = pr.twSpeed, t = this.t;
+      for (let i = 0; i < this.count; i++) {
+        const p = this.pool[i];
+        const lifeFrac = p.life / p.maxLife;          // 1 birth -> 0 death
+        const ageIdx = ((1 - lifeFrac) * n) | 0;       // young=hot, old=cool
+        let a = Math.pow(Math.sin(lifeFrac * 3.14159), shape) * inten * dis;
+        if (tw) a *= (1 - tw) + tw * (0.5 + 0.5 * Math.sin(t * tsp + p.seed * 6.28));
+        if (a <= 0.01) continue;
+        ctx.globalAlpha = a > 1 ? 1 : a;
+        const d = p.size * 2;
+        ctx.drawImage(spr[ageIdx], p.x - p.size, p.y - p.size, d, d);
+      }
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+    },
+
+    // Reduced-motion: draw the formed word once, no animation.
+    renderStatic(ctx, W, H) {
+      const pr = this.preset; if (!pr) return;
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = `rgb(${pr.bg[0]},${pr.bg[1]},${pr.bg[2]})`;
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = pr.blend;
+      const spr = this.sprites, mid = (spr.length * 0.4) | 0;
+      for (let i = 0; i < this.count; i++) {
+        const p = this.pool[i];
+        ctx.globalAlpha = 0.9; const d = p.size * 2;
+        ctx.drawImage(spr[mid], p.hx - p.size, p.hy - p.size, d, d);
+      }
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+    },
+  };
+
+  /* ---------- 4. stage: DPR, resize, rAF loop ---------- */
+  const canvas = document.getElementById("stage");
+  const ctx = canvas.getContext("2d");
+  const hud = document.getElementById("hud");
+  const subEl = document.getElementById("sub");
+  let W = 0, H = 0, dpr = 1, last = 0, fps = 60, fpsT = 0, fpsN = 0;
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    // Fall back if the viewport isn't laid out yet (e.g. headless/preview at boot).
+    W = window.innerWidth || document.documentElement.clientWidth || 1280;
+    H = window.innerHeight || document.documentElement.clientHeight || 720;
+    if (W <= 0 || H <= 0) return;             // never zero the canvas
+    canvas.width = Math.floor(W * dpr); canvas.height = Math.floor(H * dpr);
+    canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);   // all drawing in CSS px
+    field.layout(W, H);
+    if (reduceMotion) field.renderStatic(ctx, W, H);
+  }
+  window.addEventListener("resize", resize);
+  // Re-run when the viewport gains a real size (handles late layout in previews).
+  if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(document.documentElement);
+
+  function frame(now) {
+    let dt = (now - last) / 1000; last = now;
+    if (dt > 1 / 20) dt = 1 / 20;             // clamp (tab blur / hitch / first frame)
+    const f = Math.min(dt * 60, 2);           // frame-normalised step
+    field.update(dt, f);
+    field.render(ctx, W, H);
+    // fps readout
+    fpsT += dt; fpsN++;
+    if (fpsT >= 0.5) { fps = Math.round(fpsN / fpsT); fpsT = 0; fpsN = 0;
+      hud.textContent = `${field.preset.label}  ·  ${field.count} particles  ·  ${fps} fps`; }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- 5. word loading + GSAP orchestration ---------- */
+  let current = null;
+
+  function applyChrome(pr) {
+    document.documentElement.style.setProperty("--bg", `rgb(${pr.bg[0]},${pr.bg[1]},${pr.bg[2]})`);
+    document.documentElement.style.setProperty("--accent", pr.accent);
+    subEl.textContent = pr.sub; subEl.style.color = pr.accent;
+    [...document.querySelectorAll(".pill")].forEach(b =>
+      b.setAttribute("aria-pressed", String(b.dataset.key === keyOf(pr))));
+  }
+  const keyOf = (pr) => Object.keys(PRESETS).find(k => PRESETS[k] === pr);
+
+  function loadWord(key, animate) {
+    const pr = PRESETS[key];
+    if (reduceMotion) {
+      current = pr; field.load(pr, W, H, false);
+      applyChrome(pr); field.renderStatic(ctx, W, H); return;
+    }
+    if (!animate || !current) {
+      current = pr; field.load(pr, W, H, true);
+      field.gatherStrength = 0; field.intensity = 1; field.dissolve = 0;
+      applyChrome(pr);
+      gsap.to(field, { gatherStrength: 1, duration: 1.6, ease: "power3.out" });
+      return;
+    }
+    // switch: dissolve current out, then assemble the new word in
+    gsap.killTweensOf(field);
+    const tl = gsap.timeline();
+    tl.to(field, { dissolve: 1, gatherStrength: 0.0, duration: 0.45, ease: "power2.in" })
+      .add(() => { current = pr; field.load(pr, W, H, true); field.dissolve = 0; field.gatherStrength = 0; applyChrome(pr); })
+      .to(field, { gatherStrength: 1, duration: 1.5, ease: "power3.out" })
+      .fromTo(field, { intensity: 1.5 }, { intensity: 1, duration: 1.2, ease: "power2.out" }, "<");
+  }
+
+  /* ---------- 6. UI ---------- */
+  const bar = document.getElementById("bar");
+  const order = ["pyro", "hydro", "astro"];
+  order.forEach(k => {
+    const b = document.createElement("div");
+    b.className = "pill"; b.dataset.key = k; b.textContent = PRESETS[k].label;
+    b.setAttribute("role", "button"); b.setAttribute("aria-pressed", "false");
+    b.onclick = () => loadWord(k, true);
+    bar.appendChild(b);
+  });
+  window.addEventListener("keydown", e => {
+    const i = ["1", "2", "3"].indexOf(e.key);
+    if (i >= 0) loadWord(order[i], true);
+  });
+
+  /* ---------- boot: wait for the font, then run ---------- */
+  field.init();
+  (async function boot() {
+    try {
+      await document.fonts.load(`${REF_FONT}px "Archivo Black"`);
+      await document.fonts.ready;
+    } catch (_) { /* fall back to Impact/Arial Black */ }
+    // sample + build sprites for all three words up front (instant switching)
+    for (const k of order) {
+      PRESETS[k].sampleCache = sampleGlyphs(PRESETS[k].text);
+      PRESETS[k].sprites = buildSprites(PRESETS[k]);
+    }
+    resize();
+    loadWord("pyro", false);                 // auto-play the hero word
+    if (!reduceMotion) requestAnimationFrame(t => { last = t; requestAnimationFrame(frame); });
+  })();
+
+  // Debug handle (harmless): lets a throttled/headless preview render a
+  // deterministic frame without relying on the rAF loop ticking.
+  window.__spike = {
+    field, resize, loadWord, PRESETS,
+    size: () => ({ W, H }),
+    // Load a word at its formed home positions, advance n steps, render once.
+    snap(key, n = 60) {
+      resize();
+      const pr = PRESETS[key];
+      current = pr; field.load(pr, W, H, false);   // start AT home (no scatter)
+      applyChrome(pr);
+      field.gatherStrength = 1; field.dissolve = 0; field.intensity = 1;
+      gsap.killTweensOf(field);                     // stop the entrance tween fighting us
+      const dt = 1 / 60, f = 1;
+      for (let i = 0; i < n; i++) field.update(dt, f);
+      field.render(ctx, W, H);
+      return { count: field.count, W, H, label: pr.label };
+    },
+  };
+  </script>
+</body>
+</html>
