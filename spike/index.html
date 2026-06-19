@@ -106,7 +106,7 @@
       label: "PYRO", meaning: "fire", text: "PYRO", accent: "rgba(255,120,30,0.6)",
       examples: "pyro<b>technics</b> · funeral <b>pyre</b> · pyro<b>mania</b>",
       mode: "text", step: 12,    // readable TYPE + flames licking up (effect supports text)
-      flameGlow: true,           // glow flickers like fire
+      flameGlow: true, flame: true,   // flame-tongue sprites (not round dots); glow flickers
       textFill: ["#fff7df", "#ffd058", "#ff8a1e", "#e23a06", "#9a1f00"],  // top hot -> base ember
       glowColor: "rgba(255,120,25,0.9)", glowBlur: 26,
       bg: [14, 5, 2], blend: "lighter", trailFade: 0.22,
@@ -124,17 +124,17 @@
     hydro: {
       label: "HYDRO", meaning: "water", text: "HYDRO", accent: "rgba(60,160,255,0.6)",
       examples: "<b>hydrate</b> · fire <b>hydrant</b> · de<b>hydrated</b>",
-      mode: "text", step: 18, droplet: true, fill: "water",   // letters FILLED with moving water; only a few drips
+      mode: "text", step: 12, rain: true, fill: "water",   // letters FILLED with moving water + rain/waterfall drops
       textFill: ["#eaffff", "#a6e6ff", "#4fb0ff", "#1e74e6", "#0c4099"],
       glowColor: "rgba(60,150,255,0.85)", glowBlur: 24,
       bg: [3, 10, 22], blend: "source-over", trailFade: 0.14,
-      gravity: 0.34,             // a couple of slow droplets slide off
+      gravity: 0.7,              // rain/waterfall drops fall off the letters
       gather: 0,
-      drag: 0.93,
-      turbulence: 0.16, noiseScale: 0.03, noiseSpeed: 0.8,
-      orbit: 0, sway: 0.06, swaySpeed: 1.6,
+      drag: 0.94,
+      turbulence: 0.14, noiseScale: 0.03, noiseSpeed: 0.8,
+      orbit: 0, sway: 0.05, swaySpeed: 1.6,
       grow: 0, stretchY: 0,
-      lifetime: [1.2, 2.8],
+      lifetime: [1.0, 2.4],
       size: [2, 5], core: 0.5,
       alphaShape: 0.7, twinkle: 0, twSpeed: 0,
       colorRamp: ["#eaffff", "#a6e6ff", "#4fb0ff", "#1e74e6", "#0c4099"],
@@ -142,20 +142,20 @@
     astro: {
       label: "ASTRO", meaning: "stars", text: "ASTRO", accent: "rgba(150,120,255,0.6)",
       examples: "<b>astro</b>naut · <b>astro</b>nomy · <b>aster</b>isk",
-      mode: "text", step: 14, backdrop: "sky", fill: "galaxy",   // letters MADE of stars; deep space behind
-      textFill: ["#ffffff", "#e4e2ff", "#b9b0ff", "#7d6cf0", "#3a2c84"],
-      glowColor: "rgba(150,120,255,0.85)", glowBlur: 26,
-      bg: [5, 3, 18], blend: "lighter", trailFade: 0.25,
-      gravity: 0,
+      mode: "text", step: 22, backdrop: "sun",   // a glowing sun (disc + corona + flares) behind warm type
+      textFill: ["#fffaf0", "#ffeccc", "#ffd9a0", "#f7b86a", "#d98a3a"],
+      glowColor: "rgba(255,170,70,0.85)", glowBlur: 26,
+      bg: [10, 5, 2], blend: "lighter", trailFade: 0.22,
+      gravity: -0.12,            // a few warm embers drift up off the sun
       gather: 0,
-      drag: 0.995,               // barely drift: twinkle in place, not fly off
-      turbulence: 0.04, noiseScale: 0.01, noiseSpeed: 0.3,
-      orbit: 0, sway: 0, swaySpeed: 0,
+      drag: 0.985,
+      turbulence: 0.18, noiseScale: 0.012, noiseSpeed: 1.0,
+      orbit: 0, sway: 0.06, swaySpeed: 2.0,
       grow: 0, stretchY: 0,
-      lifetime: [2.0, 5.0],
-      size: [1.4, 3.6], core: 0.4,
-      alphaShape: 1.0, twinkle: 0.85, twSpeed: 3.0,   // sparse accent stars twinkling on the letters
-      colorRamp: ["#ffffff", "#d6e2ff", "#aeb9ff", "#8a7cff", "#3a2c74"],
+      lifetime: [1.0, 2.6],
+      size: [1.2, 3.2], core: 0.2,
+      alphaShape: 1.0, twinkle: 0.5, twSpeed: 3.0,
+      colorRamp: ["#fff3cf", "#ffd24a", "#ff8a1e", "#ff3a08", "#a01400", "#2a0600"],
     },
     bio: {
       label: "BIO", meaning: "life", text: "BIO", accent: "rgba(70,225,130,0.6)",
@@ -247,6 +247,54 @@
     return sprites;
   }
 
+  // Flame-tongue sprites (PYRO flames + ASTRO solar flares): a pointed tongue,
+  // bright at the base, fading to a transparent tip. Coloured per LUT stop.
+  function buildFlameSprites(preset) {
+    const lut = buildLUT(preset.colorRamp, LUT_N), FW = 48, FH = 72, sprites = [];
+    for (let i = 0; i < lut.length; i++) {
+      const c = document.createElement("canvas"); c.width = FW; c.height = FH;
+      const g = c.getContext("2d");
+      const [r, gr, b] = lut[i];
+      g.beginPath();
+      g.moveTo(FW/2, FH);
+      g.quadraticCurveTo(FW*0.02, FH*0.62, FW*0.34, FH*0.34);
+      g.quadraticCurveTo(FW*0.46, FH*0.12, FW*0.5, 0);
+      g.quadraticCurveTo(FW*0.54, FH*0.12, FW*0.66, FH*0.34);
+      g.quadraticCurveTo(FW*0.98, FH*0.62, FW/2, FH);
+      g.closePath();
+      const grd = g.createLinearGradient(0, FH, 0, 0);
+      grd.addColorStop(0, `rgba(${r},${gr},${b},0.95)`);
+      grd.addColorStop(0.45, `rgba(${r},${gr},${b},0.55)`);
+      grd.addColorStop(1, `rgba(${r},${gr},${b},0)`);
+      g.fillStyle = grd; g.fill();
+      sprites.push(c);
+    }
+    return sprites;
+  }
+  // Raindrop sprites (HYDRO): teardrop, round leading bottom + faint trailing tip + highlight.
+  function buildRainSprites(preset) {
+    const lut = buildLUT(preset.colorRamp, LUT_N), RW = 22, RH = 46, sprites = [];
+    for (let i = 0; i < lut.length; i++) {
+      const c = document.createElement("canvas"); c.width = RW; c.height = RH;
+      const g = c.getContext("2d");
+      const [r, gr, b] = lut[i];
+      g.beginPath();
+      g.moveTo(RW/2, 2);
+      g.bezierCurveTo(RW*0.96, RH*0.5, RW*0.86, RH*0.98, RW/2, RH-2);
+      g.bezierCurveTo(RW*0.14, RH*0.98, RW*0.04, RH*0.5, RW/2, 2);
+      g.closePath();
+      const grd = g.createLinearGradient(0, 0, 0, RH);
+      grd.addColorStop(0, `rgba(${r},${gr},${b},0.18)`);
+      grd.addColorStop(0.6, `rgba(${r},${gr},${b},0.8)`);
+      grd.addColorStop(1, `rgba(${r},${gr},${b},0.95)`);
+      g.fillStyle = grd; g.fill();
+      g.fillStyle = "rgba(255,255,255,0.7)";
+      g.beginPath(); g.arc(RW*0.4, RH*0.72, RW*0.1, 0, Math.PI*2); g.fill();
+      sprites.push(c);
+    }
+    return sprites;
+  }
+
   /* ---------- 2. text -> particle home-points ---------- */
   function sampleGlyphs(text, step) {
     step = step || SAMPLE_STEP;
@@ -288,6 +336,7 @@
     preset: null, sprites: null, sample: null,
     stars: [], starPairs: [], starfield: [], nebula: [], cells: [], fillStars: [],
     maskCanvas: null, maskCtx: null, composeCanvas: null, composeCtx: null, cellSprites: null,
+    flameSprites: null, rainSprites: null, sunFlares: [],
     textSize: 0, textCx: 0, textCy: 0, textScale: 1,
     gatherStrength: 0, intensity: 1, dissolve: 0,
     t: 0,
@@ -306,8 +355,10 @@
         p.hx = ox + s.xs[i*2] * scale;
         p.hy = oy + s.xs[i*2+1] * scale;
       }
-      if (this.preset && (this.preset.mode === "constellation" || this.preset.backdrop === "sky")) this.buildSky(W, H);
-      if (this.preset && this.preset.backdrop === "life") this.buildCells(W, H);
+      const bd = this.preset && this.preset.backdrop;
+      if (this.preset && (this.preset.mode === "constellation" || bd === "sky" || bd === "sun")) this.buildSky(W, H);
+      if (bd === "life") this.buildCells(W, H);
+      if (bd === "sun") this.buildSun();
       if (this.preset && this.preset.fill) this.buildTextMask(W, H);
       if (this.preset && this.preset.fill === "galaxy") this.buildFillStars(W, H);
     },
@@ -322,6 +373,12 @@
         { x: W*0.72, y: H*0.58, r: Math.min(W,H)*0.5,  c: [30,60,150] },
         { x: W*0.55, y: H*0.30, r: Math.min(W,H)*0.4,  c: [120,40,120] },
       ];
+    },
+
+    buildSun() {
+      const flares = [], N = 44;
+      for (let i = 0; i < N; i++) flares.push({ ang: (i / N) * TAU + (Math.random() - 0.5) * 0.08, ph: Math.random() * TAU, sp: rand(1.4, 2.6) });
+      this.sunFlares = flares;
     },
 
     buildCells(W, H) {
@@ -405,6 +462,8 @@
       this.preset = preset;
       this.sprites = preset.sprites;
       this.cellSprites = preset.cellSprites || null;
+      this.flameSprites = preset.flameSprites || null;
+      this.rainSprites = preset.rainSprites || null;
       this.sample = preset.sampleCache;
       this.count = Math.min(this.sample.xs.length / 2, MAX_PARTICLES);
       this.layout(W, H);
@@ -474,10 +533,15 @@
 
     // Reusable: draw the rising effect particles (flames/embers) on top.
     drawParticles(ctx, pr) {
-      const spr = (pr.cell && this.cellSprites) ? this.cellSprites : this.sprites, n = spr.length - 1, t = this.t;
-      const inten = this.intensity, dis = 1 - this.dissolve;
+      const t = this.t, inten = this.intensity, dis = 1 - this.dissolve;
       const shape = pr.alphaShape, grow = pr.grow, stretchY = pr.stretchY;
       const tw = pr.twinkle, tsp = pr.twSpeed;
+      let spr, mode = "round";
+      if (pr.flame && this.flameSprites) { spr = this.flameSprites; mode = "flame"; }
+      else if (pr.rain && this.rainSprites) { spr = this.rainSprites; mode = "rain"; }
+      else if (pr.cell && this.cellSprites) { spr = this.cellSprites; }
+      else { spr = this.sprites; }
+      const n = spr.length - 1;
       for (let i = 0; i < this.count; i++) {
         const p = this.pool[i];
         const lifeFrac = p.life / p.maxLife;
@@ -488,14 +552,24 @@
         if (a <= 0.012) continue;
         ctx.globalAlpha = a > 1 ? 1 : a;
         const sz = grow ? p.size * (1 + grow * ageFrac) : p.size;
-        const w = sz * 2;
-        let h = w, top = p.y - sz;
-        if (stretchY) {
-          const spd = -p.vy;
-          const amt = spd > 0 ? (spd * 0.12 < 2.4 ? spd * 0.12 : 2.4) : 0;
-          h = w * (1 + stretchY * amt); top = p.y - h + sz;
+        if (mode === "flame") {                              // tongue: base at p.y, licks up
+          const w = sz * 2.0, spd = p.vy < 0 ? -p.vy : 0;
+          const h = sz * 3.2 * (1 + (spd * 0.08 < 1.6 ? spd * 0.08 : 1.6));
+          ctx.drawImage(spr[ageIdx], p.x - w / 2, p.y - h, w, h);
+        } else if (mode === "rain") {                        // teardrop streaking down
+          const w = sz * 1.4, spd = p.vy > 0 ? p.vy : 0;
+          const h = sz * 2.0 * (1 + (spd * 0.12 < 2.4 ? spd * 0.12 : 2.4));
+          ctx.drawImage(spr[ageIdx], p.x - w / 2, p.y - h, w, h);
+        } else {
+          const w = sz * 2;
+          let h = w, top = p.y - sz;
+          if (stretchY) {
+            const spd = -p.vy;
+            const amt = spd > 0 ? (spd * 0.12 < 2.4 ? spd * 0.12 : 2.4) : 0;
+            h = w * (1 + stretchY * amt); top = p.y - h + sz;
+          }
+          ctx.drawImage(spr[ageIdx], p.x - sz, top, w, h);
         }
-        ctx.drawImage(spr[ageIdx], p.x - sz, top, w, h);
       }
       ctx.globalAlpha = 1;
     },
@@ -509,6 +583,7 @@
 
       if (pr.backdrop === "sky") this.drawSky(ctx, W, H);        // supporting imagery behind
       else if (pr.backdrop === "life") this.drawLife(ctx, W, H);
+      else if (pr.backdrop === "sun") this.drawSun(ctx, W, H);
 
       // the word as the hero — fill style depends on the element
       if (pr.fill === "water") this.renderWaterLetters(ctx, W, H);
@@ -795,6 +870,47 @@
       ctx.globalAlpha = 1;
     },
 
+    // ASTRO: a glowing star/sun (disc + corona + flickering solar flares) behind the word.
+    drawSun(ctx, W, H) {
+      const t = this.t, cx = this.textCx, cy = this.textCy, dis = 1 - this.dissolve;
+      const R = Math.min(this.textSize * 0.85, H * 0.4);
+      const scy = cy - R * 0.32;                              // lift the disc so the word stays crisp
+      ctx.globalCompositeOperation = "lighter";
+      // faint background starfield
+      const white = this.sprites[0];
+      for (let i = 0; i < this.starfield.length; i++) {
+        const s = this.starfield[i];
+        const twk = 0.4 + 0.6 * Math.sin(t * 1.5 + s.ph);
+        ctx.globalAlpha = s.a * 0.7 * twk * dis;
+        ctx.drawImage(white, s.x - s.r, s.y - s.r, s.r * 2, s.r * 2);
+      }
+      // solar flares around the rim (flame tongues, base at rim, licking outward)
+      const fl = this.flameSprites, fn = fl.length - 1;
+      for (let i = 0; i < this.sunFlares.length; i++) {
+        const f = this.sunFlares[i];
+        const len = R * (0.22 + 0.42 * (0.5 + 0.5 * Math.sin(t * f.sp + f.ph)));
+        ctx.save();
+        ctx.globalAlpha = 0.75 * dis;
+        ctx.translate(cx + Math.cos(f.ang) * R * 0.96, scy + Math.sin(f.ang) * R * 0.96);
+        ctx.rotate(f.ang + Math.PI / 2);                     // sprite tip -> radially outward
+        const w = R * 0.13;
+        ctx.drawImage(fl[(0.18 * fn) | 0], -w / 2, -len, w, len);
+        ctx.restore();
+      }
+      // glowing disc
+      ctx.globalAlpha = 1;
+      const g = ctx.createRadialGradient(cx, scy, 0, cx, scy, R * 1.35);
+      g.addColorStop(0, `rgba(255,234,175,${0.82 * dis})`);
+      g.addColorStop(0.30, `rgba(255,160,55,${0.66 * dis})`);
+      g.addColorStop(0.62, `rgba(210,70,18,${0.36 * dis})`);
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, scy, R * 1.35, 0, TAU); ctx.fill();
+      // corona rim
+      ctx.lineWidth = R * 0.035; ctx.strokeStyle = `rgba(255,190,100,${0.55 * dis})`;
+      ctx.beginPath(); ctx.arc(cx, scy, R * 0.98, 0, TAU); ctx.stroke();
+      ctx.globalCompositeOperation = "source-over";
+    },
+
     renderStatic(ctx, W, H) {
       const pr = this.preset; if (!pr) return;
       ctx.globalCompositeOperation = "source-over";
@@ -907,6 +1023,8 @@
       PRESETS[k].sampleCache = sampleGlyphs(PRESETS[k].text, PRESETS[k].step);
       PRESETS[k].sprites = buildSprites(PRESETS[k]);
       if (PRESETS[k].cell) PRESETS[k].cellSprites = buildCellSprites(PRESETS[k]);
+      if (PRESETS[k].flame || PRESETS[k].backdrop === "sun") PRESETS[k].flameSprites = buildFlameSprites(PRESETS[k]);
+      if (PRESETS[k].rain) PRESETS[k].rainSprites = buildRainSprites(PRESETS[k]);
     }
     resize();
     loadWord("pyro", false);
