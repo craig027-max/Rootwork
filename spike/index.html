@@ -105,37 +105,37 @@
     pyro: {
       label: "PYRO", meaning: "fire", text: "PYRO", accent: "rgba(255,120,30,0.6)",
       examples: "pyro<b>technics</b> · funeral <b>pyre</b> · pyro<b>mania</b>",
-      mode: "text", step: 10,    // readable TYPE + flames licking up (effect supports text)
+      mode: "text", step: 12,    // readable TYPE + flames licking up (effect supports text)
       flameGlow: true,           // glow flickers like fire
       textFill: ["#fff7df", "#ffd058", "#ff8a1e", "#e23a06", "#9a1f00"],  // top hot -> base ember
       glowColor: "rgba(255,120,25,0.9)", glowBlur: 26,
       bg: [14, 5, 2], blend: "lighter", trailFade: 0.22,
-      gravity: -0.95,            // flames climb off the letters
+      gravity: -0.82,            // lower buoyancy: flames hug the letters (contained)
       gather: 0,                 // letters ARE the type; particles just rise (no seek)
       drag: 0.9,
       turbulence: 0.9, noiseScale: 0.022, noiseSpeed: 2.6,
       orbit: 0, sway: 0.24, swaySpeed: 5.5,
       grow: 1.5, stretchY: 1.1,  // swell + elongate into tongues as they rise
-      lifetime: [0.3, 0.8],      // flames reduced ~50% again (fewer + shorter)
-      size: [2.5, 7], core: 0.16,
+      lifetime: [0.28, 0.68],    // fewer + shorter flames; bigger/softer so less "dotty"
+      size: [3, 8], core: 0.16,
       alphaShape: 1.1, twinkle: 0, twSpeed: 0,
       colorRamp: ["#fff3cf", "#ffd24a", "#ff8a1e", "#ff3a08", "#a01400", "#2a0600"],
     },
     hydro: {
       label: "HYDRO", meaning: "water", text: "HYDRO", accent: "rgba(60,160,255,0.6)",
       examples: "<b>hydrate</b> · fire <b>hydrant</b> · de<b>hydrated</b>",
-      mode: "text", step: 13, droplet: true, fill: "water",   // letters FILLED with moving water + sparse drips
+      mode: "text", step: 18, droplet: true, fill: "water",   // letters FILLED with moving water; only a few drips
       textFill: ["#eaffff", "#a6e6ff", "#4fb0ff", "#1e74e6", "#0c4099"],
       glowColor: "rgba(60,150,255,0.85)", glowBlur: 24,
       bg: [3, 10, 22], blend: "source-over", trailFade: 0.14,
-      gravity: 0.42,             // a few droplets drip off the bottom
+      gravity: 0.34,             // a couple of slow droplets slide off
       gather: 0,
       drag: 0.93,
-      turbulence: 0.18, noiseScale: 0.03, noiseSpeed: 0.8,
+      turbulence: 0.16, noiseScale: 0.03, noiseSpeed: 0.8,
       orbit: 0, sway: 0.06, swaySpeed: 1.6,
       grow: 0, stretchY: 0,
-      lifetime: [1.0, 2.6],
-      size: [3, 7], core: 0.5,
+      lifetime: [1.2, 2.8],
+      size: [2, 5], core: 0.5,
       alphaShape: 0.7, twinkle: 0, twSpeed: 0,
       colorRamp: ["#eaffff", "#a6e6ff", "#4fb0ff", "#1e74e6", "#0c4099"],
     },
@@ -559,18 +559,38 @@
     drawWater(cc, W, H) {
       const t = this.t, size = this.textSize, cy = this.textCy;
       const top = cy - size * 0.6, bot = cy + size * 0.6, hgt = bot - top;
+      // deep base fill
       const g = cc.createLinearGradient(0, top, 0, bot);
-      g.addColorStop(0, "#cdf3ff"); g.addColorStop(0.45, "#5cb6ff"); g.addColorStop(1, "#0f53b8");
-      cc.fillStyle = g; cc.fillRect(0, top - 30, W, hgt + 60);
-      cc.globalCompositeOperation = "lighter";                    // caustic light sweeping down
+      g.addColorStop(0, "#9ad8ff"); g.addColorStop(0.5, "#3f9bef"); g.addColorStop(1, "#0d469f");
+      cc.fillStyle = g; cc.fillRect(0, top - 40, W, hgt + 80);
+
+      cc.globalCompositeOperation = "lighter";
+      // undulating waterline: a moving surface with brighter water below it
+      const surfY = cy + Math.sin(t * 0.8) * size * 0.06;
+      const waveAt = (x) => surfY + Math.sin(x * 0.016 + t * 2.0) * size * 0.05 + Math.sin(x * 0.045 - t * 1.4) * size * 0.022;
+      cc.beginPath(); cc.moveTo(0, bot + 40);
+      for (let x = 0; x <= W; x += 10) cc.lineTo(x, waveAt(x));
+      cc.lineTo(W, bot + 40); cc.closePath();
+      const ug = cc.createLinearGradient(0, surfY - size * 0.1, 0, bot);
+      ug.addColorStop(0, "rgba(150,222,255,0.34)"); ug.addColorStop(1, "rgba(30,110,220,0.05)");
+      cc.fillStyle = ug; cc.fill();
+      // bright surface line
+      cc.strokeStyle = "rgba(228,249,255,0.6)"; cc.lineWidth = 2.5;
+      cc.beginPath();
+      for (let x = 0; x <= W; x += 10) { const y = waveAt(x); if (x === 0) cc.moveTo(x, y); else cc.lineTo(x, y); }
+      cc.stroke();
+      // glossy sheen near the top (wet look)
+      const glossY = top + size * 0.16 + Math.sin(t * 1.5) * size * 0.02;
+      const gloss = cc.createLinearGradient(0, glossY - size * 0.13, 0, glossY + size * 0.13);
+      gloss.addColorStop(0, "rgba(255,255,255,0)"); gloss.addColorStop(0.5, "rgba(255,255,255,0.4)"); gloss.addColorStop(1, "rgba(255,255,255,0)");
+      cc.fillStyle = gloss; cc.fillRect(0, glossY - size * 0.13, W, size * 0.26);
+      // caustic light bands
       const span = hgt + 200;
-      for (let i = 0; i < 3; i++) {
-        const yy = top - 100 + ((t * 34 + i * span / 3) % span);
-        const bandH = size * 0.24;
+      for (let i = 0; i < 2; i++) {
+        const yy = top - 100 + ((t * 28 + i * span / 2) % span);
+        const bandH = size * 0.2;
         const bg = cc.createLinearGradient(0, yy - bandH, 0, yy + bandH);
-        bg.addColorStop(0, "rgba(255,255,255,0)");
-        bg.addColorStop(0.5, "rgba(225,248,255,0.42)");
-        bg.addColorStop(1, "rgba(255,255,255,0)");
+        bg.addColorStop(0, "rgba(255,255,255,0)"); bg.addColorStop(0.5, "rgba(210,242,255,0.3)"); bg.addColorStop(1, "rgba(255,255,255,0)");
         cc.fillStyle = bg; cc.fillRect(0, yy - bandH, W, bandH * 2);
       }
       cc.globalCompositeOperation = "source-over";
