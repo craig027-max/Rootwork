@@ -16,32 +16,30 @@ Pure static HTML + Canvas 2D. GSAP loads from CDN (with SRI), so you need a netw
 first time. Switch words with the on-screen pills or keys **1 / 2 / 3 / 4**. PYRO auto-plays on load.
 (If the browser cached an old build, hard-reload or append `?v=N`.)
 
-## Words (v2)
+## Words (v3 — text-first)
 
-The goal is *concept association*, not fancy text — each root teaches its meaning + example
-derived words (shown under the word):
+The word is rendered as **real, readable type** (Archivo Black, a glowing gradient fill); the
+effect *supports* the letters instead of replacing them. Each root also shows its meaning +
+example derived words, for concept association — the whole point is that students learn the root.
 
-- **PYRO → fire** — dense rising flames, elongated tongues, smoke ramp (additive).
-- **HYDRO → water** — highlighted 3D droplets that overlap into a body and *drip* below the letters.
-- **ASTRO → stars** — constellation/planetarium: sparse bright stars linked by lines over a
-  twinkling starfield + nebula clouds.
-- **BIO → life** — *hybrid*: the word in bright green particles over a recessed, rotating **DNA
-  double-helix** backdrop. Demonstrates supporting concept-imagery behind a particle word.
+- **PYRO → fire** — hot gradient type + flames/embers licking up off the letters.
+- **HYDRO → water** — glassy blue type + droplets running down and dripping off the letters.
+- **ASTRO → stars** — cosmic violet/white type over a starfield + nebula backdrop, stars twinkling around it.
+- **BIO → life** — green type over a recessed, rotating **DNA double-helix** backdrop (hybrid concept-imagery).
 
 ## What's inside (`index.html`, one file)
 
-- **`PRESETS`** — each root's look/behaviour as data: signed `gravity`, `gather`, `turbulence`,
-  `orbit`, `sway`, `grow`, `stretchY` (flame tongues), `drip*` (water), `blend`, `trailFade`,
-  `lifetime`, `breathe`, `twinkle`, `colorRamp`, plus `mode`/`backdrop` for the richer treatments.
-- **`sampleGlyphs()`** — renders the word offscreen, samples opaque pixels into particle "home"
-  points (gated on `document.fonts.ready`).
-- **`ParticleField`** — one preallocated pool, single `update`/`render`. Shared physics is
-  data-driven; a few element render paths earn their keep now (`renderField` with flame
-  elongation, water droplet sprites, `renderConstellation`, and the `drawLife` DNA backdrop).
-- **GSAP** orchestrates only macro scalars (`gatherStrength`, `intensity`, `dissolve`) — never
-  individual particles.
-- Perf: pre-rendered glow/droplet **sprites** per colour stop (no per-particle `shadowBlur`),
-  colour-ramp LUT, trail-fade clears, `prefers-reduced-motion` → static frame.
+- **`PRESETS`** — each root as data: `textFill` gradient + `glowColor`/`glowBlur` for the type,
+  plus the supporting-effect knobs (`gravity`, `turbulence`, `sway`, `grow`, `stretchY`, `droplet`,
+  `twinkle`, `breathe`, `blend`, `trailFade`, `lifetime`, `colorRamp`) and `backdrop` (`sky`/`life`).
+- **`sampleGlyphs()`** — samples the glyph pixels into points the effect particles emit from, using
+  the *same* scale/centre as the solid type so type and effect align.
+- **`renderText()`** — the hero: draws a backdrop (`drawSky`/`drawLife`), the solid glowing word,
+  then `drawParticles()` (flames/drips/stars/motes) on top.
+- **GSAP** orchestrates only macro scalars (`gatherStrength` = text reveal, `intensity`, `dissolve`).
+- Perf: pre-rendered glow/droplet **sprites** (no per-particle `shadowBlur`), colour-ramp LUT,
+  trail-fade clears, `prefers-reduced-motion` → static frame.
+  (Earlier dot-formed render paths `renderField`/`renderConstellation` remain but are now unused.)
 
 ## Verdict
 
