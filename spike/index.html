@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet" />
 
 <style>
-  :root { --bg: #07040a; }
+  :root { --bg: #07040a; --accent: rgba(255,120,30,0.55); }
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; }
   body {
@@ -21,14 +21,24 @@
   }
   #stage { position: fixed; inset: 0; display: block; }
 
-  /* Meaning label — recedes so it never competes with the effect. */
-  #sub {
-    position: fixed; left: 0; right: 0; bottom: 16vh; text-align: center;
-    font-family: ui-sans-serif, system-ui, sans-serif; font-weight: 400;
-    letter-spacing: 0.5em; text-transform: uppercase; font-size: 13px;
-    color: rgba(255,255,255,0.34); pointer-events: none;
-    transition: color .4s ease; text-indent: 0.5em;
+  /* Meaning label + example words — teaches the root -> meaning association. */
+  #label {
+    position: fixed; left: 0; right: 0; bottom: 13vh; text-align: center;
+    pointer-events: none; z-index: 4;
   }
+  #meaning {
+    font-family: "Archivo Black", Impact, "Arial Black", sans-serif;
+    font-size: clamp(30px, 5.6vw, 66px); letter-spacing: 0.16em;
+    text-transform: uppercase; color: #fff; line-height: 1;
+    text-shadow: 0 0 30px var(--accent), 0 0 8px var(--accent);
+    transition: text-shadow .4s ease;
+  }
+  #examples {
+    margin-top: 1.1em; font-family: ui-sans-serif, system-ui, sans-serif;
+    font-weight: 500; font-size: clamp(12px, 1.5vw, 17px); letter-spacing: 0.22em;
+    text-transform: uppercase; color: rgba(255,255,255,0.46);
+  }
+  #examples b { color: rgba(255,255,255,0.78); font-weight: 700; }
 
   /* Word switcher */
   #bar {
@@ -64,9 +74,12 @@
 </head>
 <body>
   <canvas id="stage"></canvas>
-  <div id="sub">fire</div>
+  <div id="label">
+    <div id="meaning">fire</div>
+    <div id="examples"></div>
+  </div>
   <div id="hud">—</div>
-  <div id="hint">keys 1 · 2 · 3</div>
+  <div id="hint">keys 1 · 2 · 3 · 4</div>
   <div id="bar"></div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
@@ -76,72 +89,102 @@
   "use strict";
 
   /* =====================================================================
-   * Word-Roots — animation spike (THROWAWAY)
+   * Word-Roots — animation spike (THROWAWAY) · v2
    *
-   * One parametric particle engine + three preset objects. The bet of the
-   * whole product is "the animation IS the product"; the bet of THIS file is
-   * that one engine driven by data can express three different *meanings*
-   * (fire rises, water fills, stars orbit) with NO per-word branching in the
-   * hot loop. If that holds, the parametric path is validated.
+   * Goal of the product: make a word ROOT *feel* like its meaning so students
+   * learn the association (PYRO->fire, HYDRO->water, ASTRO->stars). The visual
+   * has to TEACH the concept, not just decorate the letters.
+   *
+   * One particle engine drives all words. Most behaviour is data in PRESETS;
+   * a few element-specific render paths (flame elongation, water droplets,
+   * constellation lines) earn their keep now that we're chasing real *feel*.
    * ===================================================================== */
 
-  /* ---------- 1. PRESETS — every per-word difference lives here as data ---------- */
+  /* ---------- 1. PRESETS ---------- */
   const PRESETS = {
     pyro: {
-      label: "PYRO", sub: "fire", text: "PYRO", accent: "rgba(255,120,30,0.55)",
-      bg: [12, 4, 2], blend: "lighter", trailFade: 0.16,
-      gravity: -0.5,             // negative = buoyant, rises
-      gather: 0.07,              // weak-ish: fire reads as PYRO but still flickers
-      drag: 0.90,
-      turbulence: 0.7, noiseScale: 0.020, noiseSpeed: 2.0,
-      orbit: 0,
-      lifetime: [0.45, 1.25],    // short-lived embers
-      size: [4, 10], core: 0.18, // soft glow
-      alphaShape: 1.0, twinkle: 0, twSpeed: 0,
-      colorRamp: ["#fff7cc", "#ffd24a", "#ff7a18", "#e02500", "#5c0a00"],
+      label: "PYRO", meaning: "fire", text: "PYRO", accent: "rgba(255,120,30,0.6)",
+      examples: "pyro<b>technics</b> · funeral <b>pyre</b> · pyro<b>mania</b>",
+      mode: "flame", step: 5,
+      bg: [14, 5, 2], blend: "lighter", trailFade: 0.20,
+      gravity: -0.85,            // strong buoyancy: flames climb
+      gather: 0.06,              // weak: fire dances, never locks hard
+      drag: 0.92,
+      turbulence: 0.8, noiseScale: 0.022, noiseSpeed: 2.4,
+      orbit: 0, sway: 0.18, swaySpeed: 5.0,
+      grow: 1.6,                 // particles swell as they rise (flame body)
+      stretchY: 1.0,             // elongate fast-rising particles into tongues
+      lifetime: [0.5, 1.4],
+      size: [3, 8], core: 0.16,
+      alphaShape: 1.1, twinkle: 0, twSpeed: 0,
+      colorRamp: ["#fff3cf", "#ffde6b", "#ff9b21", "#ff4810", "#b21500", "#360500"],
     },
     hydro: {
-      label: "HYDRO", sub: "water", text: "HYDRO", accent: "rgba(60,150,255,0.55)",
-      bg: [3, 9, 20], blend: "source-over", trailFade: 0.12,
-      gravity: 0.30,             // positive = settles / fills downward
-      gather: 0.13,              // strong: water fills the letterform cleanly
-      drag: 0.85,                // viscous
-      turbulence: 0.35, noiseScale: 0.025, noiseSpeed: 0.7,
-      orbit: 0,
-      lifetime: [3.0, 6.0],      // long-lived (water persists)
-      size: [4, 11], core: 0.24,
-      alphaShape: 0.30,          // low = flat-topped = stays solid most of life
+      label: "HYDRO", meaning: "water", text: "HYDRO", accent: "rgba(60,160,255,0.6)",
+      examples: "<b>hydrate</b> · fire <b>hydrant</b> · de<b>hydrated</b>",
+      mode: "water", droplet: true,
+      bg: [3, 10, 22], blend: "source-over", trailFade: 0.16,
+      gravity: 0.22,
+      gather: 0.14,              // strong: water fills the letterform
+      drag: 0.84,                // viscous
+      turbulence: 0.3, noiseScale: 0.03, noiseSpeed: 0.8,
+      orbit: 0, sway: 0.05, swaySpeed: 1.4,
+      grow: 0, stretchY: 0,
+      dripFrac: 0.14, dripGravity: 1.3, dripDist: 200,  // a few droplets drip + reset
+      lifetime: [3.0, 6.0],
+      size: [6, 15], core: 0.5,  // bigger, rounder droplets that overlap into a body
+      alphaShape: 0.28,
       twinkle: 0, twSpeed: 0,
-      colorRamp: ["#e6ffff", "#9fe8ff", "#46b3ff", "#1b6fe0", "#0a3a8f"],
+      colorRamp: ["#dffaff", "#8fd6ff", "#3f9dff", "#1666e0", "#0a3a93"],
     },
     astro: {
-      label: "ASTRO", sub: "stars", text: "ASTRO", accent: "rgba(150,120,255,0.55)",
-      bg: [4, 2, 16], blend: "lighter", trailFade: 0.07,
-      gravity: 0,                // weightless
-      gather: 0.028,             // loose orbit around home, not locked
-      drag: 0.985,               // almost frictionless drift
-      turbulence: 0.25, noiseScale: 0.010, noiseSpeed: 0.4,
-      orbit: 0.013,              // tangential force around home → swirl
-      lifetime: [2.0, 5.0],
-      size: [3, 9], core: 0.34,  // sharper core = crisp twinkle
-      alphaShape: 1.0, twinkle: 0.7, twSpeed: 4.0,
-      colorRamp: ["#ffffff", "#cfe0ff", "#a9b8ff", "#7b6cff", "#2a1c66"],
+      label: "ASTRO", meaning: "stars", text: "ASTRO", accent: "rgba(150,120,255,0.6)",
+      examples: "<b>astro</b>naut · <b>astro</b>nomy · <b>aster</b>isk",
+      mode: "constellation", starEvery: 16, linkDist: 130,
+      bg: [5, 3, 18], blend: "lighter", trailFade: 0.16,
+      gravity: 0,
+      gather: 0.05,              // steadier than v1 so the constellation holds
+      drag: 0.99,
+      turbulence: 0.1, noiseScale: 0.009, noiseSpeed: 0.35,
+      orbit: 0.004, sway: 0, swaySpeed: 0,
+      grow: 0, stretchY: 0,
+      lifetime: [2.5, 6.0],
+      size: [1.6, 4.5], core: 0.4,
+      alphaShape: 1.0, twinkle: 0.75, twSpeed: 3.5,
+      colorRamp: ["#ffffff", "#d6e2ff", "#aeb9ff", "#8a7cff", "#3a2c74"],
+    },
+    bio: {
+      label: "BIO", meaning: "life", text: "BIO", accent: "rgba(70,225,130,0.6)",
+      examples: "<b>bio</b>logy · <b>bio</b>graphy · sym<b>bio</b>sis",
+      mode: "field", backdrop: "life",     // hybrid: particle word + DNA helix behind
+      bg: [3, 14, 8], blend: "lighter", trailFade: 0.18,
+      gravity: 0,
+      gather: 0.08,
+      drag: 0.94,
+      turbulence: 0.22, noiseScale: 0.014, noiseSpeed: 0.9,
+      orbit: 0, sway: 0.06, swaySpeed: 1.8,
+      grow: 0, stretchY: 0,
+      breathe: 0.14, breatheSpeed: 1.5,     // gentle pulse = alive / breathing
+      lifetime: [2.5, 5.0],
+      size: [4, 9], core: 0.3,
+      alphaShape: 0.55, twinkle: 0.25, twSpeed: 2.2,
+      colorRamp: ["#ecffe8", "#a8f58a", "#4fd96a", "#23a152", "#0b5e38"],
     },
   };
 
-  const MAX_PARTICLES = 4500;
+  const MAX_PARTICLES = 5200;
   const SAMPLE_STEP = 6;
-  const REF_FONT = 220;                 // offscreen sampling size (CSS px, fixed)
+  const REF_FONT = 220;
   const FONT_FAMILY = '"Archivo Black", Impact, "Arial Black", sans-serif';
-  const LUT_N = 24;                     // colour-ramp resolution
+  const LUT_N = 24;
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const TAU = Math.PI * 2;
 
-  /* ---------- colour helpers ---------- */
+  /* ---------- colour helpers + sprites ---------- */
   function hexToRgb(h) {
     const n = parseInt(h.slice(1), 16);
     return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
   }
-  // Expand a small ramp into an LUT of [r,g,b] (young -> old).
   function buildLUT(ramp, n) {
     const stops = ramp.map(hexToRgb), out = [];
     for (let i = 0; i < n; i++) {
@@ -156,48 +199,52 @@
     }
     return out;
   }
-  // Pre-render one soft glow sprite per LUT colour. drawImage of these stacks
-  // into glow under 'lighter' blend — far cheaper than ctx.shadowBlur per dot.
+  // One soft glow sprite per LUT colour. drawImage stacks into glow under
+  // 'lighter' — cheaper than per-particle shadowBlur. Water adds a highlight
+  // dot so each particle reads as a 3D droplet.
   function buildSprites(preset) {
     const lut = buildLUT(preset.colorRamp, LUT_N), SPR = 64, sprites = [];
     for (let i = 0; i < lut.length; i++) {
       const c = document.createElement("canvas"); c.width = c.height = SPR;
       const g = c.getContext("2d");
-      const grd = g.createRadialGradient(SPR/2, SPR/2, 0, SPR/2, SPR/2, SPR/2);
       const [r, gr, b] = lut[i];
+      const grd = g.createRadialGradient(SPR/2, SPR/2, 0, SPR/2, SPR/2, SPR/2);
       grd.addColorStop(0, `rgba(${r},${gr},${b},1)`);
       grd.addColorStop(preset.core, `rgba(${r},${gr},${b},0.85)`);
       grd.addColorStop(1, `rgba(${r},${gr},${b},0)`);
       g.fillStyle = grd; g.fillRect(0, 0, SPR, SPR);
+      if (preset.droplet) {                       // specular highlight -> 3D droplet
+        const hg = g.createRadialGradient(SPR*0.38, SPR*0.32, 0, SPR*0.38, SPR*0.32, SPR*0.18);
+        hg.addColorStop(0, "rgba(255,255,255,0.9)");
+        hg.addColorStop(1, "rgba(255,255,255,0)");
+        g.fillStyle = hg; g.fillRect(0, 0, SPR, SPR);
+      }
       sprites.push(c);
     }
     return sprites;
   }
 
   /* ---------- 2. text -> particle home-points ---------- */
-  // Returns points in offscreen ("source") space; the field scales/centres them.
-  function sampleGlyphs(text) {
+  function sampleGlyphs(text, step) {
+    step = step || SAMPLE_STEP;
     const off = document.createElement("canvas");
     const o = off.getContext("2d", { willReadFrequently: true });
     o.font = `${REF_FONT}px ${FONT_FAMILY}`;
     const w = Math.ceil(o.measureText(text).width) + REF_FONT;
     const h = Math.ceil(REF_FONT * 1.4);
     off.width = w; off.height = h;
-    o.font = `${REF_FONT}px ${FONT_FAMILY}`;      // re-set: resize clears state
+    o.font = `${REF_FONT}px ${FONT_FAMILY}`;
     o.fillStyle = "#fff"; o.textBaseline = "middle"; o.textAlign = "center";
     o.fillText(text, w / 2, h / 2);
 
     const data = o.getImageData(0, 0, w, h).data, pts = [];
-    const j = SAMPLE_STEP / 2;
-    for (let y = 0; y < h; y += SAMPLE_STEP) {
-      for (let x = 0; x < w; x += SAMPLE_STEP) {
+    for (let y = 0; y < h; y += step) {
+      for (let x = 0; x < w; x += step) {
         if (data[(y * w + x) * 4 + 3] > 128) {
-          pts.push(x + (Math.random() - 0.5) * SAMPLE_STEP,
-                   y + (Math.random() - 0.5) * SAMPLE_STEP);
+          pts.push(x + (Math.random() - 0.5) * step, y + (Math.random() - 0.5) * step);
         }
       }
     }
-    // Strided downsample if a longer word blows the budget.
     let xs = pts;
     const count = pts.length / 2;
     if (count > MAX_PARTICLES) {
@@ -209,22 +256,19 @@
 
   /* ---------- 3. the engine ---------- */
   const rand = (a, b) => a + Math.random() * (b - a);
-
-  // Flat struct-of-objects pool, preallocated once. No per-frame allocation.
   function makeParticle() {
-    return { x:0,y:0, vx:0,vy:0, hx:0,hy:0, size:1, life:0, maxLife:1, seed:0 };
+    return { x:0,y:0, vx:0,vy:0, hx:0,hy:0, size:1, life:0, maxLife:1, seed:0, kind:0 };
   }
 
   const field = {
     pool: [], count: 0,
     preset: null, sprites: null, sample: null,
-    // GSAP tweens ONLY these scalars; the rAF loop reads them for all particles.
+    stars: [], starPairs: [], starfield: [], nebula: [], cells: [],
     gatherStrength: 0, intensity: 1, dissolve: 0,
     t: 0,
 
     init() { for (let i = 0; i < MAX_PARTICLES; i++) this.pool.push(makeParticle()); },
 
-    // Place homes by scaling the cached sample into the live canvas.
     layout(W, H) {
       const s = this.sample; if (!s) return;
       const scale = Math.min(W * 0.74 / s.w, H * 0.46 / s.h);
@@ -234,6 +278,53 @@
         p.hx = ox + s.xs[i*2] * scale;
         p.hy = oy + s.xs[i*2+1] * scale;
       }
+      if (this.preset && this.preset.mode === "constellation") this.buildSky(W, H);
+      if (this.preset && this.preset.backdrop === "life") this.buildCells(W, H);
+    },
+
+    // Background starfield + nebula clouds for the planetarium feel.
+    buildSky(W, H) {
+      const sf = []; const N = Math.round((W * H) / 9000);
+      for (let i = 0; i < N; i++) sf.push({ x: Math.random()*W, y: Math.random()*H, r: rand(0.4,1.6), a: rand(0.15,0.7), ph: Math.random()*TAU });
+      this.starfield = sf;
+      this.nebula = [
+        { x: W*0.30, y: H*0.40, r: Math.min(W,H)*0.55, c: [80,40,160] },
+        { x: W*0.72, y: H*0.58, r: Math.min(W,H)*0.5,  c: [30,60,150] },
+        { x: W*0.55, y: H*0.30, r: Math.min(W,H)*0.4,  c: [120,40,120] },
+      ];
+    },
+
+    buildCells(W, H) {
+      this.cells = [
+        { x: W*0.30, y: H*0.42, r: Math.min(W,H)*0.42, ph: 0,   col: [40,180,90] },
+        { x: W*0.70, y: H*0.55, r: Math.min(W,H)*0.46, ph: 2.1, col: [30,150,110] },
+        { x: W*0.52, y: H*0.48, r: Math.min(W,H)*0.55, ph: 4.2, col: [60,200,80] },
+      ];
+    },
+
+    // Pick sparse bright stars and link each to its 2 nearest neighbours.
+    buildConstellation(pr) {
+      const stars = [];
+      for (let i = 0; i < this.count; i += pr.starEvery) { stars.push(i); this.pool[i].kind = 1; }
+      const pairs = [], seen = new Set();
+      for (let a = 0; a < stars.length; a++) {
+        const pa = this.pool[stars[a]];
+        let b1 = -1, b2 = -1, d1 = 1e18, d2 = 1e18;
+        for (let b = 0; b < stars.length; b++) {
+          if (a === b) continue;
+          const pb = this.pool[stars[b]];
+          const dx = pa.hx - pb.hx, dy = pa.hy - pb.hy, d = dx*dx + dy*dy;
+          if (d < d1) { d2 = d1; b2 = b1; d1 = d; b1 = b; }
+          else if (d < d2) { d2 = d; b2 = b; }
+        }
+        for (const bi of [b1, b2]) {
+          if (bi < 0) continue;
+          const i1 = stars[a], i2 = stars[bi];
+          const k = Math.min(i1,i2) + "_" + Math.max(i1,i2);
+          if (!seen.has(k)) { seen.add(k); pairs.push(i1, i2); }
+        }
+      }
+      this.stars = stars; this.starPairs = pairs;
     },
 
     load(preset, W, H, scatter) {
@@ -242,15 +333,18 @@
       this.sample = preset.sampleCache;
       this.count = Math.min(this.sample.xs.length / 2, MAX_PARTICLES);
       this.layout(W, H);
+      const dripEvery = preset.dripFrac ? Math.max(2, Math.round(1 / preset.dripFrac)) : 0;
       for (let i = 0; i < this.count; i++) {
         const p = this.pool[i];
         p.size = rand(preset.size[0], preset.size[1]);
         p.maxLife = rand(preset.lifetime[0], preset.lifetime[1]);
-        p.life = Math.random() * p.maxLife;   // desync so they don't all die together
+        p.life = Math.random() * p.maxLife;
         p.seed = Math.random();
+        p.kind = (dripEvery && i % dripEvery === 0) ? 1 : 0;   // water drippers
         if (scatter) { p.x = Math.random() * W; p.y = Math.random() * H; p.vx = 0; p.vy = 0; }
-        else { p.x = p.hx; p.y = p.hy; }
+        else { p.x = p.hx; p.y = p.hy; p.vx = 0; p.vy = 0; }
       }
+      if (preset.mode === "constellation") this.buildConstellation(preset);
     },
 
     respawn(p, pr) {
@@ -267,57 +361,183 @@
       const t = this.t, gs = this.gatherStrength;
       const g = pr.gravity, gk = pr.gather, dragF = Math.pow(pr.drag, f);
       const turb = pr.turbulence, ns = pr.noiseScale, nsp = pr.noiseSpeed, orb = pr.orbit;
+      const sway = pr.sway, swsp = pr.swaySpeed;
+      const dripG = pr.dripGravity || 0, dripDist = pr.dripDist || 0;
       for (let i = 0; i < this.count; i++) {
         const p = this.pool[i];
         const dx = p.hx - p.x, dy = p.hy - p.y;
-        // seek home (gather) — strength tweened by GSAP
-        p.vx += dx * gk * gs * f;
-        p.vy += dy * gk * gs * f;
-        // gravity / buoyancy (signed)
-        p.vy += g * f;
-        // tangential orbit around home (stars swirl; 0 for others)
-        p.vx += -dy * orb * f;
-        p.vy +=  dx * orb * f;
-        // turbulence via cheap layered-sine flow field
+        let gEff = g, gkEff = gk;
+        if (dripG && p.kind === 1) { gEff = dripG; gkEff = gk * 0.12; }  // water drips fall
+        // seek home
+        p.vx += dx * gkEff * gs * f;
+        p.vy += dy * gkEff * gs * f;
+        // gravity / buoyancy
+        p.vy += gEff * f;
+        // orbit (stars)
+        if (orb) { p.vx += -dy * orb * f; p.vy += dx * orb * f; }
+        // lateral sway (flame dance / water jiggle)
+        if (sway) p.vx += Math.sin(t * swsp + p.seed * TAU) * sway * f;
+        // turbulence flow field
         const ang = (Math.sin(p.x * ns + t * nsp) + Math.sin(p.y * ns * 1.3 - t * nsp * 0.8)) * 3.14159;
         p.vx += Math.cos(ang) * turb * f;
         p.vy += Math.sin(ang) * turb * f;
         // drag + integrate
         p.vx *= dragF; p.vy *= dragF;
         p.x += p.vx * f; p.y += p.vy * f;
-        // lifecycle
+        // lifecycle (+ reset drippers that have fallen far)
         p.life -= dt;
-        if (p.life <= 0) this.respawn(p, pr);
+        if (p.life <= 0 || (dripDist && p.kind === 1 && p.y - p.hy > dripDist)) this.respawn(p, pr);
       }
     },
 
     render(ctx, W, H) {
       const pr = this.preset; if (!pr) return;
-      // trail-fade clear: paint low-alpha bg instead of clearRect -> motion streaks
+      if (pr.mode === "constellation") return this.renderConstellation(ctx, W, H);
+      this.renderField(ctx, W, H);
+    },
+
+    renderField(ctx, W, H) {
+      const pr = this.preset, t = this.t;
       ctx.globalCompositeOperation = "source-over";
       ctx.fillStyle = `rgba(${pr.bg[0]},${pr.bg[1]},${pr.bg[2]},${pr.trailFade})`;
       ctx.fillRect(0, 0, W, H);
 
+      if (pr.backdrop === "life") this.drawLife(ctx, W, H);   // hybrid supporting imagery
+
       ctx.globalCompositeOperation = pr.blend;
       const spr = this.sprites, n = spr.length - 1;
       const inten = this.intensity, dis = 1 - this.dissolve;
-      const shape = pr.alphaShape, tw = pr.twinkle, tsp = pr.twSpeed, t = this.t;
+      const shape = pr.alphaShape, grow = pr.grow, stretchY = pr.stretchY;
+      const tw = pr.twinkle, tsp = pr.twSpeed;
+      const breatheMul = pr.breathe ? (1 + pr.breathe * Math.sin(t * pr.breatheSpeed)) : 1;
       for (let i = 0; i < this.count; i++) {
         const p = this.pool[i];
-        const lifeFrac = p.life / p.maxLife;          // 1 birth -> 0 death
-        const ageIdx = ((1 - lifeFrac) * n) | 0;       // young=hot, old=cool
-        let a = Math.pow(Math.sin(lifeFrac * 3.14159), shape) * inten * dis;
-        if (tw) a *= (1 - tw) + tw * (0.5 + 0.5 * Math.sin(t * tsp + p.seed * 6.28));
-        if (a <= 0.01) continue;
+        const lifeFrac = p.life / p.maxLife;
+        const ageFrac = 1 - lifeFrac;
+        const ageIdx = (ageFrac * n) | 0;
+        let a = Math.pow(Math.sin(lifeFrac * 3.14159), shape) * inten * dis * breatheMul;
+        if (tw) a *= (1 - tw) + tw * (0.5 + 0.5 * Math.sin(t * tsp + p.seed * TAU));
+        if (a <= 0.012) continue;
         ctx.globalAlpha = a > 1 ? 1 : a;
-        const d = p.size * 2;
-        ctx.drawImage(spr[ageIdx], p.x - p.size, p.y - p.size, d, d);
+        const sz = grow ? p.size * (1 + grow * ageFrac) : p.size;
+        const w = sz * 2;
+        let h = w, top = p.y - sz;
+        if (stretchY) {                              // elongate fast risers into tongues
+          const spd = -p.vy;
+          const amt = spd > 0 ? (spd * 0.12 < 2.4 ? spd * 0.12 : 2.4) : 0;
+          h = w * (1 + stretchY * amt); top = p.y - h + sz;
+        }
+        ctx.drawImage(spr[ageIdx], p.x - sz, top, w, h);
       }
       ctx.globalAlpha = 1;
       ctx.globalCompositeOperation = "source-over";
     },
 
-    // Reduced-motion: draw the formed word once, no animation.
+    renderConstellation(ctx, W, H) {
+      const pr = this.preset, t = this.t, dis = 1 - this.dissolve;
+      // deep space
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = `rgba(${pr.bg[0]},${pr.bg[1]},${pr.bg[2]},${pr.trailFade})`;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.globalCompositeOperation = "lighter";
+      // nebula clouds
+      for (let i = 0; i < this.nebula.length; i++) {
+        const nb = this.nebula[i];
+        const grd = ctx.createRadialGradient(nb.x, nb.y, 0, nb.x, nb.y, nb.r);
+        grd.addColorStop(0, `rgba(${nb.c[0]},${nb.c[1]},${nb.c[2]},${0.10 * dis})`);
+        grd.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+      }
+      // background starfield
+      const white = this.sprites[0];
+      for (let i = 0; i < this.starfield.length; i++) {
+        const s = this.starfield[i];
+        const tw = 0.4 + 0.6 * Math.sin(t * 1.5 + s.ph);
+        ctx.globalAlpha = s.a * tw * dis;
+        ctx.drawImage(white, s.x - s.r, s.y - s.r, s.r * 2, s.r * 2);
+      }
+      // constellation lines between bright stars
+      const sp = this.starPairs, link2 = pr.linkDist * pr.linkDist;
+      ctx.lineWidth = 1; ctx.strokeStyle = `rgba(150,170,255,${0.16 * dis})`;
+      ctx.beginPath();
+      for (let i = 0; i < sp.length; i += 2) {
+        const a = this.pool[sp[i]], b = this.pool[sp[i+1]];
+        const dx = a.x - b.x, dy = a.y - b.y;
+        if (dx*dx + dy*dy > link2) continue;
+        ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+      }
+      ctx.stroke();
+      // dust (letter body) + bright stars
+      const spr = this.sprites, n = spr.length - 1, tw = pr.twinkle, tsp = pr.twSpeed;
+      for (let i = 0; i < this.count; i++) {
+        const p = this.pool[i];
+        const lifeFrac = p.life / p.maxLife;
+        const flick = (1 - tw) + tw * (0.5 + 0.5 * Math.sin(t * tsp + p.seed * TAU));
+        if (p.kind === 1) {                          // bright star
+          const a = Math.min(1, Math.sin(lifeFrac * 3.14159) * 1.3) * flick * dis;
+          if (a <= 0.012) continue;
+          ctx.globalAlpha = a;
+          const d = (p.size + 2.5) * 2;
+          ctx.drawImage(spr[(0.15 * n) | 0], p.x - d/2, p.y - d/2, d, d);
+        } else {                                     // faint dust = letter shape
+          const a = 0.5 * Math.sin(lifeFrac * 3.14159) * flick * dis;
+          if (a <= 0.012) continue;
+          ctx.globalAlpha = a;
+          const d = p.size * 2;
+          ctx.drawImage(spr[(0.6 * n) | 0], p.x - p.size, p.y - p.size, d, d);
+        }
+      }
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+    },
+
+    // Hybrid backdrop for BIO: soft cell glows + a rotating DNA double helix.
+    drawLife(ctx, W, H) {
+      const t = this.t, dis = 1 - this.dissolve;
+      ctx.globalCompositeOperation = "lighter";
+      for (let i = 0; i < this.cells.length; i++) {
+        const c = this.cells[i];
+        const pulse = 0.6 + 0.4 * Math.sin(t * 0.8 + c.ph);
+        const grd = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
+        grd.addColorStop(0, `rgba(${c.col[0]},${c.col[1]},${c.col[2]},${0.07 * pulse * dis})`);
+        grd.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+      }
+      this.drawDNA(ctx, W, H);
+    },
+
+    drawDNA(ctx, W, H) {
+      const t = this.t, spr = this.sprites, n = spr.length - 1, dis = 1 - this.dissolve;
+      const cy = H * 0.5, amp = Math.min(H * 0.22, 190);
+      const k = (4 * TAU) / W, speed = 1.0, step = 7, rungEvery = 54;
+      ctx.globalCompositeOperation = "lighter";
+      ctx.lineWidth = 1.4;
+      for (let x = 0; x < W; x += step) {            // base-pair rungs
+        if (x % rungEvery >= step) continue;
+        const ph = x * k + t * speed;
+        const yA = cy + amp * Math.sin(ph), yB = cy + amp * Math.sin(ph + Math.PI);
+        const ra = (0.07 + 0.13 * Math.abs(Math.cos(ph))) * dis;
+        ctx.strokeStyle = `rgba(150,255,185,${ra})`;
+        ctx.beginPath(); ctx.moveTo(x, yA); ctx.lineTo(x, yB); ctx.stroke();
+      }
+      for (let x = 0; x < W; x += step) {            // two strands (depth = 3D twist)
+        const ph = x * k + t * speed;
+        this._helixDot(ctx, x, cy + amp * Math.sin(ph), Math.cos(ph), spr, n, dis);
+        this._helixDot(ctx, x, cy + amp * Math.sin(ph + Math.PI), Math.cos(ph + Math.PI), spr, n, dis);
+      }
+      ctx.globalAlpha = 1;
+    },
+    _helixDot(ctx, x, y, z, spr, n, dis) {
+      const depth = (z + 1) / 2;                     // 0 back .. 1 front
+      const a = (0.10 + 0.34 * depth) * dis;         // recessed backdrop, word stays hero
+      const size = 2.2 + 4 * depth;
+      const idx = (((1 - depth) * 0.6) * n) | 0;
+      ctx.globalAlpha = a > 1 ? 1 : a;
+      const d = size * 2;
+      ctx.drawImage(spr[idx], x - size, y - size, d, d);
+    },
+
     renderStatic(ctx, W, H) {
       const pr = this.preset; if (!pr) return;
       ctx.globalCompositeOperation = "source-over";
@@ -338,32 +558,30 @@
   const canvas = document.getElementById("stage");
   const ctx = canvas.getContext("2d");
   const hud = document.getElementById("hud");
-  const subEl = document.getElementById("sub");
+  const meaningEl = document.getElementById("meaning");
+  const examplesEl = document.getElementById("examples");
   let W = 0, H = 0, dpr = 1, last = 0, fps = 60, fpsT = 0, fpsN = 0;
 
   function resize() {
     dpr = Math.min(window.devicePixelRatio || 1, 2);
-    // Fall back if the viewport isn't laid out yet (e.g. headless/preview at boot).
     W = window.innerWidth || document.documentElement.clientWidth || 1280;
     H = window.innerHeight || document.documentElement.clientHeight || 720;
-    if (W <= 0 || H <= 0) return;             // never zero the canvas
+    if (W <= 0 || H <= 0) return;
     canvas.width = Math.floor(W * dpr); canvas.height = Math.floor(H * dpr);
     canvas.style.width = W + "px"; canvas.style.height = H + "px";
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);   // all drawing in CSS px
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     field.layout(W, H);
     if (reduceMotion) field.renderStatic(ctx, W, H);
   }
   window.addEventListener("resize", resize);
-  // Re-run when the viewport gains a real size (handles late layout in previews).
   if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(document.documentElement);
 
   function frame(now) {
     let dt = (now - last) / 1000; last = now;
-    if (dt > 1 / 20) dt = 1 / 20;             // clamp (tab blur / hitch / first frame)
-    const f = Math.min(dt * 60, 2);           // frame-normalised step
+    if (dt > 1 / 20) dt = 1 / 20;
+    const f = Math.min(dt * 60, 2);
     field.update(dt, f);
     field.render(ctx, W, H);
-    // fps readout
     fpsT += dt; fpsN++;
     if (fpsT >= 0.5) { fps = Math.round(fpsN / fpsT); fpsT = 0; fpsN = 0;
       hud.textContent = `${field.preset.label}  ·  ${field.count} particles  ·  ${fps} fps`; }
@@ -376,7 +594,8 @@
   function applyChrome(pr) {
     document.documentElement.style.setProperty("--bg", `rgb(${pr.bg[0]},${pr.bg[1]},${pr.bg[2]})`);
     document.documentElement.style.setProperty("--accent", pr.accent);
-    subEl.textContent = pr.sub; subEl.style.color = pr.accent;
+    meaningEl.textContent = pr.meaning;
+    examplesEl.innerHTML = pr.examples;
     [...document.querySelectorAll(".pill")].forEach(b =>
       b.setAttribute("aria-pressed", String(b.dataset.key === keyOf(pr))));
   }
@@ -395,7 +614,6 @@
       gsap.to(field, { gatherStrength: 1, duration: 1.6, ease: "power3.out" });
       return;
     }
-    // switch: dissolve current out, then assemble the new word in
     gsap.killTweensOf(field);
     const tl = gsap.timeline();
     tl.to(field, { dissolve: 1, gatherStrength: 0.0, duration: 0.45, ease: "power2.in" })
@@ -406,7 +624,7 @@
 
   /* ---------- 6. UI ---------- */
   const bar = document.getElementById("bar");
-  const order = ["pyro", "hydro", "astro"];
+  const order = ["pyro", "hydro", "astro", "bio"];
   order.forEach(k => {
     const b = document.createElement("div");
     b.className = "pill"; b.dataset.key = k; b.textContent = PRESETS[k].label;
@@ -415,40 +633,37 @@
     bar.appendChild(b);
   });
   window.addEventListener("keydown", e => {
-    const i = ["1", "2", "3"].indexOf(e.key);
+    const i = ["1", "2", "3", "4"].indexOf(e.key);
     if (i >= 0) loadWord(order[i], true);
   });
 
-  /* ---------- boot: wait for the font, then run ---------- */
+  /* ---------- boot ---------- */
   field.init();
   (async function boot() {
     try {
       await document.fonts.load(`${REF_FONT}px "Archivo Black"`);
       await document.fonts.ready;
     } catch (_) { /* fall back to Impact/Arial Black */ }
-    // sample + build sprites for all three words up front (instant switching)
     for (const k of order) {
-      PRESETS[k].sampleCache = sampleGlyphs(PRESETS[k].text);
+      PRESETS[k].sampleCache = sampleGlyphs(PRESETS[k].text, PRESETS[k].step);
       PRESETS[k].sprites = buildSprites(PRESETS[k]);
     }
     resize();
-    loadWord("pyro", false);                 // auto-play the hero word
+    loadWord("pyro", false);
     if (!reduceMotion) requestAnimationFrame(t => { last = t; requestAnimationFrame(frame); });
   })();
 
-  // Debug handle (harmless): lets a throttled/headless preview render a
-  // deterministic frame without relying on the rAF loop ticking.
+  // Debug handle (harmless): render a deterministic frame without the rAF loop.
   window.__spike = {
     field, resize, loadWord, PRESETS,
     size: () => ({ W, H }),
-    // Load a word at its formed home positions, advance n steps, render once.
     snap(key, n = 60) {
       resize();
       const pr = PRESETS[key];
-      current = pr; field.load(pr, W, H, false);   // start AT home (no scatter)
+      current = pr; field.load(pr, W, H, false);
       applyChrome(pr);
       field.gatherStrength = 1; field.dissolve = 0; field.intensity = 1;
-      gsap.killTweensOf(field);                     // stop the entrance tween fighting us
+      gsap.killTweensOf(field);
       const dt = 1 / 60, f = 1;
       for (let i = 0; i < n; i++) field.update(dt, f);
       field.render(ctx, W, H);
