@@ -65,6 +65,31 @@ look has to be validated **before** any infrastructure is built.
   Piano Surge and Orbital are separate. Never cross data between projects.
 - Same deploy posture as Orbital: push to `main` → Cloudflare Pages auto-build.
 
+## Monorepo: when & how (decided 2026-06-19)
+
+Separate repos **now**; a workspaces monorepo is the likely *destination* for the education apps,
+but the wrong *starting point*. The deciding factor is the shared spine (accounts / consent /
+Stripe entitlement / progress / gating) that this app reuses from Orbital.
+
+- **Now (this app):** stay a separate repo. When you fork Orbital's spine, **quarantine it in a
+  clean, self-contained `src/core/`** (no app-specific imports leaking in) so it stays *liftable*
+  into a shared package later at near-zero cost.
+- **Trigger to switch:** once **two apps are live** sharing the spine *and* you catch yourself
+  fixing the same bug in both. That pain — not a hunch — is the signal.
+- **How, when triggered:** promote the edu apps into a **pnpm-workspaces + Turborepo** monorepo —
+  `apps/orbital`, `apps/word-roots`, `packages/core` (the spine), `packages/ui`. Extract the
+  shared package *informed by two real consumers* so the abstraction is right (extracting from one
+  app guesses the seams — usually wrong, and a wrong abstraction couples apps through a bad
+  interface, which is worse than duplication). Cloudflare Pages supports this via a per-app **root
+  directory** + build command.
+- **Never** fold in Piano-Surge / Pool-App unless they actually start sharing code. A monorepo is
+  for shared code, not "all projects in one place."
+- **Caveat:** if you become certain there'll be 3–4 edu spinoffs on this spine, monorepo-*first*
+  is defensible (you never create the second copy). Don't make that bet before this app passes the
+  animation spike.
+
+Principle: "don't pre-build" applies to platforms too — **monorepo later, on evidence.**
+
 ## Open decisions (owner)
 
 - **Brand name** (folder is `Word-Roots` for now — rename before mapping Cowork if desired).
