@@ -68,9 +68,14 @@ Spike is at **v7** (commit history `spike v1…v7`). Four hero words — PYRO, H
 each with readable type, an element-appropriate effect, and an instructional card (definition +
 origin + derived-word meanings). All verified in a real browser; no console errors.
 
-**Next session:** Craig is importing **superior effect packages from "Claude Design"** to work from.
+**Next session:** Craig imported **superior effect packages from "Claude Design"** to work from.
+They're in the repo root (untracked as of this handoff):
+- `design_handoff_word_roots/` — `Word Roots.html`, `Bio Root Card.html`, `colors_and_type.css`, `README.md`
+- `Text particle effects.zip` (~20K) — extract and review
+
 Plan for picking up:
-1. Review the imported packages first; treat them as the new source of the *effects*.
+0. **Read `design_handoff_word_roots/README.md` first**, then open the HTML files in a browser.
+1. Review the imported packages; treat them as the new source of the *effects*.
 2. Keep what this spike locked regardless of how the effects are built:
    - **Text-first**: the root word is real, readable type; the effect supports it (never dot-letters).
    - **Instructional card** under each word (meaning + origin + derived words w/ definitions) — this
