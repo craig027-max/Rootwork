@@ -61,3 +61,25 @@ start forking Orbital's spine. This `spike/` directory can be deleted once the e
 
 > `window.__spike` exposes a small debug handle (`snap(word)`, `field`) used to render
 > deterministic frames during verification. Harmless; remove when porting.
+
+## Status & next session (handoff)
+
+Spike is at **v7** (commit history `spike v1…v7`). Four hero words — PYRO, HYDRO, ASTRO, BIO —
+each with readable type, an element-appropriate effect, and an instructional card (definition +
+origin + derived-word meanings). All verified in a real browser; no console errors.
+
+**Next session:** Craig is importing **superior effect packages from "Claude Design"** to work from.
+Plan for picking up:
+1. Review the imported packages first; treat them as the new source of the *effects*.
+2. Keep what this spike locked regardless of how the effects are built:
+   - **Text-first**: the root word is real, readable type; the effect supports it (never dot-letters).
+   - **Instructional card** under each word (meaning + origin + derived words w/ definitions) — this
+     is a teaching tool; definitions matter as much as the visuals.
+   - **Concept association > decoration**; effects should read as the *element* (flames, water,
+     sun, cells/plants), not generic particles.
+3. The bespoke Canvas effects here are likely **superseded** by the imported packages — port the
+   structure/learning layer, swap the effect implementation. Engine call (GSAP + Canvas 2D) may be
+   revisited if the packages use a different renderer.
+
+Run notes: served via `.claude/launch.json` ("spike") or `python3 -m http.server 8731 --directory spike`.
+The static server stops on idle — just restart it. Append `?v=N` to dodge browser caching.
