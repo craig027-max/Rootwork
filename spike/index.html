@@ -105,19 +105,20 @@
     pyro: {
       label: "PYRO", meaning: "fire", text: "PYRO", accent: "rgba(255,120,30,0.6)",
       examples: "pyro<b>technics</b> · funeral <b>pyre</b> · pyro<b>mania</b>",
-      mode: "flame", step: 5,
-      bg: [14, 5, 2], blend: "lighter", trailFade: 0.20,
-      gravity: -0.85,            // strong buoyancy: flames climb
-      gather: 0.06,              // weak: fire dances, never locks hard
-      drag: 0.92,
-      turbulence: 0.8, noiseScale: 0.022, noiseSpeed: 2.4,
-      orbit: 0, sway: 0.18, swaySpeed: 5.0,
-      grow: 1.6,                 // particles swell as they rise (flame body)
-      stretchY: 1.0,             // elongate fast-rising particles into tongues
-      lifetime: [0.5, 1.4],
-      size: [3, 8], core: 0.16,
+      mode: "text", step: 6,     // readable TYPE + flames licking up (effect supports text)
+      textFill: ["#fff7df", "#ffd058", "#ff8a1e", "#e23a06", "#9a1f00"],  // top hot -> base ember
+      glowColor: "rgba(255,120,25,0.9)", glowBlur: 26,
+      bg: [14, 5, 2], blend: "lighter", trailFade: 0.22,
+      gravity: -0.95,            // flames climb off the letters
+      gather: 0,                 // letters ARE the type; particles just rise (no seek)
+      drag: 0.9,
+      turbulence: 0.9, noiseScale: 0.022, noiseSpeed: 2.6,
+      orbit: 0, sway: 0.24, swaySpeed: 5.5,
+      grow: 1.5, stretchY: 1.1,  // swell + elongate into tongues as they rise
+      lifetime: [0.35, 1.1],
+      size: [2.5, 7], core: 0.16,
       alphaShape: 1.1, twinkle: 0, twSpeed: 0,
-      colorRamp: ["#fff3cf", "#ffde6b", "#ff9b21", "#ff4810", "#b21500", "#360500"],
+      colorRamp: ["#fff3cf", "#ffd24a", "#ff8a1e", "#ff3a08", "#a01400", "#2a0600"],
     },
     hydro: {
       label: "HYDRO", meaning: "water", text: "HYDRO", accent: "rgba(60,160,255,0.6)",
@@ -264,6 +265,7 @@
     pool: [], count: 0,
     preset: null, sprites: null, sample: null,
     stars: [], starPairs: [], starfield: [], nebula: [], cells: [],
+    textSize: 0, textCx: 0, textCy: 0, textScale: 1,
     gatherStrength: 0, intensity: 1, dissolve: 0,
     t: 0,
 
@@ -273,6 +275,9 @@
       const s = this.sample; if (!s) return;
       const scale = Math.min(W * 0.74 / s.w, H * 0.46 / s.h);
       const ox = (W - s.w * scale) / 2, oy = (H - s.h * scale) / 2;
+      // Solid text shares the sample's scale + centre, so type and particles align.
+      this.textScale = scale; this.textSize = REF_FONT * scale;
+      this.textCx = W / 2; this.textCy = H / 2;
       for (let i = 0; i < this.count; i++) {
         const p = this.pool[i];
         p.hx = ox + s.xs[i*2] * scale;
@@ -392,8 +397,65 @@
 
     render(ctx, W, H) {
       const pr = this.preset; if (!pr) return;
+      if (pr.mode === "text") return this.renderText(ctx, W, H);
       if (pr.mode === "constellation") return this.renderConstellation(ctx, W, H);
       this.renderField(ctx, W, H);
+    },
+
+    // Reusable: draw the rising effect particles (flames/embers) on top.
+    drawParticles(ctx, pr) {
+      const spr = this.sprites, n = spr.length - 1;
+      const inten = this.intensity, dis = 1 - this.dissolve;
+      const shape = pr.alphaShape, grow = pr.grow, stretchY = pr.stretchY;
+      for (let i = 0; i < this.count; i++) {
+        const p = this.pool[i];
+        const lifeFrac = p.life / p.maxLife;
+        const ageFrac = 1 - lifeFrac;
+        const ageIdx = (ageFrac * n) | 0;
+        let a = Math.pow(Math.sin(lifeFrac * 3.14159), shape) * inten * dis;
+        if (a <= 0.012) continue;
+        ctx.globalAlpha = a > 1 ? 1 : a;
+        const sz = grow ? p.size * (1 + grow * ageFrac) : p.size;
+        const w = sz * 2;
+        let h = w, top = p.y - sz;
+        if (stretchY) {
+          const spd = -p.vy;
+          const amt = spd > 0 ? (spd * 0.12 < 2.4 ? spd * 0.12 : 2.4) : 0;
+          h = w * (1 + stretchY * amt); top = p.y - h + sz;
+        }
+        ctx.drawImage(spr[ageIdx], p.x - sz, top, w, h);
+      }
+      ctx.globalAlpha = 1;
+    },
+
+    // TEXT mode: readable solid type is the hero; particles only support it.
+    renderText(ctx, W, H) {
+      const pr = this.preset, t = this.t;
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = `rgba(${pr.bg[0]},${pr.bg[1]},${pr.bg[2]},${pr.trailFade})`;
+      ctx.fillRect(0, 0, W, H);
+
+      // solid glowing letters
+      const reveal = this.gatherStrength;                 // entrance fade-in
+      const flick = 0.78 + 0.22 * Math.sin(t * 9) * Math.sin(t * 5.3);
+      const size = this.textSize, cx = this.textCx, cy = this.textCy;
+      const grad = ctx.createLinearGradient(0, cy - size * 0.52, 0, cy + size * 0.52);
+      const fs = pr.textFill;
+      for (let i = 0; i < fs.length; i++) grad.addColorStop(i / (fs.length - 1), fs[i]);
+      ctx.save();
+      ctx.globalAlpha = reveal;
+      ctx.font = `${size}px ${FONT_FAMILY}`;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.shadowColor = pr.glowColor; ctx.shadowBlur = pr.glowBlur * (0.7 + 0.6 * flick);
+      ctx.fillStyle = grad;
+      ctx.fillText(pr.text, cx, cy);
+      ctx.fillText(pr.text, cx, cy);                      // 2nd pass deepens fill + glow
+      ctx.restore();
+
+      // flames licking up off the letters
+      ctx.globalCompositeOperation = pr.blend;
+      this.drawParticles(ctx, pr);
+      ctx.globalCompositeOperation = "source-over";
     },
 
     renderField(ctx, W, H) {
@@ -603,12 +665,14 @@
 
   function loadWord(key, animate) {
     const pr = PRESETS[key];
+    const scat = pr.mode !== "text";        // text mode: flames start on the letters
     if (reduceMotion) {
       current = pr; field.load(pr, W, H, false);
-      applyChrome(pr); field.renderStatic(ctx, W, H); return;
+      field.gatherStrength = 1; field.intensity = 1; field.dissolve = 0;
+      applyChrome(pr); field.render(ctx, W, H); return;
     }
     if (!animate || !current) {
-      current = pr; field.load(pr, W, H, true);
+      current = pr; field.load(pr, W, H, scat);
       field.gatherStrength = 0; field.intensity = 1; field.dissolve = 0;
       applyChrome(pr);
       gsap.to(field, { gatherStrength: 1, duration: 1.6, ease: "power3.out" });
@@ -617,7 +681,7 @@
     gsap.killTweensOf(field);
     const tl = gsap.timeline();
     tl.to(field, { dissolve: 1, gatherStrength: 0.0, duration: 0.45, ease: "power2.in" })
-      .add(() => { current = pr; field.load(pr, W, H, true); field.dissolve = 0; field.gatherStrength = 0; applyChrome(pr); })
+      .add(() => { current = pr; field.load(pr, W, H, scat); field.dissolve = 0; field.gatherStrength = 0; applyChrome(pr); })
       .to(field, { gatherStrength: 1, duration: 1.5, ease: "power3.out" })
       .fromTo(field, { intensity: 1.5 }, { intensity: 1, duration: 1.2, ease: "power2.out" }, "<");
   }
