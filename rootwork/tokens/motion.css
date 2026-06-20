@@ -1,0 +1,45 @@
+/* ============================================================
+   ROOTWORK — Motion tokens
+   ------------------------------------------------------------
+   House easing is the same snappy ease-out as the DNA. No
+   bouncy springs. Hover = lift + spark glow. Press = scale.
+   ============================================================ */
+
+:root {
+  /* ─── Easing ───────────────────────────────────────────── */
+  --ease-snap:  cubic-bezier(0.2, 0.8, 0.2, 1);   /* house ease-out */
+  --ease-soft:  cubic-bezier(0.4, 0.0, 0.2, 1);   /* gentle fades */
+
+  /* ─── Durations ────────────────────────────────────────── */
+  --dur-fast:  0.15s;   /* hover, color */
+  --dur-med:   0.25s;   /* transforms */
+  --dur-slow:  0.4s;    /* expand / entrance */
+  --dur-enter: 0.6s;    /* big fades-up */
+
+  /* ─── Signature transforms ─────────────────────────────── */
+  --lift-card: translateY(-4px);   /* card hover */
+  --lift-btn:  translateY(-2px);   /* button hover */
+  --press:     scale(0.98);        /* press */
+}
+
+/* Live-indicator pulse — eyebrow dot, daily badge, combo flame. */
+@keyframes rw-pulse {
+  0%, 100% { opacity: 1;    transform: scale(1); }
+  50%      { opacity: 0.45; transform: scale(0.7); }
+}
+
+/* Entrance — content fades up into place. Gate on a parent
+   [data-active] / [data-deck-active] so print + reduced-motion
+   show the END state instead of opacity:0. */
+@keyframes rw-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

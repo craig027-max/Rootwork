@@ -1,0 +1,15 @@
+<!-- @dsCard group="Spacing" viewport="700x180" subtitle="Neutral drop shadows for lift · colored spark glow for emphasis" name="Shadows & Glow" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><link rel="stylesheet" href="../styles.css">
+<style>
+  body{margin:0;padding:26px 24px;background:var(--bg-secondary);font-family:var(--font-mono);display:flex;gap:22px;align-items:center}
+  .s{flex:1;display:flex;flex-direction:column;align-items:center;gap:12px}
+  .box{width:100%;height:62px;border-radius:var(--radius-lg);background:var(--bg-card);border:var(--border-default)}
+  .n{font-size:.6rem;color:var(--text-muted);text-align:center;letter-spacing:.04em}
+  .glow{--spark-rgb:52,224,166;border-color:rgba(52,224,166,.4)}
+  .glow2{--spark-rgb:177,140,255;border-color:rgba(177,140,255,.4)}
+</style></head><body>
+  <div class="s"><div class="box" style="box-shadow:var(--shadow-card)"></div><div class="n">card · drop</div></div>
+  <div class="s"><div class="box" style="box-shadow:var(--shadow-card-lg)"></div><div class="n">card-lg</div></div>
+  <div class="s"><div class="box glow" style="box-shadow:var(--shadow-card),var(--glow-spark)"></div><div class="n">spark glow · jade</div></div>
+  <div class="s"><div class="box glow2" style="box-shadow:var(--shadow-card),var(--glow-spark)"></div><div class="n">spark glow · violet</div></div>
+</body></html>

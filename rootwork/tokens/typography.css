@@ -1,0 +1,42 @@
+/* ============================================================
+   ROOTWORK — Typography tokens
+   ------------------------------------------------------------
+   Same three-family system as PianoSurge DNA, same jobs:
+     Orbitron      — display, brand wordmark, big root words,
+                     scores, grades, badges (wide, futuristic)
+     Outfit        — UI labels, paragraph copy, buttons
+     JetBrains Mono — eyebrows, breakdowns, tabular numbers,
+                     always UPPERCASE + wide tracking for labels
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* ─── Families ─────────────────────────────────────────── */
+  --font-display: 'Outfit', system-ui, sans-serif;        /* body & UI text */
+  --font-game:    'Orbitron', system-ui, sans-serif;      /* headings, scores, brand */
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace; /* labels, numbers */
+  --font-body:    'Outfit', system-ui, sans-serif;        /* alias */
+
+  /* ─── Sizes (rem) ──────────────────────────────────────── */
+  --fs-xs:   0.7rem;    /* tiny mono labels */
+  --fs-sm:   0.82rem;
+  --fs-base: 1rem;
+  --fs-md:   1.06rem;
+  --fs-lg:   1.3rem;
+  --fs-xl:   1.85rem;
+  --fs-h2:   clamp(1.7rem, 4vw, 2.9rem);
+  --fs-h1:   clamp(2.6rem, 7vw, 5.6rem);
+  --fs-display: clamp(3.6rem, 10vw, 7rem);   /* the big root/answer word */
+
+  /* ─── Tracking ─────────────────────────────────────────── */
+  --track-tight:  -0.03em;   /* big display words */
+  --track-snug:   -0.01em;   /* headings */
+  --track-label:   0.16em;   /* mono eyebrows / labels (UPPERCASE) */
+  --track-badge:   0.14em;   /* small mono badges */
+
+  /* ─── Line-height ──────────────────────────────────────── */
+  --lh-display: 0.9;
+  --lh-heading: 1.1;
+  --lh-body:    1.62;
+}

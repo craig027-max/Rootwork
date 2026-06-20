@@ -1,0 +1,359 @@
+<!-- @dsCard group="Rootwork App" viewport="1120x760" subtitle="The learning app — jewel card deck, index & Root Rush quiz" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rootwork — Word Roots</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body {
+    background:
+      radial-gradient(ellipse 70% 55% at 12% 8%, rgba(52,224,166,0.10), transparent 60%),
+      radial-gradient(ellipse 65% 55% at 92% 96%, rgba(52,217,240,0.10), transparent 60%),
+      var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: clamp(18px, 3.5vw, 44px) clamp(14px, 3.5vw, 44px) 100px;
+  }
+  .deck { width: 100%; max-width: 1120px; }
+
+  /* ── Card ───────────────────────────────────────────────── */
+  .card {
+    --c1: #34e07a; --c1rgb: 52,224,122; --c2: #06b6d4; --grad: linear-gradient(135deg,#34e07a,#22c55e,#06b6d4);
+    width: 100%;
+    background: linear-gradient(180deg, rgba(var(--c1rgb),0.05), transparent 30%), var(--bg-card);
+    border: 1px solid rgba(var(--c1rgb),0.16);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card), 0 0 80px rgba(var(--c1rgb),0.10), inset 0 1px 0 rgba(255,255,255,0.04);
+    overflow: hidden; position: relative;
+  }
+  .strip { display: flex; align-items: center; gap: var(--space-3); padding: 15px clamp(20px,3vw,40px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+  .strip .badge { width: 30px; height: 30px; display: grid; place-items: center; border-radius: var(--radius-sm); background: var(--grad); font-size: 0.95rem; box-shadow: 0 0 18px rgba(var(--c1rgb),0.45); }
+  .strip .title { font-family: var(--font-game); font-weight: 800; font-size: 0.9rem; letter-spacing: 0.02em; }
+  .strip .tier { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--c1); border: 1px solid rgba(var(--c1rgb),0.3); padding: 3px 9px; border-radius: var(--radius-pill); }
+  .strip .count { margin-left: auto; font-family: var(--font-mono); font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-muted); }
+
+  .hero { display: grid; grid-template-columns: 1.05fr 0.95fr; align-items: stretch; }
+  .hero-text { padding: clamp(26px,3.5vw,48px) clamp(22px,3.2vw,46px); display: flex; flex-direction: column; justify-content: center; }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--c1); }
+  .eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c1); box-shadow: 0 0 10px var(--c1); animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1);} 50% { opacity: 0.45; transform: scale(0.7);} }
+
+  .root { font-family: var(--font-game); font-weight: 900; font-size: clamp(3.6rem, 10vw, 7rem); line-height: 0.9; letter-spacing: -0.03em; margin: 12px 0 6px; background: var(--grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 26px rgba(var(--c1rgb),0.35)); }
+  .pron { font-family: var(--font-mono); font-size: 0.86rem; color: var(--text-secondary); letter-spacing: 0.03em; }
+  .pron .origin { color: var(--text-muted); }
+  .means { margin-top: 20px; display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+  .means .arrow { font-family: var(--font-mono); color: var(--text-muted); font-size: 1.2rem; }
+  .means .word { font-family: var(--font-game); font-weight: 800; font-size: clamp(1.9rem, 4.4vw, 2.9rem); line-height: 1; color: var(--c1); text-shadow: 0 0 22px rgba(var(--c1rgb),0.4); }
+  .means .alt { font-family: var(--font-display); font-size: clamp(0.95rem,1.7vw,1.15rem); color: var(--text-secondary); }
+  .lead { margin-top: 18px; max-width: 34ch; font-size: 1rem; line-height: 1.6; color: var(--text-secondary); }
+  .lead b { color: var(--text-primary); font-weight: 700; }
+
+  .scene { position: relative; min-height: 360px; border-left: 1px solid rgba(255,255,255,0.05); background: radial-gradient(ellipse 60% 70% at 50% 45%, rgba(var(--c1rgb),0.08), transparent 70%); overflow: hidden; }
+  .scene canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .scene .caption { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-secondary); background: rgba(10,10,26,0.55); border: 1px solid rgba(255,255,255,0.08); padding: 6px 14px; border-radius: var(--radius-pill); backdrop-filter: blur(6px); white-space: nowrap; }
+
+  .words { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: rgba(255,255,255,0.06); border-top: 1px solid rgba(255,255,255,0.06); }
+  .word { background: var(--bg-card); padding: clamp(18px,2.4vw,28px) clamp(16px,2.2vw,26px); transition: background var(--dur-med) var(--ease-snap), transform var(--dur-med) var(--ease-snap), box-shadow var(--dur-med) var(--ease-snap); }
+  .word:hover { background: linear-gradient(180deg, rgba(var(--c1rgb),0.07), var(--bg-card)); transform: translateY(-4px); box-shadow: 0 -2px 30px rgba(var(--c1rgb),0.18); z-index: 2; }
+  .word .ico { font-size: 1.4rem; line-height: 1; display: inline-grid; place-items: center; width: 42px; height: 42px; border-radius: var(--radius-md); background: rgba(var(--c1rgb),0.10); border: 1px solid rgba(var(--c1rgb),0.22); margin-bottom: 14px; }
+  .word h3 { font-family: var(--font-game); font-weight: 700; font-size: 1.32rem; letter-spacing: 0.01em; color: var(--text-primary); margin-bottom: 9px; }
+  .word h3 .hl { background: var(--grad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .word .build { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.01em; color: var(--text-muted); margin-bottom: 11px; }
+  .word .build .b { color: var(--c1); }
+  .word p { font-size: 0.94rem; line-height: 1.5; color: var(--text-secondary); text-wrap: pretty; }
+
+  /* ── Bottom nav ─────────────────────────────────────────── */
+  .nav { position: fixed; left: 50%; transform: translateX(-50%); bottom: 18px; z-index: 30; display: flex; align-items: center; gap: 8px; padding: 7px 9px; background: rgba(18,18,42,0.85); backdrop-filter: blur(12px); border: var(--border-default); border-radius: var(--radius-pill); box-shadow: var(--shadow-card); }
+  .nav .arrow { width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); color: var(--text-primary); font-size: 1.1rem; cursor: pointer; display: grid; place-items: center; transition: background var(--dur-fast), transform var(--dur-fast); }
+  .nav .arrow:hover { background: rgba(255,255,255,0.1); }
+  .nav .arrow:active { transform: scale(0.92); }
+  .nav .cur { min-width: 150px; text-align: center; padding: 0 6px; cursor: pointer; }
+  .nav .cur .r { font-family: var(--font-game); font-weight: 800; font-size: 0.95rem; }
+  .nav .cur .r b { color: var(--text-secondary); font-weight: 500; font-family: var(--font-display); font-size: 0.82rem; }
+  .nav .cur .meta { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-top: 1px; }
+  .nav .idx { width: 38px; height: 38px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); color: var(--text-primary); font-size: 1rem; cursor: pointer; display: grid; place-items: center; transition: background var(--dur-fast); }
+  .nav .idx:hover { background: rgba(255,255,255,0.1); }
+
+  /* ── Index overlay ──────────────────────────────────────── */
+  .index { position: fixed; inset: 0; z-index: 50; background: rgba(6,6,16,0.78); backdrop-filter: blur(8px); display: none; overflow-y: auto; padding: clamp(24px,5vw,64px) clamp(16px,5vw,64px) 64px; }
+  .index.open { display: block; }
+  .index-inner { max-width: 1000px; margin: 0 auto; }
+  .index-head { display: flex; align-items: baseline; gap: 14px; margin-bottom: 8px; }
+  .index-head h2 { font-family: var(--font-game); font-weight: 900; font-size: 1.9rem; }
+  .index-head .sub { font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-right: auto; }
+  .index-head .x { width: 40px; height: 40px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.05); color: var(--text-primary); font-size: 1.1rem; cursor: pointer; }
+  .tier-sec { margin-top: 30px; }
+  .tier-sec .th { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+  .tier-sec .th .n { font-family: var(--font-game); font-weight: 800; font-size: 1.05rem; }
+  .tier-sec .th .s { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+  .tier-sec .th .line { flex: 1; height: 1px; background: rgba(255,255,255,0.08); }
+  .igrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .ichip { text-align: left; cursor: pointer; padding: 11px 13px; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.025); transition: transform var(--dur-fast), border-color var(--dur-fast), background var(--dur-fast); }
+  .ichip:hover { transform: translateY(-3px); border-color: rgba(var(--ic),0.5); background: rgba(var(--ic),0.08); }
+  .ichip .ir { font-family: var(--font-game); font-weight: 700; font-size: 1rem; color: rgb(var(--ic)); }
+  .ichip .im { font-family: var(--font-display); font-size: 0.78rem; color: var(--text-secondary); }
+
+  @media (max-width: 820px) {
+    .hero { grid-template-columns: 1fr; }
+    .scene { min-height: 250px; border-left: none; border-top: 1px solid rgba(255,255,255,0.05); order: 2; }
+    .words { grid-template-columns: 1fr; }
+    .word:hover { transform: none; }
+    .nav .cur { min-width: 110px; }
+  }
+
+  /* ── Quiz · Root Rush ───────────────────────────────────── */
+  #quizStage { width: 100%; max-width: 660px; --qc: 52,224,166; --qgrad: linear-gradient(135deg,#34e0a6,#22c3e6,#5b8def); }
+  .quiz { position: fixed; inset: 0; z-index: 60; display: none; place-items: center; overflow-y: auto;
+    padding: clamp(16px,4vw,52px);
+    background: radial-gradient(ellipse 75% 55% at 50% 0%, rgba(var(--qc),0.14), transparent 62%), rgba(6,6,16,0.93);
+    backdrop-filter: blur(10px); }
+  .quiz.open { display: grid; }
+  .quiz-x { position: fixed; top: 18px; right: 18px; width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.05); color: var(--text-primary); font-size: 1.05rem; cursor: pointer; z-index: 2; transition: background var(--dur-fast); }
+  .quiz-x:hover { background: rgba(255,255,255,0.12); }
+
+  .q-card { background: linear-gradient(180deg, rgba(var(--qc),0.06), transparent 32%), var(--bg-card);
+    border: 1px solid rgba(var(--qc),0.20); border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card), 0 0 70px rgba(var(--qc),0.12), inset 0 1px 0 rgba(255,255,255,0.04);
+    padding: clamp(24px,4vw,42px); }
+
+  .q-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; color: rgb(var(--qc)); }
+  .q-eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: rgb(var(--qc)); box-shadow: 0 0 10px rgb(var(--qc)); animation: pulse 2s ease-in-out infinite; }
+  .g, .q-big, .q-grade { background: var(--qgrad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+
+  /* start */
+  .q-title { font-family: var(--font-game); font-weight: 900; font-size: clamp(2rem,5.5vw,3.1rem); line-height: 1; letter-spacing: -0.02em; margin: 14px 0 14px; }
+  .q-sub { font-size: 1rem; line-height: 1.6; color: var(--text-secondary); max-width: 46ch; }
+  .q-sub b { color: var(--text-primary); }
+  .q-lvl-label { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-muted); margin: 26px 0 12px; }
+  .q-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .q-chip { font-family: var(--font-body); font-size: 0.86rem; font-weight: 600; color: var(--text-secondary); padding: 9px 16px; border-radius: var(--radius-pill); border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); cursor: pointer; transition: all var(--dur-fast) var(--ease-snap); }
+  .q-chip:hover { border-color: rgba(var(--qc),0.5); color: var(--text-primary); }
+  .q-chip.on { color: #0a0a1a; background: var(--qgrad); border-color: transparent; box-shadow: 0 0 22px rgba(var(--qc),0.4); }
+  .q-go { margin-top: 28px; font-family: var(--font-game); font-weight: 700; font-size: 1.02rem; color: #07120c; padding: 15px 30px; border: none; border-radius: var(--radius-md); background: var(--qgrad); cursor: pointer; box-shadow: 0 0 30px rgba(var(--qc),0.4), inset 0 1px 0 rgba(255,255,255,0.25); transition: transform var(--dur-fast) var(--ease-snap), opacity var(--dur-fast); }
+  .q-go:hover { transform: translateY(-2px); opacity: 0.94; }
+  .q-go:active { transform: scale(0.98); }
+  .q-best { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--text-muted); margin-top: 18px; }
+  .q-best b { color: var(--accent-gold); }
+
+  /* play */
+  .q-hud { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; }
+  .q-count { color: var(--text-muted); }
+  .q-combo { color: var(--text-muted); transition: color var(--dur-fast); }
+  .q-combo.live { color: var(--accent-amber); text-shadow: 0 0 16px rgba(245,158,11,0.5); }
+  .q-score { font-family: var(--font-game); font-weight: 800; font-size: 1rem; color: var(--text-primary); letter-spacing: 0; }
+  .q-prog { height: 4px; border-radius: 4px; background: rgba(255,255,255,0.08); margin: 14px 0 4px; overflow: hidden; }
+  .q-prog span { display: block; height: 100%; background: var(--qgrad); transition: width var(--dur-med) var(--ease-snap); }
+  .q-ask { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-top: 22px; }
+  .q-prompt { text-align: center; padding: 18px 0 26px; }
+  .q-big { font-family: var(--font-game); font-weight: 900; font-size: clamp(2.6rem,8vw,4.4rem); line-height: 1; letter-spacing: -0.02em; filter: drop-shadow(0 0 26px rgba(var(--qc),0.35)); }
+  .q-say { font-family: var(--font-mono); font-size: 0.84rem; color: var(--text-secondary); margin-top: 12px; }
+  .q-psub { font-family: var(--font-display); font-size: 0.98rem; color: var(--text-secondary); margin-top: 8px; }
+  .q-options { display: grid; gap: 9px; }
+  .q-opt { display: flex; align-items: center; gap: 14px; text-align: left; padding: 15px 16px; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.025); color: var(--text-primary); cursor: pointer; transition: transform var(--dur-fast) var(--ease-snap), border-color var(--dur-fast), background var(--dur-fast); }
+  .q-opt:hover { transform: translateY(-2px); border-color: rgba(var(--qc),0.5); background: rgba(var(--qc),0.07); }
+  .q-opt .q-key { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 7px; border: 1px solid rgba(255,255,255,0.14); font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-muted); }
+  .q-opt .q-lbl { font-family: var(--font-game); font-weight: 600; font-size: 1.08rem; }
+  .q-opt.done { cursor: default; }
+  .q-opt.done:hover { transform: none; }
+  .q-opt.correct { border-color: rgba(34,197,94,0.6); background: rgba(34,197,94,0.14); box-shadow: 0 0 26px rgba(34,197,94,0.22); }
+  .q-opt.correct .q-key { border-color: rgba(34,197,94,0.6); color: var(--accent-green); }
+  .q-opt.wrong { border-color: rgba(239,68,68,0.6); background: rgba(239,68,68,0.12); }
+  .q-opt.wrong .q-key { border-color: rgba(239,68,68,0.6); color: var(--accent-red); }
+  .q-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 30px; margin-top: 18px; }
+  .q-fb { font-family: var(--font-game); font-weight: 700; font-size: 1rem; }
+  .q-fb.good { color: var(--accent-green); }
+  .q-fb.bad { color: var(--accent-red); }
+  .q-fb b { color: var(--text-primary); }
+  .q-next { margin-left: auto; font-family: var(--font-game); font-weight: 700; font-size: 0.92rem; color: var(--text-primary); padding: 11px 22px; border-radius: var(--radius-md); border: 1px solid rgba(var(--qc),0.4); background: rgba(var(--qc),0.12); cursor: pointer; transition: background var(--dur-fast), transform var(--dur-fast) var(--ease-snap); }
+  .q-next:hover { background: rgba(var(--qc),0.2); transform: translateY(-2px); }
+  .q-next:active { transform: scale(0.98); }
+
+  /* result */
+  .q-result { text-align: center; }
+  .q-result .q-eyebrow { justify-content: center; }
+  .q-grade { font-family: var(--font-game); font-weight: 900; font-size: clamp(5rem,16vw,8rem); line-height: 0.92; margin: 8px 0 2px; filter: drop-shadow(0 0 34px rgba(var(--qc),0.4)); }
+  .q-stars { font-size: 1.5rem; letter-spacing: 0.16em; color: var(--accent-gold); text-shadow: 0 0 18px rgba(255,215,0,0.45); }
+  .q-result-score { font-family: var(--font-game); font-weight: 800; font-size: 1.6rem; margin-top: 18px; color: var(--text-primary); }
+  .q-newbest { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.16em; vertical-align: middle; color: #07120c; background: var(--gradient-gold); padding: 4px 9px; border-radius: var(--radius-pill); margin-left: 8px; }
+  .q-stats { display: flex; justify-content: center; gap: clamp(18px,5vw,46px); margin: 26px 0 6px; }
+  .q-stats div { display: flex; flex-direction: column; gap: 3px; }
+  .q-stats b { font-family: var(--font-game); font-weight: 800; font-size: 1.5rem; color: rgb(var(--qc)); }
+  .q-stats span { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+  .q-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 26px; }
+  .q-actions .q-go { margin-top: 0; }
+  .q-ghost { font-family: var(--font-body); font-weight: 600; font-size: 0.92rem; color: var(--text-secondary); padding: 15px 24px; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.03); cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast); }
+  .q-ghost:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+  @media (max-width: 560px) {
+    .q-stats { gap: 18px; }
+    .q-big { font-size: clamp(2.2rem,12vw,3rem); }
+  }
+</style>
+</head>
+<body>
+  <div class="deck" id="deck"></div>
+
+  <nav class="nav">
+    <button class="arrow" id="prev" aria-label="Previous">‹</button>
+    <div class="cur" id="cur" title="Open index"></div>
+    <button class="arrow" id="next" aria-label="Next">›</button>
+    <button class="idx" id="quizBtn" aria-label="Play quiz">🎯</button>
+    <button class="idx" id="idxBtn" aria-label="Index">☰</button>
+  </nav>
+
+  <div class="index" id="index">
+    <div class="index-inner">
+      <div class="index-head">
+        <h2>All Roots</h2>
+        <span class="sub" id="idxSub"></span>
+        <button class="x" id="idxClose" aria-label="Close">✕</button>
+      </div>
+      <div id="idxBody"></div>
+    </div>
+  </div>
+
+  <div class="quiz" id="quiz">
+    <button class="quiz-x" id="quizX" aria-label="Close quiz">✕</button>
+    <div id="quizStage"></div>
+  </div>
+
+  <script src="roots-data.js"></script>
+  <script src="roots-scenes.js"></script>
+  <script src="roots-quiz.js"></script>
+  <script>
+  (function () {
+    "use strict";
+    const ROOTS = window.ROOTS, PALETTES = window.PALETTES, TIERS = window.TIERS, SCENES = window.SCENES;
+    const SCENE_EMOJI = { dna:'🧬', globe:'🌍', light:'☀️', waves:'📡', draw:'✍️', water:'💧', heat:'🔥', stars:'✨', clock:'⏳', sound:'🔊', eye:'👁️', motion:'➡️', gear:'⚙️', speak:'💬', breakx:'💥', scale:'🔎', people:'👥', mind:'🧠', heart:'💗' };
+
+    function hl(word, letters) {
+      if (!letters) return word;
+      const i = word.toLowerCase().indexOf(letters.toLowerCase());
+      if (i < 0) return word;
+      return word.slice(0, i) + '<span class="hl">' + word.slice(i, i + letters.length) + '</span>' + word.slice(i + letters.length);
+    }
+
+    const deck = document.getElementById('deck');
+    const cards = [];
+
+    ROOTS.forEach((d, i) => {
+      const P = PALETTES[d.pal] || PALETTES.green;
+      const lang = d.org.split(' ')[0];
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.style.cssText = `--c1:${P.c1};--c1rgb:${P.c1rgb};--c2:${P.c2};--grad:${P.grad}`;
+      card.innerHTML = `
+        <div class="strip">
+          <span class="badge">${SCENE_EMOJI[d.scene] || '🔤'}</span>
+          <span class="title">Word Roots</span>
+          <span class="tier">Tier ${d.t} · ${TIERS[d.t-1].n}</span>
+          <span class="count">Card ${String(i+1).padStart(2,'0')} / ${ROOTS.length}</span>
+        </div>
+        <div class="hero">
+          <div class="hero-text">
+            <span class="eyebrow"><span class="dot"></span> ${lang} Root</span>
+            <div class="root">${d.root}</div>
+            <div class="pron">${d.say} &nbsp;·&nbsp; <span class="origin">from ${d.org}</span></div>
+            <div class="means"><span class="arrow">→</span><span class="word">${d.mean}</span><span class="alt">${d.alt}</span></div>
+            <p class="lead">${d.lead}</p>
+          </div>
+          <div class="scene"><canvas></canvas><span class="caption">${SCENE_EMOJI[d.scene]} ${d.mean} — ${d.alt}</span></div>
+        </div>
+        <div class="words">
+          ${d.words.map(w => `
+            <div class="word">
+              <span class="ico">${w.i}</span>
+              <h3>${hl(w.w, w.hl)}</h3>
+              <div class="build">${w.b}</div>
+              <p>${w.d}</p>
+            </div>`).join('')}
+        </div>`;
+      deck.appendChild(card);
+      cards.push({ el: card, canvas: card.querySelector('canvas'), ctx: card.querySelector('canvas').getContext('2d'), scene: d.scene, pal: P.pal, data: d });
+    });
+
+    // ── Build index overlay ────────────────────────────────
+    const idxBody = document.getElementById('idxBody');
+    document.getElementById('idxSub').textContent = `${ROOTS.length} roots · ${TIERS.length} tiers`;
+    TIERS.forEach((tier, ti) => {
+      const sec = document.createElement('div');
+      sec.className = 'tier-sec';
+      sec.innerHTML = `<div class="th"><span class="n">Tier ${ti+1} — ${tier.n}</span><span class="s">${tier.sub}</span><span class="line"></span></div><div class="igrid"></div>`;
+      const grid = sec.querySelector('.igrid');
+      ROOTS.forEach((d, i) => {
+        if (d.t !== ti + 1) return;
+        const P = PALETTES[d.pal] || PALETTES.green;
+        const chip = document.createElement('button');
+        chip.className = 'ichip';
+        chip.style.setProperty('--ic', P.c1rgb);
+        chip.innerHTML = `<div class="ir">${d.root}</div><div class="im">${d.mean}</div>`;
+        chip.addEventListener('click', () => { show(i); closeIndex(); });
+        grid.appendChild(chip);
+      });
+      idxBody.appendChild(sec);
+    });
+
+    const index = document.getElementById('index');
+    function openIndex() { index.classList.add('open'); }
+    function closeIndex() { index.classList.remove('open'); }
+    document.getElementById('idxBtn').addEventListener('click', openIndex);
+    document.getElementById('cur').addEventListener('click', openIndex);
+    document.getElementById('idxClose').addEventListener('click', closeIndex);
+    index.addEventListener('click', (e) => { if (e.target === index) closeIndex(); });
+
+    // ── Navigation ─────────────────────────────────────────
+    const cur = document.getElementById('cur');
+    let active = 0;
+    function show(i) {
+      active = (i + ROOTS.length) % ROOTS.length;
+      cards.forEach((c, idx) => c.el.style.display = idx === active ? '' : 'none');
+      const d = cards[active].data;
+      cur.innerHTML = `<div class="r">${d.root} <b>· ${d.mean}</b></div><div class="meta">${TIERS[d.t-1].n} · ${active+1} / ${ROOTS.length}</div>`;
+      requestAnimationFrame(sizeActive);
+    }
+    document.getElementById('prev').addEventListener('click', () => show(active - 1));
+    document.getElementById('next').addEventListener('click', () => show(active + 1));
+    window.addEventListener('keydown', (e) => {
+      if (document.getElementById('quiz').classList.contains('open')) return;
+      if (e.key === 'Escape') closeIndex();
+      else if (e.key === 'ArrowLeft') show(active - 1);
+      else if (e.key === 'ArrowRight') show(active + 1);
+    });
+    document.getElementById('quizBtn').addEventListener('click', () => window.RootRush && window.RootRush.open());
+    document.getElementById('quizX').addEventListener('click', () => window.RootRush && window.RootRush.close());
+
+    // ── Canvas engine ──────────────────────────────────────
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let DPR = Math.min(window.devicePixelRatio || 1, 2);
+    function sizeActive() {
+      const c = cards[active];
+      const r = c.canvas.parentElement.getBoundingClientRect();
+      DPR = Math.min(window.devicePixelRatio || 1, 2);
+      c.canvas.width = Math.max(1, r.width * DPR);
+      c.canvas.height = Math.max(1, r.height * DPR);
+      c.ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      c._w = r.width; c._h = r.height;
+    }
+    window.addEventListener('resize', () => requestAnimationFrame(sizeActive));
+
+    let t = 0, last = performance.now();
+    function frame(now) {
+      let dt = (now - last) / 1000; last = now; if (dt > 0.05) dt = 0.05;
+      if (!reduce) t += dt;
+      const c = cards[active];
+      if (c._w && SCENES[c.scene]) { c.ctx.clearRect(0, 0, c._w, c._h); SCENES[c.scene](c.ctx, c._w, c._h, t, c.pal); }
+      requestAnimationFrame(frame);
+    }
+
+    show(0);
+    requestAnimationFrame(() => { sizeActive(); requestAnimationFrame(frame); });
+  })();
+  </script>
+</body>
+</html>

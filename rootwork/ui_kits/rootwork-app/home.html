@@ -1,0 +1,367 @@
+<!-- @dsCard group="Rootwork App" viewport="1180x820" subtitle="Home & profile — selectable master-detail menu" -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rootwork — Home</title>
+<link rel="stylesheet" href="../../styles.css">
+<style>
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    min-height: 100%;
+    background:
+      radial-gradient(ellipse 60% 50% at 10% 4%, rgba(52,224,166,0.10), transparent 60%),
+      radial-gradient(ellipse 55% 50% at 94% 96%, rgba(52,217,240,0.09), transparent 60%),
+      var(--bg-primary);
+  }
+
+  .shell { max-width: 1120px; margin: 0 auto; padding: clamp(20px,3vw,38px) clamp(16px,5vw,40px) 60px; }
+
+  /* ── Top bar ─────────────────────────────────────────────── */
+  .top { display: flex; align-items: center; gap: 14px; margin-bottom: clamp(22px,3vw,34px); }
+  .brand { display: flex; align-items: center; gap: 11px; }
+  .brand .tile { width: 38px; height: 38px; border-radius: var(--radius-md); background: var(--gradient-hero); display: grid; place-items: center; font-size: 1.2rem; box-shadow: 0 0 22px rgba(52,217,240,0.4); }
+  .brand .mark { font-family: var(--font-game); font-weight: 800; font-size: 1.32rem; letter-spacing: 0.01em; }
+  .brand .mark b { background: var(--gradient-hero); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .top .spacer { flex: 1; }
+  .iconbtn { width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.035); color: var(--text-primary); font-size: 1.1rem; cursor: pointer; transition: all var(--dur-fast) var(--ease-snap); display: grid; place-items: center; }
+  .iconbtn:hover { background: rgba(255,255,255,0.09); border-color: rgba(52,217,240,0.45); }
+
+  /* ── Profile band ───────────────────────────────────────── */
+  .profile {
+    display: flex; align-items: center; gap: clamp(16px,2.4vw,26px);
+    padding: clamp(20px,2.6vw,30px);
+    border-radius: var(--radius-xl);
+    background:
+      linear-gradient(115deg, rgba(52,224,166,0.10), rgba(52,217,240,0.04) 40%, transparent 70%),
+      var(--bg-card);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: var(--shadow-card);
+    margin-bottom: clamp(20px,2.6vw,30px);
+    position: relative; overflow: hidden;
+  }
+  .profile::after { content:''; position:absolute; inset:0; background: radial-gradient(circle at 84% -10%, rgba(52,224,166,0.14), transparent 46%); pointer-events:none; }
+  .avatar {
+    position: relative; flex: none;
+    width: clamp(72px,9vw,92px); height: clamp(72px,9vw,92px);
+    border-radius: 22px;
+    background: var(--gradient-hero);
+    display: grid; place-items: center;
+    font-size: clamp(2rem,4vw,2.7rem);
+    box-shadow: 0 0 38px rgba(52,224,166,0.45), inset 0 1px 0 rgba(255,255,255,0.25);
+  }
+  .avatar .lvl { position: absolute; bottom: -8px; right: -8px; background: var(--bg-elevated); border: 2px solid var(--bg-card); border-radius: var(--radius-pill); font-family: var(--font-game); font-weight: 800; font-size: 0.74rem; letter-spacing: 0.02em; padding: 3px 9px; color: var(--gold); box-shadow: var(--shadow-glow-gold); }
+  .pinfo { min-width: 0; }
+  .pinfo .hello { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+  .pinfo h1 { font-family: var(--font-game); font-weight: 900; font-size: clamp(1.7rem,3.4vw,2.5rem); line-height: 1; letter-spacing: -0.01em; }
+  .pinfo .rank { font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--jewel-cobalt); margin-top: 9px; }
+  .pinfo .rank b { color: var(--text-secondary); font-weight: 400; }
+
+  .stats { margin-left: auto; display: grid; grid-template-columns: repeat(4, auto); gap: clamp(12px,2vw,26px); position: relative; }
+  .stat { text-align: center; }
+  .stat .v { font-family: var(--font-game); font-weight: 800; font-size: clamp(1.3rem,2.4vw,1.8rem); line-height: 1; display: flex; align-items: center; gap: 5px; justify-content: center; }
+  .stat .l { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-top: 7px; }
+  .stat.streak .v { color: var(--accent-coral, #ff8a6b); }
+  .stat.stars .v { color: var(--gold); }
+  .stat.acc .v { color: var(--success); }
+  .stat.roots .v { color: var(--jewel-cyan); }
+
+  /* ── Main grid: list + detail ───────────────────────────── */
+  .grid { display: grid; grid-template-columns: minmax(0,420px) 1fr; gap: clamp(16px,2.2vw,24px); align-items: start; }
+
+  .panel-label { display: flex; align-items: baseline; gap: 10px; margin: 0 0 12px 2px; }
+  .panel-label .n { font-family: var(--font-game); font-weight: 800; font-size: 1.04rem; }
+  .panel-label .s { font-family: var(--font-mono); font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); }
+
+  /* selectable list */
+  .menu { display: flex; flex-direction: column; gap: 9px; }
+  .row {
+    --rc: 52,224,166;
+    display: flex; align-items: center; gap: 14px;
+    width: 100%; text-align: left; cursor: pointer;
+    padding: 13px 14px; border-radius: var(--radius-lg);
+    border: 1px solid rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.02);
+    color: var(--text-primary); font: inherit;
+    transition: transform var(--dur-fast) var(--ease-snap), border-color var(--dur-fast), background var(--dur-fast), box-shadow var(--dur-fast);
+  }
+  .row:hover { transform: translateX(3px); border-color: rgba(var(--rc),0.4); background: rgba(var(--rc),0.06); }
+  .row:focus-visible { outline: none; box-shadow: var(--ring-focus); }
+  .row.sel {
+    border-color: rgba(var(--rc),0.55);
+    background: linear-gradient(100deg, rgba(var(--rc),0.16), rgba(var(--rc),0.04));
+    box-shadow: 0 0 30px rgba(var(--rc),0.16), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .row .chip { flex: none; width: 46px; height: 46px; border-radius: var(--radius-md); display: grid; place-items: center; font-size: 1.4rem; background: var(--rg); box-shadow: 0 0 20px rgba(var(--rc),0.34), inset 0 1px 0 rgba(255,255,255,0.25); }
+  .row .lock { background: rgba(255,255,255,0.05) !important; box-shadow: none !important; filter: grayscale(0.4) brightness(0.8); }
+  .row .body { min-width: 0; flex: 1; }
+  .row .body .t { font-family: var(--font-game); font-weight: 700; font-size: 1.02rem; letter-spacing: 0.01em; display: flex; align-items: center; gap: 8px; }
+  .row .body .sub { font-family: var(--font-body); font-size: 0.8rem; color: var(--text-muted); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row .meta { flex: none; text-align: right; }
+  .row .meta .pct { font-family: var(--font-game); font-weight: 800; font-size: 0.96rem; color: rgb(var(--rc)); }
+  .row .meta .stars { font-size: 0.62rem; letter-spacing: 0.04em; color: var(--gold); margin-top: 3px; }
+  .row .meta .locklbl { font-family: var(--font-mono); font-size: 0.56rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+  .row .bar { position: absolute; }
+  .rowbar { height: 3px; border-radius: 99px; background: rgba(255,255,255,0.08); margin: 11px 0 1px; overflow: hidden; }
+  .rowbar > i { display: block; height: 100%; border-radius: 99px; background: var(--rg); }
+  .tag-new { font-family: var(--font-mono); font-size: 0.5rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-on-bright); background: var(--rg); padding: 2px 6px; border-radius: 99px; }
+
+  /* detail panel */
+  .detail {
+    --dc: 52,224,166;
+    position: relative; overflow: hidden;
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(var(--dc),0.22);
+    background: linear-gradient(180deg, rgba(var(--dc),0.07), transparent 28%), var(--bg-card);
+    box-shadow: var(--shadow-card), 0 0 80px rgba(var(--dc),0.10);
+    padding: clamp(24px,3vw,38px);
+    min-height: 440px;
+  }
+  .detail::before { content:''; position:absolute; top:0; right:0; width:60%; height:60%; background: radial-gradient(circle at 80% 0%, rgba(var(--dc),0.16), transparent 60%); pointer-events:none; }
+  .detail .eyebrow { color: rgb(var(--dc)); margin-bottom: 16px; }
+  .detail .eyebrow .dot { background: rgb(var(--dc)); box-shadow: 0 0 10px rgb(var(--dc)); }
+  .detail .big { font-family: var(--font-game); font-weight: 900; font-size: clamp(2.6rem,5vw,4.1rem); line-height: 0.92; letter-spacing: -0.02em; background: var(--dg); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 30px rgba(var(--dc),0.3)); }
+  .detail .lead { max-width: 52ch; margin: 16px 0 0; font-size: 1.02rem; }
+  .detail .lead b { color: var(--text-primary); }
+
+  .prog { display: flex; align-items: center; gap: 16px; margin: 26px 0 22px; }
+  .prog .ring { --p: 0; flex: none; width: 76px; height: 76px; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(rgb(var(--dc)) calc(var(--p)*1%), rgba(255,255,255,0.08) 0); }
+  .prog .ring i { width: 60px; height: 60px; border-radius: 50%; background: var(--bg-card); display: grid; place-items: center; font-family: var(--font-game); font-weight: 800; font-size: 1.15rem; color: rgb(var(--dc)); font-style: normal; }
+  .prog .pmeta .pm-a { font-family: var(--font-game); font-weight: 700; font-size: 1.05rem; }
+  .prog .pmeta .pm-b { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-top: 5px; }
+  .prog .pmeta .pm-b .gold { color: var(--gold); }
+
+  .samples { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+  .samples .schip { display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px; border-radius: var(--radius-pill); border: 1px solid rgba(var(--dc),0.28); background: rgba(var(--dc),0.06); font-family: var(--font-game); font-weight: 600; font-size: 0.86rem; }
+  .samples .schip span { font-family: var(--font-mono); font-size: 0.66rem; color: var(--text-muted); }
+  .samples .more { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); align-self: center; padding-left: 4px; }
+
+  .detail .cta { display: flex; gap: 12px; flex-wrap: wrap; }
+  .detail .btn-spark { --spark-rgb: var(--dc); background: var(--dg); color: var(--text-on-bright); box-shadow: 0 0 30px rgba(var(--dc),0.4), var(--shadow-inset-hi); }
+
+  .locked-state { display: flex; flex-direction: column; align-items: flex-start; gap: 14px; }
+  .locked-state .lk { font-size: 2.4rem; }
+  .locked-state p { max-width: 46ch; }
+
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: repeat(4, auto); margin-left: 0; width: 100%; justify-content: space-between; }
+    .profile { flex-wrap: wrap; }
+    .detail { min-height: 0; }
+  }
+  @media (max-width: 540px) {
+    .stats { gap: 10px; }
+    .stat .v { font-size: 1.2rem; }
+    .pinfo { flex: 1 1 60%; }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .detail-anim { animation: rw-rise 0.4s var(--ease-snap); }
+  }
+</style>
+</head>
+<body>
+  <div class="shell">
+    <!-- top bar -->
+    <div class="top">
+      <div class="brand">
+        <div class="tile">🌱</div>
+        <div class="mark">Root<b>work</b></div>
+      </div>
+      <div class="spacer"></div>
+      <button class="iconbtn" title="How to play">📖</button>
+      <button class="iconbtn" title="Settings">⚙️</button>
+    </div>
+
+    <!-- profile band -->
+    <section class="profile">
+      <div class="avatar">🦊<span class="lvl">LV 12</span></div>
+      <div class="pinfo">
+        <div class="hello">Welcome back</div>
+        <h1>Maya</h1>
+        <div class="rank">Scholar · Tier 3 &nbsp;<b>·&nbsp; 1,240 XP to Master</b></div>
+      </div>
+      <div class="stats">
+        <div class="stat streak"><div class="v">🔥 7</div><div class="l">Day Streak</div></div>
+        <div class="stat stars"><div class="v">★ 86</div><div class="l">Stars</div></div>
+        <div class="stat acc"><div class="v">94%</div><div class="l">Accuracy</div></div>
+        <div class="stat roots"><div class="v">63</div><div class="l">Roots Owned</div></div>
+      </div>
+    </section>
+
+    <!-- main: selectable list + detail -->
+    <div class="grid">
+      <div>
+        <div class="panel-label"><span class="n">Jump back in</span><span class="s">↑ ↓ to browse · Enter to start</span></div>
+        <div class="menu" id="menu" role="listbox" aria-label="Choose what to play"></div>
+      </div>
+      <div>
+        <div class="panel-label"><span class="n">Preview</span><span class="s" id="dHint">Selected</span></div>
+        <div class="detail" id="detail"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    "use strict";
+
+    // jewel helpers
+    const J = {
+      jade:   { rgb:'52,224,166',  grad:'linear-gradient(135deg,#7df3c4,#1fc28e,#0e8a9b)' },
+      cyan:   { rgb:'52,217,240',  grad:'linear-gradient(135deg,#9bedfb,#22c3e6,#2f7bed)' },
+      cobalt: { rgb:'106,160,255', grad:'linear-gradient(135deg,#aac8ff,#5b8def,#6d4bf5)' },
+      violet: { rgb:'177,140,255', grad:'linear-gradient(135deg,#d4c2ff,#9a6df5,#6d28d9)' },
+      magenta:{ rgb:'245,122,208', grad:'linear-gradient(135deg,#ffb3e6,#ec4faf,#a21caf)' },
+      coral:  { rgb:'255,138,107', grad:'linear-gradient(135deg,#ffc0a8,#ff7a5c,#e0365b)' },
+      gold:   { rgb:'255,206,77',  grad:'linear-gradient(135deg,#ffe7a0,#ffc24d,#f5821f)' }
+    };
+
+    // menu items: modes + 5 tiers
+    const ITEMS = [
+      { kind:'mode', icon:'🎯', jewel:'coral', title:'Root Rush', sub:'Timed combo run · beat your best',
+        eyebrow:'Quiz Mode', big:'Root Rush', best:'A · 4★',
+        lead:'Match the root to its meaning before the combo drops. Chain <b>8× combo</b>, climb the grade, and bank stars toward your next rank.',
+        ring:72, ringLabel:'A', pmA:'Best: Grade A · 4 stars', pmB:'92% accuracy · 18-run streak',
+        samples:[['bio','life'],['chron','time'],['scrib','write']], moreN:'all tiers',
+        cta:'Start the run', cta2:'Pick a tier' },
+      { kind:'mode', icon:'📅', jewel:'gold', title:'Daily Challenge', sub:'New roots every day · keep the streak', badge:'NEW',
+        eyebrow:'Today · Day 7', big:'Daily', best:'3 left',
+        lead:"Five fresh roots, one shot each. Clear all five to keep your <b>7-day streak</b> alive and earn today's bonus stars.",
+        ring:40, ringLabel:'2/5', pmA:'2 of 5 cleared', pmB:'<span class="gold">+15 ★</span> bonus on a clean run',
+        samples:[['lumin','light'],['ject','throw'],['port','carry']], moreN:'2 more',
+        cta:'Play today', cta2:'Streak history' },
+      { kind:'tier', icon:'🌱', jewel:'jade',   title:'Tier 1 · Starter', sub:'Everyday roots', pct:100, total:19, done:19, stars:5,
+        eyebrow:'Tier 1 · Starter', big:'Starter', lead:'The everyday building blocks — <b>bio</b>, <b>geo</b>, <b>photo</b>. You own this tier. Replay any card to keep it sharp.',
+        ring:100, ringLabel:'✓', pmA:'19 of 19 roots owned', pmB:'<span class="gold">★★★★★</span> · tier mastered',
+        samples:[['Bio','life'],['Geo','earth'],['Photo','light'],['Aqua','water']], moreN:'15 more',
+        cta:'Replay tier', cta2:'See all roots' },
+      { kind:'tier', icon:'🔨', jewel:'cyan',   title:'Tier 2 · Builder', sub:'Level up your vocabulary', pct:78, total:23, done:18, stars:4,
+        eyebrow:'Tier 2 · Builder', big:'Builder', lead:'Roots that show up everywhere once you spot them — <b>port</b>, <b>dict</b>, <b>spect</b>. Five to go before you clear it.',
+        ring:78, ringLabel:'78%', pmA:'18 of 23 roots owned', pmB:'<span class="gold">★★★★</span>☆ · 5 roots left',
+        samples:[['Port','carry'],['Dict','say'],['Spect','look'],['Form','shape']], moreN:'19 more',
+        cta:'Continue tier', cta2:'See all roots' },
+      { kind:'tier', icon:'📚', jewel:'cobalt', title:'Tier 3 · Scholar', sub:'Honors & AP roots', pct:41, total:27, done:11, stars:2, current:true,
+        eyebrow:'Tier 3 · Scholar', big:'Scholar', lead:"Where you are right now. Academic roots like <b>chron</b>, <b>scrib</b>, <b>ben</b> — the ones that crack open big words.",
+        ring:41, ringLabel:'41%', pmA:'11 of 27 roots owned', pmB:'<span class="gold">★★</span>☆☆☆ · current tier',
+        samples:[['Chron','time'],['Scrib','write'],['Ben','good'],['Vis','see']], moreN:'23 more',
+        cta:'Continue tier', cta2:'See all roots' },
+      { kind:'tier', icon:'🎓', jewel:'violet', title:'Tier 4 · Master', sub:'SAT & GRE territory', locked:true, need:'Clear Tier 3 to unlock',
+        eyebrow:'Tier 4 · Master', big:'Master', lead:'College-level roots that turn unfamiliar words into easy guesses. Locked until you finish Scholar.',
+        samples:[['Loqu','speak'],['Magn','great'],['Pugn','fight']], moreN:'26 more',
+        cta:'Locked', cta2:'Preview roots' },
+      { kind:'tier', icon:'🤖', jewel:'magenta', title:'Tier 5 · AI Level', sub:'Roots in the wild', locked:true, need:'Clear Tier 4 to unlock',
+        eyebrow:'Tier 5 · AI Level', big:'AI Level', lead:'PhD-energy roots you meet in research, law, and medicine. The final climb.',
+        samples:[['Soph','wise'],['Phil','love'],['Theo','god']], moreN:'29 more',
+        cta:'Locked', cta2:'Preview roots' }
+    ];
+
+    const menu = document.getElementById('menu');
+    const detail = document.getElementById('detail');
+    const dHint = document.getElementById('dHint');
+    let sel = 4; // start on current tier (Scholar)
+
+    // build list rows
+    ITEMS.forEach((it, i) => {
+      const j = J[it.jewel];
+      const row = document.createElement('button');
+      row.className = 'row';
+      row.setAttribute('role', 'option');
+      row.style.setProperty('--rc', j.rgb);
+      row.style.setProperty('--rg', j.grad);
+
+      let meta;
+      if (it.locked) {
+        meta = `<div class="meta"><div class="locklbl">🔒 Locked</div></div>`;
+      } else if (it.kind === 'mode') {
+        meta = `<div class="meta"><div class="pct">${it.best}</div><div class="stars">best</div></div>`;
+      } else {
+        meta = `<div class="meta"><div class="pct">${it.pct}%</div><div class="stars">${'★'.repeat(it.stars)}${'☆'.repeat(5-it.stars)}</div></div>`;
+      }
+
+      const bar = (it.kind === 'tier' && !it.locked)
+        ? `<div class="rowbar"><i style="width:${it.pct}%"></i></div>` : '';
+
+      row.innerHTML = `
+        <div class="chip ${it.locked?'lock':''}">${it.icon}</div>
+        <div class="body">
+          <div class="t">${it.title}${it.badge?`<span class="tag-new">${it.badge}</span>`:''}${it.current?'<span class="tag-new">HERE</span>':''}</div>
+          <div class="sub">${it.sub}</div>
+          ${bar}
+        </div>
+        ${meta}`;
+      row.addEventListener('click', () => select(i));
+      menu.appendChild(row);
+    });
+
+    function renderDetail(it) {
+      const j = J[it.jewel];
+      detail.style.setProperty('--dc', j.rgb);
+      detail.style.setProperty('--dg', j.grad);
+      dHint.textContent = it.kind === 'mode' ? 'Game mode' : (it.locked ? 'Locked tier' : 'Your progress');
+
+      const samples = it.samples.map(([w,m]) => `<div class="schip">${w}<span>${m}</span></div>`).join('')
+        + (it.moreN ? `<div class="more">+ ${it.moreN}</div>` : '');
+
+      if (it.locked) {
+        detail.innerHTML = `
+          <div class="detail-anim locked-state">
+            <span class="eyebrow"><span class="dot"></span> ${it.eyebrow}</span>
+            <div class="lk">🔒</div>
+            <div class="big">${it.big}</div>
+            <p class="lead">${it.lead}</p>
+            <div class="samples">${samples}</div>
+            <div class="cta">
+              <button class="btn btn-secondary" disabled style="opacity:.6;cursor:not-allowed">🔒 ${it.need}</button>
+              <button class="btn btn-ghost">${it.cta2}</button>
+            </div>
+          </div>`;
+        return;
+      }
+
+      detail.innerHTML = `
+        <div class="detail-anim">
+          <span class="eyebrow"><span class="dot"></span> ${it.eyebrow}</span>
+          <div class="big">${it.big}</div>
+          <p class="lead">${it.lead}</p>
+          <div class="prog">
+            <div class="ring" style="--p:${it.ring}"><i>${it.ringLabel}</i></div>
+            <div class="pmeta">
+              <div class="pm-a">${it.pmA}</div>
+              <div class="pm-b">${it.pmB}</div>
+            </div>
+          </div>
+          <div class="samples">${samples}</div>
+          <div class="cta">
+            <button class="btn btn-spark">${it.cta} ${it.kind==='mode'?(it.icon):'›'}</button>
+            <button class="btn btn-ghost">${it.cta2}</button>
+          </div>
+        </div>`;
+    }
+
+    function select(i) {
+      sel = (i + ITEMS.length) % ITEMS.length;
+      [...menu.children].forEach((r, idx) => {
+        r.classList.toggle('sel', idx === sel);
+        r.setAttribute('aria-selected', idx === sel ? 'true' : 'false');
+      });
+      renderDetail(ITEMS[sel]);
+    }
+
+    // keyboard nav — echoes the in-game selection feel
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowDown') { e.preventDefault(); select(sel + 1); menu.children[sel].focus(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); select(sel - 1); menu.children[sel].focus(); }
+      else if (e.key === 'Enter') {
+        const btn = detail.querySelector('.btn-spark, .btn-secondary');
+        if (btn) { btn.style.transform = 'scale(0.97)'; setTimeout(() => btn.style.transform = '', 120); }
+      }
+    });
+
+    select(sel);
+  })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!-- @dsCard group="Components" viewport="700x260" name="QuizTile" subtitle="Answer options — idle, correct, wrong, dim" -->
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><link rel="stylesheet" href="../../styles.css">
+<style>
+  body{margin:0;padding:22px;background:var(--bg-secondary);display:grid;grid-template-columns:1fr 1fr;gap:22px;--spark:var(--jewel-jade);--spark-rgb:var(--jewel-jade-rgb)}
+  .col{display:grid;gap:9px}
+  .h{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted);margin-bottom:2px}
+</style></head><body>
+  <div class="col">
+    <div class="h">Idle — selectable</div>
+    <button class="quiz-tile"><span class="qt-key">1</span><span class="qt-label">life</span></button>
+    <button class="quiz-tile"><span class="qt-key">2</span><span class="qt-label">earth</span></button>
+    <button class="quiz-tile"><span class="qt-key">3</span><span class="qt-label">light</span></button>
+  </div>
+  <div class="col">
+    <div class="h">Locked — after a pick</div>
+    <button class="quiz-tile is-locked is-correct"><span class="qt-key">1</span><span class="qt-label">life</span></button>
+    <button class="quiz-tile is-locked is-wrong"><span class="qt-key">2</span><span class="qt-label">earth</span></button>
+    <button class="quiz-tile is-locked is-dim"><span class="qt-key">3</span><span class="qt-label">light</span></button>
+  </div>
+</body></html>
