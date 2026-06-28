@@ -1,6 +1,6 @@
-# The Animated Scene — Rootwork's hero motif
+# The Animated Scene — Wondral Words' hero motif
 
-Every Rootwork card carries a small **live `<canvas>` panel** beside its text that *animates the concept itself*: a DNA helix for **bio** (life), an orbiting globe for **geo** (earth), radiating rays for **photo** (light), ripples for **aqua** (water), a radar sweep for **tele** (far). The scene is the single most distinctive thing about the brand — it turns a flashcard into a tiny aquarium of the idea.
+Every Wondral Words card carries a small **live `<canvas>` panel** beside its text that *animates the concept itself*: a DNA helix for **bio** (life), an orbiting globe for **geo** (earth), radiating rays for **photo** (light), ripples for **aqua** (water), a radar sweep for **tele** (far). The scene is the single most distinctive thing about the brand — it turns a flashcard into a tiny aquarium of the idea.
 
 It is **decorative-but-meaningful**, never chrome. One scene per item, matched to that item's jewel.
 

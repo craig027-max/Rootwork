@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * The signature Rootwork surface — a jewel-lit card. Sets the three
+ * The signature Wondral Words surface — a jewel-lit card. Sets the three
  * theming vars (--spark / --spark-rgb / --grad) from `jewel`, so all
  * descendants (gradient text, badges, glows, hover bloom) pick up the
  * same identity. Maps to `.card` / `.card-interactive` in styles.css.

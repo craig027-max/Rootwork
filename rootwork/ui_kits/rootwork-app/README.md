@@ -1,6 +1,6 @@
-# Rootwork App — UI kit
+# Wondral Words App — UI kit
 
-The canonical Rootwork specimen: the learning app itself, click-through. This is a faithful recreation built on the real app code, re-pigmented to the Rootwork premium jewel palette.
+The canonical Wondral Words specimen: the learning app itself, click-through. This is a faithful recreation built on the real app code, re-pigmented to the Wondral Words premium jewel palette.
 
 ## Open
 `index.html` — link `../../styles.css` is already wired.

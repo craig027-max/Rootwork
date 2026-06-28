@@ -1,4 +1,4 @@
-Canonical Rootwork button — use for every clickable action; `spark` is the hero CTA, one per screen.
+Canonical Wondral Words button — use for every clickable action; `spark` is the hero CTA, one per screen.
 
 ```jsx
 <Button variant="spark" jewel="coral" icon="🎯">Start the run</Button>

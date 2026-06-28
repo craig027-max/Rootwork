@@ -1,12 +1,12 @@
 ---
 name: rootwork-design
-description: Use this skill to generate well-branded interfaces and assets for Rootwork, a learning-game brand (vocabulary roots, extensible to any drillable subject), either for production or throwaway prototypes/mocks/etc. Contains essential design guidelines, colors, type, fonts, the jewel palette system, and UI kit components for prototyping.
+description: Use this skill to generate well-branded interfaces and assets for Wondral Words, a learning-game brand (vocabulary roots, extensible to any drillable subject), either for production or throwaway prototypes/mocks/etc. Contains essential design guidelines, colors, type, fonts, the jewel palette system, and UI kit components for prototyping.
 user-invocable: true
 ---
 
 Read `docs/DESIGN_SYSTEM.md` (the full brand guide) first, and explore the other files.
 
-Rootwork is a dark cosmic-arcade learning game. The signature is the **jewel system**: every learnable item owns one of 8 curated gradient identities for life (set `--spark` / `--spark-rgb` / `--grad` on a card or surface root), plus a small **animated canvas scene** that depicts the concept. Type is Orbitron (display) / Outfit (body) / JetBrains Mono (labels). Canvas is the inky `#08070f`.
+Wondral Words is a dark cosmic-arcade learning game. The signature is the **jewel system**: every learnable item owns one of 8 curated gradient identities for life (set `--spark` / `--spark-rgb` / `--grad` on a card or surface root), plus a small **animated canvas scene** that depicts the concept. Type is Orbitron (display) / Outfit (body) / JetBrains Mono (labels). Canvas is the inky `#08070f`.
 
 Key files:
 - `styles.css` — the one global entry point; link it to inherit every token + the three webfonts.

@@ -1,4 +1,4 @@
-The jewel-lit surface every Rootwork item lives on. Set `jewel` once and all descendants inherit the identity (`--spark` / `--grad`).
+The jewel-lit surface every Wondral Words item lives on. Set `jewel` once and all descendants inherit the identity (`--spark` / `--grad`).
 
 ```jsx
 <Card jewel="violet" interactive>

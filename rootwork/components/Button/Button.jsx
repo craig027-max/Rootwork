@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * Rootwork canonical button. Maps to the `.btn` utility classes in
+ * Wondral Words canonical button. Maps to the `.btn` utility classes in
  * styles.css. Variant `spark` fills with the active jewel gradient;
  * pass `jewel` to retheme it. `primary` uses the brand hero gradient.
  */

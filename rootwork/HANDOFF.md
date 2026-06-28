@@ -1,8 +1,8 @@
-# Handoff: Rootwork — design system + learning game (v1)
+# Handoff: Wondral Words — design system + learning game (v1)
 
 ## Overview
 
-Rootwork is a learning-game brand: jewel-lit flashcards with animated concept "scenes," a
+Wondral Words is a learning-game brand: jewel-lit flashcards with animated concept "scenes," a
 profile/home with a selectable master-detail menu, and a timed quiz loop (**Root Rush**) that
 grades the player **S / A / B / C / D** with **0–5 stars**. This bundle is the first playable
 version — a design system plus two working screens.
@@ -13,7 +13,7 @@ The files in this bundle are **design references created in HTML/CSS/vanilla JS*
 that show the intended look and behavior. They are **not** production code to ship as-is.
 
 The task is to **recreate these designs in the target codebase's environment** using its
-established patterns and libraries. Rootwork is a sibling to PianoSurge, whose app is
+established patterns and libraries. Wondral Words is a sibling to PianoSurge, whose app is
 **React 19 + Vite (Capacitor for iOS/Android)** — if you're building inside or alongside that
 stack, port these screens to React components there. If starting fresh, React + Vite mirrors the
 sibling app and is the recommended choice. The CSS token layer (`styles.css` + `tokens/`) is
@@ -37,8 +37,8 @@ from a browsable list, previewing each choice before committing.
 **Layout:** Centered column, `max-width: 1120px`, page padding `clamp(20px,3vw,38px) clamp(16px,5vw,40px) 60px`.
 Three stacked regions:
 
-1. **Top bar** — flex row. Left: brand lockup (`🌱` in a 38×38 hero-gradient tile + "Rootwork"
-   wordmark, Orbitron 800, "work" filled with hero gradient). Right: two 42×42 circular icon
+1. **Top bar** — flex row. Left: brand lockup (`🌱` in a 38×38 hero-gradient tile + "Wondral Words"
+   wordmark, Orbitron 800, "Words" filled with hero gradient). Right: two 42×42 circular icon
    buttons (`📖` how-to-play, `⚙️` settings).
 2. **Profile band** — flex row, `bg-card` + a 115° jade→cyan wash + radial bloom top-right,
    `border-radius: 24px`, 1px `rgba(255,255,255,0.08)` border, `box-shadow: var(--shadow-card)`.
@@ -141,7 +141,7 @@ All tokens live in `tokens/*.css` as CSS custom properties — **use `var(--*)`,
 
 ## Assets
 
-- **No image/icon/logo files.** The brand mark is the **Rootwork** wordmark (Orbitron 800) + the
+- **No image/icon/logo files.** The brand mark is the **Wondral Words** wordmark (Orbitron 800) + the
   `🌱` emoji in a hero-gradient tile. **Emoji are the icon system** — see the iconography table in
   `docs/DESIGN_SYSTEM.md`. Use the platform's native emoji.
 - **Fonts:** Orbitron, Outfit, JetBrains Mono — loaded from Google Fonts in `tokens/typography.css`.
