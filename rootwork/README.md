@@ -1,10 +1,10 @@
-# Rootwork
+# Wondral Words
 
 > **The arcade for everything worth learning.**
 > Falling-knowledge flashcards, animated concept "scenes," daily streaks, and a grade-chasing quiz loop — built so practice never feels like practice.
 > **"Learn the root. Own the word."**
 
-Rootwork is a **learning-game brand** + design system. It began as a vocabulary trainer built on word *roots* (`bio → life`, `geo → earth`) and is designed to extend to any drillable subject — math facts, science terms, history, music theory, languages.
+Wondral Words is a **learning-game brand** + design system. It began as a vocabulary trainer built on word *roots* (`bio → life`, `geo → earth`) and is designed to extend to any drillable subject — math facts, science terms, history, music theory, languages.
 
 This repository contains **both** the design system (tokens, components, guidelines) **and** a working, playable prototype of the game (vanilla HTML/JS, no build step).
 
@@ -82,7 +82,7 @@ Full detail in [`docs/DESIGN_SYSTEM.md`](docs/DESIGN_SYSTEM.md). Porting into a 
 
 ## Lineage
 
-Rootwork is a **sibling sub-brand of PianoSurge** — it shares the three-font stack, the dark cosmic-arcade canvas, and the grade/star/combo loop, but diverges with an inkier canvas and the premium per-item jewel palette.
+Wondral Words is a **sibling sub-brand of PianoSurge** — it shares the three-font stack, the dark cosmic-arcade canvas, and the grade/star/combo loop, but diverges with an inkier canvas and the premium per-item jewel palette.
 
 ## Status
 

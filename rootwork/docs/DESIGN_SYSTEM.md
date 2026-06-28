@@ -1,4 +1,4 @@
-# Rootwork — Design System
+# Wondral Words — Design System
 
 > **The arcade for everything worth learning.**
 > Falling-knowledge flashcards, animated concept "scenes," daily streaks, and a grade-chasing quiz loop — built so practice never feels like practice.
@@ -6,15 +6,15 @@
 
 ---
 
-## What is Rootwork?
+## What is Wondral Words?
 
-Rootwork is a **learning-game brand**. It started as a vocabulary trainer built on word *roots* (see `Bio → life`, `Geo → earth`), and the system is designed to extend to **any subject** that decomposes into atoms you can drill: math facts, science terms, history dates, music theory, languages.
+Wondral Words is a **learning-game brand**. It started as a vocabulary trainer built on word *roots* (see `Bio → life`, `Geo → earth`), and the system is designed to extend to **any subject** that decomposes into atoms you can drill: math facts, science terms, history dates, music theory, languages.
 
 Every learnable item — a root, a formula, a fact — is presented on a **jewel-lit card**: a big gradient display word, a one-line meaning, a tiny animated concept *scene*, and a grid of real-world examples. Items are organized into **tiers** (Starter → AI Level) and quizzed in **Root Rush**, a timed combo run that grades you **S / A / B / C / D** with **0–5 stars**.
 
 **Audience:** curious kids and lifelong learners who like games. The loop is borrowed from rhythm/arcade games (combo, streak, stars, particles) and pointed at study.
 
-**Relationship to PianoSurge:** Rootwork is a **sibling sub-brand**. It shares PianoSurge's DNA — the three-font stack (Orbitron / Outfit / JetBrains Mono), the dark cosmic-arcade canvas, the grade/star/combo loop, snappy ease-out motion. It diverges in two deliberate ways:
+**Relationship to PianoSurge:** Wondral Words is a **sibling sub-brand**. It shares PianoSurge's DNA — the three-font stack (Orbitron / Outfit / JetBrains Mono), the dark cosmic-arcade canvas, the grade/star/combo loop, snappy ease-out motion. It diverges in two deliberate ways:
 1. **An inkier, cooler canvas** (`#08070f` violet-black vs PianoSurge's `#0a0a1a`).
 2. **A curated jewel palette** — 8 premium 3-stop gradient identities replace PianoSurge's tailwind-default hues, and **each item owns one jewel for life** so color becomes a memory hook.
 
@@ -31,7 +31,7 @@ One palette, one type stack, one motion language across all of it.
 
 - Derived from the in-project **Word Roots** build (`Word Roots.html`, `roots-data.js`, `roots-scenes.js`, `roots-quiz.js`) — the original cards, animated scenes, and quiz this system is extracted from.
 - DNA inherited from the **PianoSurge** design system (`craig027-max/Piano-Surge`).
-- No Figma, no logo files. The brand mark is the **Rootwork** wordmark plus a 🌱 emoji. Emoji are the icon system.
+- No Figma, no logo files. The brand mark is the **Wondral Words** wordmark plus a 🌱 emoji. Emoji are the icon system.
 
 ---
 
@@ -49,7 +49,7 @@ One palette, one type stack, one motion language across all of it.
   *"Learn the root. **Own the word.**"* / *"Every card **sticks.**"* / *"One run. **Five stars.**"*
 - **Game words, not classroom words.** Hit, score, combo, streak, run, tier, unlock, level up. Avoid *exercise / drill / homework / lesson* in surface copy. ("Practice mode" is fine as a feature name.)
 - **Teach in one breath.** A card's lead is a single sentence with the root and its meaning bolded: *"See **bio** and think **life**."* No paragraphs.
-- **Name the moat plainly.** Rootwork teaches the *building blocks* so one root unlocks dozens of words — say so when it's on screen.
+- **Name the moat plainly.** Wondral Words teaches the *building blocks* so one root unlocks dozens of words — say so when it's on screen.
 
 **Casing**
 
@@ -99,7 +99,7 @@ One palette, one type stack, one motion language across all of it.
   Tokens: `--jewel-<name>`, `--jewel-<name>-rgb`, `--jewel-<name>-grad`. A card retheme is three vars — set `--spark`, `--spark-rgb`, `--grad` on the card root and the whole card (text glow, border, badge, hover bloom, gradient fill) re-pigments.
 
 - **Gradients are the signature.**
-  - **Hero / brand:** `--gradient-hero` `linear-gradient(135deg, #34e0a6, #22c3e6, #5b8def)` — jade → cyan → cobalt ("growth → clarity → depth"). This is the Rootwork mark; it is **not** PianoSurge's purple→blue→cyan.
+  - **Hero / brand:** `--gradient-hero` `linear-gradient(135deg, #34e0a6, #22c3e6, #5b8def)` — jade → cyan → cobalt ("growth → clarity → depth"). This is the Wondral Words mark; it is **not** PianoSurge's purple→blue→cyan.
   - **Fire** (Perfect / Grade S): `--gradient-fire` `#ffc24d → #ff5c6b`.
   - **Gold** (stars, premium): `--gradient-gold` `#ffd24a → #ffab2e`.
   - **Premium** (unlock): `--gradient-premium` `#9a6df5 → #ec4faf`.
@@ -143,7 +143,7 @@ Headlines scale with `clamp()`: `--fs-h1` `clamp(2.6rem, 7vw, 5.6rem)`, `--fs-h2
 
 ## ICONOGRAPHY
 
-Rootwork has **no proprietary icon font and no logo files**. The brand mark is the wordmark **Rootwork** in Orbitron 800 paired with the 🌱 sprout emoji in a rounded square filled with `--gradient-hero`.
+Wondral Words has **no proprietary icon font and no logo files**. The brand mark is the wordmark **Wondral Words** in Orbitron 800 paired with the 🌱 sprout emoji in a rounded square filled with `--gradient-hero`.
 
 **Emoji are the icon system** — a deliberate, consistent set, one per element, never strings of three:
 
