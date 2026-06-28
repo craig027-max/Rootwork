@@ -1,0 +1,130 @@
+/* ============================================================
+   WONDRAL WORDS — Color tokens
+   ------------------------------------------------------------
+   Dark cosmic-arcade canvas inherited from PianoSurge DNA, but
+   re-pigmented to feel premium: an inkier violet-black ground,
+   and a curated collection of 8 JEWEL gradient identities that
+   replace PianoSurge's tailwind-default hues. Each learnable
+   item (a root, a fact, a card) is assigned ONE jewel identity
+   and keeps it everywhere — color becomes memory.
+   ============================================================ */
+
+:root {
+  /* ─── Canvas — deep cosmic ink (cooler + inkier than PianoSurge) ─── */
+  --bg-primary:   #08070f;   /* base canvas — near-black, violet cast */
+  --bg-secondary: #0e0c1a;   /* alternating sections */
+  --bg-tertiary:  #161330;   /* form fields / nested surfaces */
+  --bg-card:      #120f24;   /* cards, modals */
+  --bg-elevated:  #1b1740;   /* popovers, raised chips */
+  --bg-app:       #090a14;   /* in-app variant (a hair cooler) */
+
+  /* ─── Text ─────────────────────────────────────────────── */
+  --text-primary:   #eeedf6;
+  --text-secondary: #9b98b6;   /* body / metadata on dark */
+  --text-muted:     #66628a;   /* eyebrows, captions, de-emphasis */
+  --text-on-bright: #0a0814;   /* text sitting on a bright/gradient fill */
+
+  /* ─── Borders ──────────────────────────────────────────── */
+  --border-faint:   1px solid rgba(255,255,255,0.06);
+  --border-default: 1px solid rgba(255,255,255,0.09);
+  --border-strong:  1px solid rgba(255,255,255,0.14);
+
+  /* ════════════════════════════════════════════════════════
+     THE JEWEL COLLECTION — 8 curated item identities.
+     Each exposes:
+       --jewel-<name>        the bright "spark" accent (text, glow, hairlines)
+       --jewel-<name>-rgb    its RGB triplet (for rgba() glows + tints)
+       --jewel-<name>-grad   the 3-stop signature gradient (display fills)
+     Assign one per item and never swap it — same item = same jewel.
+     ════════════════════════════════════════════════════════ */
+
+  --jewel-jade:        #34e0a6;
+  --jewel-jade-rgb:    52,224,166;
+  --jewel-jade-grad:   linear-gradient(135deg, #7df3c4, #1fc28e, #0e8a9b);
+
+  --jewel-cyan:        #34d9f0;
+  --jewel-cyan-rgb:    52,217,240;
+  --jewel-cyan-grad:   linear-gradient(135deg, #9bedfb, #22c3e6, #2f7bed);
+
+  --jewel-cobalt:      #6aa0ff;
+  --jewel-cobalt-rgb:  106,160,255;
+  --jewel-cobalt-grad: linear-gradient(135deg, #aac8ff, #5b8def, #6d4bf5);
+
+  --jewel-violet:      #b18cff;
+  --jewel-violet-rgb:  177,140,255;
+  --jewel-violet-grad: linear-gradient(135deg, #d4c2ff, #9a6df5, #6d28d9);
+
+  --jewel-magenta:     #f57ad0;
+  --jewel-magenta-rgb: 245,122,208;
+  --jewel-magenta-grad:linear-gradient(135deg, #ffb3e6, #ec4faf, #a21caf);
+
+  --jewel-coral:       #ff8a6b;
+  --jewel-coral-rgb:   255,138,107;
+  --jewel-coral-grad:  linear-gradient(135deg, #ffc0a8, #ff7a5c, #e0365b);
+
+  --jewel-amber:       #ffce4d;
+  --jewel-amber-rgb:   255,206,77;
+  --jewel-amber-grad:  linear-gradient(135deg, #ffe7a0, #ffc24d, #f5821f);
+
+  --jewel-lime:        #b6e84a;
+  --jewel-lime-rgb:    182,232,74;
+  --jewel-lime-grad:   linear-gradient(135deg, #dcf58a, #aee036, #3fae3a);
+
+  /* ─── Per-item runtime hooks ───────────────────────────────
+     Components read these three vars. Default identity = Jade.
+     Set --spark / --spark-rgb / --grad on a card root to retheme
+     the whole card to any jewel:  style="--spark:var(--jewel-violet);
+     --spark-rgb:var(--jewel-violet-rgb);--grad:var(--jewel-violet-grad)" */
+  --spark:     var(--jewel-jade);
+  --spark-rgb: var(--jewel-jade-rgb);
+  --grad:      var(--jewel-jade-grad);
+
+  /* ─── Brand signature gradient (jade → cyan → cobalt) ─────
+     Wondral Words' hero gradient. Distinct from PianoSurge's
+     purple→blue→cyan; it reads as "growth → clarity → depth". */
+  --gradient-hero:    linear-gradient(135deg, #34e0a6, #22c3e6, #5b8def);
+  --gradient-fire:    linear-gradient(135deg, #ffc24d, #ff5c6b);   /* Perfect / Grade S */
+  --gradient-gold:    linear-gradient(135deg, #ffd24a, #ffab2e);   /* stars, premium */
+  --gradient-premium: linear-gradient(135deg, #9a6df5, #ec4faf);   /* unlock / pro */
+  --gradient-brand-text: linear-gradient(135deg, #34e0a6, #5b8def); /* 2-stop text */
+
+  /* ─── System / semantic colors ─────────────────────────── */
+  --accent-spark:  #34e0a6;   /* default brand spark = jade */
+  --success:       #2fd99a;   /* correct, Great */
+  --warning:       #ffc24d;   /* combo, Perfect, caution */
+  --danger:        #ff5c6b;   /* wrong, Miss */
+  --info:          #5b8def;   /* neutral highlight */
+  --gold:          #ffd24a;   /* stars */
+  --gold-deep:     #ffab2e;
+
+  /* selection / keyboard-nav focus ring (cyan, like the DNA) */
+  --focus-ring:    #34d9f0;
+
+  /* ─── Grade colors (S / A / B / C / D) ─────────────────── */
+  --grade-s: #ffc24d;   /* filled with --gradient-fire in use */
+  --grade-a: #2fd99a;
+  --grade-b: #5b8def;
+  --grade-c: #ffc24d;
+  --grade-d: #66628a;
+
+  /* ─── Difficulty / tier accents (Starter → AI Level) ───── */
+  --tier-1: var(--jewel-jade);     /* Starter  */
+  --tier-2: var(--jewel-cyan);     /* Builder  */
+  --tier-3: var(--jewel-cobalt);   /* Scholar  */
+  --tier-4: var(--jewel-violet);   /* Master   */
+  --tier-5: var(--jewel-magenta);  /* AI Level */
+
+  /* ─── DNA-compat accent aliases ──────────────────────────
+     Let PianoSurge-era markup and the Wondral Words app kit resolve
+     without edits. Prefer the semantic names above in new work. */
+  --accent-green:  var(--success);
+  --accent-amber:  var(--warning);
+  --accent-red:    var(--danger);
+  --accent-gold:   var(--gold);
+  --accent-gold-deep: var(--gold-deep);
+  --accent-cyan:   var(--jewel-cyan);
+  --accent-blue:   var(--info);
+  --accent-purple: var(--jewel-violet);
+  --accent-pink:   var(--jewel-magenta);
+  --shadow-glow-gold: 0 0 12px rgba(255, 210, 74, 0.45);
+}

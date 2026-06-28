@@ -1,0 +1,12 @@
+/* ============================================================
+   WONDRAL WORDS — Design System · global entry point
+   ------------------------------------------------------------
+   Consumers link THIS one file. It is a list of @imports only.
+   Everything it transitively imports is shipped + indexed.
+   ============================================================ */
+
+@import url("./tokens/typography.css");   /* webfonts + family/size tokens */
+@import url("./tokens/colors.css");        /* canvas, text, jewel collection */
+@import url("./tokens/spacing.css");       /* space, radius, shadow, glow */
+@import url("./tokens/motion.css");        /* easing, durations, keyframes */
+@import url("./tokens/base.css");          /* base elements + utility classes */
