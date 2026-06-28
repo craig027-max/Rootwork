@@ -1,7 +1,7 @@
 import React from 'react';
 
 /**
- * Rootwork badge / pill label. `outline` (default) is a jewel-tinted
+ * Wondral Words badge / pill label. `outline` (default) is a jewel-tinted
  * hairline; `solid` fills with the jewel gradient; `gold` is the
  * star/premium fill. Maps to the `.badge` utilities in styles.css.
  */

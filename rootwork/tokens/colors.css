@@ -1,5 +1,5 @@
 /* ============================================================
-   ROOTWORK — Color tokens
+   WONDRAL WORDS — Color tokens
    ------------------------------------------------------------
    Dark cosmic-arcade canvas inherited from PianoSurge DNA, but
    re-pigmented to feel premium: an inkier violet-black ground,
@@ -80,7 +80,7 @@
   --grad:      var(--jewel-jade-grad);
 
   /* ─── Brand signature gradient (jade → cyan → cobalt) ─────
-     Rootwork's hero gradient. Distinct from PianoSurge's
+     Wondral Words' hero gradient. Distinct from PianoSurge's
      purple→blue→cyan; it reads as "growth → clarity → depth". */
   --gradient-hero:    linear-gradient(135deg, #34e0a6, #22c3e6, #5b8def);
   --gradient-fire:    linear-gradient(135deg, #ffc24d, #ff5c6b);   /* Perfect / Grade S */
@@ -115,7 +115,7 @@
   --tier-5: var(--jewel-magenta);  /* AI Level */
 
   /* ─── DNA-compat accent aliases ──────────────────────────
-     Let PianoSurge-era markup and the Rootwork app kit resolve
+     Let PianoSurge-era markup and the Wondral Words app kit resolve
      without edits. Prefer the semantic names above in new work. */
   --accent-green:  var(--success);
   --accent-amber:  var(--warning);

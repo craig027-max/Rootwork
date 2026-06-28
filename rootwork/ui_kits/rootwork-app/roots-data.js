@@ -8,7 +8,7 @@
 (function () {
   "use strict";
 
-  /* Premium jewel palettes — Rootwork design system. Each curriculum
+  /* Premium jewel palettes — Wondral Words design system. Each curriculum
      key maps to one of the 8 curated jewels; same root = same jewel. */
   window.PALETTES = {
     green:  { c1:'#34e0a6', c1rgb:'52,224,166',  c2:'#34d9f0', grad:'linear-gradient(135deg,#7df3c4,#1fc28e,#0e8a9b)', pal:['52,224,166','52,217,240'] },

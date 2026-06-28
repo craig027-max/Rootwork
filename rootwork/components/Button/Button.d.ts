@@ -7,7 +7,7 @@ export type Jewel =
   | 'magenta' | 'coral' | 'amber' | 'lime';
 
 /**
- * Canonical Rootwork button.
+ * Canonical Wondral Words button.
  *
  * @startingPoint section="Core" subtitle="Spark / primary / secondary / ghost button" viewport="700x160"
  */

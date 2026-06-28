@@ -2,7 +2,7 @@ import * as React from 'react';
 import type { Jewel } from '../Button/Button';
 
 /**
- * Jewel-lit surface — the core Rootwork container. Theming any
+ * Jewel-lit surface — the core Wondral Words container. Theming any
  * content inside is automatic: set `jewel` once and gradient text,
  * badges, borders and glows all inherit it.
  *
