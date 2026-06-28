@@ -2,6 +2,12 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "wondral-words",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3003
+    },
+    {
       "name": "spike",
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8731", "--directory", "spike"],

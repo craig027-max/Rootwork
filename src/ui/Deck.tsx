@@ -1,13 +1,6 @@
 import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
-import {
-  ROOTS,
-  ROOTS_BY_ID,
-  PALETTES,
-  rootId,
-  isRootAccessible,
-  type Root,
-} from '../data/roots';
+import { ROOTS, ROOTS_BY_ID, PALETTES, rootId, isRootOpenable, type Root } from '../data/roots';
 import { paletteVars } from './components/styleVars';
 import { Scene } from './Scene';
 import { Card } from './components/Card';
@@ -18,16 +11,12 @@ function palOf(root: Root) {
   return PALETTES[root.pal] ?? PALETTES.green!;
 }
 
-/** Next accessible root after the current one (in curriculum order), or null. */
-function nextAccessible(
-  fromId: string,
-  completed: Set<string>,
-  entitled: boolean,
-): string | null {
+/** Next openable root after the current one (in curriculum order), or null. */
+function nextOpenable(fromId: string, entitled: boolean): string | null {
   const i = ROOTS.findIndex((r) => rootId(r) === fromId);
   for (let j = i + 1; j < ROOTS.length; j++) {
     const id = rootId(ROOTS[j]!);
-    if (isRootAccessible(id, completed, entitled)) return id;
+    if (isRootOpenable(id, entitled)) return id;
   }
   return null;
 }
@@ -52,14 +41,14 @@ export function Deck() {
   }
 
   const id = rootId(root);
-  const accessible = isRootAccessible(id, completed, entitled);
+  const openable = isRootOpenable(id, entitled);
   const p = palOf(root);
   const done = completed.has(id);
-  const next = nextAccessible(id, completed, entitled);
+  const next = nextOpenable(id, entitled);
 
   // Guard: should never open a locked root, but if reached, never dead-end —
   // show the upgrade path instead of the content.
-  if (!accessible) {
+  if (!openable) {
     return (
       <div className="ww-center ww-stack">
         <Badge variant="outline">🔒 Premium root</Badge>

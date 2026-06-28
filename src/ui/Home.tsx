@@ -5,7 +5,7 @@ import {
   PALETTES,
   rootId,
   rootsInTier,
-  isRootAccessible,
+  isRootOpenable,
   resumeRootId,
   type Root,
   type TierNum,
@@ -32,7 +32,7 @@ export function Home() {
 
   function pickRoot(root: Root) {
     const id = rootId(root);
-    if (isRootAccessible(id, completed, entitled)) openRoot(id);
+    if (isRootOpenable(id, entitled)) openRoot(id);
     else requestUpgrade();
   }
 
@@ -113,7 +113,7 @@ export function Home() {
         <div className="ww-word-grid">
           {shownRoots.map((root) => {
             const id = rootId(root);
-            const accessible = isRootAccessible(id, completed, entitled);
+            const openable = isRootOpenable(id, entitled);
             const done = completed.has(id);
             const p = palOf(root);
             return (
@@ -130,7 +130,7 @@ export function Home() {
                     {root.root}
                   </strong>
                   {done ? <Badge variant="solid" jewel="jade">✓</Badge> : null}
-                  {!accessible ? <Badge variant="outline">🔒</Badge> : null}
+                  {!openable ? <Badge variant="outline">🔒</Badge> : null}
                 </div>
                 <span className="ww-muted">{root.mean}</span>
               </Card>

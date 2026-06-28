@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
-import { ROOTS, rootId, isRootAccessible, type Root } from '../data/roots';
+import { ROOTS, rootId, isRootOpenable, type Root } from '../data/roots';
 import { QuizTile, type QuizTileState } from './components/QuizTile';
 import { Button } from './components/Button';
 import { Badge } from './components/Badge';
@@ -32,15 +32,13 @@ interface Question {
  * follow-on.
  */
 export function RootRush() {
-  const completed = useWondralStore((s) => s.completedRoots);
   const entitled = useEntitledForDisplay();
   const setView = useWondralStore((s) => s.setView);
   const requestUpgrade = useWondralStore((s) => s.requestUpgrade);
 
-  const pool = useMemo(
-    () => ROOTS.filter((r) => isRootAccessible(rootId(r), completed, entitled)),
-    [completed, entitled],
-  );
+  // Quiz over the roots the learner can open (Tier 1 free; all once entitled) —
+  // not the linear-unlock set, so a free learner gets a full Tier-1 quiz.
+  const pool = useMemo(() => ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)), [entitled]);
 
   const questions = useMemo<Question[]>(() => {
     const picks = shuffle(pool).slice(0, Math.min(QUESTION_COUNT, pool.length));

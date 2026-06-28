@@ -103,6 +103,18 @@ export function isRootAccessible(
 }
 
 /**
+ * Whether a learner may OPEN a root to study it — the navigation gate, which is
+ * deliberately looser than `isRootAccessible`: roots are browsable flashcards, so
+ * within an unlocked tier you can jump to any card. Only the paywall gates here
+ * (free roots and entitled users can open anything). The stricter
+ * `isRootAccessible` (which also enforces linear completion) still drives
+ * boot-time resume, so "Continue" lands on the next unfinished root.
+ */
+export function isRootOpenable(id: RootId, entitled: boolean): boolean {
+  return isRootFree(id) || entitled;
+}
+
+/**
  * Which root a returning learner should resume into on boot, or null to stay on
  * home. Fires only for someone who has already started (≥1 root complete), and
  * only when the next incomplete root is actually accessible — a locked next root
