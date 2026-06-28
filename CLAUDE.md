@@ -1,4 +1,4 @@
-# Word-Roots — Project Context
+# Wondral Words — Project Context
 
 > Spinoff of **Orbital Academy** (`~/Projects/Orbital`): an animation-first app teaching word roots
 > (Latin/Greek/etc.) by making each root *feel* like its meaning (fire on PYRO, water on HYDRO).
@@ -21,7 +21,10 @@ accounts/payments/router — fork those from Orbital only once a real lesson dri
 
 New repo · new Supabase project · new Cloudflare Pages project. Never cross data between projects.
 
-## Working name
+## Brand & names
 
-Folder `Word-Roots`; brand name TBD. Once the stack is locked, split `KICKOFF.md` into a proper
-`PRODUCT.md` (vision) + flesh out this file (architecture), mirroring Orbital's doc layout.
+Customer-facing brand is **Wondral Words** (the etymology line under the **Wondral** umbrella,
+destined for `words.wondral.app`). Internal names stay put: folder `Word-Roots`, repo `Rootwork`,
+and the "word root(s)" subject vocabulary throughout the content/code. Once the stack is locked,
+split `KICKOFF.md` into a proper `PRODUCT.md` (vision) + flesh out this file (architecture),
+mirroring Orbital's doc layout.

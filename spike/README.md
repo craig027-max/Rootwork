@@ -1,4 +1,4 @@
-# Word-Roots — animation spike (THROWAWAY)
+# Wondral Words — animation spike (THROWAWAY)
 
 A standalone proof that **one parametric particle engine + per-root presets** can make a word
 root *feel* like its meaning. Built to answer the KICKOFF question (bespoke-per-word vs. parametric)

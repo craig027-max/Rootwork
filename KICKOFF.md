@@ -1,8 +1,9 @@
-# Word-Roots — Kickoff Brief
+# Wondral Words — Kickoff Brief
 
 > One-page brief to start the project cold in a fresh Claude Code session.
 > Sibling spinoff of **Orbital Academy** (`~/Projects/Orbital`). **Created:** 2026-06-19.
-> Working folder name `Word-Roots`; product/brand name still TBD (see Open decisions).
+> Customer-facing brand is **Wondral Words** (the etymology line under the **Wondral** umbrella,
+> destined for `words.wondral.app`). Working folder name stays `Word-Roots`; repo stays `Rootwork`.
 
 ---
 
@@ -92,7 +93,9 @@ Principle: "don't pre-build" applies to platforms too — **monorepo later, on e
 
 ## Open decisions (owner)
 
-- **Brand name** (folder is `Word-Roots` for now — rename before mapping Cowork if desired).
+- ~~**Brand name**~~ — **LOCKED: "Wondral Words"** (etymology line under the Wondral umbrella,
+  served at `words.wondral.app`). Folder stays `Word-Roots`, repo stays `Rootwork`; internal
+  identifiers and the "word root" subject vocabulary are unchanged.
 - **Animation engine** (resolve via the spike).
 - **Content scope for v1** (how many roots; which "hero" set ships first).
 - **Pricing** (mirror Orbital's annual model? bundle with Orbital?).
