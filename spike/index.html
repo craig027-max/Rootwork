@@ -1,0 +1,1175 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Wondral Words · animation spike</title>
+
+<!-- Chunky display face: lots of interior area for particles to fill. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet" />
+
+<style>
+  :root { --bg: #07040a; --accent: rgba(255,120,30,0.55); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; }
+  body {
+    font-family: "Archivo Black", Impact, "Arial Black", sans-serif;
+    color: #fff; -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
+  }
+  #stage { position: fixed; inset: 0; display: block; }
+
+  /* Instructional card: root meaning + derived words with definitions.
+     A subtle scrim keeps the text legible over any effect (e.g. the ASTRO sun). */
+  #label {
+    position: fixed; left: 50%; transform: translateX(-50%); bottom: 84px;
+    width: min(700px, 92vw); text-align: center; pointer-events: none; z-index: 4;
+    background: rgba(6,8,12,0.5); border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 16px; padding: 15px 24px 13px; backdrop-filter: blur(8px);
+  }
+  #meaning {
+    font-family: "Archivo Black", Impact, "Arial Black", sans-serif;
+    font-size: clamp(22px, 3.4vw, 42px); letter-spacing: 0.12em;
+    text-transform: uppercase; line-height: 1; color: var(--ink, #fff);
+    text-shadow: 0 0 20px var(--accent); transition: color .4s ease;
+  }
+  #rootline {
+    margin-top: 7px; font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(11px, 1.3vw, 14px); letter-spacing: 0.16em;
+    text-transform: uppercase; color: rgba(255,255,255,0.5);
+  }
+  #words {
+    margin: 12px 0 0; padding: 0; list-style: none;
+    display: flex; flex-direction: column; gap: 5px;
+  }
+  #words li {
+    font-family: ui-sans-serif, system-ui, sans-serif;
+    font-size: clamp(12px, 1.35vw, 15px); color: rgba(255,255,255,0.64); line-height: 1.3;
+  }
+  #words b { color: var(--ink, #fff); font-weight: 700; }
+
+  /* Word switcher */
+  #bar {
+    position: fixed; left: 50%; transform: translateX(-50%); bottom: 28px;
+    display: flex; gap: 10px; z-index: 5;
+  }
+  .pill {
+    font-family: ui-sans-serif, system-ui, sans-serif; font-weight: 600;
+    font-size: 13px; letter-spacing: 0.12em;
+    padding: 9px 18px; border-radius: 999px; cursor: pointer;
+    color: rgba(255,255,255,0.7); background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14); backdrop-filter: blur(6px);
+    transition: all .25s ease; user-select: none;
+  }
+  .pill:hover { color: #fff; background: rgba(255,255,255,0.12); }
+  .pill[aria-pressed="true"] {
+    color: #fff; border-color: rgba(255,255,255,0.55);
+    box-shadow: 0 0 18px var(--accent, rgba(255,255,255,0.4));
+    background: rgba(255,255,255,0.14);
+  }
+
+  #hud {
+    position: fixed; top: 12px; left: 14px; z-index: 5;
+    font-family: ui-monospace, monospace; font-size: 11px;
+    color: rgba(255,255,255,0.28); pointer-events: none;
+  }
+  #hint {
+    position: fixed; top: 12px; right: 14px; z-index: 5;
+    font-family: ui-sans-serif, system-ui, sans-serif; font-size: 11px;
+    letter-spacing: 0.08em; color: rgba(255,255,255,0.22); pointer-events: none;
+  }
+</style>
+</head>
+<body>
+  <canvas id="stage"></canvas>
+  <div id="label">
+    <div id="meaning">fire</div>
+    <div id="rootline"></div>
+    <ul id="words"></ul>
+  </div>
+  <div id="hud">—</div>
+  <div id="hint">keys 1 · 2 · 3 · 4</div>
+  <div id="bar"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"
+          integrity="sha512-7eHRwcbYkK4d9g/6tD/mhkf++eoTHwpNM9woBxtPUBWm67zeAfFC+HrdoE2GanKeocly/VxeLvIqwvCdk7qScg=="
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script>
+  "use strict";
+
+  /* =====================================================================
+   * Word-Roots — animation spike (THROWAWAY) · v2
+   *
+   * Goal of the product: make a word ROOT *feel* like its meaning so students
+   * learn the association (PYRO->fire, HYDRO->water, ASTRO->stars). The visual
+   * has to TEACH the concept, not just decorate the letters.
+   *
+   * One particle engine drives all words. Most behaviour is data in PRESETS;
+   * a few element-specific render paths (flame elongation, water droplets,
+   * constellation lines) earn their keep now that we're chasing real *feel*.
+   * ===================================================================== */
+
+  /* ---------- 1. PRESETS ---------- */
+  const PRESETS = {
+    pyro: {
+      label: "PYRO", meaning: "fire", text: "PYRO", accent: "rgba(255,120,30,0.6)", ink: "#ff9e4d",
+      origin: "Greek", rootForm: "pŷr", def: "fire",
+      words: [
+        { w: "pyrotechnics", d: "the art of making fireworks" },
+        { w: "pyre", d: "a pile of wood for a funeral fire" },
+        { w: "pyromania", d: "a compulsion to start fires" },
+      ],
+      mode: "text", step: 12,    // readable TYPE + flames licking up (effect supports text)
+      flameGlow: true, flame: true,   // flame-tongue sprites (not round dots); glow flickers
+      textFill: ["#fff7df", "#ffd058", "#ff8a1e", "#e23a06", "#9a1f00"],  // top hot -> base ember
+      glowColor: "rgba(255,120,25,0.9)", glowBlur: 26,
+      bg: [14, 5, 2], blend: "lighter", trailFade: 0.22,
+      gravity: -0.82,            // lower buoyancy: flames hug the letters (contained)
+      gather: 0,                 // letters ARE the type; particles just rise (no seek)
+      drag: 0.9,
+      turbulence: 0.9, noiseScale: 0.022, noiseSpeed: 2.6,
+      orbit: 0, sway: 0.24, swaySpeed: 5.5,
+      grow: 1.5, stretchY: 1.1,  // swell + elongate into tongues as they rise
+      lifetime: [0.28, 0.68],    // fewer + shorter flames; bigger/softer so less "dotty"
+      size: [3, 8], core: 0.16,
+      alphaShape: 1.1, twinkle: 0, twSpeed: 0,
+      colorRamp: ["#fff3cf", "#ffd24a", "#ff8a1e", "#ff3a08", "#a01400", "#2a0600"],
+    },
+    hydro: {
+      label: "HYDRO", meaning: "water", text: "HYDRO", accent: "rgba(60,160,255,0.6)", ink: "#5fb4ff",
+      origin: "Greek", rootForm: "hýdōr", def: "water",
+      words: [
+        { w: "hydrate", d: "to supply with water" },
+        { w: "hydrant", d: "a pipe for drawing water" },
+        { w: "dehydrate", d: "to remove water; dry out" },
+      ],
+      mode: "text", step: 12, rain: true, fill: "water",   // letters FILLED with moving water + rain/waterfall drops
+      textFill: ["#eaffff", "#a6e6ff", "#4fb0ff", "#1e74e6", "#0c4099"],
+      glowColor: "rgba(60,150,255,0.85)", glowBlur: 24,
+      bg: [3, 10, 22], blend: "source-over", trailFade: 0.14,
+      gravity: 0.7,              // rain/waterfall drops fall off the letters
+      gather: 0,
+      drag: 0.94,
+      turbulence: 0.14, noiseScale: 0.03, noiseSpeed: 0.8,
+      orbit: 0, sway: 0.05, swaySpeed: 1.6,
+      grow: 0, stretchY: 0,
+      lifetime: [1.0, 2.4],
+      size: [2, 5], core: 0.5,
+      alphaShape: 0.7, twinkle: 0, twSpeed: 0,
+      colorRamp: ["#eaffff", "#a6e6ff", "#4fb0ff", "#1e74e6", "#0c4099"],
+    },
+    astro: {
+      label: "ASTRO", meaning: "star", text: "ASTRO", accent: "rgba(255,170,60,0.6)", ink: "#ffc46b",
+      origin: "Greek", rootForm: "ástron", def: "star · celestial body",
+      words: [
+        { w: "astronaut", d: "a space traveler (“star sailor”)" },
+        { w: "astronomy", d: "the study of the stars and space" },
+        { w: "asterisk", d: "a star-shaped symbol (*)" },
+      ],
+      mode: "text", step: 22, backdrop: "sun",   // a glowing sun (disc + corona + flares) behind warm type
+      textFill: ["#fffaf0", "#ffeccc", "#ffd9a0", "#f7b86a", "#d98a3a"],
+      glowColor: "rgba(255,170,70,0.85)", glowBlur: 26,
+      bg: [10, 5, 2], blend: "lighter", trailFade: 0.22,
+      gravity: -0.12,            // a few warm embers drift up off the sun
+      gather: 0,
+      drag: 0.985,
+      turbulence: 0.18, noiseScale: 0.012, noiseSpeed: 1.0,
+      orbit: 0, sway: 0.06, swaySpeed: 2.0,
+      grow: 0, stretchY: 0,
+      lifetime: [1.0, 2.6],
+      size: [1.2, 3.2], core: 0.2,
+      alphaShape: 1.0, twinkle: 0.5, twSpeed: 3.0,
+      colorRamp: ["#fff3cf", "#ffd24a", "#ff8a1e", "#ff3a08", "#a01400", "#2a0600"],
+    },
+    bio: {
+      label: "BIO", meaning: "life", text: "BIO", accent: "rgba(70,225,130,0.6)", ink: "#6ee88a",
+      origin: "Greek", rootForm: "bíos", def: "life",
+      words: [
+        { w: "biology", d: "the study of life" },
+        { w: "biography", d: "the story of a person’s life" },
+        { w: "symbiosis", d: "organisms living together" },
+      ],
+      mode: "text", step: 14, backdrop: "life", cell: true, fill: "bio", sprouts: true,   // green-filled type + DNA + cells + sprouting plants
+      textFill: ["#f0ffe8", "#a8f58a", "#4fd96a", "#1f9b4e", "#0c5a36"],
+      glowColor: "rgba(70,220,120,0.8)", glowBlur: 22,
+      bg: [3, 14, 8], blend: "lighter", trailFade: 0.2,
+      gravity: -0.04,            // cells drift gently around the word
+      gather: 0,
+      drag: 0.98,
+      turbulence: 0.14, noiseScale: 0.012, noiseSpeed: 0.7,
+      orbit: 0, sway: 0.04, swaySpeed: 1.4,
+      grow: 0, stretchY: 0,
+      breathe: 0.14, breatheSpeed: 1.5,     // gentle glow pulse = alive / breathing
+      lifetime: [3.0, 6.0],
+      size: [6, 14], core: 0.3,
+      alphaShape: 0.8, twinkle: 0.2, twSpeed: 1.8,
+      colorRamp: ["#ecffe8", "#a8f58a", "#4fd96a", "#23a152", "#0b5e38"],
+    },
+  };
+
+  const MAX_PARTICLES = 5200;
+  const SAMPLE_STEP = 6;
+  const REF_FONT = 220;
+  const FONT_FAMILY = '"Archivo Black", Impact, "Arial Black", sans-serif';
+  const LUT_N = 24;
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const TAU = Math.PI * 2;
+
+  /* ---------- colour helpers + sprites ---------- */
+  function hexToRgb(h) {
+    const n = parseInt(h.slice(1), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  }
+  function buildLUT(ramp, n) {
+    const stops = ramp.map(hexToRgb), out = [];
+    for (let i = 0; i < n; i++) {
+      const t = i / (n - 1), s = t * (stops.length - 1);
+      const a = stops[Math.floor(s)], b = stops[Math.min(stops.length - 1, Math.ceil(s))];
+      const f = s - Math.floor(s);
+      out.push([
+        Math.round(a[0] + (b[0] - a[0]) * f),
+        Math.round(a[1] + (b[1] - a[1]) * f),
+        Math.round(a[2] + (b[2] - a[2]) * f),
+      ]);
+    }
+    return out;
+  }
+  // One soft glow sprite per LUT colour. drawImage stacks into glow under
+  // 'lighter' — cheaper than per-particle shadowBlur. Water adds a highlight
+  // dot so each particle reads as a 3D droplet.
+  function buildSprites(preset) {
+    const lut = buildLUT(preset.colorRamp, LUT_N), SPR = 64, sprites = [];
+    for (let i = 0; i < lut.length; i++) {
+      const c = document.createElement("canvas"); c.width = c.height = SPR;
+      const g = c.getContext("2d");
+      const [r, gr, b] = lut[i];
+      const grd = g.createRadialGradient(SPR/2, SPR/2, 0, SPR/2, SPR/2, SPR/2);
+      grd.addColorStop(0, `rgba(${r},${gr},${b},1)`);
+      grd.addColorStop(preset.core, `rgba(${r},${gr},${b},0.85)`);
+      grd.addColorStop(1, `rgba(${r},${gr},${b},0)`);
+      g.fillStyle = grd; g.fillRect(0, 0, SPR, SPR);
+      if (preset.droplet) {                       // specular highlight -> 3D droplet
+        const hg = g.createRadialGradient(SPR*0.38, SPR*0.32, 0, SPR*0.38, SPR*0.32, SPR*0.18);
+        hg.addColorStop(0, "rgba(255,255,255,0.9)");
+        hg.addColorStop(1, "rgba(255,255,255,0)");
+        g.fillStyle = hg; g.fillRect(0, 0, SPR, SPR);
+      }
+      sprites.push(c);
+    }
+    return sprites;
+  }
+  // Cell sprites for BIO: cytoplasm + membrane ring + nucleus.
+  function buildCellSprites(preset) {
+    const lut = buildLUT(preset.colorRamp, LUT_N), SPR = 64, sprites = [];
+    for (let i = 0; i < lut.length; i++) {
+      const c = document.createElement("canvas"); c.width = c.height = SPR;
+      const g = c.getContext("2d");
+      const [r, gr, b] = lut[i];
+      g.fillStyle = `rgba(${r},${gr},${b},0.16)`;
+      g.beginPath(); g.arc(SPR/2, SPR/2, SPR*0.31, 0, Math.PI*2); g.fill();
+      g.strokeStyle = `rgba(${r},${gr},${b},0.85)`; g.lineWidth = SPR*0.06;
+      g.beginPath(); g.arc(SPR/2, SPR/2, SPR*0.31, 0, Math.PI*2); g.stroke();
+      g.fillStyle = `rgba(${r},${gr},${b},0.95)`;
+      g.beginPath(); g.arc(SPR*0.5, SPR*0.5, SPR*0.1, 0, Math.PI*2); g.fill();
+      sprites.push(c);
+    }
+    return sprites;
+  }
+
+  // Flame-tongue sprites (PYRO flames + ASTRO solar flares): a pointed tongue,
+  // bright at the base, fading to a transparent tip. Coloured per LUT stop.
+  function buildFlameSprites(preset) {
+    const lut = buildLUT(preset.colorRamp, LUT_N), FW = 48, FH = 72, sprites = [];
+    for (let i = 0; i < lut.length; i++) {
+      const c = document.createElement("canvas"); c.width = FW; c.height = FH;
+      const g = c.getContext("2d");
+      const [r, gr, b] = lut[i];
+      g.beginPath();
+      g.moveTo(FW/2, FH);
+      g.quadraticCurveTo(FW*0.02, FH*0.62, FW*0.34, FH*0.34);
+      g.quadraticCurveTo(FW*0.46, FH*0.12, FW*0.5, 0);
+      g.quadraticCurveTo(FW*0.54, FH*0.12, FW*0.66, FH*0.34);
+      g.quadraticCurveTo(FW*0.98, FH*0.62, FW/2, FH);
+      g.closePath();
+      const grd = g.createLinearGradient(0, FH, 0, 0);
+      grd.addColorStop(0, `rgba(${r},${gr},${b},0.95)`);
+      grd.addColorStop(0.45, `rgba(${r},${gr},${b},0.55)`);
+      grd.addColorStop(1, `rgba(${r},${gr},${b},0)`);
+      g.fillStyle = grd; g.fill();
+      sprites.push(c);
+    }
+    return sprites;
+  }
+  // Raindrop sprites (HYDRO): teardrop, round leading bottom + faint trailing tip + highlight.
+  function buildRainSprites(preset) {
+    const lut = buildLUT(preset.colorRamp, LUT_N), RW = 22, RH = 46, sprites = [];
+    for (let i = 0; i < lut.length; i++) {
+      const c = document.createElement("canvas"); c.width = RW; c.height = RH;
+      const g = c.getContext("2d");
+      const [r, gr, b] = lut[i];
+      g.beginPath();
+      g.moveTo(RW/2, 2);
+      g.bezierCurveTo(RW*0.96, RH*0.5, RW*0.86, RH*0.98, RW/2, RH-2);
+      g.bezierCurveTo(RW*0.14, RH*0.98, RW*0.04, RH*0.5, RW/2, 2);
+      g.closePath();
+      const grd = g.createLinearGradient(0, 0, 0, RH);
+      grd.addColorStop(0, `rgba(${r},${gr},${b},0.18)`);
+      grd.addColorStop(0.6, `rgba(${r},${gr},${b},0.8)`);
+      grd.addColorStop(1, `rgba(${r},${gr},${b},0.95)`);
+      g.fillStyle = grd; g.fill();
+      g.fillStyle = "rgba(255,255,255,0.7)";
+      g.beginPath(); g.arc(RW*0.4, RH*0.72, RW*0.1, 0, Math.PI*2); g.fill();
+      sprites.push(c);
+    }
+    return sprites;
+  }
+
+  /* ---------- 2. text -> particle home-points ---------- */
+  function sampleGlyphs(text, step) {
+    step = step || SAMPLE_STEP;
+    const off = document.createElement("canvas");
+    const o = off.getContext("2d", { willReadFrequently: true });
+    o.font = `${REF_FONT}px ${FONT_FAMILY}`;
+    const w = Math.ceil(o.measureText(text).width) + REF_FONT;
+    const h = Math.ceil(REF_FONT * 1.4);
+    off.width = w; off.height = h;
+    o.font = `${REF_FONT}px ${FONT_FAMILY}`;
+    o.fillStyle = "#fff"; o.textBaseline = "middle"; o.textAlign = "center";
+    o.fillText(text, w / 2, h / 2);
+
+    const data = o.getImageData(0, 0, w, h).data, pts = [];
+    for (let y = 0; y < h; y += step) {
+      for (let x = 0; x < w; x += step) {
+        if (data[(y * w + x) * 4 + 3] > 128) {
+          pts.push(x + (Math.random() - 0.5) * step, y + (Math.random() - 0.5) * step);
+        }
+      }
+    }
+    let xs = pts;
+    const count = pts.length / 2;
+    if (count > MAX_PARTICLES) {
+      const k = Math.ceil(count / MAX_PARTICLES); xs = [];
+      for (let i = 0; i < count; i += k) xs.push(pts[i*2], pts[i*2+1]);
+    }
+    return { xs, w, h };
+  }
+
+  /* ---------- 3. the engine ---------- */
+  const rand = (a, b) => a + Math.random() * (b - a);
+  function makeParticle() {
+    return { x:0,y:0, vx:0,vy:0, hx:0,hy:0, size:1, life:0, maxLife:1, seed:0, kind:0 };
+  }
+
+  const field = {
+    pool: [], count: 0,
+    preset: null, sprites: null, sample: null,
+    stars: [], starPairs: [], starfield: [], nebula: [], cells: [], fillStars: [],
+    maskCanvas: null, maskCtx: null, composeCanvas: null, composeCtx: null, cellSprites: null,
+    flameSprites: null, rainSprites: null, sunFlares: [], bioBubbles: [], sprouts: [],
+    textSize: 0, textCx: 0, textCy: 0, textScale: 1,
+    gatherStrength: 0, intensity: 1, dissolve: 0,
+    t: 0,
+
+    init() { for (let i = 0; i < MAX_PARTICLES; i++) this.pool.push(makeParticle()); },
+
+    layout(W, H) {
+      const s = this.sample; if (!s) return;
+      const scale = Math.min(W * 0.74 / s.w, H * 0.46 / s.h);
+      const CY = H * 0.42;                       // sit the word higher; card goes below
+      const ox = (W - s.w * scale) / 2, oy = CY - (s.h / 2) * scale;
+      // Solid text shares the sample's scale + centre, so type and particles align.
+      this.textScale = scale; this.textSize = REF_FONT * scale;
+      this.textCx = W / 2; this.textCy = CY;
+      for (let i = 0; i < this.count; i++) {
+        const p = this.pool[i];
+        p.hx = ox + s.xs[i*2] * scale;
+        p.hy = oy + s.xs[i*2+1] * scale;
+      }
+      const bd = this.preset && this.preset.backdrop;
+      if (this.preset && (this.preset.mode === "constellation" || bd === "sky" || bd === "sun")) this.buildSky(W, H);
+      if (bd === "life") this.buildCells(W, H);
+      if (bd === "sun") this.buildSun();
+      if (this.preset && this.preset.fill) this.buildTextMask(W, H);
+      if (this.preset && this.preset.fill === "galaxy") this.buildFillStars(W, H);
+      if (this.preset && this.preset.fill === "bio") this.buildBioBubbles(W, H);
+      if (this.preset && this.preset.sprouts) this.buildSprouts(W, H);
+    },
+
+    // Background starfield + nebula clouds for the planetarium feel.
+    buildSky(W, H) {
+      const sf = []; const N = Math.round((W * H) / 9000);
+      for (let i = 0; i < N; i++) sf.push({ x: Math.random()*W, y: Math.random()*H, r: rand(0.4,1.6), a: rand(0.15,0.7), ph: Math.random()*TAU });
+      this.starfield = sf;
+      this.nebula = [
+        { x: W*0.30, y: H*0.40, r: Math.min(W,H)*0.55, c: [80,40,160] },
+        { x: W*0.72, y: H*0.58, r: Math.min(W,H)*0.5,  c: [30,60,150] },
+        { x: W*0.55, y: H*0.30, r: Math.min(W,H)*0.4,  c: [120,40,120] },
+      ];
+    },
+
+    buildSun() {
+      const flares = [], N = 44;
+      for (let i = 0; i < N; i++) flares.push({ ang: (i / N) * TAU + (Math.random() - 0.5) * 0.08, ph: Math.random() * TAU, sp: rand(1.4, 2.6) });
+      this.sunFlares = flares;
+    },
+
+    buildCells(W, H) {
+      this.cells = [
+        { x: W*0.30, y: H*0.42, r: Math.min(W,H)*0.42, ph: 0,   col: [40,180,90] },
+        { x: W*0.70, y: H*0.55, r: Math.min(W,H)*0.46, ph: 2.1, col: [30,150,110] },
+        { x: W*0.52, y: H*0.48, r: Math.min(W,H)*0.55, ph: 4.2, col: [60,200,80] },
+      ];
+    },
+
+    // Offscreen text mask + compose layer, for filling letters with animated content.
+    ensureLayers(W, H) {
+      const dw = Math.max(1, Math.floor(W * dpr)), dh = Math.max(1, Math.floor(H * dpr));
+      if (!this.maskCanvas) {
+        this.maskCanvas = document.createElement("canvas");
+        this.maskCtx = this.maskCanvas.getContext("2d");
+        this.composeCanvas = document.createElement("canvas");
+        this.composeCtx = this.composeCanvas.getContext("2d");
+      }
+      if (this.maskCanvas.width !== dw || this.maskCanvas.height !== dh) {
+        this.maskCanvas.width = dw; this.maskCanvas.height = dh;
+        this.composeCanvas.width = dw; this.composeCanvas.height = dh;
+      }
+    },
+    buildTextMask(W, H) {
+      this.ensureLayers(W, H);
+      const m = this.maskCtx;
+      m.setTransform(dpr, 0, 0, dpr, 0, 0);
+      m.clearRect(0, 0, W, H);
+      m.fillStyle = "#fff";
+      m.font = `${this.textSize}px ${FONT_FAMILY}`;
+      m.textAlign = "center"; m.textBaseline = "middle";
+      m.fillText(this.preset.text, this.textCx, this.textCy);
+    },
+    buildFillStars(W, H) {
+      const N = Math.round((W * H) / 2400), fs = [];
+      for (let i = 0; i < N; i++) fs.push({ x: Math.random()*W, y: Math.random()*H, r: rand(0.5, 2.2), a: rand(0.4, 1), ph: Math.random()*TAU });
+      this.fillStars = fs;
+    },
+    buildBioBubbles(W, H) {
+      const N = Math.round((W * H) / 7000), bb = [];
+      for (let i = 0; i < N; i++) bb.push({ x: Math.random()*W, y: Math.random()*H, r: rand(3, 10), sp: rand(8, 22), ph: Math.random()*TAU });
+      this.bioBubbles = bb;
+    },
+    // Top-edge anchor points (scan the text mask) where plants sprout from.
+    buildSprouts(W, H) {
+      if (!this.maskCanvas) return;
+      const mw = this.maskCanvas.width, mh = this.maskCanvas.height;
+      const data = this.maskCtx.getImageData(0, 0, mw, mh).data;
+      const sprouts = [], stepX = Math.max(2, Math.round(40 * dpr));
+      for (let x = 0; x < mw; x += stepX) {
+        for (let y = 0; y < mh; y += 2) {
+          if (data[(y * mw + x) * 4 + 3] > 128) {
+            sprouts.push({ x: x / dpr, y: y / dpr, seed: Math.random(), h: rand(0.55, 1.0) });
+            break;
+          }
+        }
+      }
+      this.sprouts = sprouts;
+    },
+
+    // Draw drawFn's content clipped to the letterforms, then blit onto ctx.
+    fillTextWith(ctx, W, H, drawFn) {
+      const cc = this.composeCtx;
+      cc.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cc.globalCompositeOperation = "source-over"; cc.globalAlpha = 1;
+      cc.clearRect(0, 0, W, H);
+      drawFn(cc, W, H);
+      cc.globalCompositeOperation = "destination-in";
+      cc.setTransform(1, 0, 0, 1, 0, 0);
+      cc.drawImage(this.maskCanvas, 0, 0);
+      cc.setTransform(dpr, 0, 0, dpr, 0, 0);
+      cc.globalCompositeOperation = "source-over";
+      ctx.drawImage(this.composeCanvas, 0, 0, W, H);
+    },
+
+    // Pick sparse bright stars and link each to its 2 nearest neighbours.
+    buildConstellation(pr) {
+      const stars = [];
+      for (let i = 0; i < this.count; i += pr.starEvery) { stars.push(i); this.pool[i].kind = 1; }
+      const pairs = [], seen = new Set();
+      for (let a = 0; a < stars.length; a++) {
+        const pa = this.pool[stars[a]];
+        let b1 = -1, b2 = -1, d1 = 1e18, d2 = 1e18;
+        for (let b = 0; b < stars.length; b++) {
+          if (a === b) continue;
+          const pb = this.pool[stars[b]];
+          const dx = pa.hx - pb.hx, dy = pa.hy - pb.hy, d = dx*dx + dy*dy;
+          if (d < d1) { d2 = d1; b2 = b1; d1 = d; b1 = b; }
+          else if (d < d2) { d2 = d; b2 = b; }
+        }
+        for (const bi of [b1, b2]) {
+          if (bi < 0) continue;
+          const i1 = stars[a], i2 = stars[bi];
+          const k = Math.min(i1,i2) + "_" + Math.max(i1,i2);
+          if (!seen.has(k)) { seen.add(k); pairs.push(i1, i2); }
+        }
+      }
+      this.stars = stars; this.starPairs = pairs;
+    },
+
+    load(preset, W, H, scatter) {
+      this.preset = preset;
+      this.sprites = preset.sprites;
+      this.cellSprites = preset.cellSprites || null;
+      this.flameSprites = preset.flameSprites || null;
+      this.rainSprites = preset.rainSprites || null;
+      this.sample = preset.sampleCache;
+      this.count = Math.min(this.sample.xs.length / 2, MAX_PARTICLES);
+      this.layout(W, H);
+      const dripEvery = preset.dripFrac ? Math.max(2, Math.round(1 / preset.dripFrac)) : 0;
+      for (let i = 0; i < this.count; i++) {
+        const p = this.pool[i];
+        p.size = rand(preset.size[0], preset.size[1]);
+        p.maxLife = rand(preset.lifetime[0], preset.lifetime[1]);
+        p.life = Math.random() * p.maxLife;
+        p.seed = Math.random();
+        p.kind = (dripEvery && i % dripEvery === 0) ? 1 : 0;   // water drippers
+        if (scatter) { p.x = Math.random() * W; p.y = Math.random() * H; p.vx = 0; p.vy = 0; }
+        else { p.x = p.hx; p.y = p.hy; p.vx = 0; p.vy = 0; }
+      }
+      if (preset.mode === "constellation") this.buildConstellation(preset);
+    },
+
+    respawn(p, pr) {
+      p.maxLife = rand(pr.lifetime[0], pr.lifetime[1]);
+      p.life = p.maxLife;
+      p.x = p.hx + (Math.random() - 0.5) * 6;
+      p.y = p.hy + (Math.random() - 0.5) * 6;
+      p.vx = 0; p.vy = 0;
+    },
+
+    update(dt, f) {
+      const pr = this.preset; if (!pr) return;
+      this.t += dt;
+      const t = this.t, gs = this.gatherStrength;
+      const g = pr.gravity, gk = pr.gather, dragF = Math.pow(pr.drag, f);
+      const turb = pr.turbulence, ns = pr.noiseScale, nsp = pr.noiseSpeed, orb = pr.orbit;
+      const sway = pr.sway, swsp = pr.swaySpeed;
+      const dripG = pr.dripGravity || 0, dripDist = pr.dripDist || 0;
+      for (let i = 0; i < this.count; i++) {
+        const p = this.pool[i];
+        const dx = p.hx - p.x, dy = p.hy - p.y;
+        let gEff = g, gkEff = gk;
+        if (dripG && p.kind === 1) { gEff = dripG; gkEff = gk * 0.12; }  // water drips fall
+        // seek home
+        p.vx += dx * gkEff * gs * f;
+        p.vy += dy * gkEff * gs * f;
+        // gravity / buoyancy
+        p.vy += gEff * f;
+        // orbit (stars)
+        if (orb) { p.vx += -dy * orb * f; p.vy += dx * orb * f; }
+        // lateral sway (flame dance / water jiggle)
+        if (sway) p.vx += Math.sin(t * swsp + p.seed * TAU) * sway * f;
+        // turbulence flow field
+        const ang = (Math.sin(p.x * ns + t * nsp) + Math.sin(p.y * ns * 1.3 - t * nsp * 0.8)) * 3.14159;
+        p.vx += Math.cos(ang) * turb * f;
+        p.vy += Math.sin(ang) * turb * f;
+        // drag + integrate
+        p.vx *= dragF; p.vy *= dragF;
+        p.x += p.vx * f; p.y += p.vy * f;
+        // lifecycle (+ reset drippers that have fallen far)
+        p.life -= dt;
+        if (p.life <= 0 || (dripDist && p.kind === 1 && p.y - p.hy > dripDist)) this.respawn(p, pr);
+      }
+    },
+
+    render(ctx, W, H) {
+      const pr = this.preset; if (!pr) return;
+      if (pr.mode === "text") return this.renderText(ctx, W, H);
+      if (pr.mode === "constellation") return this.renderConstellation(ctx, W, H);
+      this.renderField(ctx, W, H);
+    },
+
+    // Reusable: draw the rising effect particles (flames/embers) on top.
+    drawParticles(ctx, pr) {
+      const t = this.t, inten = this.intensity, dis = 1 - this.dissolve;
+      const shape = pr.alphaShape, grow = pr.grow, stretchY = pr.stretchY;
+      const tw = pr.twinkle, tsp = pr.twSpeed;
+      let spr, mode = "round";
+      if (pr.flame && this.flameSprites) { spr = this.flameSprites; mode = "flame"; }
+      else if (pr.rain && this.rainSprites) { spr = this.rainSprites; mode = "rain"; }
+      else if (pr.cell && this.cellSprites) { spr = this.cellSprites; }
+      else { spr = this.sprites; }
+      const n = spr.length - 1;
+      for (let i = 0; i < this.count; i++) {
+        const p = this.pool[i];
+        const lifeFrac = p.life / p.maxLife;
+        const ageFrac = 1 - lifeFrac;
+        const ageIdx = (ageFrac * n) | 0;
+        let a = Math.pow(Math.sin(lifeFrac * 3.14159), shape) * inten * dis;
+        if (tw) a *= (1 - tw) + tw * (0.5 + 0.5 * Math.sin(t * tsp + p.seed * TAU));
+        if (a <= 0.012) continue;
+        ctx.globalAlpha = a > 1 ? 1 : a;
+        const sz = grow ? p.size * (1 + grow * ageFrac) : p.size;
+        if (mode === "flame") {                              // tongue: base at p.y, licks up
+          const w = sz * 2.0, spd = p.vy < 0 ? -p.vy : 0;
+          const h = sz * 3.2 * (1 + (spd * 0.08 < 1.6 ? spd * 0.08 : 1.6));
+          ctx.drawImage(spr[ageIdx], p.x - w / 2, p.y - h, w, h);
+        } else if (mode === "rain") {                        // teardrop streaking down
+          const w = sz * 1.4, spd = p.vy > 0 ? p.vy : 0;
+          const h = sz * 2.0 * (1 + (spd * 0.12 < 2.4 ? spd * 0.12 : 2.4));
+          ctx.drawImage(spr[ageIdx], p.x - w / 2, p.y - h, w, h);
+        } else {
+          const w = sz * 2;
+          let h = w, top = p.y - sz;
+          if (stretchY) {
+            const spd = -p.vy;
+            const amt = spd > 0 ? (spd * 0.12 < 2.4 ? spd * 0.12 : 2.4) : 0;
+            h = w * (1 + stretchY * amt); top = p.y - h + sz;
+          }
+          ctx.drawImage(spr[ageIdx], p.x - sz, top, w, h);
+        }
+      }
+      ctx.globalAlpha = 1;
+    },
+
+    // TEXT mode: readable solid type is the hero; particles only support it.
+    renderText(ctx, W, H) {
+      const pr = this.preset, t = this.t;
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = `rgba(${pr.bg[0]},${pr.bg[1]},${pr.bg[2]},${pr.trailFade})`;
+      ctx.fillRect(0, 0, W, H);
+
+      if (pr.backdrop === "sky") this.drawSky(ctx, W, H);        // supporting imagery behind
+      else if (pr.backdrop === "life") this.drawLife(ctx, W, H);
+      else if (pr.backdrop === "sun") this.drawSun(ctx, W, H);
+
+      // the word as the hero — fill style depends on the element
+      if (pr.fill === "water") this.renderWaterLetters(ctx, W, H);
+      else if (pr.fill === "galaxy") this.renderGalaxyLetters(ctx, W, H);
+      else if (pr.fill === "bio") this.renderBioLetters(ctx, W, H);
+      else this.renderSolidLetters(ctx);
+      if (pr.sprouts) this.drawSprouts(ctx, W, H);
+
+      // supporting effect particles on top (flames / drips / stars / cells)
+      ctx.globalCompositeOperation = pr.blend;
+      this.drawParticles(ctx, pr);
+      ctx.globalCompositeOperation = "source-over";
+    },
+
+    _glowK() {
+      const pr = this.preset, t = this.t;
+      if (pr.flameGlow) return 0.7 + 0.6 * (0.78 + 0.22 * Math.sin(t * 9) * Math.sin(t * 5.3));
+      if (pr.breathe) return 0.8 + 0.45 * (0.5 + 0.5 * Math.sin(t * pr.breatheSpeed));
+      return 1;
+    },
+    _setFont(ctx) {
+      ctx.font = `${this.textSize}px ${FONT_FAMILY}`;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    },
+    renderSolidLetters(ctx) {
+      const pr = this.preset, size = this.textSize, cx = this.textCx, cy = this.textCy;
+      const grad = ctx.createLinearGradient(0, cy - size * 0.52, 0, cy + size * 0.52);
+      const fs = pr.textFill;
+      for (let i = 0; i < fs.length; i++) grad.addColorStop(i / (fs.length - 1), fs[i]);
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = this.gatherStrength;
+      this._setFont(ctx);
+      ctx.shadowColor = pr.glowColor; ctx.shadowBlur = pr.glowBlur * this._glowK();
+      ctx.fillStyle = grad;
+      ctx.fillText(pr.text, cx, cy); ctx.fillText(pr.text, cx, cy);
+      ctx.restore();
+    },
+    // Letters filled with moving water.
+    renderWaterLetters(ctx, W, H) {
+      const pr = this.preset, cx = this.textCx, cy = this.textCy;
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = this.gatherStrength;
+      this._setFont(ctx);
+      ctx.shadowColor = pr.glowColor; ctx.shadowBlur = pr.glowBlur;
+      ctx.fillStyle = "#0e4ea8"; ctx.fillText(pr.text, cx, cy);   // base body + glow halo
+      ctx.shadowBlur = 0;
+      this.fillTextWith(ctx, W, H, (cc, w, h) => this.drawWater(cc, w, h));
+      ctx.restore();
+    },
+    drawWater(cc, W, H) {
+      const t = this.t, size = this.textSize, cy = this.textCy;
+      const top = cy - size * 0.6, bot = cy + size * 0.6, hgt = bot - top;
+      // deep base fill
+      const g = cc.createLinearGradient(0, top, 0, bot);
+      g.addColorStop(0, "#9ad8ff"); g.addColorStop(0.5, "#3f9bef"); g.addColorStop(1, "#0d469f");
+      cc.fillStyle = g; cc.fillRect(0, top - 40, W, hgt + 80);
+
+      cc.globalCompositeOperation = "lighter";
+      // undulating waterline: a moving surface with brighter water below it
+      const surfY = cy + Math.sin(t * 0.8) * size * 0.06;
+      const waveAt = (x) => surfY + Math.sin(x * 0.016 + t * 2.0) * size * 0.05 + Math.sin(x * 0.045 - t * 1.4) * size * 0.022;
+      cc.beginPath(); cc.moveTo(0, bot + 40);
+      for (let x = 0; x <= W; x += 10) cc.lineTo(x, waveAt(x));
+      cc.lineTo(W, bot + 40); cc.closePath();
+      const ug = cc.createLinearGradient(0, surfY - size * 0.1, 0, bot);
+      ug.addColorStop(0, "rgba(150,222,255,0.34)"); ug.addColorStop(1, "rgba(30,110,220,0.05)");
+      cc.fillStyle = ug; cc.fill();
+      // bright surface line
+      cc.strokeStyle = "rgba(228,249,255,0.6)"; cc.lineWidth = 2.5;
+      cc.beginPath();
+      for (let x = 0; x <= W; x += 10) { const y = waveAt(x); if (x === 0) cc.moveTo(x, y); else cc.lineTo(x, y); }
+      cc.stroke();
+      // glossy sheen near the top (wet look)
+      const glossY = top + size * 0.16 + Math.sin(t * 1.5) * size * 0.02;
+      const gloss = cc.createLinearGradient(0, glossY - size * 0.13, 0, glossY + size * 0.13);
+      gloss.addColorStop(0, "rgba(255,255,255,0)"); gloss.addColorStop(0.5, "rgba(255,255,255,0.4)"); gloss.addColorStop(1, "rgba(255,255,255,0)");
+      cc.fillStyle = gloss; cc.fillRect(0, glossY - size * 0.13, W, size * 0.26);
+      // caustic light bands
+      const span = hgt + 200;
+      for (let i = 0; i < 2; i++) {
+        const yy = top - 100 + ((t * 28 + i * span / 2) % span);
+        const bandH = size * 0.2;
+        const bg = cc.createLinearGradient(0, yy - bandH, 0, yy + bandH);
+        bg.addColorStop(0, "rgba(255,255,255,0)"); bg.addColorStop(0.5, "rgba(210,242,255,0.3)"); bg.addColorStop(1, "rgba(255,255,255,0)");
+        cc.fillStyle = bg; cc.fillRect(0, yy - bandH, W, bandH * 2);
+      }
+      cc.globalCompositeOperation = "source-over";
+    },
+    // Letters filled with a twinkling starfield + nebula.
+    renderGalaxyLetters(ctx, W, H) {
+      const pr = this.preset, cx = this.textCx, cy = this.textCy;
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = this.gatherStrength;
+      this._setFont(ctx);
+      ctx.shadowColor = pr.glowColor; ctx.shadowBlur = pr.glowBlur;
+      ctx.fillStyle = "#1a1140"; ctx.fillText(pr.text, cx, cy);   // deep-space body + glow halo
+      ctx.shadowBlur = 0;
+      this.fillTextWith(ctx, W, H, (cc, w, h) => this.drawGalaxy(cc, w, h));
+      ctx.restore();
+    },
+    drawGalaxy(cc, W, H) {
+      const t = this.t, size = this.textSize, cx = this.textCx, cy = this.textCy;
+      const top = cy - size * 0.6, bot = cy + size * 0.6;
+      const g = cc.createLinearGradient(0, top, 0, bot);
+      g.addColorStop(0, "#3a2f80"); g.addColorStop(0.5, "#3a2a7a"); g.addColorStop(1, "#160e3a");
+      cc.fillStyle = g; cc.fillRect(0, top - 30, W, (bot - top) + 60);
+      cc.globalCompositeOperation = "lighter";
+      const r1 = cc.createRadialGradient(cx - size * 0.5, cy, 0, cx - size * 0.5, cy, size);
+      r1.addColorStop(0, "rgba(150,60,170,0.28)"); r1.addColorStop(1, "rgba(0,0,0,0)");
+      cc.fillStyle = r1; cc.fillRect(0, 0, W, H);
+      const r2 = cc.createRadialGradient(cx + size * 0.5, cy, 0, cx + size * 0.5, cy, size);
+      r2.addColorStop(0, "rgba(50,90,190,0.24)"); r2.addColorStop(1, "rgba(0,0,0,0)");
+      cc.fillStyle = r2; cc.fillRect(0, 0, W, H);
+      const white = this.sprites[0];                             // stars inside the letters
+      for (let i = 0; i < this.fillStars.length; i++) {
+        const s = this.fillStars[i];
+        const tw = 0.3 + 0.7 * Math.abs(Math.sin(t * 1.8 + s.ph));
+        cc.globalAlpha = s.a * tw;
+        cc.drawImage(white, s.x - s.r, s.y - s.r, s.r * 2, s.r * 2);
+      }
+      cc.globalAlpha = 1; cc.globalCompositeOperation = "source-over";
+    },
+
+    // BIO: letters filled with green "life" (bubble-cells in a green body).
+    renderBioLetters(ctx, W, H) {
+      const pr = this.preset, cx = this.textCx, cy = this.textCy;
+      ctx.save();
+      ctx.globalCompositeOperation = "source-over"; ctx.globalAlpha = this.gatherStrength;
+      this._setFont(ctx);
+      ctx.shadowColor = pr.glowColor; ctx.shadowBlur = pr.glowBlur * this._glowK();
+      ctx.fillStyle = "#0d7a3a"; ctx.fillText(pr.text, cx, cy);   // base body + glow halo
+      ctx.shadowBlur = 0;
+      this.fillTextWith(ctx, W, H, (cc, w, h) => this.drawBioFill(cc, w, h));
+      ctx.restore();
+    },
+    drawBioFill(cc, W, H) {
+      const t = this.t, size = this.textSize, cy = this.textCy;
+      const top = cy - size * 0.6, bot = cy + size * 0.6;
+      const g = cc.createLinearGradient(0, top, 0, bot);
+      g.addColorStop(0, "#d8ffcf"); g.addColorStop(0.5, "#46d268"); g.addColorStop(1, "#0c7a3a");
+      cc.fillStyle = g; cc.fillRect(0, top - 30, W, (bot - top) + 60);
+      cc.globalCompositeOperation = "lighter";
+      const range = size * 1.3;
+      for (let i = 0; i < this.bioBubbles.length; i++) {
+        const b = this.bioBubbles[i];
+        let yy = b.y - ((t * b.sp) % range);
+        if (yy < top - 30) yy += range;
+        const r = b.r;
+        cc.globalAlpha = 0.5; cc.fillStyle = "rgba(190,255,200,0.16)";
+        cc.beginPath(); cc.arc(b.x, yy, r, 0, TAU); cc.fill();
+        cc.strokeStyle = "rgba(180,255,190,0.5)"; cc.lineWidth = 1.2;
+        cc.beginPath(); cc.arc(b.x, yy, r, 0, TAU); cc.stroke();
+        cc.fillStyle = "rgba(255,255,255,0.6)";
+        cc.beginPath(); cc.arc(b.x - r * 0.3, yy - r * 0.3, r * 0.18, 0, TAU); cc.fill();
+      }
+      cc.globalAlpha = 1; cc.globalCompositeOperation = "source-over";
+    },
+    // Plants growing out of the top edges of the letters (stem + leaves + bud), swaying.
+    drawSprouts(ctx, W, H) {
+      const t = this.t, size = this.textSize, dis = 1 - this.dissolve;
+      ctx.globalCompositeOperation = "source-over";
+      ctx.lineCap = "round";
+      for (let i = 0; i < this.sprouts.length; i++) {
+        const s = this.sprouts[i];
+        ctx.globalAlpha = this.gatherStrength * dis;
+        const len = size * 0.34 * s.h;
+        const sway = Math.sin(t * 1.1 + s.seed * TAU) * size * 0.05;
+        const midX = s.x + sway * 0.4, midY = s.y - len * 0.55, tipX = s.x + sway, tipY = s.y - len;
+        ctx.strokeStyle = "#5fcf52"; ctx.lineWidth = Math.max(1.6, size * 0.012);
+        ctx.beginPath(); ctx.moveTo(s.x, s.y + 4); ctx.quadraticCurveTo(midX, midY, tipX, tipY); ctx.stroke();
+        this._leaf(ctx, midX, midY, -0.7, size * 0.11);
+        this._leaf(ctx, midX + sway * 0.2, midY - len * 0.16, 0.7, size * 0.1);
+        ctx.fillStyle = "#8df07a";
+        ctx.beginPath(); ctx.arc(tipX, tipY, Math.max(2.2, size * 0.018), 0, TAU); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    },
+    _leaf(ctx, x, y, ang, r) {
+      ctx.save(); ctx.translate(x, y); ctx.rotate(ang);
+      ctx.fillStyle = "#62d957";
+      ctx.beginPath(); ctx.ellipse(r * 0.9, 0, r, r * 0.5, 0, 0, TAU); ctx.fill();
+      ctx.restore();
+    },
+
+    renderField(ctx, W, H) {
+      const pr = this.preset, t = this.t;
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = `rgba(${pr.bg[0]},${pr.bg[1]},${pr.bg[2]},${pr.trailFade})`;
+      ctx.fillRect(0, 0, W, H);
+
+      if (pr.backdrop === "life") this.drawLife(ctx, W, H);   // hybrid supporting imagery
+
+      ctx.globalCompositeOperation = pr.blend;
+      const spr = this.sprites, n = spr.length - 1;
+      const inten = this.intensity, dis = 1 - this.dissolve;
+      const shape = pr.alphaShape, grow = pr.grow, stretchY = pr.stretchY;
+      const tw = pr.twinkle, tsp = pr.twSpeed;
+      const breatheMul = pr.breathe ? (1 + pr.breathe * Math.sin(t * pr.breatheSpeed)) : 1;
+      for (let i = 0; i < this.count; i++) {
+        const p = this.pool[i];
+        const lifeFrac = p.life / p.maxLife;
+        const ageFrac = 1 - lifeFrac;
+        const ageIdx = (ageFrac * n) | 0;
+        let a = Math.pow(Math.sin(lifeFrac * 3.14159), shape) * inten * dis * breatheMul;
+        if (tw) a *= (1 - tw) + tw * (0.5 + 0.5 * Math.sin(t * tsp + p.seed * TAU));
+        if (a <= 0.012) continue;
+        ctx.globalAlpha = a > 1 ? 1 : a;
+        const sz = grow ? p.size * (1 + grow * ageFrac) : p.size;
+        const w = sz * 2;
+        let h = w, top = p.y - sz;
+        if (stretchY) {                              // elongate fast risers into tongues
+          const spd = -p.vy;
+          const amt = spd > 0 ? (spd * 0.12 < 2.4 ? spd * 0.12 : 2.4) : 0;
+          h = w * (1 + stretchY * amt); top = p.y - h + sz;
+        }
+        ctx.drawImage(spr[ageIdx], p.x - sz, top, w, h);
+      }
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+    },
+
+    renderConstellation(ctx, W, H) {
+      const pr = this.preset, t = this.t, dis = 1 - this.dissolve;
+      // deep space
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = `rgba(${pr.bg[0]},${pr.bg[1]},${pr.bg[2]},${pr.trailFade})`;
+      ctx.fillRect(0, 0, W, H);
+
+      ctx.globalCompositeOperation = "lighter";
+      // nebula clouds
+      for (let i = 0; i < this.nebula.length; i++) {
+        const nb = this.nebula[i];
+        const grd = ctx.createRadialGradient(nb.x, nb.y, 0, nb.x, nb.y, nb.r);
+        grd.addColorStop(0, `rgba(${nb.c[0]},${nb.c[1]},${nb.c[2]},${0.10 * dis})`);
+        grd.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+      }
+      // background starfield
+      const white = this.sprites[0];
+      for (let i = 0; i < this.starfield.length; i++) {
+        const s = this.starfield[i];
+        const tw = 0.4 + 0.6 * Math.sin(t * 1.5 + s.ph);
+        ctx.globalAlpha = s.a * tw * dis;
+        ctx.drawImage(white, s.x - s.r, s.y - s.r, s.r * 2, s.r * 2);
+      }
+      // constellation lines between bright stars
+      const sp = this.starPairs, link2 = pr.linkDist * pr.linkDist;
+      ctx.lineWidth = 1; ctx.strokeStyle = `rgba(150,170,255,${0.16 * dis})`;
+      ctx.beginPath();
+      for (let i = 0; i < sp.length; i += 2) {
+        const a = this.pool[sp[i]], b = this.pool[sp[i+1]];
+        const dx = a.x - b.x, dy = a.y - b.y;
+        if (dx*dx + dy*dy > link2) continue;
+        ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+      }
+      ctx.stroke();
+      // dust (letter body) + bright stars
+      const spr = this.sprites, n = spr.length - 1, tw = pr.twinkle, tsp = pr.twSpeed;
+      for (let i = 0; i < this.count; i++) {
+        const p = this.pool[i];
+        const lifeFrac = p.life / p.maxLife;
+        const flick = (1 - tw) + tw * (0.5 + 0.5 * Math.sin(t * tsp + p.seed * TAU));
+        if (p.kind === 1) {                          // bright star
+          const a = Math.min(1, Math.sin(lifeFrac * 3.14159) * 1.3) * flick * dis;
+          if (a <= 0.012) continue;
+          ctx.globalAlpha = a;
+          const d = (p.size + 2.5) * 2;
+          ctx.drawImage(spr[(0.15 * n) | 0], p.x - d/2, p.y - d/2, d, d);
+        } else {                                     // faint dust = letter shape
+          const a = 0.5 * Math.sin(lifeFrac * 3.14159) * flick * dis;
+          if (a <= 0.012) continue;
+          ctx.globalAlpha = a;
+          const d = p.size * 2;
+          ctx.drawImage(spr[(0.6 * n) | 0], p.x - p.size, p.y - p.size, d, d);
+        }
+      }
+      ctx.globalAlpha = 1;
+      ctx.globalCompositeOperation = "source-over";
+    },
+
+    // Hybrid backdrop for BIO: soft cell glows + a rotating DNA double helix.
+    drawLife(ctx, W, H) {
+      const t = this.t, dis = 1 - this.dissolve;
+      ctx.globalCompositeOperation = "lighter";
+      for (let i = 0; i < this.cells.length; i++) {
+        const c = this.cells[i];
+        const pulse = 0.6 + 0.4 * Math.sin(t * 0.8 + c.ph);
+        const grd = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
+        grd.addColorStop(0, `rgba(${c.col[0]},${c.col[1]},${c.col[2]},${0.07 * pulse * dis})`);
+        grd.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+      }
+      this.drawDNA(ctx, W, H);
+    },
+
+    drawDNA(ctx, W, H) {
+      const t = this.t, spr = this.sprites, n = spr.length - 1, dis = 1 - this.dissolve;
+      const cy = H * 0.5, amp = Math.min(H * 0.22, 190);
+      const k = (3.5 * TAU) / W, speed = 0.9, step = 4, rungEvery = 24;
+      ctx.globalCompositeOperation = "lighter";
+      let rung = 0;
+      for (let x = 0; x < W; x += step) {            // base-pair rungs (alternating colours)
+        if (x % rungEvery >= step) continue;
+        const ph = x * k + t * speed;
+        const yA = cy + amp * Math.sin(ph), yB = cy + amp * Math.sin(ph + Math.PI);
+        const depth = Math.abs(Math.cos(ph));
+        const ra = (0.12 + 0.3 * depth) * dis;
+        ctx.lineWidth = 1 + 2 * depth;
+        ctx.strokeStyle = (rung++ % 2) ? `rgba(120,255,170,${ra})` : `rgba(90,210,255,${ra})`;
+        ctx.beginPath(); ctx.moveTo(x, yA); ctx.lineTo(x, yB); ctx.stroke();
+      }
+      for (let x = 0; x < W; x += step) {            // two backbones (depth = 3D twist)
+        const ph = x * k + t * speed;
+        this._helixDot(ctx, x, cy + amp * Math.sin(ph), Math.cos(ph), spr, n, dis);
+        this._helixDot(ctx, x, cy + amp * Math.sin(ph + Math.PI), Math.cos(ph + Math.PI), spr, n, dis);
+      }
+      ctx.globalAlpha = 1;
+    },
+    _helixDot(ctx, x, y, z, spr, n, dis) {
+      const depth = (z + 1) / 2;                     // 0 back .. 1 front
+      const a = (0.16 + 0.5 * depth) * dis;          // brighter, more defined ribbons
+      const size = 2.4 + 4.2 * depth;
+      const idx = (((1 - depth) * 0.55) * n) | 0;
+      ctx.globalAlpha = a > 1 ? 1 : a;
+      const d = size * 2;
+      ctx.drawImage(spr[idx], x - size, y - size, d, d);
+    },
+
+    // Starfield + nebula backdrop (ASTRO).
+    drawSky(ctx, W, H) {
+      const t = this.t, dis = 1 - this.dissolve;
+      ctx.globalCompositeOperation = "lighter";
+      for (let i = 0; i < this.nebula.length; i++) {
+        const nb = this.nebula[i];
+        const grd = ctx.createRadialGradient(nb.x, nb.y, 0, nb.x, nb.y, nb.r);
+        grd.addColorStop(0, `rgba(${nb.c[0]},${nb.c[1]},${nb.c[2]},${0.10 * dis})`);
+        grd.addColorStop(1, "rgba(0,0,0,0)");
+        ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
+      }
+      const white = this.sprites[0];
+      for (let i = 0; i < this.starfield.length; i++) {
+        const s = this.starfield[i];
+        const twk = 0.4 + 0.6 * Math.sin(t * 1.5 + s.ph);
+        ctx.globalAlpha = s.a * twk * dis;
+        ctx.drawImage(white, s.x - s.r, s.y - s.r, s.r * 2, s.r * 2);
+      }
+      ctx.globalAlpha = 1;
+    },
+
+    // ASTRO: a glowing star/sun (disc + corona + flickering solar flares) behind the word.
+    drawSun(ctx, W, H) {
+      const t = this.t, cx = this.textCx, cy = this.textCy, dis = 1 - this.dissolve;
+      const R = Math.min(this.textSize * 0.85, H * 0.4);
+      const scy = cy - R * 0.32;                              // lift the disc so the word stays crisp
+      ctx.globalCompositeOperation = "lighter";
+      // faint background starfield
+      const white = this.sprites[0];
+      for (let i = 0; i < this.starfield.length; i++) {
+        const s = this.starfield[i];
+        const twk = 0.4 + 0.6 * Math.sin(t * 1.5 + s.ph);
+        ctx.globalAlpha = s.a * 0.7 * twk * dis;
+        ctx.drawImage(white, s.x - s.r, s.y - s.r, s.r * 2, s.r * 2);
+      }
+      // solar flares around the rim (flame tongues, base at rim, licking outward)
+      const fl = this.flameSprites, fn = fl.length - 1;
+      for (let i = 0; i < this.sunFlares.length; i++) {
+        const f = this.sunFlares[i];
+        const len = R * (0.22 + 0.42 * (0.5 + 0.5 * Math.sin(t * f.sp + f.ph)));
+        ctx.save();
+        ctx.globalAlpha = 0.75 * dis;
+        ctx.translate(cx + Math.cos(f.ang) * R * 0.96, scy + Math.sin(f.ang) * R * 0.96);
+        ctx.rotate(f.ang + Math.PI / 2);                     // sprite tip -> radially outward
+        const w = R * 0.13;
+        ctx.drawImage(fl[(0.18 * fn) | 0], -w / 2, -len, w, len);
+        ctx.restore();
+      }
+      // glowing disc
+      ctx.globalAlpha = 1;
+      const g = ctx.createRadialGradient(cx, scy, 0, cx, scy, R * 1.35);
+      g.addColorStop(0, `rgba(255,234,175,${0.82 * dis})`);
+      g.addColorStop(0.30, `rgba(255,160,55,${0.66 * dis})`);
+      g.addColorStop(0.62, `rgba(210,70,18,${0.36 * dis})`);
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, scy, R * 1.35, 0, TAU); ctx.fill();
+      // corona rim
+      ctx.lineWidth = R * 0.035; ctx.strokeStyle = `rgba(255,190,100,${0.55 * dis})`;
+      ctx.beginPath(); ctx.arc(cx, scy, R * 0.98, 0, TAU); ctx.stroke();
+      ctx.globalCompositeOperation = "source-over";
+    },
+
+    renderStatic(ctx, W, H) {
+      const pr = this.preset; if (!pr) return;
+      ctx.globalCompositeOperation = "source-over";
+      ctx.fillStyle = `rgb(${pr.bg[0]},${pr.bg[1]},${pr.bg[2]})`;
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = pr.blend;
+      const spr = this.sprites, mid = (spr.length * 0.4) | 0;
+      for (let i = 0; i < this.count; i++) {
+        const p = this.pool[i];
+        ctx.globalAlpha = 0.9; const d = p.size * 2;
+        ctx.drawImage(spr[mid], p.hx - p.size, p.hy - p.size, d, d);
+      }
+      ctx.globalAlpha = 1; ctx.globalCompositeOperation = "source-over";
+    },
+  };
+
+  /* ---------- 4. stage: DPR, resize, rAF loop ---------- */
+  const canvas = document.getElementById("stage");
+  const ctx = canvas.getContext("2d");
+  const hud = document.getElementById("hud");
+  const meaningEl = document.getElementById("meaning");
+  const rootlineEl = document.getElementById("rootline");
+  const wordsEl = document.getElementById("words");
+  let W = 0, H = 0, dpr = 1, last = 0, fps = 60, fpsT = 0, fpsN = 0;
+
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth || document.documentElement.clientWidth || 1280;
+    H = window.innerHeight || document.documentElement.clientHeight || 720;
+    if (W <= 0 || H <= 0) return;
+    canvas.width = Math.floor(W * dpr); canvas.height = Math.floor(H * dpr);
+    canvas.style.width = W + "px"; canvas.style.height = H + "px";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    field.layout(W, H);
+    if (reduceMotion) field.renderStatic(ctx, W, H);
+  }
+  window.addEventListener("resize", resize);
+  if (window.ResizeObserver) new ResizeObserver(() => resize()).observe(document.documentElement);
+
+  function frame(now) {
+    let dt = (now - last) / 1000; last = now;
+    if (dt > 1 / 20) dt = 1 / 20;
+    const f = Math.min(dt * 60, 2);
+    field.update(dt, f);
+    field.render(ctx, W, H);
+    fpsT += dt; fpsN++;
+    if (fpsT >= 0.5) { fps = Math.round(fpsN / fpsT); fpsT = 0; fpsN = 0;
+      hud.textContent = `${field.preset.label}  ·  ${field.count} particles  ·  ${fps} fps`; }
+    requestAnimationFrame(frame);
+  }
+
+  /* ---------- 5. word loading + GSAP orchestration ---------- */
+  let current = null;
+
+  function applyChrome(pr) {
+    document.documentElement.style.setProperty("--bg", `rgb(${pr.bg[0]},${pr.bg[1]},${pr.bg[2]})`);
+    document.documentElement.style.setProperty("--accent", pr.accent);
+    document.documentElement.style.setProperty("--ink", pr.ink);
+    meaningEl.textContent = pr.def;
+    rootlineEl.textContent = `${pr.label} · from ${pr.origin} “${pr.rootForm}”`;
+    wordsEl.innerHTML = pr.words.map(x => `<li><b>${x.w}</b> — ${x.d}</li>`).join("");
+    [...document.querySelectorAll(".pill")].forEach(b =>
+      b.setAttribute("aria-pressed", String(b.dataset.key === keyOf(pr))));
+  }
+  const keyOf = (pr) => Object.keys(PRESETS).find(k => PRESETS[k] === pr);
+
+  function loadWord(key, animate) {
+    const pr = PRESETS[key];
+    const scat = pr.mode !== "text";        // text mode: flames start on the letters
+    if (reduceMotion) {
+      current = pr; field.load(pr, W, H, false);
+      field.gatherStrength = 1; field.intensity = 1; field.dissolve = 0;
+      applyChrome(pr); field.render(ctx, W, H); return;
+    }
+    if (!animate || !current) {
+      current = pr; field.load(pr, W, H, scat);
+      field.gatherStrength = 0; field.intensity = 1; field.dissolve = 0;
+      applyChrome(pr);
+      gsap.to(field, { gatherStrength: 1, duration: 1.6, ease: "power3.out" });
+      return;
+    }
+    gsap.killTweensOf(field);
+    const tl = gsap.timeline();
+    tl.to(field, { dissolve: 1, gatherStrength: 0.0, duration: 0.45, ease: "power2.in" })
+      .add(() => { current = pr; field.load(pr, W, H, scat); field.dissolve = 0; field.gatherStrength = 0; applyChrome(pr); })
+      .to(field, { gatherStrength: 1, duration: 1.5, ease: "power3.out" })
+      .fromTo(field, { intensity: 1.5 }, { intensity: 1, duration: 1.2, ease: "power2.out" }, "<");
+  }
+
+  /* ---------- 6. UI ---------- */
+  const bar = document.getElementById("bar");
+  const order = ["pyro", "hydro", "astro", "bio"];
+  order.forEach(k => {
+    const b = document.createElement("div");
+    b.className = "pill"; b.dataset.key = k; b.textContent = PRESETS[k].label;
+    b.setAttribute("role", "button"); b.setAttribute("aria-pressed", "false");
+    b.onclick = () => loadWord(k, true);
+    bar.appendChild(b);
+  });
+  window.addEventListener("keydown", e => {
+    const i = ["1", "2", "3", "4"].indexOf(e.key);
+    if (i >= 0) loadWord(order[i], true);
+  });
+
+  /* ---------- boot ---------- */
+  field.init();
+  (async function boot() {
+    try {
+      await document.fonts.load(`${REF_FONT}px "Archivo Black"`);
+      await document.fonts.ready;
+    } catch (_) { /* fall back to Impact/Arial Black */ }
+    for (const k of order) {
+      PRESETS[k].sampleCache = sampleGlyphs(PRESETS[k].text, PRESETS[k].step);
+      PRESETS[k].sprites = buildSprites(PRESETS[k]);
+      if (PRESETS[k].cell) PRESETS[k].cellSprites = buildCellSprites(PRESETS[k]);
+      if (PRESETS[k].flame || PRESETS[k].backdrop === "sun") PRESETS[k].flameSprites = buildFlameSprites(PRESETS[k]);
+      if (PRESETS[k].rain) PRESETS[k].rainSprites = buildRainSprites(PRESETS[k]);
+    }
+    resize();
+    loadWord("pyro", false);
+    if (!reduceMotion) requestAnimationFrame(t => { last = t; requestAnimationFrame(frame); });
+  })();
+
+  // Debug handle (harmless): render a deterministic frame without the rAF loop.
+  window.__spike = {
+    field, resize, loadWord, PRESETS,
+    size: () => ({ W, H }),
+    snap(key, n = 60) {
+      resize();
+      const pr = PRESETS[key];
+      current = pr; field.load(pr, W, H, false);
+      applyChrome(pr);
+      field.gatherStrength = 1; field.dissolve = 0; field.intensity = 1;
+      gsap.killTweensOf(field);
+      const dt = 1 / 60, f = 1;
+      for (let i = 0; i < n; i++) field.update(dt, f);
+      field.render(ctx, W, H);
+      return { count: field.count, W, H, label: pr.label };
+    },
+  };
+  </script>
+</body>
+</html>

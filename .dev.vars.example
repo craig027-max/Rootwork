@@ -1,0 +1,32 @@
+# Cloudflare Pages Functions secrets (the /functions/api/stripe handlers).
+#
+# Local:  copy to `.dev.vars` and fill in real values, then run `wrangler pages dev`.
+# Prod:   set these in the Pages project → Settings → Variables and secrets
+#         (mark STRIPE_SECRET_KEY and SUPABASE_SERVICE_ROLE_KEY as "Secret").
+#
+# These are SERVER-side only — they are NOT VITE_-prefixed and must never reach
+# the browser bundle. The SPA's publishable bits live in .env.local instead.
+#
+# ISOLATION: every value here belongs to the NEW Wondral Words Supabase + Stripe
+# setup. Never share keys, price ids, or projects with Orbital / Piano Surge.
+
+# Stripe (test mode while building; swap for live keys at launch)
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+STRIPE_PRICE_SINGLE=price_xxx_single_annual
+STRIPE_PRICE_MULTI=price_xxx_multi_annual
+
+# Supabase (NEW Wondral Words project). The service-role key bypasses RLS — it is
+# the webhook's authority to write entitlements + consent evidence. Keep it
+# secret; never put it in any VITE_ var.
+SUPABASE_URL=https://your-project-ref.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=service-role-key-here
+
+# Optional: base URL for post-checkout redirects. Defaults to the function's own
+# serving origin, which is correct for the single-domain Pages setup. Set only if
+# the API is ever served from a different host than the app.
+# APP_BASE_URL=https://words.wondral.app
+
+# Optional redirect path overrides (defaults: /?checkout=success and /?checkout=cancel)
+# CHECKOUT_SUCCESS_PATH=/?checkout=success
+# CHECKOUT_CANCEL_PATH=/?checkout=cancel

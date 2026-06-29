@@ -1,0 +1,121 @@
+import { useState } from 'react';
+import { useWondralStore } from '../app/store';
+import { startCheckout, type CheckoutTier } from '../core/checkout';
+import { useOnline, hasSupabaseConfig } from '../app/hooks';
+import { Button } from './components/Button';
+import { Card } from './components/Card';
+
+const TIERS: Array<{ id: CheckoutTier; name: string; price: string; blurb: string; jewel: string }> = [
+  {
+    id: 'single',
+    name: 'Single Scholar',
+    price: '$49 / year',
+    blurb: 'One learner. All 152 roots across every tier, plus the full Root Rush quiz.',
+    jewel: 'jade',
+  },
+  {
+    id: 'multi',
+    name: 'Family',
+    price: '$79 / year',
+    blurb: 'Up to 10 student profiles under one parent account — track each child separately.',
+    jewel: 'violet',
+  },
+];
+
+function messageFor(code: string): string {
+  switch (code) {
+    case 'network':
+      return "Couldn't reach checkout. Check your connection and try again.";
+    case 'no_url':
+      return 'Checkout is temporarily unavailable. Please try again shortly.';
+    case 'price_not_configured':
+    case 'stripe_error':
+      return 'Payments are being set up. Please try again later.';
+    default:
+      return 'Something went wrong starting checkout. Please try again.';
+  }
+}
+
+/**
+ * The paywall (tier picker → Stripe Checkout). Reachable from a locked root or
+ * "Go Premium". CRUCIAL: it NEVER dead-ends. When the backend is unconfigured or
+ * the device is offline, the CTAs are disabled and a calm notice explains why —
+ * never a broken redirect or an error screen (the PianoSurge App Store lesson).
+ */
+export function Paywall() {
+  const setView = useWondralStore((s) => s.setView);
+  const online = useOnline();
+  const [busy, setBusy] = useState<CheckoutTier | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const unavailable = !hasSupabaseConfig || !online;
+
+  async function buy(tier: CheckoutTier) {
+    setError(null);
+    setBusy(tier);
+    const res = await startCheckout(tier);
+    setBusy(null);
+    if (res && 'error' in res) {
+      // The purchase IS the COPPA consent — an anonymous user must sign up first.
+      if (res.error === 'account_required') {
+        setView('auth');
+        return;
+      }
+      setError(messageFor(res.error));
+    }
+    // success → the browser navigates to Stripe; nothing more to do here.
+  }
+
+  return (
+    <div className="ww-stack" style={{ maxWidth: 760, margin: '0 auto' }}>
+      <div>
+        <p className="ww-eyebrow">Unlock everything</p>
+        <h1 className="text-gradient-hero">Go Premium</h1>
+        <p className="ww-muted">
+          Tier 1 (Starter) is always free. A one-time annual unlock opens every tier and the
+          full quiz. Your purchase is also the verified parental consent for your child's account.
+        </p>
+      </div>
+
+      {unavailable ? (
+        <div className="ww-notice" role="status">
+          {online
+            ? 'Purchasing isn’t available in this preview build (no payment backend configured). Everything in the free tier still works.'
+            : 'You’re offline. Reconnect to upgrade — the free Tier 1 roots keep working in the meantime.'}
+        </div>
+      ) : null}
+
+      {error ? (
+        <div className="ww-notice is-error" role="alert">
+          {error}
+        </div>
+      ) : null}
+
+      <div className="ww-paywall-tiers">
+        {TIERS.map((t) => (
+          <Card key={t.id} jewel={t.jewel} className="ww-stack" interactive>
+            <p className="ww-eyebrow">{t.name}</p>
+            <h2 className="text-gradient">{t.price}</h2>
+            <p className="ww-muted" style={{ minHeight: 60 }}>
+              {t.blurb}
+            </p>
+            <Button
+              jewel={t.jewel}
+              block
+              disabled={unavailable || busy !== null}
+              onClick={() => void buy(t.id)}
+            >
+              {busy === t.id ? 'Starting checkout…' : `Choose ${t.name}`}
+            </Button>
+          </Card>
+        ))}
+      </div>
+
+      <div className="ww-row">
+        <Button variant="ghost" onClick={() => setView('home')}>
+          Back to learning
+        </Button>
+      </div>
+    </div>
+  );
+}
