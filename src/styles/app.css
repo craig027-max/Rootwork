@@ -197,6 +197,20 @@
   color: var(--text-muted);
 }
 
+/* Root Rush result — grade + stars */
+.ww-grade {
+  font-family: var(--font-game);
+  font-weight: 900;
+  font-size: clamp(5rem, 16vw, 8rem);
+  line-height: 0.92;
+}
+.ww-grade-stars {
+  font-size: 1.6rem;
+  letter-spacing: 0.16em;
+  color: var(--gold);
+  text-shadow: 0 0 18px rgba(255, 210, 74, 0.45);
+}
+
 /* ============================================================
    Home & Profile — master-detail (ported from the design package
    rootwork/ui_kits/rootwork-app/home.html). Theming flows through
@@ -232,6 +246,7 @@
   pointer-events: none;
 }
 .ww-avatar {
+  position: relative;
   flex: none;
   width: clamp(72px, 9vw, 92px);
   height: clamp(72px, 9vw, 92px);
@@ -241,6 +256,20 @@
   place-items: center;
   font-size: clamp(2rem, 4vw, 2.7rem);
   box-shadow: 0 0 38px rgba(52, 224, 166, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.ww-avatar .lvl {
+  position: absolute;
+  bottom: -8px;
+  right: -8px;
+  background: var(--bg-elevated);
+  border: 2px solid var(--bg-card);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-game);
+  font-weight: 800;
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  padding: 3px 9px;
+  color: var(--gold);
 }
 .ww-pinfo {
   min-width: 0;
@@ -296,6 +325,18 @@
   text-transform: uppercase;
   color: var(--text-muted);
   margin-top: 7px;
+}
+.ww-stat.streak .v {
+  color: var(--accent-coral, #ff8a6b);
+}
+.ww-stat.stars .v {
+  color: var(--gold);
+}
+.ww-stat.acc .v {
+  color: var(--success);
+}
+.ww-stat.roots .v {
+  color: var(--jewel-cyan);
 }
 
 /* Main grid: list + detail */

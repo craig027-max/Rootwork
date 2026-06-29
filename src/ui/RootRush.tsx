@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
 import { ROOTS, rootId, isRootOpenable, type Root } from '../data/roots';
+import type { RunResult } from '../core/stats';
 import { QuizTile, type QuizTileState } from './components/QuizTile';
 import { Button } from './components/Button';
 import { Badge } from './components/Badge';
@@ -18,6 +19,7 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 const QUESTION_COUNT = 8;
+const MAX_STARS = 5;
 
 interface Question {
   root: Root;
@@ -28,13 +30,14 @@ interface Question {
 /**
  * Root Rush — a quick timed-feel meaning-match quiz. Runs over the roots the
  * learner can actually access (Tier 1 for free users; everything once entitled),
- * so it never quizzes locked content. Pure UI; persistence/leaderboards are a
- * follow-on.
+ * so it never quizzes locked content. Finishing a run banks stars / accuracy /
+ * XP / streak via the store (core/stats), which feeds the home profile band.
  */
 export function RootRush() {
   const entitled = useEntitledForDisplay();
   const setView = useWondralStore((s) => s.setView);
   const requestUpgrade = useWondralStore((s) => s.requestUpgrade);
+  const recordQuizRun = useWondralStore((s) => s.recordQuizRun);
 
   // Quiz over the roots the learner can open (Tier 1 free; all once entitled) —
   // not the linear-unlock set, so a free learner gets a full Tier-1 quiz.
@@ -55,6 +58,7 @@ export function RootRush() {
   const [picked, setPicked] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [combo, setCombo] = useState(0);
+  const [result, setResult] = useState<RunResult | null>(null);
 
   if (questions.length < 1) {
     return (
@@ -66,21 +70,33 @@ export function RootRush() {
   }
 
   if (i >= questions.length) {
-    const pct = Math.round((score / questions.length) * 100);
+    const pct = result?.pct ?? Math.round((score / questions.length) * 100);
+    const stars = result?.stars ?? 0;
     return (
       <div className="ww-center ww-stack">
         <p className="ww-eyebrow">Root Rush complete</p>
+        {result ? (
+          <div className="ww-grade text-gradient-hero" aria-label={`Grade ${result.grade}`}>
+            {result.grade}
+          </div>
+        ) : null}
+        <div className="ww-grade-stars" aria-label={`${stars} of ${MAX_STARS} stars`}>
+          {'★'.repeat(stars)}
+          {'☆'.repeat(MAX_STARS - stars)}
+        </div>
         <h1 className="text-gradient-hero">
           {score} / {questions.length}
         </h1>
         <p className="ww-muted">{pct}% correct</p>
-        <div className="ww-row">
+        {result?.isNewBest ? <Badge variant="gold">✨ New best!</Badge> : null}
+        <div className="ww-row" style={{ justifyContent: 'center' }}>
           <Button
             onClick={() => {
               setI(0);
               setPicked(null);
               setScore(0);
               setCombo(0);
+              setResult(null);
             }}
           >
             Play again
@@ -99,6 +115,7 @@ export function RootRush() {
   }
 
   const q = questions[i]!;
+  const isLast = i + 1 >= questions.length;
 
   function answer(idx: number) {
     if (picked !== null) return;
@@ -109,6 +126,16 @@ export function RootRush() {
     } else {
       setCombo(0);
     }
+  }
+
+  function advance() {
+    if (isLast) {
+      // `score` already reflects this final answer — bank the run exactly once.
+      const finalCorrect = score;
+      setResult(recordQuizRun(finalCorrect, questions.length));
+    }
+    setPicked(null);
+    setI((x) => x + 1);
   }
 
   function tileState(idx: number): QuizTileState {
@@ -151,14 +178,8 @@ export function RootRush() {
       </div>
 
       {picked !== null ? (
-        <Button
-          block
-          onClick={() => {
-            setPicked(null);
-            setI((x) => x + 1);
-          }}
-        >
-          {i + 1 < questions.length ? 'Next →' : 'See results'}
+        <Button block onClick={advance}>
+          {isLast ? 'See results' : 'Next →'}
         </Button>
       ) : null}
     </div>

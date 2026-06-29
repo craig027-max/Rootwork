@@ -59,6 +59,7 @@ function leadWithRoots(prefix: string, samples: Root[]): ReactNode {
 export function Home() {
   const entitled = useEntitledForDisplay();
   const completed = useWondralStore((s) => s.completedRoots);
+  const stats = useWondralStore((s) => s.stats);
   const students = useWondralStore((s) => s.students);
   const activeStudentId = useWondralStore((s) => s.activeStudentId);
   const openRoot = useWondralStore((s) => s.openRoot);
@@ -106,13 +107,7 @@ export function Home() {
 
   return (
     <div className="ww-home">
-      <ProfileBand
-        name={name}
-        avatar={avatar}
-        rootsOwned={completed.size}
-        currentTier={currentTier}
-        currentTierStat={tierStats(currentTier, completed)}
-      />
+      <ProfileBand name={name} avatar={avatar} rootsOwned={completed.size} stats={stats} />
 
       <div className="ww-home-grid">
         <div>

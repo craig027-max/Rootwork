@@ -12,6 +12,13 @@ import {
   saveProgress as saveRemoteProgress,
 } from '../core/progress';
 import { addStudentProfile, deleteStudentProfile, renameStudentProfile } from '../core/profile';
+import {
+  EMPTY_STATS,
+  recordRootLearned,
+  recordRun,
+  type GameStats,
+  type RunResult,
+} from '../core/stats';
 import type { Entitlement, LessonProgressRow, Profile, StudentProfile } from '../core/supabase';
 
 export type AppView = 'home' | 'deck' | 'quiz' | 'auth' | 'consent' | 'dashboard' | 'paywall';
@@ -89,6 +96,48 @@ function isOffline(): boolean {
   return typeof navigator !== 'undefined' && navigator.onLine === false;
 }
 
+// Gamification stats are namespaced per active student, same scheme as progress.
+// Local-only for now (no Supabase stats table yet); the pure rules live in
+// core/stats. Merge over EMPTY_STATS so older saved blobs gain new fields safely.
+const STATS_KEY_PREFIX = 'wondral:stats:v1:';
+
+function statsKey(studentId: string | null): string {
+  return STATS_KEY_PREFIX + (studentId ?? 'anon');
+}
+
+function loadStats(studentId: string | null): GameStats {
+  if (typeof localStorage === 'undefined') return { ...EMPTY_STATS };
+  try {
+    const raw = localStorage.getItem(statsKey(studentId));
+    if (!raw) return { ...EMPTY_STATS };
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return { ...EMPTY_STATS, ...(parsed as Partial<GameStats>) };
+    }
+    return { ...EMPTY_STATS };
+  } catch {
+    return { ...EMPTY_STATS };
+  }
+}
+
+function saveStats(stats: GameStats, studentId: string | null): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(statsKey(studentId), JSON.stringify(stats));
+  } catch {
+    // ignore quota / privacy errors
+  }
+}
+
+/** Local calendar day (YYYY-MM-DD) used to drive the daily streak. */
+function todayKey(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 interface WondralStore {
   // Top-level view.
   view: AppView;
@@ -146,10 +195,16 @@ interface WondralStore {
   dismissCelebration: () => void;
   resetProgress: () => void;
   hydrateFromServer: (rows: LessonProgressRow[], studentId: string | null) => void;
+
+  // Gamification — derived from learning + quiz activity, persisted per student.
+  stats: GameStats;
+  /** Record a finished Root Rush run; returns the run summary for the UI. */
+  recordQuizRun: (correct: number, total: number) => RunResult;
 }
 
 const INITIAL_ACTIVE_STUDENT = loadActiveStudentId();
 const INITIAL_PROGRESS = loadProgress(INITIAL_ACTIVE_STUDENT);
+const INITIAL_STATS = loadStats(INITIAL_ACTIVE_STUDENT);
 
 export const useWondralStore = create<WondralStore>((set, get) => ({
   view: 'home',
@@ -210,6 +265,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       activeStudentId: null,
       progress: freePlay,
       completedRoots: completedIdSet(freePlay),
+      stats: loadStats(null),
       view: 'home',
     });
   },
@@ -220,7 +276,12 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   setActiveStudent: (id) => {
     saveActiveStudentId(id);
     const next = loadProgress(id);
-    set({ activeStudentId: id, progress: next, completedRoots: completedIdSet(next) });
+    set({
+      activeStudentId: id,
+      progress: next,
+      completedRoots: completedIdSet(next),
+      stats: loadStats(id),
+    });
   },
   addStudent: async (nickname, avatar) => {
     const parentId = get().authUser?.id;
@@ -252,6 +313,14 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   closeRoot: () => set({ currentRootId: null, view: 'home' }),
   progress: INITIAL_PROGRESS,
   completedRoots: completedIdSet(INITIAL_PROGRESS),
+  stats: INITIAL_STATS,
+  recordQuizRun: (correct, total) => {
+    const studentId = get().activeStudentId;
+    const { stats, run } = recordRun(get().stats, { correct, total, day: todayKey() });
+    saveStats(stats, studentId);
+    set({ stats });
+    return run;
+  },
   completeRoot: (id) => {
     const cur = get().progress;
     if (cur[id]) return;
@@ -259,9 +328,12 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
     const completedAt = Date.now();
     const next: RootProgress = { ...cur, [id]: { completed: true, completedAt } };
     saveProgress(next, studentId);
+    const nextStats = recordRootLearned(get().stats, { day: todayKey() });
+    saveStats(nextStats, studentId);
     set({
       progress: next,
       completedRoots: completedIdSet(next),
+      stats: nextStats,
       celebration: { rootId: id },
     });
 

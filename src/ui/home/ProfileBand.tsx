@@ -1,49 +1,54 @@
-import { ROOTS, TIERS, type TierNum } from '../../data/roots';
-import type { TierStat } from './menu';
+import { ROOTS } from '../../data/roots';
+import { accuracyPct, levelForXp, type GameStats } from '../../core/stats';
 
 /**
- * Profile band — avatar, identity, and the real stats we actually track
- * (roots owned + current-tier progress). The design's streak / stars / accuracy
- * / level have no data source yet (the quiz doesn't persist a score), so they're
- * intentionally omitted rather than faked.
- *
- * TODO(gamification): once quiz scoring + streak tracking land, restore the
- * 🔥 streak / ★ stars / % accuracy / LV badge from home.html.
+ * Profile band — avatar + level badge, identity, and the gamified stats, all
+ * fed from real activity (core/stats): daily streak, stars banked, lifetime
+ * quiz accuracy, and roots owned. Accuracy reads "—" until the first quiz run
+ * so a brand-new learner never sees a misleading 0%.
  */
 export function ProfileBand({
   name,
   avatar,
   rootsOwned,
-  currentTier,
-  currentTierStat,
+  stats,
 }: {
   name: string;
   avatar: string;
   rootsOwned: number;
-  currentTier: TierNum;
-  currentTierStat: TierStat;
+  stats: GameStats;
 }) {
-  const tierName = TIERS[currentTier - 1]?.n ?? 'Starter';
+  const level = levelForXp(stats.xp);
+  const accuracy = accuracyPct(stats);
   return (
     <section className="ww-profile">
       <div className="ww-avatar" aria-hidden="true">
         {avatar}
+        <span className="lvl">LV {level}</span>
       </div>
       <div className="ww-pinfo">
         <div className="ww-hello">Welcome back</div>
         <h1>{name}</h1>
         <div className="ww-rank">
-          Owns {rootsOwned} of {ROOTS.length} roots
+          Level {level} · {stats.xp} XP · owns {rootsOwned} of {ROOTS.length} roots
         </div>
       </div>
       <div className="ww-stats">
-        <div className="ww-stat">
+        <div className="ww-stat streak">
+          <div className="v">🔥 {stats.streakCurrent}</div>
+          <div className="l">Day Streak</div>
+        </div>
+        <div className="ww-stat stars">
+          <div className="v">★ {stats.totalStars}</div>
+          <div className="l">Stars</div>
+        </div>
+        <div className="ww-stat acc">
+          <div className="v">{accuracy === null ? '—' : `${accuracy}%`}</div>
+          <div className="l">Accuracy</div>
+        </div>
+        <div className="ww-stat roots">
           <div className="v">{rootsOwned}</div>
           <div className="l">Roots Owned</div>
-        </div>
-        <div className="ww-stat">
-          <div className="v">{currentTierStat.pct}%</div>
-          <div className="l">{tierName} Tier</div>
         </div>
       </div>
     </section>
