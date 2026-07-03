@@ -1,0 +1,135 @@
+/* ============================================================
+   ROOT RUSH — quiz overlay styles (src/ui/RootRush.tsx)
+   ------------------------------------------------------------
+   Ported from rootwork/ui_kits/rootwork-app/index.html (.q-*
+   rules + the .quiz overlay). Values are copied verbatim where
+   possible; only the design tokens (tokens/*.css) are used.
+
+   Renames vs. the package (to avoid colliding with app.css,
+   which is edited concurrently):
+     .quiz      → .q-rush   (overlay root — always "open" while mounted)
+     .quiz-x    → .q-x
+     #quizStage → .q-stage
+     @keyframes pulse → q-pulse
+
+   Fix vs. the package: --qc / --qgrad live on the OVERLAY root
+   (not the stage) so the radial jewel bloom re-colors with the
+   current question — in the package the vars were set on a child
+   and the bloom never saw them.
+   ============================================================ */
+
+.q-rush {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  --qc: var(--jewel-jade-rgb);
+  --qgrad: var(--gradient-hero);
+  padding: clamp(16px, 4vw, 52px);
+  padding-bottom: calc(clamp(16px, 4vw, 52px) + env(safe-area-inset-bottom));
+  background:
+    radial-gradient(ellipse 75% 55% at 50% 0%, rgba(var(--qc), 0.14), transparent 62%),
+    rgba(6, 6, 16, 0.93);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+.q-stage { width: 100%; max-width: 660px; }
+
+.q-x { position: fixed; top: 18px; right: 18px; width: 42px; height: 42px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.16); background: rgba(255,255,255,0.05); color: var(--text-primary); font-size: 1.05rem; cursor: pointer; z-index: 2; transition: background var(--dur-fast); }
+.q-x:hover { background: rgba(255,255,255,0.12); }
+
+.q-card { background: linear-gradient(180deg, rgba(var(--qc),0.06), transparent 32%), var(--bg-card);
+  border: 1px solid rgba(var(--qc),0.20); border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-card), 0 0 70px rgba(var(--qc),0.12), inset 0 1px 0 rgba(255,255,255,0.04);
+  padding: clamp(24px,4vw,42px); }
+
+.q-eyebrow { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; color: rgb(var(--qc)); }
+.q-eyebrow .dot { width: 7px; height: 7px; border-radius: 50%; background: rgb(var(--qc)); box-shadow: 0 0 10px rgb(var(--qc)); animation: q-pulse 2s ease-in-out infinite; }
+@keyframes q-pulse { 0%,100% { opacity: 1; transform: scale(1);} 50% { opacity: 0.45; transform: scale(0.7);} }
+.q-rush .g, .q-big, .q-grade { background: var(--qgrad); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+
+/* start */
+.q-title { font-family: var(--font-game); font-weight: 900; font-size: clamp(2rem,5.5vw,3.1rem); line-height: 1; letter-spacing: -0.02em; margin: 14px 0 14px; }
+.q-sub { font-size: 1rem; line-height: 1.6; color: var(--text-secondary); max-width: 46ch; }
+.q-sub b { color: var(--text-primary); }
+.q-lvl-label { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-muted); margin: 26px 0 12px; }
+.q-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.q-chip { font-family: var(--font-body); font-size: 0.86rem; font-weight: 600; color: var(--text-secondary); padding: 9px 16px; border-radius: var(--radius-pill); border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.03); cursor: pointer; transition: all var(--dur-fast) var(--ease-snap); }
+.q-chip:hover { border-color: rgba(var(--qc),0.5); color: var(--text-primary); }
+.q-chip.on { color: #0a0a1a; background: var(--qgrad); border-color: transparent; box-shadow: 0 0 22px rgba(var(--qc),0.4); }
+/* Entitlement-locked tier chips: visible but not selectable. */
+.q-chip.locked, .q-chip:disabled { opacity: 0.45; cursor: not-allowed; }
+.q-chip.locked:hover, .q-chip:disabled:hover { border-color: rgba(255,255,255,0.12); color: var(--text-secondary); }
+.q-go { margin-top: 28px; font-family: var(--font-game); font-weight: 700; font-size: 1.02rem; color: #07120c; padding: 15px 30px; border: none; border-radius: var(--radius-md); background: var(--qgrad); cursor: pointer; box-shadow: 0 0 30px rgba(var(--qc),0.4), inset 0 1px 0 rgba(255,255,255,0.25); transition: transform var(--dur-fast) var(--ease-snap), opacity var(--dur-fast); }
+.q-go:hover { transform: translateY(-2px); opacity: 0.94; }
+.q-go:active { transform: scale(0.98); }
+.q-best { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--text-muted); margin-top: 18px; }
+.q-best b { color: var(--accent-gold); }
+
+/* play */
+.q-hud { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-family: var(--font-mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.q-count { color: var(--text-muted); }
+.q-combo { color: var(--text-muted); transition: color var(--dur-fast); }
+.q-combo.live { color: var(--accent-amber); text-shadow: 0 0 16px rgba(245,158,11,0.5); }
+.q-score { font-family: var(--font-game); font-weight: 800; font-size: 1rem; color: var(--text-primary); letter-spacing: 0; }
+.q-prog { height: 4px; border-radius: 4px; background: rgba(255,255,255,0.08); margin: 14px 0 4px; overflow: hidden; }
+.q-prog span { display: block; height: 100%; background: var(--qgrad); transition: width var(--dur-med) var(--ease-snap); }
+.q-ask { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-top: 22px; }
+.q-prompt { text-align: center; padding: 18px 0 26px; }
+.q-big { font-family: var(--font-game); font-weight: 900; font-size: clamp(2.6rem,8vw,4.4rem); line-height: 1; letter-spacing: -0.02em; filter: drop-shadow(0 0 26px rgba(var(--qc),0.35)); }
+.q-say { font-family: var(--font-mono); font-size: 0.84rem; color: var(--text-secondary); margin-top: 12px; }
+.q-psub { font-family: var(--font-display); font-size: 0.98rem; color: var(--text-secondary); margin-top: 8px; }
+.q-options { display: grid; gap: 9px; }
+.q-opt { display: flex; align-items: center; gap: 14px; text-align: left; padding: 15px 16px; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.025); color: var(--text-primary); cursor: pointer; transition: transform var(--dur-fast) var(--ease-snap), border-color var(--dur-fast), background var(--dur-fast); }
+.q-opt:hover { transform: translateY(-2px); border-color: rgba(var(--qc),0.5); background: rgba(var(--qc),0.07); }
+.q-opt .q-key { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 7px; border: 1px solid rgba(255,255,255,0.14); font-family: var(--font-mono); font-size: 0.74rem; color: var(--text-muted); }
+.q-opt .q-lbl { font-family: var(--font-game); font-weight: 600; font-size: 1.08rem; }
+.q-opt.done { cursor: default; }
+.q-opt.done:hover { transform: none; border-color: rgba(255,255,255,0.1); background: rgba(255,255,255,0.025); }
+.q-opt.correct, .q-opt.correct:hover { border-color: rgba(34,197,94,0.6); background: rgba(34,197,94,0.14); box-shadow: 0 0 26px rgba(34,197,94,0.22); }
+.q-opt.correct .q-key { border-color: rgba(34,197,94,0.6); color: var(--accent-green); }
+.q-opt.wrong, .q-opt.wrong:hover { border-color: rgba(239,68,68,0.6); background: rgba(239,68,68,0.12); }
+.q-opt.wrong .q-key { border-color: rgba(239,68,68,0.6); color: var(--accent-red); }
+.q-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 30px; margin-top: 18px; }
+.q-fb { font-family: var(--font-game); font-weight: 700; font-size: 1rem; }
+.q-fb.good { color: var(--accent-green); }
+.q-fb.bad { color: var(--accent-red); }
+.q-fb b { color: var(--text-primary); }
+.q-next { margin-left: auto; font-family: var(--font-game); font-weight: 700; font-size: 0.92rem; color: var(--text-primary); padding: 11px 22px; border-radius: var(--radius-md); border: 1px solid rgba(var(--qc),0.4); background: rgba(var(--qc),0.12); cursor: pointer; transition: background var(--dur-fast), transform var(--dur-fast) var(--ease-snap); }
+.q-next:hover { background: rgba(var(--qc),0.2); transform: translateY(-2px); }
+.q-next:active { transform: scale(0.98); }
+
+/* result */
+.q-result { text-align: center; }
+.q-result .q-eyebrow { justify-content: center; }
+.q-grade { font-family: var(--font-game); font-weight: 900; font-size: clamp(5rem,16vw,8rem); line-height: 0.92; margin: 8px 0 2px; filter: drop-shadow(0 0 34px rgba(var(--qc),0.4)); }
+.q-stars { font-size: 1.5rem; letter-spacing: 0.16em; color: var(--accent-gold); text-shadow: 0 0 18px rgba(255,215,0,0.45); }
+.q-result-score { font-family: var(--font-game); font-weight: 800; font-size: 1.6rem; margin-top: 18px; color: var(--text-primary); }
+.q-newbest { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.16em; vertical-align: middle; color: #07120c; background: var(--gradient-gold); padding: 4px 9px; border-radius: var(--radius-pill); margin-left: 8px; }
+.q-stats { display: flex; justify-content: center; gap: clamp(18px,5vw,46px); margin: 26px 0 6px; }
+.q-stats div { display: flex; flex-direction: column; gap: 3px; }
+.q-stats b { font-family: var(--font-game); font-weight: 800; font-size: 1.5rem; color: rgb(var(--qc)); }
+.q-stats span { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+.q-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 26px; }
+.q-actions .q-go { margin-top: 0; }
+.q-ghost { font-family: var(--font-body); font-weight: 600; font-size: 0.92rem; color: var(--text-secondary); padding: 15px 24px; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.03); cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast); }
+.q-ghost:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+/* empty-pool fallback */
+.q-empty { text-align: center; }
+.q-empty p { color: var(--text-secondary); margin: 14px 0 6px; }
+
+@media (max-width: 560px) {
+  .q-stats { gap: 18px; }
+  .q-big { font-size: clamp(2.2rem,12vw,3rem); }
+}
+
+/* Reduced motion: motion.css already zeroes animation/transition durations
+   globally; kill the pulsing dot + glow bloom flourishes explicitly too. */
+@media (prefers-reduced-motion: reduce) {
+  .q-eyebrow .dot { animation: none; }
+  .q-opt:hover, .q-go:hover, .q-next:hover { transform: none; }
+  .q-big, .q-grade { filter: none; }
+}
