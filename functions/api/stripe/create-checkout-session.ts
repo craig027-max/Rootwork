@@ -26,9 +26,11 @@ const json = (data: unknown, status = 200): Response =>
  *
  * Verifies the caller's Supabase JWT SERVER-SIDE and derives parent_id from it —
  * it never trusts a client-supplied id, so a user can only ever buy for their own
- * account. Mints a one-time ('payment') Checkout Session for the chosen tier and
- * stamps parent_id into both the session metadata and client_reference_id so the
- * webhook can grant the entitlement to exactly this parent.
+ * account. Refuses with 409 'already_entitled' if the parent already holds an
+ * active entitlement (double-purchase guard). Otherwise mints a one-time
+ * ('payment') Checkout Session for the chosen tier and stamps parent_id into both
+ * the session metadata and client_reference_id so the webhook can grant the
+ * entitlement to exactly this parent.
  */
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const token = (request.headers.get('Authorization') ?? '')
@@ -49,6 +51,29 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   // The purchase IS the COPPA consent, and consent must attach to a durable
   // account — so an anonymous/free-play session must sign up first.
   if (user.is_anonymous) return json({ error: 'account_required' }, 403);
+
+  // Double-purchase guard: a second tab or a stale paywall must not let a parent
+  // pay twice. Any currently-active entitlement → 409 (the client maps it to a
+  // friendly "already unlocked" state). An expired/refunded row may buy again.
+  // Tier upgrades (single → multi mid-year) are deliberately not a thing yet —
+  // when they are, this guard is where the exception goes.
+  const { data: existing, error: entErr } = await supabase
+    .from('entitlements')
+    .select('status, expires_at')
+    .eq('parent_id', user.id)
+    .maybeSingle();
+  if (entErr) {
+    // Fail OPEN: blocking checkout on a flaky read would stop ALL purchases; the
+    // worst case of proceeding is the pre-guard behavior (a duplicate charge,
+    // which support can refund).
+    console.error('[stripe] entitlement pre-check failed (proceeding)', entErr);
+  } else if (
+    existing &&
+    existing.status === 'active' &&
+    (!existing.expires_at || new Date(existing.expires_at).getTime() > Date.now())
+  ) {
+    return json({ error: 'already_entitled' }, 409);
+  }
 
   let tier: 'single' | 'multi' = 'single';
   try {

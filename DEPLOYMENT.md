@@ -51,8 +51,12 @@ the static app first and wire the backend incrementally.
    Copy each **price id** (`price_…`).
 2. **Webhook endpoint:** Developers → Webhooks → Add endpoint:
    - URL: `https://words.wondral.app/api/stripe/webhook`
-   - Events: `checkout.session.completed`
+   - Events: `checkout.session.completed`, `charge.refunded`, `charge.dispute.created`
+     (the last two revoke the entitlement — without them a refunded or disputed purchase
+     stays unlocked for the full year)
    - Copy the **Signing secret** (`whsec_…`).
+   *Note:* the paywall copy in `src/ui/Paywall.tsx` hardcodes “$49 / year” and “$79 / year” —
+   if the Stripe price amounts ever change, change them together.
 3. Put the Stripe values into `.dev.vars` locally (copy from `.dev.vars.example`) and into the
    Cloudflare Pages env (step 3 below).
 

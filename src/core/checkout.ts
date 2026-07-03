@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { getEntitlement, isEntitlementActive } from './entitlement';
+import { getProfile } from './profile';
 import { useWondralStore } from '../app/store';
 
 export type CheckoutTier = 'single' | 'multi';
@@ -37,14 +38,20 @@ export async function startCheckout(tier: CheckoutTier): Promise<{ error: string
   window.location.href = url; // hand off to Stripe Checkout
 }
 
+export type CheckoutReturn =
+  | { status: 'cancel' }
+  /** `unlocked` resolves true once the webhook-granted entitlement lands. */
+  | { status: 'success'; unlocked: Promise<boolean> };
+
 /**
  * Handle a return from Stripe Checkout (success_url / cancel_url carry
- * ?checkout=success|cancel). Strips the param so a refresh can't re-fire, and on
- * success polls the parent's entitlement — the webhook grants it asynchronously,
- * so it can lag the redirect by a beat — folding it into the store once active.
- * Returns the outcome for the caller to surface, or null if this wasn't a return.
+ * ?checkout=success|cancel). Strips the param so a refresh can't re-fire.
+ * Returns SYNCHRONOUSLY so the UI can show "Payment received — unlocking…" the
+ * instant the page loads; on success, `unlocked` carries the entitlement poll
+ * (the webhook grants asynchronously, so it can lag the redirect by a beat).
+ * null if this wasn't a checkout return.
  */
-export async function consumeCheckoutReturn(): Promise<'success' | 'cancel' | null> {
+export function consumeCheckoutReturn(): CheckoutReturn | null {
   if (typeof window === 'undefined') return null;
   const params = new URLSearchParams(window.location.search);
   const status = params.get('checkout');
@@ -55,25 +62,45 @@ export async function consumeCheckoutReturn(): Promise<'success' | 'cancel' | nu
   const qs = params.toString();
   window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''));
 
-  if (status === 'cancel') return 'cancel';
+  if (status === 'cancel') return { status: 'cancel' };
+  return { status: 'success', unlocked: pollEntitlementUnlock() };
+}
 
-  const store = useWondralStore.getState();
-  const userId = store.authUser?.id ?? (await supabase.auth.getUser()).data.user?.id ?? null;
-  if (userId) {
-    for (let attempt = 0; attempt < 6; attempt++) {
-      try {
-        const ent = await getEntitlement(userId);
-        if (ent) {
-          store.setEntitlement(ent);
-          if (isEntitlementActive(ent)) break;
+/**
+ * Poll the parent's entitlement until it turns active (the webhook can outlast
+ * the redirect), folding each fetch into the store. On unlock, also refetch the
+ * profile — the webhook stamps consent + role there, and a stale profile would
+ * re-prompt a parent who just paid through the consent gate. Resolves false if
+ * the grant hasn't landed after ~9s; callers surface a "still processing" state
+ * with a retry that calls this again — never a silent still-locked app.
+ */
+export async function pollEntitlementUnlock(attempts = 6): Promise<boolean> {
+  const userId =
+    useWondralStore.getState().authUser?.id ??
+    (await supabase.auth.getUser()).data.user?.id ??
+    null;
+  if (!userId) return false;
+
+  for (let attempt = 0; attempt < attempts; attempt++) {
+    if (attempt > 0) await delay(1500);
+    try {
+      const ent = await getEntitlement(userId);
+      if (ent) {
+        useWondralStore.getState().setEntitlement(ent);
+        if (isEntitlementActive(ent)) {
+          try {
+            useWondralStore.getState().setProfile(await getProfile(userId));
+          } catch {
+            // non-fatal — hydrate's auth listener will catch the profile up
+          }
+          return true;
         }
-      } catch {
-        // transient — keep polling
       }
-      await delay(1500);
+    } catch {
+      // transient — keep polling
     }
   }
-  return 'success';
+  return false;
 }
 
 function delay(ms: number): Promise<void> {

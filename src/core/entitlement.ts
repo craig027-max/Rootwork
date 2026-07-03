@@ -32,6 +32,29 @@ export function isEntitlementActive(
 }
 
 /**
+ * How many student profiles the parent may have. This is the client-side
+ * enforcement of `entitlement.seats`, which the Stripe webhook grants as
+ * single=1 / multi(family)=10. No active entitlement (free tier, or an expired /
+ * refunded purchase) → 1: free play is "one learner", matching the paywall copy.
+ * Pure so the cap rule is unit-testable; `nowMs` injectable like
+ * isEntitlementActive.
+ */
+export function seatLimit(ent: Entitlement | null, nowMs: number = Date.now()): number {
+  if (!ent || !isEntitlementActive(ent, nowMs)) return 1;
+  // Guard a malformed row (seats 0/null) — an active purchase always buys ≥ 1.
+  return Math.max(1, ent.seats ?? 1);
+}
+
+/** Whether the roster has room for one more student under the current plan. */
+export function canAddStudent(
+  currentCount: number,
+  ent: Entitlement | null,
+  nowMs: number = Date.now(),
+): boolean {
+  return currentCount < seatLimit(ent, nowMs);
+}
+
+/**
  * Whether the gate should treat a user as entitled *for display*, which is
  * deliberately broader than `isEntitlementActive`: it also returns true while the
  * entitlement is still resolving for a signed-in user, so the paywall (💳) doesn't

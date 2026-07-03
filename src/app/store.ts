@@ -3,7 +3,7 @@ import type { User } from '@supabase/supabase-js';
 import { moduleIdOfRoot } from '../data/roots';
 import { signOut as libSignOut } from '../core/auth';
 import { resolveEntryView } from '../core/consentGate';
-import { isEntitlementActive } from '../core/entitlement';
+import { canAddStudent, isEntitlementActive } from '../core/entitlement';
 import {
   clearRemoteProgress,
   localProgressKey,
@@ -22,6 +22,12 @@ import {
 import type { Entitlement, LessonProgressRow, Profile, StudentProfile } from '../core/supabase';
 
 export type AppView = 'home' | 'deck' | 'quiz' | 'auth' | 'consent' | 'dashboard' | 'paywall';
+
+// Post-checkout banner state. A parent returning from a $49–79 payment must
+// ALWAYS see what happened: 'unlocking' while we poll for the webhook's grant,
+// then 'unlocked' (or 'pending' with a retry if the grant is lagging — never a
+// silently still-locked app). 'cancelled' reassures that no charge was made.
+export type CheckoutNotice = 'unlocking' | 'unlocked' | 'pending' | 'cancelled' | null;
 
 // 'loading' until bootstrapProgress (src/core/hydrate.ts) settles the Supabase
 // session, then one of: 'anonymous' (try-before-buy), 'authenticated' (a real
@@ -164,6 +170,10 @@ interface WondralStore {
   requestUpgrade: () => void;
   signOut: () => Promise<void>;
 
+  // Post-checkout banner (driven by consumeCheckoutReturn / pollEntitlementUnlock).
+  checkoutNotice: CheckoutNotice;
+  setCheckoutNotice: (n: CheckoutNotice) => void;
+
   // Students (parent-rooted). `students` is the parent's roster; `activeStudentId`
   // is the child currently learning — it namespaces local progress and stamps
   // every progress row. null = anonymous / free-play.
@@ -238,6 +248,8 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   entitlement: null,
   entitlementLoaded: false,
   setEntitlement: (e) => set({ entitlement: e, entitlementLoaded: true }),
+  checkoutNotice: null,
+  setCheckoutNotice: (n) => set({ checkoutNotice: n }),
   requestUpgrade: () => {
     const s = get();
     const view = resolveEntryView({
@@ -284,8 +296,13 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
     });
   },
   addStudent: async (nickname, avatar) => {
-    const parentId = get().authUser?.id;
+    const s = get();
+    const parentId = s.authUser?.id;
     if (!parentId) return null;
+    // Seat-cap backstop (single=1, family=10, free=1). The dashboard swaps the
+    // add form for an upgrade card before this is reachable; returning null (not
+    // throwing) keeps any other path a no-op rather than an error dead-end.
+    if (!canAddStudent(s.students.length, s.entitlement)) return null;
     const student = await addStudentProfile(parentId, { nickname, avatar });
     set((s) => ({ students: [...s.students, student] }));
     return student;
