@@ -1,0 +1,15 @@
+# Supabase project config — pushed to the linked project via `supabase config push`.
+# Keep MINIMAL: only settings we deliberately manage as code are declared here.
+project_id = "ivbchwfmrrfkyqpdcerh"
+
+[auth]
+site_url = "https://words.wondral.app"
+# Supabase only honours email-link redirects from allowlisted origins.
+additional_redirect_urls = [
+  "https://words.wondral.app/**",
+  "https://wondral-words.pages.dev/**",
+  "http://localhost:3003/**",
+]
+# The app's first-visit session (src/core/auth.ts ensureSession) signs in
+# anonymously; without this flag it fails silently and progress never syncs.
+enable_anonymous_sign_ins = true
