@@ -72,6 +72,7 @@ export function TierMenu({
                 {it.title}
                 {it.kind === 'mode' && it.badge ? <span className="ww-tag">{it.badge}</span> : null}
                 {it.kind === 'tier' && it.t === 1 ? <span className="ww-tag">FREE</span> : null}
+                {it.kind === 'tier' && it.current ? <span className="ww-tag here">HERE</span> : null}
               </span>
               <span className="sub">{it.sub}</span>
               {it.kind === 'tier' && !it.locked ? (
@@ -85,10 +86,21 @@ export function TierMenu({
                 it.locked ? (
                   <span className="locklbl">🔒 Locked</span>
                 ) : (
-                  <span className="pct">{it.pct}%</span>
+                  <>
+                    <span className="pct">{it.pct}%</span>
+                    <span className="stars" aria-label={`${it.stars} of 5 stars`}>
+                      {'★'.repeat(it.stars)}
+                      {'☆'.repeat(5 - it.stars)}
+                    </span>
+                  </>
                 )
               ) : it.disabled ? (
                 <span className="locklbl">Soon</span>
+              ) : it.best ? (
+                <>
+                  <span className="pct">{it.best}</span>
+                  <span className="stars">best</span>
+                </>
               ) : (
                 <span className="pct" aria-hidden="true">
                   ›

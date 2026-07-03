@@ -104,7 +104,9 @@ async function loadProfileIntoStore(userId?: string): Promise<void> {
       try {
         store.setEntitlement(await getEntitlement(id));
       } catch (err) {
-         
+        // Must mark the entitlement as loaded (as none) — leaving entitlementLoaded
+        // false keeps gateEntitled's anti-flash rule open, i.e. fails open to premium.
+        store.setEntitlement(null);
         console.warn('[entitlement] load failed (treating as none)', err);
       }
       routeParentLanding(students);

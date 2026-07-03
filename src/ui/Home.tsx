@@ -13,6 +13,7 @@ import {
   type TierNum,
 } from '../data/roots';
 import { DEFAULT_AVATAR } from '../data/avatars';
+import { gradeForPct } from '../core/stats';
 import { buildMenu, tierStats, type MenuItem } from './home/menu';
 import { ProfileBand } from './home/ProfileBand';
 import { TierMenu } from './home/TierMenu';
@@ -67,8 +68,10 @@ export function Home() {
   const setView = useWondralStore((s) => s.setView);
   const setSelectedTier = useWondralStore((s) => s.setSelectedTier);
 
-  const items = buildMenu(completed, entitled);
   const currentTier = pickCurrentTier(completed, entitled);
+  const rushBest =
+    stats.runs > 0 ? `${gradeForPct(stats.bestPct)} · ${stats.bestStars}★` : undefined;
+  const items = buildMenu(completed, entitled, { currentTier, rushBest });
   const [selectedIndex, setSelectedIndex] = useState(() => tierMenuIndex(currentTier));
   const selected = items[Math.min(selectedIndex, items.length - 1)]!;
 
@@ -154,7 +157,7 @@ function buildDetailVM(item: MenuItem): DetailVM {
         animKey: item.key,
         eyebrow: 'Quiz Mode',
         big: 'Root Rush',
-        lead: 'Match each root to its meaning before the timer runs out. Eight questions a run — build your streak and beat your best.',
+        lead: 'Match roots to meanings and rack up combos — every right answer in a row multiplies your score. Ten questions a run; beat your best.',
         samples: starter.map((r) => ({ root: r.root, mean: r.mean })),
         moreCount: 0,
         primary: { label: 'Start the run 🎯' },
@@ -183,11 +186,11 @@ function buildDetailVM(item: MenuItem): DetailVM {
       animKey: item.key,
       eyebrow: item.title,
       big: name,
+      locked: true,
       lead: leadWithRoots(`${name} unlocks the full curriculum — roots like `, samples.slice(0, 3)),
       samples: samples.map((r) => ({ root: r.root, mean: r.mean })),
       moreCount: Math.max(0, item.total - samples.length),
-      primary: { label: `🔓 Unlock Tier ${item.t}` },
-      secondary: { label: 'Preview roots' },
+      primary: { label: '🔓 Ask a grown-up to unlock' },
     };
   }
 
