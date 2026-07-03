@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import '../styles/app.css';
 import { useWondralStore } from './store';
+import { pathForView, viewForPath } from './routes';
 import { consumeCheckoutReturn } from '../core/checkout';
 import { useShowUpgrade } from './hooks';
 import { Home } from '../ui/Home';
@@ -10,6 +11,8 @@ import { AuthScreen } from '../ui/AuthScreen';
 import { Consent } from '../ui/Consent';
 import { Paywall } from '../ui/Paywall';
 import { ParentDashboard } from '../ui/ParentDashboard';
+import { PrivacyPolicy } from '../ui/PrivacyPolicy';
+import { TermsOfService } from '../ui/TermsOfService';
 import { BuildStamp } from '../ui/BuildStamp';
 import { Button } from '../ui/components/Button';
 import type { AppView } from './store';
@@ -28,6 +31,10 @@ function Screen({ view }: { view: AppView }) {
       return <Paywall />;
     case 'dashboard':
       return <ParentDashboard />;
+    case 'privacy':
+      return <PrivacyPolicy />;
+    case 'terms':
+      return <TermsOfService />;
     case 'home':
     default:
       return <Home />;
@@ -47,6 +54,20 @@ export function App() {
   useEffect(() => {
     void consumeCheckoutReturn();
   }, []);
+
+  // The legal pages are the only URL-addressable views: keep the address bar in
+  // sync as the view changes, and honor back/forward between them and the app.
+  useEffect(() => {
+    const path = pathForView(view);
+    if (path && location.pathname !== path) history.pushState(null, '', path);
+    else if (!path && viewForPath(location.pathname)) history.pushState(null, '', '/');
+  }, [view]);
+
+  useEffect(() => {
+    const onPop = () => setView(viewForPath(location.pathname) ?? 'home');
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [setView]);
 
   const signedIn = authUser && !authUser.isAnonymous;
 

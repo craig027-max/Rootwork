@@ -8,6 +8,7 @@ import {
 } from '../core/auth';
 import { hasSupabaseConfig } from '../app/hooks';
 import { Button } from './components/Button';
+import { LegalLink } from './components/LegalLink';
 
 type Mode = 'sign-in' | 'sign-up' | 'forgot';
 
@@ -96,7 +97,8 @@ export function AuthScreen() {
       {!passwordRecovery && mode !== 'forgot' ? (
         <p className="ww-muted">
           Wondral Words is a kids’ product. A parent creates the account and gives consent; children
-          learn under student profiles.
+          learn under student profiles. By {mode === 'sign-up' ? 'creating an account' : 'signing in'}{' '}
+          you agree to the <LegalLink page="terms" /> and <LegalLink page="privacy" />.
         </p>
       ) : null}
 
