@@ -19,6 +19,8 @@ export interface GameStats {
   /** Best single-run stars / accuracy, for the "new best" celebration. */
   bestStars: number;
   bestPct: number;
+  /** Best single-run Root Rush combo score (points, not stars). */
+  bestScore: number;
   /** Completed quiz runs. */
   runs: number;
   /** Daily streak: consecutive calendar days with ≥1 learning action. */
@@ -35,6 +37,7 @@ export const EMPTY_STATS: GameStats = {
   questionsCorrect: 0,
   bestStars: 0,
   bestPct: 0,
+  bestScore: 0,
   runs: 0,
   streakCurrent: 0,
   streakLongest: 0,
@@ -117,18 +120,22 @@ export interface RunResult {
   stars: number;
   grade: Grade;
   isNewBest: boolean;
+  /** Only present when the run reported a combo `score`: it beat `bestScore`. */
+  isNewBestScore?: boolean;
 }
 
 /** Record a finished quiz run; returns the new stats + a summary for the UI. */
 export function recordRun(
   stats: GameStats,
-  input: { correct: number; total: number; day: string },
+  input: { correct: number; total: number; day: string; score?: number },
 ): { stats: GameStats; run: RunResult } {
   const total = Math.max(0, input.total);
   const correct = Math.max(0, Math.min(input.correct, total));
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
   const stars = starsForPct(pct);
   const isNewBest = stars > stats.bestStars || (stars === stats.bestStars && pct > stats.bestPct);
+  // Older persisted blobs may predate bestScore; treat a missing field as 0.
+  const prevBestScore = stats.bestScore ?? 0;
 
   const next: GameStats = {
     ...stats,
@@ -138,11 +145,21 @@ export function recordRun(
     questionsCorrect: stats.questionsCorrect + correct,
     bestStars: Math.max(stats.bestStars, stars),
     bestPct: Math.max(stats.bestPct, pct),
+    bestScore: Math.max(prevBestScore, input.score ?? 0),
     runs: stats.runs + 1,
     ...bumpStreak(stats, input.day),
   };
 
-  return { stats: next, run: { pct, stars, grade: gradeForPct(pct), isNewBest } };
+  return {
+    stats: next,
+    run: {
+      pct,
+      stars,
+      grade: gradeForPct(pct),
+      isNewBest,
+      ...(input.score != null ? { isNewBestScore: input.score > prevBestScore } : {}),
+    },
+  };
 }
 
 /** Record that a root was marked learned (XP + streak). */

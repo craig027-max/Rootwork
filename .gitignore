@@ -28,3 +28,6 @@ dist-ssr
 .idea
 .DS_Store
 *.sw?
+
+# Supabase CLI local state
+supabase/.temp/

@@ -115,6 +115,40 @@ describe('recordRun', () => {
     const { run } = recordRun(EMPTY_STATS, { correct: 99, total: 8, day: '2026-06-29' });
     expect(run.pct).toBe(100);
   });
+
+  it('banks a combo score and flags only a genuine new best score', () => {
+    const first = recordRun(EMPTY_STATS, { correct: 5, total: 10, day: '2026-06-29', score: 900 });
+    expect(first.stats.bestScore).toBe(900);
+    expect(first.run.isNewBestScore).toBe(true);
+
+    const lower = recordRun(first.stats, { correct: 5, total: 10, day: '2026-06-29', score: 400 });
+    expect(lower.stats.bestScore).toBe(900);
+    expect(lower.run.isNewBestScore).toBe(false);
+
+    const higher = recordRun(lower.stats, { correct: 9, total: 10, day: '2026-06-29', score: 2400 });
+    expect(higher.stats.bestScore).toBe(2400);
+    expect(higher.run.isNewBestScore).toBe(true);
+  });
+
+  it('leaves bestScore alone (and unreported) when no score is given', () => {
+    const seeded = { ...EMPTY_STATS, bestScore: 700 };
+    const { stats, run } = recordRun(seeded, { correct: 1, total: 2, day: '2026-06-29' });
+    expect(stats.bestScore).toBe(700);
+    expect(run.isNewBestScore).toBeUndefined();
+  });
+
+  it('treats a missing bestScore field (older saved blobs) as 0', () => {
+    const legacy = { ...EMPTY_STATS } as Partial<typeof EMPTY_STATS>;
+    delete legacy.bestScore;
+    const { stats, run } = recordRun(legacy as typeof EMPTY_STATS, {
+      correct: 3,
+      total: 10,
+      day: '2026-06-29',
+      score: 300,
+    });
+    expect(stats.bestScore).toBe(300);
+    expect(run.isNewBestScore).toBe(true);
+  });
 });
 
 describe('recordRootLearned', () => {

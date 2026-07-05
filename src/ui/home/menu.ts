@@ -5,6 +5,7 @@
  * the learner's completed-root set (no placeholder numbers).
  */
 import { TIERS, rootsInTier, rootId, type TierNum } from '../../data/roots';
+import { starsForPct } from '../../core/stats';
 
 /** Per-tier presentation: emoji chip + the PALETTES jewel key that themes the row. */
 export const TIER_META: { icon: string; jewel: string }[] = [
@@ -24,6 +25,8 @@ export interface ModeItem {
   sub: string;
   badge?: string;
   disabled?: boolean;
+  /** Best-result meta for the row (e.g. "A · 4★" for Root Rush), design's `best`. */
+  best?: string;
 }
 
 export interface TierItem {
@@ -38,6 +41,10 @@ export interface TierItem {
   total: number;
   pct: number;
   locked: boolean;
+  /** Collection stars (0–5) from tier completion — the gold ★★★☆☆ row. */
+  stars: number;
+  /** The tier the learner is currently working through — the HERE pill. */
+  current: boolean;
 }
 
 export type MenuItem = ModeItem | TierItem;
@@ -60,9 +67,14 @@ export function tierStats(t: TierNum, completed: Set<string>): TierStat {
 /**
  * Build the home menu: Root Rush + Daily Challenge, then the five tiers. A tier
  * is locked when it isn't free (Tier 1) and the learner isn't entitled — the
- * same free/paid line the gating module enforces.
+ * same free/paid line the gating module enforces. `currentTier` marks the HERE
+ * pill; `rushBest` is the pre-formatted best-run meta for the Root Rush row.
  */
-export function buildMenu(completed: Set<string>, entitled: boolean): MenuItem[] {
+export function buildMenu(
+  completed: Set<string>,
+  entitled: boolean,
+  opts: { currentTier?: TierNum; rushBest?: string } = {},
+): MenuItem[] {
   const modes: MenuItem[] = [
     {
       kind: 'mode',
@@ -70,7 +82,8 @@ export function buildMenu(completed: Set<string>, entitled: boolean): MenuItem[]
       icon: '🎯',
       jewel: 'fire',
       title: 'Root Rush',
-      sub: 'Timed combo run · match root to meaning',
+      sub: 'Combo run · match roots to meanings',
+      best: opts.rushBest,
     },
     {
       kind: 'mode',
@@ -101,6 +114,8 @@ export function buildMenu(completed: Set<string>, entitled: boolean): MenuItem[]
       total,
       pct,
       locked,
+      stars: starsForPct(pct),
+      current: !locked && t === opts.currentTier,
     };
   });
 

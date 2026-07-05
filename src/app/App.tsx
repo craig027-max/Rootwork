@@ -13,6 +13,7 @@ import { Paywall } from '../ui/Paywall';
 import { ParentDashboard } from '../ui/ParentDashboard';
 import { PrivacyPolicy } from '../ui/PrivacyPolicy';
 import { TermsOfService } from '../ui/TermsOfService';
+import { Celebration } from '../ui/Celebration';
 import { BuildStamp } from '../ui/BuildStamp';
 import { Button } from '../ui/components/Button';
 import type { AppView } from './store';
@@ -108,6 +109,7 @@ export function App() {
         <Screen view={view} />
       </main>
 
+      <Celebration />
       <BuildStamp />
     </div>
   );
