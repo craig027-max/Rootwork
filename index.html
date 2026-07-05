@@ -20,11 +20,21 @@
     <meta name="twitter:title" content="Wondral Words — Roots, Reimagined" />
     <meta name="twitter:description" content="One root unlocks dozens of words. 152 Greek & Latin roots, animated scenes, Root Rush quiz. Tier 1 free." />
     <meta name="twitter:image" content="https://words.wondral.app/og-image.jpg" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <!-- Fonts are self-hosted (public/fonts + tokens/typography.css): no third-party
+         font CDN means no off-site requests to disclose in the privacy policy. -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&family=Outfit:wght@300..800&family=JetBrains+Mono:wght@400..700&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      href="/fonts/outfit-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link
+      rel="preload"
+      href="/fonts/orbitron-latin.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
     />
   </head>
   <body>

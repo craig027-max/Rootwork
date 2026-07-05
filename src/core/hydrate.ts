@@ -117,6 +117,8 @@ async function loadProfileIntoStore(userId?: string): Promise<void> {
 
     // A real (non-anonymous) account that hasn't completed onboarding needs to be
     // routed to consent. We surface the screen; the consent flow assigns the role.
+    // Legal pages are exempt: reading the privacy policy BEFORE consenting is
+    // exactly what the consent screen invites the parent to do.
     const authUser = store.authUser;
     const currentView = store.view;
     if (
@@ -125,7 +127,9 @@ async function loadProfileIntoStore(userId?: string): Promise<void> {
       profile &&
       !profile.role &&
       currentView !== 'auth' &&
-      currentView !== 'consent'
+      currentView !== 'consent' &&
+      currentView !== 'privacy' &&
+      currentView !== 'terms'
     ) {
       store.setView('consent');
     }
@@ -142,7 +146,14 @@ async function loadProfileIntoStore(userId?: string): Promise<void> {
  */
 function routeParentLanding(students: StudentProfile[]): void {
   const store = useWondralStore.getState();
-  if (store.view === 'auth' || store.view === 'consent' || store.view === 'deck' || store.view === 'quiz')
+  if (
+    store.view === 'auth' ||
+    store.view === 'consent' ||
+    store.view === 'deck' ||
+    store.view === 'quiz' ||
+    store.view === 'privacy' ||
+    store.view === 'terms'
+  )
     return;
 
   const landing = resolveParentLanding(
