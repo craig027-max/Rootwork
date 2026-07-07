@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { User } from '@supabase/supabase-js';
+import { initialView } from './routes';
 import { moduleIdOfRoot } from '../data/roots';
 import { signOut as libSignOut } from '../core/auth';
 import { resolveEntryView } from '../core/consentGate';
@@ -21,7 +22,16 @@ import {
 } from '../core/stats';
 import type { Entitlement, LessonProgressRow, Profile, StudentProfile } from '../core/supabase';
 
-export type AppView = 'home' | 'deck' | 'quiz' | 'auth' | 'consent' | 'dashboard' | 'paywall';
+export type AppView =
+  | 'home'
+  | 'deck'
+  | 'quiz'
+  | 'auth'
+  | 'consent'
+  | 'dashboard'
+  | 'paywall'
+  | 'privacy'
+  | 'terms';
 
 // Post-checkout banner state. A parent returning from a $49–79 payment must
 // ALWAYS see what happened: 'unlocking' while we poll for the webhook's grant,
@@ -217,7 +227,9 @@ const INITIAL_PROGRESS = loadProgress(INITIAL_ACTIVE_STUDENT);
 const INITIAL_STATS = loadStats(INITIAL_ACTIVE_STUDENT);
 
 export const useWondralStore = create<WondralStore>((set, get) => ({
-  view: 'home',
+  // Boot on /privacy or /terms when deep-linked; App.tsx keeps the URL in sync
+  // as the view changes afterwards.
+  view: initialView(),
   setView: (v) => set({ view: v }),
 
   authStatus: 'loading',

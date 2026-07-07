@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useWondralStore } from '../app/store';
 import { getProfile, updateProfile } from '../core/profile';
 import { Button } from './components/Button';
+import { LegalLink } from './components/LegalLink';
 
 /**
  * Parent consent / onboarding (COPPA verifiable parental consent). The MVP path
@@ -49,6 +50,18 @@ export function Consent() {
         progress.
       </p>
 
+      {/* COPPA direct notice — shown at the moment of consent, per the amended
+          COPPA Rule. Keep in lockstep with the Privacy Policy's student section. */}
+      <div className="ww-notice ww-consent-notice">
+        Here’s exactly what we save about your student: a nickname and avatar you choose, and which
+        word roots and quizzes they’ve completed — never their real name, email, photo, or location.
+        We don’t show ads or use tracking, and we never sell or share your family’s information.
+        Completing a purchase through Stripe is how we verify that consent comes from you, the
+        parent (the payment record is kept as consent evidence). You can review or delete your
+        student’s information, or revoke consent, anytime from the parent dashboard or by emailing{' '}
+        <a href="mailto:support@wondral.app">support@wondral.app</a>.
+      </div>
+
       {error ? (
         <div className="ww-notice is-error" role="alert">
           {error}
@@ -62,9 +75,9 @@ export function Consent() {
           onChange={(e) => setAgreed(e.target.checked)}
           style={{ marginTop: 4 }}
         />
-        <span className="ww-muted">
-          I am the parent or legal guardian and I consent to my child using Wondral Words under my
-          account.
+        <span className="ww-muted ww-consent-notice">
+          I am the parent or legal guardian, I consent to my child using Wondral Words under my
+          account, and I agree to the <LegalLink page="terms" /> and <LegalLink page="privacy" />.
         </span>
       </label>
 

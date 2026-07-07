@@ -5,6 +5,7 @@ import { getEntitlement } from '../core/entitlement';
 import { useOnline, hasSupabaseConfig } from '../app/hooks';
 import { Button } from './components/Button';
 import { Card } from './components/Card';
+import { LegalLink } from './components/LegalLink';
 
 // PRICE SOURCE OF TRUTH: the amounts actually charged come from the Stripe price
 // objects behind STRIPE_PRICE_SINGLE / STRIPE_PRICE_MULTI (Cloudflare Pages env —
@@ -140,6 +141,15 @@ export function Paywall() {
           </Card>
         ))}
       </div>
+
+      {/* Stripe requires the refund policy to be stated where the purchase starts. */}
+      <p className="ww-muted ww-legal-links">
+        <strong>30-day money-back guarantee.</strong> One-time purchase — no auto-renewal, nothing
+        to cancel; access simply ends after a year unless you buy again. Not right for your family?
+        Email <a href="mailto:support@wondral.app">support@wondral.app</a> within 30 days for a
+        full refund, no questions asked. By purchasing you agree to the <LegalLink page="terms" />{' '}
+        and <LegalLink page="privacy" />.
+      </p>
 
       <div className="ww-row">
         <Button variant="ghost" onClick={() => setView('home')}>

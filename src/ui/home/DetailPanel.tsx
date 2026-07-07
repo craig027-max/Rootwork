@@ -10,6 +10,8 @@ export interface DetailVM {
   animKey: string;
   eyebrow: string;
   big: string;
+  /** Locked tier — renders the design's .locked-state (🔒 glyph, no ring). */
+  locked?: boolean;
   lead: ReactNode;
   ring?: { pct: number; label: string };
   pmA?: string;
@@ -38,11 +40,16 @@ export function DetailPanel({
   const p = PALETTES[vm.jewel] ?? PALETTES.green!;
   return (
     <div className="ww-detail" style={paletteVars(p.c1rgb, p.grad)}>
-      <div className="ww-detail-anim" key={vm.animKey}>
+      <div className={`ww-detail-anim${vm.locked ? ' ww-locked-state' : ''}`} key={vm.animKey}>
         <span className="ww-detail-eyebrow">
           <span className="dot" aria-hidden="true" />
           {vm.eyebrow}
         </span>
+        {vm.locked ? (
+          <span className="lk" aria-hidden="true">
+            🔒
+          </span>
+        ) : null}
         <div className="ww-big">{vm.big}</div>
         <p className="lead">{vm.lead}</p>
 

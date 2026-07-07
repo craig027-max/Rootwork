@@ -74,15 +74,30 @@ export function Scene({
     if (!ctx) return;
     const context: CanvasRenderingContext2D = ctx;
 
+    // prefers-reduced-motion: freeze t at 0 so scenes render as a static
+    // illustration (matches the design-package engine); no rAF loop burns CPU.
+    // A ResizeObserver redraw keeps the static frame crisp across resizes.
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     let raf = 0;
     const start = performance.now();
 
-    function frame(now: number): void {
+    function draw(t: number): void {
       const { w, h } = sizeRef.current;
-      const t = (now - start) / 1000;
       context.clearRect(0, 0, w, h);
       SCENES[sceneRef.current]?.(context, w, h, t, palRef.current);
+    }
+
+    function frame(now: number): void {
+      draw((now - start) / 1000);
       raf = requestAnimationFrame(frame);
+    }
+
+    if (reduced) {
+      draw(0);
+      const ro = new ResizeObserver(() => draw(0));
+      ro.observe(canvas);
+      return () => ro.disconnect();
     }
 
     raf = requestAnimationFrame(frame);

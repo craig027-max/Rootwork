@@ -270,6 +270,7 @@
   letter-spacing: 0.02em;
   padding: 3px 9px;
   color: var(--gold);
+  box-shadow: var(--shadow-glow-gold);
 }
 .ww-pinfo {
   min-width: 0;
@@ -880,13 +881,19 @@
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 .ww-word {
+  position: relative;
   background: var(--bg-card);
   padding: clamp(18px, 2.4vw, 28px) clamp(16px, 2.2vw, 26px);
-  transition: background var(--dur-med) var(--ease-snap), transform var(--dur-med) var(--ease-snap);
+  transition:
+    background var(--dur-med) var(--ease-snap),
+    transform var(--dur-med) var(--ease-snap),
+    box-shadow var(--dur-med) var(--ease-snap);
 }
 .ww-word:hover {
   background: linear-gradient(180deg, rgba(var(--spark-rgb), 0.07), var(--bg-card));
   transform: translateY(-4px);
+  box-shadow: 0 -2px 30px rgba(var(--spark-rgb), 0.18);
+  z-index: 2;
 }
 .ww-word .ico {
   font-size: 1.4rem;
@@ -935,7 +942,7 @@
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: 18px;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
   z-index: 30;
   display: flex;
   align-items: center;
@@ -1117,4 +1124,234 @@
   .ww-nav-cur {
     min-width: 110px;
   }
+}
+
+/* Legal pages (/privacy, /terms) — prose-first, calmer type than the game UI */
+.ww-legal {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  font-family: var(--font-body);
+  color: var(--text-secondary);
+  line-height: var(--lh-body);
+  padding-bottom: var(--space-6);
+}
+
+.ww-legal h1 {
+  font-size: var(--fs-h2);
+}
+
+.ww-legal h2 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-lg);
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+}
+
+.ww-legal p + p {
+  margin-top: var(--space-2);
+}
+
+.ww-legal ul {
+  margin: 0;
+  padding-left: 1.2em;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.ww-legal a,
+.ww-legal-links a,
+.ww-consent-notice a {
+  color: var(--text-primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(255, 255, 255, 0.35);
+}
+
+.ww-legal a:hover,
+.ww-legal-links a:hover,
+.ww-consent-notice a:hover {
+  text-decoration-color: currentColor;
+}
+
+.ww-legal-date {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: var(--track-badge);
+}
+
+/* Footer + inline "Privacy · Terms" link rows */
+.ww-legal-links {
+  color: var(--text-muted);
+}
+
+.ww-legal-links a {
+  color: inherit;
+}
+
+/* COPPA direct notice on the consent screen */
+.ww-consent-notice {
+  text-align: left;
+}
+
+/* ---- Profile XP bar (thin, mirrors .ww-menu-bar) ---- */
+.ww-xpbar {
+  height: 3px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  margin-top: 8px;
+  max-width: 260px;
+  overflow: hidden;
+}
+.ww-xpbar > i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--gradient-hero);
+  transition: width var(--dur-slow) var(--ease-snap);
+}
+.ww-stat .v .of {
+  font-size: 0.62em;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+/* ---- Celebration overlay (root learned) ---- */
+.ww-celebrate {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background:
+    radial-gradient(ellipse 75% 55% at 50% 0%, rgba(var(--spark-rgb), 0.14), transparent 60%),
+    rgba(6, 6, 16, 0.93);
+  backdrop-filter: blur(10px);
+  animation: ww-celebrate-in var(--dur-med) var(--ease-snap);
+}
+@keyframes ww-celebrate-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.ww-confetti {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.ww-celebrate-card {
+  position: relative;
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+  padding: clamp(28px, 5vw, 46px) clamp(22px, 4vw, 40px);
+  background: linear-gradient(180deg, rgba(var(--spark-rgb), 0.08), rgba(255, 255, 255, 0.02)),
+    var(--bg-card);
+  border: 1px solid rgba(var(--spark-rgb), 0.28);
+  border-radius: var(--radius-xl, 24px);
+  box-shadow:
+    0 0 70px rgba(var(--spark-rgb), 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  animation: ww-celebrate-pop var(--dur-slow) var(--ease-snap);
+}
+@keyframes ww-celebrate-pop {
+  0% { transform: scale(0.82); opacity: 0; }
+  60% { transform: scale(1.04); }
+  100% { transform: scale(1); opacity: 1; }
+}
+.ww-celebrate-star {
+  font-size: 3rem;
+  line-height: 1;
+  color: var(--gold);
+  text-shadow: 0 0 24px rgba(255, 210, 74, 0.65);
+  animation: ww-star-pop 700ms var(--ease-snap);
+}
+@keyframes ww-star-pop {
+  0% { transform: scale(0) rotate(-30deg); }
+  70% { transform: scale(1.35) rotate(8deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+.ww-celebrate-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 14px 0 6px;
+}
+.ww-celebrate-root {
+  font-family: var(--font-game);
+  font-weight: 900;
+  font-size: clamp(2.6rem, 8vw, 4rem);
+  line-height: 1;
+  background: var(--grad);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.ww-celebrate-mean {
+  margin-top: 10px;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  font-weight: 700;
+}
+.ww-celebrate-mean .alt {
+  color: var(--text-muted);
+  font-weight: 400;
+  margin-left: 6px;
+}
+.ww-celebrate-xp {
+  display: inline-block;
+  margin-top: 16px;
+  font-family: var(--font-game);
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--gold);
+  background: rgba(255, 210, 74, 0.1);
+  border: 1px solid rgba(255, 210, 74, 0.3);
+  border-radius: var(--radius-pill);
+  padding: 6px 16px;
+  box-shadow: var(--shadow-glow-gold);
+}
+.ww-celebrate-actions {
+  margin-top: 22px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ww-celebrate,
+  .ww-celebrate-card,
+  .ww-celebrate-star {
+    animation: none;
+  }
+}
+
+/* ---- Menu meta stars + HERE pill + locked detail state ---- */
+.ww-menu-meta .stars {
+  display: block;
+  font-size: 0.62rem;
+  letter-spacing: 0.04em;
+  color: var(--gold);
+  margin-top: 3px;
+}
+.ww-tag.here {
+  background: var(--grad);
+  color: var(--text-on-bright, #08070f);
+}
+.ww-locked-state .lk {
+  font-size: 2.4rem;
+  line-height: 1;
+  display: block;
+  margin: 6px 0 2px;
+  filter: drop-shadow(0 0 14px rgba(var(--spark-rgb), 0.35));
 }
