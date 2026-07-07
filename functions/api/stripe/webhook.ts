@@ -14,14 +14,19 @@ interface Env {
 const SEATS: Record<'single' | 'multi', number> = { single: 1, multi: 10 };
 
 /**
- * POST /api/stripe/webhook — Stripe checkout.session.completed handler.
+ * POST /api/stripe/webhook — Stripe event handler.
  *
  * Verifies the Stripe signature with Web Crypto (Workers have no Node crypto, so
  * the async constructEventAsync + SubtleCryptoProvider is required), dedupes via
- * the stripe_events table, then — for a PAID session — grants the parent's
- * entitlement and records the charge as COPPA VPC evidence. Runs with the
- * Supabase SERVICE ROLE (bypasses RLS); this is the ONLY writer of entitlements
- * and the consent-evidence columns, which is why clients have no write policy.
+ * the stripe_events table, then:
+ *   - checkout.session.completed (PAID) → grants the parent's entitlement and
+ *     records the charge as COPPA VPC evidence;
+ *   - charge.refunded (full refund) / charge.dispute.created → flips the
+ *     entitlement to 'refunded' so access ends with the money.
+ * The Stripe endpoint must be subscribed to all three event types (DEPLOYMENT.md).
+ * Runs with the Supabase SERVICE ROLE (bypasses RLS); this is the ONLY writer of
+ * entitlements and the consent-evidence columns, which is why clients have no
+ * write policy.
  */
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   const sig = request.headers.get('stripe-signature');
@@ -90,6 +95,29 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
           customerId: typeof session.customer === 'string' ? session.customer : null,
         });
       }
+    } else if (event.type === 'charge.refunded') {
+      // Fires for partial refunds too; `charge.refunded` is only true once the
+      // charge is FULLY refunded. A partial (goodwill) refund keeps access.
+      const charge = event.data.object as Stripe.Charge;
+      if (charge.refunded) {
+        await revokeEntitlement(supabase, {
+          paymentIntentId:
+            typeof charge.payment_intent === 'string' ? charge.payment_intent : null,
+          // Charges created from a PaymentIntent inherit its metadata (we stamp
+          // parent_id via payment_intent_data) — fallback if the PI id is absent.
+          parentId: charge.metadata?.parent_id ?? null,
+        });
+      }
+    } else if (event.type === 'charge.dispute.created') {
+      // A dispute freezes the funds immediately — revoke up front rather than
+      // waiting for the outcome. If the parent wins the dispute, support can
+      // re-grant manually (source='manual').
+      const dispute = event.data.object as Stripe.Dispute;
+      await revokeEntitlement(supabase, {
+        paymentIntentId:
+          typeof dispute.payment_intent === 'string' ? dispute.payment_intent : null,
+        parentId: null, // dispute metadata is Stripe's own, not our PI metadata
+      });
     }
   } catch (err) {
     // We claimed the event but processing failed. Release the claim so Stripe's
@@ -155,4 +183,42 @@ async function grantEntitlement(
     .eq('id', args.parentId)
     .is('role', null);
   if (role.error) throw new Error(`role: ${role.error.message}`);
+}
+
+/**
+ * Flip an entitlement to 'refunded' (used for full refunds AND disputes — the DB
+ * status enum has no separate 'disputed'; either way the money is gone, so access
+ * goes with it). Matches by stripe_payment_intent_id first: if the parent later
+ * re-purchased, the row carries the NEW payment intent, so a refund of the OLD
+ * charge correctly matches nothing. parent_id is the fallback when the event has
+ * no usable PI reference. Idempotent — safe under Stripe's at-least-once retries.
+ */
+async function revokeEntitlement(
+  supabase: SupabaseClient,
+  args: { paymentIntentId: string | null; parentId: string | null },
+): Promise<void> {
+  const patch = { status: 'refunded', updated_at: new Date().toISOString() };
+
+  if (args.paymentIntentId) {
+    const byPi = await supabase
+      .from('entitlements')
+      .update(patch)
+      .eq('stripe_payment_intent_id', args.paymentIntentId);
+    if (byPi.error) throw new Error(`entitlement revoke (pi): ${byPi.error.message}`);
+    return;
+  }
+
+  if (args.parentId) {
+    // Only revoke a Stripe-granted row — never clobber a pep/manual grant.
+    const byParent = await supabase
+      .from('entitlements')
+      .update(patch)
+      .eq('parent_id', args.parentId)
+      .eq('source', 'stripe');
+    if (byParent.error) throw new Error(`entitlement revoke (parent): ${byParent.error.message}`);
+    return;
+  }
+
+  // No usable reference — ack rather than 500: Stripe retries wouldn't add info.
+  console.warn('[stripe] revoke event had no payment_intent or parent_id reference');
 }

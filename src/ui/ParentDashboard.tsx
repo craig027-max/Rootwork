@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useWondralStore } from '../app/store';
+import { seatLimit } from '../core/entitlement';
 import { hydrateActiveStudent } from '../core/hydrate';
 import { getAllStudentProgress } from '../core/progress';
 import { AVATARS, DEFAULT_AVATAR } from '../data/avatars';
@@ -21,6 +22,15 @@ export function ParentDashboard() {
   const renameStudent = useWondralStore((s) => s.renameStudent);
   const removeStudent = useWondralStore((s) => s.removeStudent);
   const setView = useWondralStore((s) => s.setView);
+  const entitlement = useWondralStore((s) => s.entitlement);
+  const requestUpgrade = useWondralStore((s) => s.requestUpgrade);
+
+  // Seat cap from the plan (single=1, family=10, free=1). At the cap the add
+  // form is REPLACED by a calm upgrade card — never a submit-then-error.
+  const seats = seatLimit(entitlement);
+  const atSeatCap = students.length >= seats;
+  // The family plan is the top tier — at ITS cap there is nothing to upgrade to.
+  const canUpgradeForMore = seats < 10;
 
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [nickname, setNickname] = useState('');
@@ -146,31 +156,47 @@ export function ParentDashboard() {
         </div>
       )}
 
-      <Card className="ww-stack">
-        <p className="ww-eyebrow">Add a student</p>
-        {error ? (
-          <div className="ww-notice is-error" role="alert">
-            {error}
+      {atSeatCap ? (
+        <Card className="ww-stack">
+          <p className="ww-eyebrow">Add a student</p>
+          <div className="ww-notice" role="status">
+            {canUpgradeForMore
+              ? `Your plan includes ${seats} student profile${seats === 1 ? '' : 's'}, and ${
+                  seats === 1 ? 'it is' : 'all of them are'
+                } in use. Upgrade to the Family plan for up to 10 learners.`
+              : 'Your Family plan is full — all 10 student profiles are in use. Remove a profile to make room for a new learner.'}
           </div>
-        ) : null}
-        <input
-          className="ww-input"
-          placeholder="Nickname"
-          value={nickname}
-          maxLength={30}
-          onChange={(e) => setNickname(e.target.value)}
-        />
-        <div className="ww-row">
-          {AVATARS.map((a) => (
-            <Chip key={a} selected={avatar === a} onClick={() => setAvatar(a)}>
-              {a}
-            </Chip>
-          ))}
-        </div>
-        <Button disabled={busy || !nickname.trim()} onClick={() => void add()}>
-          {busy ? 'Adding…' : 'Add student'}
-        </Button>
-      </Card>
+          {canUpgradeForMore ? (
+            <Button onClick={requestUpgrade}>Upgrade to add more learners</Button>
+          ) : null}
+        </Card>
+      ) : (
+        <Card className="ww-stack">
+          <p className="ww-eyebrow">Add a student</p>
+          {error ? (
+            <div className="ww-notice is-error" role="alert">
+              {error}
+            </div>
+          ) : null}
+          <input
+            className="ww-input"
+            placeholder="Nickname"
+            value={nickname}
+            maxLength={30}
+            onChange={(e) => setNickname(e.target.value)}
+          />
+          <div className="ww-row">
+            {AVATARS.map((a) => (
+              <Chip key={a} selected={avatar === a} onClick={() => setAvatar(a)}>
+                {a}
+              </Chip>
+            ))}
+          </div>
+          <Button disabled={busy || !nickname.trim()} onClick={() => void add()}>
+            {busy ? 'Adding…' : 'Add student'}
+          </Button>
+        </Card>
+      )}
 
       <div className="ww-row">
         <Button variant="ghost" onClick={() => setView('home')}>

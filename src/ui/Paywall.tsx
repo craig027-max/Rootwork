@@ -1,11 +1,17 @@
 import { useState } from 'react';
 import { useWondralStore } from '../app/store';
 import { startCheckout, type CheckoutTier } from '../core/checkout';
+import { getEntitlement } from '../core/entitlement';
 import { useOnline, hasSupabaseConfig } from '../app/hooks';
 import { Button } from './components/Button';
 import { Card } from './components/Card';
 import { LegalLink } from './components/LegalLink';
 
+// PRICE SOURCE OF TRUTH: the amounts actually charged come from the Stripe price
+// objects behind STRIPE_PRICE_SINGLE / STRIPE_PRICE_MULTI (Cloudflare Pages env —
+// see DEPLOYMENT.md §2). The strings below are display copy only; if a price
+// changes in the Stripe Dashboard, update them together or buyers will see one
+// number here and another on the Stripe Checkout page.
 const TIERS: Array<{ id: CheckoutTier; name: string; price: string; blurb: string; jewel: string }> = [
   {
     id: 'single',
@@ -48,11 +54,13 @@ export function Paywall() {
   const online = useOnline();
   const [busy, setBusy] = useState<CheckoutTier | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
 
   const unavailable = !hasSupabaseConfig || !online;
 
   async function buy(tier: CheckoutTier) {
     setError(null);
+    setInfo(null);
     setBusy(tier);
     const res = await startCheckout(tier);
     setBusy(null);
@@ -60,6 +68,22 @@ export function Paywall() {
       // The purchase IS the COPPA consent — an anonymous user must sign up first.
       if (res.error === 'account_required') {
         setView('auth');
+        return;
+      }
+      // 409 from the double-purchase guard: this account already paid (stale tab
+      // or a second tab). Good news, not an error — refresh the entitlement into
+      // the store so the app unlocks right here.
+      if (res.error === 'already_entitled') {
+        setInfo('Good news — this account is already unlocked! Everything is open.');
+        const store = useWondralStore.getState();
+        const parentId = store.authUser?.id;
+        if (parentId) {
+          try {
+            store.setEntitlement(await getEntitlement(parentId));
+          } catch {
+            // non-fatal — the notice + "Back to learning" still work
+          }
+        }
         return;
       }
       setError(messageFor(res.error));
@@ -83,6 +107,12 @@ export function Paywall() {
           {online
             ? 'Purchasing isn’t available in this preview build (no payment backend configured). Everything in the free tier still works.'
             : 'You’re offline. Reconnect to upgrade — the free Tier 1 roots keep working in the meantime.'}
+        </div>
+      ) : null}
+
+      {info ? (
+        <div className="ww-notice" role="status">
+          {info}
         </div>
       ) : null}
 

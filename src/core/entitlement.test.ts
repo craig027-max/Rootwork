@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { isEntitlementActive, gateEntitled } from './entitlement';
+import { canAddStudent, gateEntitled, isEntitlementActive, seatLimit } from './entitlement';
 import type { Entitlement } from './supabase';
 
 // A fixed "now" so expiry comparisons are deterministic (never Date.now()).
@@ -55,6 +55,49 @@ describe('isEntitlementActive', () => {
     expect(isEntitlementActive(makeEnt({ status: 'refunded', expires_at: FUTURE }), NOW)).toBe(
       false,
     );
+  });
+});
+
+describe('seatLimit (student-profile cap: single=1, family=10, free=1)', () => {
+  it('is 1 with no entitlement (free tier is one learner)', () => {
+    expect(seatLimit(null, NOW)).toBe(1);
+  });
+
+  it('is the granted seats for an active entitlement', () => {
+    expect(seatLimit(makeEnt({ tier: 'single', seats: 1, expires_at: FUTURE }), NOW)).toBe(1);
+    expect(seatLimit(makeEnt({ tier: 'multi', seats: 10, expires_at: FUTURE }), NOW)).toBe(10);
+  });
+
+  it('drops back to 1 when the entitlement is expired', () => {
+    expect(seatLimit(makeEnt({ tier: 'multi', seats: 10, expires_at: PAST }), NOW)).toBe(1);
+  });
+
+  it('drops back to 1 when the entitlement is refunded', () => {
+    expect(
+      seatLimit(makeEnt({ tier: 'multi', seats: 10, status: 'refunded', expires_at: FUTURE }), NOW),
+    ).toBe(1);
+  });
+
+  it('never returns less than 1, even for a malformed seats value', () => {
+    expect(seatLimit(makeEnt({ seats: 0, expires_at: FUTURE }), NOW)).toBe(1);
+  });
+});
+
+describe('canAddStudent', () => {
+  it('allows the first student on the free/single tier, then stops', () => {
+    expect(canAddStudent(0, null, NOW)).toBe(true);
+    expect(canAddStudent(1, null, NOW)).toBe(false);
+  });
+
+  it('allows up to 10 on the family tier, then stops (boundary at seats)', () => {
+    const family = makeEnt({ tier: 'multi', seats: 10, expires_at: FUTURE });
+    expect(canAddStudent(9, family, NOW)).toBe(true);
+    expect(canAddStudent(10, family, NOW)).toBe(false);
+  });
+
+  it('treats a lapsed family plan as the free cap again', () => {
+    const lapsed = makeEnt({ tier: 'multi', seats: 10, expires_at: PAST });
+    expect(canAddStudent(1, lapsed, NOW)).toBe(false);
   });
 });
 

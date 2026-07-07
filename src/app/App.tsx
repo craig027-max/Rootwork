@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import '../styles/app.css';
 import { useWondralStore } from './store';
 import { pathForView, viewForPath } from './routes';
-import { consumeCheckoutReturn } from '../core/checkout';
+import { consumeCheckoutReturn, pollEntitlementUnlock } from '../core/checkout';
 import { useShowUpgrade } from './hooks';
 import { Home } from '../ui/Home';
 import { Deck } from '../ui/Deck';
@@ -16,7 +16,49 @@ import { TermsOfService } from '../ui/TermsOfService';
 import { Celebration } from '../ui/Celebration';
 import { BuildStamp } from '../ui/BuildStamp';
 import { Button } from '../ui/components/Button';
-import type { AppView } from './store';
+import type { AppView, CheckoutNotice } from './store';
+
+function CheckoutBanner({
+  notice,
+  onRetry,
+  onDismiss,
+}: {
+  notice: CheckoutNotice;
+  onRetry: () => void;
+  onDismiss: () => void;
+}) {
+  if (!notice) return null;
+  const dismissible = notice === 'unlocked' || notice === 'cancelled';
+  return (
+    <div
+      className={`ww-notice${notice === 'pending' ? ' is-error' : ''}`}
+      role="status"
+      aria-live="polite"
+    >
+      <div className="ww-row" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+        <span>
+          {notice === 'unlocking'
+            ? 'Payment received — unlocking your account…'
+            : notice === 'unlocked'
+              ? '🎉 Payment received — everything is unlocked. Happy learning!'
+              : notice === 'pending'
+                ? 'Payment received — the unlock is taking longer than usual. It will finish on its own, or check again now.'
+                : 'Checkout cancelled — you haven’t been charged.'}
+        </span>
+        {notice === 'pending' ? (
+          <Button size="sm" onClick={onRetry}>
+            Check again
+          </Button>
+        ) : null}
+        {dismissible ? (
+          <Button variant="ghost" size="sm" onClick={onDismiss} aria-label="Dismiss">
+            ✕
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 function Screen({ view }: { view: AppView }) {
   switch (view) {
@@ -50,11 +92,28 @@ export function App() {
   const requestUpgrade = useWondralStore((s) => s.requestUpgrade);
   const signOut = useWondralStore((s) => s.signOut);
   const showUpgrade = useShowUpgrade();
+  const checkoutNotice = useWondralStore((s) => s.checkoutNotice);
+  const setCheckoutNotice = useWondralStore((s) => s.setCheckoutNotice);
 
   // Handle a return from Stripe Checkout (?checkout=success|cancel) on first load.
+  // consumeCheckoutReturn strips the URL param, so a StrictMode double-run (or a
+  // reload) gets null the second time and leaves the banner state alone. The
+  // notice lives in the store (an external system), not component state.
   useEffect(() => {
-    void consumeCheckoutReturn();
-  }, []);
+    const ret = consumeCheckoutReturn();
+    if (!ret) return;
+    if (ret.status === 'cancel') {
+      setCheckoutNotice('cancelled');
+      return;
+    }
+    setCheckoutNotice('unlocking');
+    void ret.unlocked.then((ok) => setCheckoutNotice(ok ? 'unlocked' : 'pending'));
+  }, [setCheckoutNotice]);
+
+  function retryUnlock() {
+    setCheckoutNotice('unlocking');
+    void pollEntitlementUnlock().then((ok) => setCheckoutNotice(ok ? 'unlocked' : 'pending'));
+  }
 
   // The legal pages are the only URL-addressable views: keep the address bar in
   // sync as the view changes, and honor back/forward between them and the app.
@@ -106,6 +165,11 @@ export function App() {
       </header>
 
       <main className="ww-main">
+        <CheckoutBanner
+          notice={checkoutNotice}
+          onRetry={retryUnlock}
+          onDismiss={() => setCheckoutNotice(null)}
+        />
         <Screen view={view} />
       </main>
 
