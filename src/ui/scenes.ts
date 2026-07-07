@@ -365,27 +365,71 @@ function draw(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal:
 
 // Flowing waves + bubbles (water) ────────────────────────
 function water(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal: string[]): void {
+  // Deep body gradient — gives the pool volume instead of flat lines.
+  const body = x.createLinearGradient(0, H * 0.2, 0, H);
+  body.addColorStop(0, `rgba(${p0(pal)},0)`);
+  body.addColorStop(0.55, `rgba(${p0(pal)},0.10)`);
+  body.addColorStop(1, `rgba(${p1(pal)},0.22)`);
+  x.fillStyle = body;
+  x.fillRect(0, 0, W, H);
+
   x.globalCompositeOperation = 'lighter';
-  for (let r = 0; r < 4; r++) {
-    const y = H * (0.3 + r * 0.14);
-    x.strokeStyle = `rgba(${r % 2 ? p1(pal) : p0(pal)},${0.2 - r * 0.03})`;
-    x.lineWidth = 2;
+
+  // Six layered wave crests, back (dim) to front (bright): a filled body plus
+  // a brighter surface line, so the water reads as stacked moving planes.
+  for (let r = 0; r < 6; r++) {
+    const depth = r / 5;
+    const y = H * (0.26 + r * 0.12);
+    const amp = 6 + depth * 10;
+    const col = r % 2 ? p1(pal) : p0(pal);
+    const wave = (i: number): number =>
+      y +
+      Math.sin(i * 0.02 + t * 1.4 + r * 0.9) * amp +
+      Math.sin(i * 0.055 - t * (1 + depth)) * amp * 0.4;
+
+    x.beginPath();
+    x.moveTo(0, H);
+    for (let i = 0; i <= W; i += 6) x.lineTo(i, wave(i));
+    x.lineTo(W, H);
+    x.closePath();
+    x.fillStyle = `rgba(${col},${0.05 + depth * 0.07})`;
+    x.fill();
+
     x.beginPath();
     for (let i = 0; i <= W; i += 6) {
-      const yy = y + Math.sin(i * 0.025 + t * 1.5 + r) * 8 + Math.sin(i * 0.06 - t) * 4;
-      if (i) x.lineTo(i, yy); else x.moveTo(i, yy);
+      if (i) x.lineTo(i, wave(i));
+      else x.moveTo(i, wave(i));
     }
+    x.strokeStyle = `rgba(${col},${0.12 + depth * 0.22})`;
+    x.lineWidth = 1 + depth * 1.5;
     x.stroke();
   }
-  for (let i = 0; i < 20; i++) {
+
+  // Caustic shimmer — bright dashes drifting across the surface.
+  for (let i = 0; i < 26; i++) {
+    const sx = (i * 0.0137 * W * 7.3 + t * 22) % W;
+    const sy = H * (0.3 + ((i * 0.0197) % 0.5));
+    const tw = 0.5 + 0.5 * Math.sin(t * 3 + i);
+    x.fillStyle = `rgba(255,255,255,${0.04 + tw * 0.1})`;
+    x.beginPath();
+    x.ellipse(sx, sy, 6 + tw * 4, 1.1, 0, 0, TAU);
+    x.fill();
+  }
+
+  // Rising bubbles, each with a little specular highlight.
+  for (let i = 0; i < 22; i++) {
     const d = (t * 0.3 + i * 0.11) % 1,
-      bx = W * ((i * 0.137) % 1),
+      bx = W * ((i * 0.137) % 1) + Math.sin(t + i) * 5,
       by = H - d * H,
-      a = (1 - d) * 0.4,
+      a = (1 - d) * 0.45,
       s = 2 + (i % 3);
     x.fillStyle = `rgba(${p1(pal)},${a})`;
     x.beginPath();
     x.arc(bx, by, s, 0, TAU);
+    x.fill();
+    x.fillStyle = `rgba(255,255,255,${a * 0.7})`;
+    x.beginPath();
+    x.arc(bx - s * 0.3, by - s * 0.3, s * 0.35, 0, TAU);
     x.fill();
   }
   x.globalCompositeOperation = 'source-over';
@@ -396,7 +440,16 @@ function heat(x: CanvasRenderingContext2D, W: number, H: number, t: number, _pal
   void _pal;
   const cx = W / 2;
   x.globalCompositeOperation = 'lighter';
-  for (let i = 0; i < 72; i++) {
+
+  // Coal-bed glow the flames rise from — anchors the fire to a source.
+  const bed = x.createRadialGradient(cx, H * 0.94, 0, cx, H * 0.94, W * 0.4);
+  bed.addColorStop(0, 'rgba(255,120,20,0.45)');
+  bed.addColorStop(1, 'rgba(255,60,0,0)');
+  x.fillStyle = bed;
+  x.fillRect(0, H * 0.55, W, H * 0.45);
+
+  // Flame licks.
+  for (let i = 0; i < 84; i++) {
     const seed = i * 0.137,
       d = (t * 0.6 + seed) % 1;
     const fx = cx + Math.sin(i * 12.9) * W * 0.34 + Math.sin(d * 6 + i) * 14;
@@ -411,6 +464,20 @@ function heat(x: CanvasRenderingContext2D, W: number, H: number, t: number, _pal
     x.fillStyle = g;
     x.beginPath();
     x.arc(fx, fy, s, 0, TAU);
+    x.fill();
+  }
+
+  // Embers — sparks that rise higher, drift, and twinkle out.
+  for (let i = 0; i < 22; i++) {
+    const seed = i * 0.191,
+      d = (t * 0.4 + seed) % 1;
+    const sx = cx + Math.sin(i * 7.1) * W * 0.28 + Math.sin(d * 9 + i) * 22;
+    const sy = H * 0.9 - d * H * 0.95;
+    const tw = 0.5 + 0.5 * Math.sin(t * 8 + i * 3);
+    const a = (1 - d) * tw * 0.9;
+    x.fillStyle = `rgba(255,${180 + Math.round(tw * 60)},120,${a})`;
+    x.beginPath();
+    x.arc(sx, sy, 1.4, 0, TAU);
     x.fill();
   }
   x.globalCompositeOperation = 'source-over';
@@ -823,6 +890,149 @@ function people(x: CanvasRenderingContext2D, W: number, H: number, t: number, pa
   x.globalCompositeOperation = 'source-over';
 }
 
+// Standing pillar — firm, unwavering (stand / stay / stable) ──
+function stand(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal: string[]): void {
+  const cx = W / 2;
+  const groundY = H * 0.82;
+  const colW = Math.min(W * 0.16, 68);
+  const colTop = H * 0.24;
+  const colH = groundY - colTop;
+
+  // Steady aura behind the column — breathes very slowly, "holds its ground".
+  x.globalCompositeOperation = 'lighter';
+  const breathe = 0.5 + 0.5 * Math.sin(t * 0.8);
+  glow(x, cx, (colTop + groundY) / 2, colW * 2.2, p0(pal), 0.1 + breathe * 0.06);
+
+  // Motes drift down and settle onto the ground — coming to a standstill.
+  for (let i = 0; i < 14; i++) {
+    const seed = i * 0.137;
+    const d = (t * 0.22 + seed) % 1;
+    const rest = d > 0.86 ? (1 - d) / 0.14 : 1; // fade as it comes to rest
+    const mx = cx + Math.sin(i * 31.7) * colW * 2.6;
+    const my = colTop + d * (groundY - colTop);
+    const a = d < 0.86 ? 0.5 : 0.5 * rest;
+    x.fillStyle = `rgba(${p1(pal)},${a})`;
+    x.beginPath();
+    x.arc(mx, my, 1.8 + (i % 3) * 0.6, 0, TAU);
+    x.fill();
+  }
+  x.globalCompositeOperation = 'source-over';
+
+  // The column itself — solid, upright, unwavering.
+  const g = x.createLinearGradient(cx - colW / 2, 0, cx + colW / 2, 0);
+  g.addColorStop(0, `rgba(${p0(pal)},0.9)`);
+  g.addColorStop(0.5, `rgba(${p1(pal)},0.95)`);
+  g.addColorStop(1, `rgba(${p0(pal)},0.9)`);
+  x.fillStyle = g;
+  rr(x, cx - colW / 2, colTop, colW, colH, 8);
+  x.fill();
+
+  // Capital + base plinth — reads as a monument that stands.
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  rr(x, cx - colW * 0.9, colTop - 14, colW * 1.8, 16, 5);
+  x.fill();
+  rr(x, cx - colW * 0.95, groundY - 4, colW * 1.9, 16, 5);
+  x.fill();
+
+  // Ground line.
+  x.strokeStyle = `rgba(${p0(pal)},0.5)`;
+  x.lineWidth = 2;
+  x.beginPath();
+  x.moveTo(W * 0.1, groundY + 12);
+  x.lineTo(W * 0.9, groundY + 12);
+  x.stroke();
+}
+
+// Held in grip — captives strain out but are pulled back (hold / keep) ──
+function hold(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal: string[]): void {
+  const cx = W / 2,
+    cy = H / 2;
+  const R = Math.min(W, H) * 0.32;
+  x.globalCompositeOperation = 'lighter';
+
+  // Central core — the thing being held.
+  const pulse = 0.5 + 0.5 * Math.sin(t * 1.6);
+  glow(x, cx, cy, R * 0.7, p1(pal), 0.22 + pulse * 0.12);
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  x.beginPath();
+  x.arc(cx, cy, 9 + pulse * 2, 0, TAU);
+  x.fill();
+
+  // Captives orbit and strain outward, but a tether keeps them held.
+  const N = 9;
+  for (let i = 0; i < N; i++) {
+    const ang = (i / N) * TAU + t * 0.35;
+    const strain = Math.pow(0.5 + 0.5 * Math.sin(t * 1.3 + i * 1.7), 4);
+    const rad = R * (0.72 + strain * 0.42);
+    const px = cx + Math.cos(ang) * rad;
+    const py = cy + Math.sin(ang) * rad;
+
+    // Tether back to the core — brighter as the grip tightens.
+    const g = x.createLinearGradient(cx, cy, px, py);
+    g.addColorStop(0, `rgba(${p1(pal)},${0.15 + strain * 0.35})`);
+    g.addColorStop(1, `rgba(${p0(pal)},${0.1 + strain * 0.25})`);
+    x.strokeStyle = g;
+    x.lineWidth = 1.5 + strain * 1.5;
+    x.beginPath();
+    x.moveTo(cx, cy);
+    x.lineTo(px, py);
+    x.stroke();
+
+    x.fillStyle = `rgba(${p0(pal)},${0.7 - strain * 0.25})`;
+    x.beginPath();
+    x.arc(px, py, 4 - strain * 1.5, 0, TAU);
+    x.fill();
+  }
+  x.globalCompositeOperation = 'source-over';
+}
+
+// The moment of contact — ripples spread from a touch (touch / feel) ──
+function touch(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal: string[]): void {
+  const cx = W / 2;
+  const surfaceY = H * 0.62;
+  const cycle = 2.4; // seconds between touches
+  const ph = (t % cycle) / cycle; // 0..1 within a touch cycle
+
+  // Fingertip: descends (0..0.4), makes contact (~0.4), then lifts away.
+  const down = ph < 0.4 ? ph / 0.4 : 1 - (ph - 0.4) / 0.6;
+  const tipY = surfaceY - 46 * (1 - Math.max(0, Math.min(1, down))) - 6;
+  const contact = ph >= 0.38 && ph < 0.46;
+
+  x.globalCompositeOperation = 'lighter';
+
+  // The surface being touched.
+  x.strokeStyle = `rgba(${p0(pal)},0.35)`;
+  x.lineWidth = 2;
+  x.beginPath();
+  x.moveTo(W * 0.12, surfaceY);
+  x.lineTo(W * 0.88, surfaceY);
+  x.stroke();
+
+  // Ripples born at the moment of contact — expand outward and fade.
+  for (let k = 0; k < 3; k++) {
+    const age = ph - 0.4 - k * 0.06;
+    if (age > 0 && age < 0.6) {
+      const rad = age * Math.min(W, H) * 1.1;
+      const a = (1 - age / 0.6) * 0.5;
+      x.strokeStyle = `rgba(${p1(pal)},${a})`;
+      x.lineWidth = 2.5;
+      x.beginPath();
+      x.ellipse(cx, surfaceY, rad, rad * 0.34, 0, 0, TAU);
+      x.stroke();
+    }
+  }
+
+  // Contact flash, then the fingertip glow.
+  if (contact) glow(x, cx, surfaceY, 40, p1(pal), 0.5);
+  glow(x, cx, tipY, 16, p0(pal), 0.6);
+  x.fillStyle = `rgba(${p0(pal)},0.9)`;
+  x.beginPath();
+  x.arc(cx, tipY, 7, 0, TAU);
+  x.fill();
+
+  x.globalCompositeOperation = 'source-over';
+}
+
 export const SCENES: Record<string, SceneFn> = {
   dna,
   globe,
@@ -843,4 +1053,7 @@ export const SCENES: Record<string, SceneFn> = {
   heart,
   mind,
   people,
+  stand,
+  hold,
+  touch,
 };
