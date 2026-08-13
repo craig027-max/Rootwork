@@ -223,7 +223,7 @@ export interface Root {
       words:[ {i:'🦸',w:'Superhero',hl:'Super',b:'super (above) + hero',d:'A hero with above-ordinary powers.'},
               {i:'🥇',w:'Superior',hl:'Super',b:'super (above) + -ior (more)',d:'Higher or better than something else.'},
               {i:'👁️',w:'Supervise',hl:'Super',b:'super (over) + vis (see)',d:"To watch over someone's work."} ] },
-    { t:1, root:'Semi', say:'SEM-ee', org:'Latin semi-', mean:'half', alt:'partly', scene:'circle', pal:'lime',
+    { t:1, root:'Semi', say:'SEM-ee', org:'Latin semi-', mean:'half', alt:'partly', scene:'half', pal:'lime',
       lead:'<b>Semi-</b> is a prefix that goes on the front of a word. It means <b>half</b> or partly.',
       words:[ {i:'◐',w:'Semicircle',hl:'Semi',b:'semi (half) + circle',d:'Half of a circle.'},
               {i:'🏆',w:'Semifinal',hl:'Semi',b:'semi (half) + final',d:'The round that is halfway to the final.'},

@@ -411,6 +411,67 @@ export const circle: SceneFn = (x, W, H, t, pal) => {
   disc(x, cx, cy, 5, 'rgba(10,10,26,0.9)');
 };
 
+/** A whole circle with exactly the left half filled — unmistakably 50%. */
+export const half: SceneFn = (x, W, H, t, pal) => {
+  const cx = W / 2,
+    cy = H / 2,
+    R = Math.min(W, H) * 0.36;
+  const breathe = 0.5 + 0.5 * Math.sin(t * 1.15);
+  // Wipe 0→1 then hold at half. Offset so t=0 (reduced motion) is already 50%.
+  const u = (t * 0.32 + 0.72) % 1;
+  const s = u < 0.28 ? u / 0.28 : 1;
+  const cover = s * s * (3 - 2 * s);
+
+  x.save();
+  x.lineCap = 'round';
+  glow(x, cx, cy, R * 1.45, p0(pal), 0.12 + breathe * 0.06);
+
+  // Full disc — pale so the empty half is a surface, not a hole.
+  x.fillStyle = 'rgba(214, 228, 255, 0.22)';
+  x.beginPath();
+  x.arc(cx, cy, R, 0, TAU);
+  x.fill();
+
+  // Hatch the empty right half (worksheet "unshaded" cue).
+  x.save();
+  x.beginPath();
+  x.arc(cx, cy, R - 1, -Math.PI / 2, Math.PI / 2, false);
+  x.closePath();
+  x.clip();
+  x.strokeStyle = `rgba(${p1(pal)},0.42)`;
+  x.lineWidth = 1.6;
+  for (let i = -R * 2; i <= R * 2; i += 9) {
+    line(x, cx, cy - R + i, cx + R, cy - R + i + R);
+  }
+  x.restore();
+
+  // Solid fill wipes from the left rim and STOPS at the midline.
+  x.save();
+  x.beginPath();
+  x.arc(cx, cy, R - 1, Math.PI / 2, -Math.PI / 2, false);
+  x.closePath();
+  x.clip();
+  const fill = x.createLinearGradient(cx - R, cy, cx, cy);
+  fill.addColorStop(0, `rgba(${p0(pal)},0.98)`);
+  fill.addColorStop(1, `rgba(${p1(pal)},0.92)`);
+  x.fillStyle = fill;
+  x.fillRect(cx - R, cy - R, Math.max(0, cover) * R, R * 2);
+  x.restore();
+
+  // Diameter cut.
+  x.strokeStyle = `rgba(255,255,255,${0.7 + breathe * 0.2})`;
+  x.lineWidth = 3;
+  line(x, cx, cy - R + 1, cx, cy + R - 1);
+
+  // Rim of the whole.
+  x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+  x.lineWidth = 4;
+  x.beginPath();
+  x.arc(cx, cy, R, 0, TAU);
+  x.stroke();
+  x.restore();
+};
+
 /** A balance scale with matching weights (equal). */
 export const equal: SceneFn = (x, W, H, t, pal) => {
   const cx = W / 2,

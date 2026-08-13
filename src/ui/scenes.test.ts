@@ -39,6 +39,9 @@ describe('scene registry', () => {
     expect(byRoot.Therm).toBe('heat');
     expect(byRoot.Bio).toBe('dna');
     expect(byRoot.Pyr).toBe('heat');
+    expect(byRoot.Semi).toBe('half');
+    expect(byRoot.Circum).toBe('circle');
+    expect(byRoot.Cycl).toBe('circle');
   });
 
   it('lets every scene paint a frame without throwing', () => {
