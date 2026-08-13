@@ -131,12 +131,11 @@ export function Deck() {
   return (
     <>
       <div className="ww-deck-wrap">
-        <button type="button" className="ww-deck-back" onClick={closeRoot}>
-          ← All roots
-        </button>
-
         <article className="ww-card2" style={paletteVars(p.c1rgb, p.grad)}>
           <div className="ww-strip">
+            <button type="button" className="ww-deck-back" onClick={closeRoot}>
+              ← All roots
+            </button>
             <span className="badge2" aria-hidden="true">
               {emoji}
             </span>
@@ -150,6 +149,12 @@ export function Deck() {
           </div>
 
           <div className="ww-hero">
+            <div className="ww-scene2">
+              <Scene scene={root.scene} pal={p.pal} />
+              <span className="ww-caption">
+                {studying ? `${emoji} watch the scene` : `${emoji} ${root.mean} — ${root.alt}`}
+              </span>
+            </div>
             <div className="ww-hero-text">
               <span className="ww-eyebrow2">
                 <span className="ww-eyebrow-dot" aria-hidden="true" /> {lang} Root
@@ -173,24 +178,19 @@ export function Deck() {
                 <p className="ww-lead2" dangerouslySetInnerHTML={{ __html: root.lead }} />
               )}
             </div>
-            <div className="ww-scene2">
-              <Scene scene={root.scene} pal={p.pal} />
-              <span className="ww-caption">
-                {studying ? `${emoji} watch the scene` : `${emoji} ${root.mean} — ${root.alt}`}
-              </span>
-            </div>
           </div>
 
           {studying ? null : (
             <div className="ww-words">
               {root.words.map((w) => (
-                <div className="ww-word" key={w.w}>
+                <div className="ww-word" key={w.w} title={`${w.b} — ${w.d}`}>
                   <span className="ico" aria-hidden="true">
                     {w.i}
                   </span>
-                  <h3>{highlight(w.w, w.hl)}</h3>
-                  <div className="build">{w.b}</div>
-                  <p>{w.d}</p>
+                  <div className="ww-word-body">
+                    <h3>{highlight(w.w, w.hl)}</h3>
+                    <p>{w.d}</p>
+                  </div>
                 </div>
               ))}
             </div>
