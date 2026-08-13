@@ -6,6 +6,14 @@
 
 * { box-sizing: border-box; }
 
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+button, a, [role="option"], [role="listbox"] {
+  touch-action: manipulation;
+}
+
 body {
   margin: 0;
   font-family: var(--font-display);

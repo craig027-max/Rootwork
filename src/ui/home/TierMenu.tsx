@@ -9,9 +9,9 @@ function jewelVarsOf(jewel: string) {
 }
 
 /**
- * The signature selectable menu (master column). A real listbox: click a row or
- * use ↑/↓ to move the selection (wraps), Enter fires the selected row's detail
- * CTA. Selecting re-themes the detail panel to the row's jewel.
+ * The signature selectable menu (master column). A real listbox: tap/click a
+ * row to preview it in the detail panel; tap the already-selected row (or
+ * press Enter) to start. Arrow keys still move the selection on desktop.
  */
 export function TierMenu({
   items,
@@ -62,7 +62,10 @@ export function TierMenu({
             tabIndex={sel ? 0 : -1}
             className={`ww-menu-row${sel ? ' sel' : ''}`}
             style={jewelVarsOf(it.jewel)}
-            onClick={() => onSelect(i)}
+            onClick={() => {
+              if (sel) onActivate(it);
+              else onSelect(i);
+            }}
           >
             <span className={`ww-menu-chip${locked ? ' lock' : ''}`} aria-hidden="true">
               {it.icon}

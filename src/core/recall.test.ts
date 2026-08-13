@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ROOTS } from '../data/roots';
 import { mulberry32 } from './daily';
+import { wordContainsRoot } from './distractors';
 import { buildRecall } from './recall';
 
 const bio = ROOTS.find((r) => r.root === 'Bio')!;
@@ -49,5 +50,21 @@ describe('buildRecall', () => {
     expect(beat.opts.length).toBeGreaterThanOrEqual(2);
     expect(beat.opts.some((o) => o.ok && o.label === bio.mean)).toBe(true);
     expect(beat.opts.some((o) => !o.ok)).toBe(true);
+    const junkMeans = new Set(['moon', 'color', 'number', 'weather']);
+    for (const o of beat.opts) {
+      if (!o.ok) expect(junkMeans.has(o.label)).toBe(false);
+    }
+  });
+
+  it('word distractors are curriculum words that do not contain the root', () => {
+    const form = ROOTS.find((r) => r.root === 'Form')!;
+    const curriculumWords = new Set(ROOTS.flatMap((r) => r.words.map((w) => w.w)));
+    const household = new Set(['Window', 'Blanket', 'Sandwich', 'Pillow', 'Ladder']);
+    const beat = buildRecall({ root: form, pool: ROOTS.filter((r) => r.t === 1), kind: 'word', rng: mulberry32(7), choices: 3 });
+    for (const o of beat.opts) {
+      expect(household.has(o.label)).toBe(false);
+      expect(curriculumWords.has(o.label)).toBe(true);
+      if (!o.ok) expect(wordContainsRoot(o.label, 'Form')).toBe(false);
+    }
   });
 });
