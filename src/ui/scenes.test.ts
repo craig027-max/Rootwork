@@ -129,48 +129,88 @@ describe('scene registry', () => {
   });
 
   it('lets every scene paint a frame without throwing', () => {
-    const grad = { addColorStop: () => undefined };
-    const noop = () => undefined;
-    const ctx = {
-      fillStyle: '',
-      strokeStyle: '',
-      lineWidth: 1,
-      lineCap: 'butt',
-      lineJoin: 'miter',
-      shadowColor: '',
-      shadowBlur: 0,
-      globalCompositeOperation: 'source-over',
-      font: '',
-      textAlign: 'center',
-      textBaseline: 'middle',
-      beginPath: noop,
-      closePath: noop,
-      moveTo: noop,
-      lineTo: noop,
-      quadraticCurveTo: noop,
-      bezierCurveTo: noop,
-      arc: noop,
-      ellipse: noop,
-      arcTo: noop,
-      rect: noop,
-      fillRect: noop,
-      fill: noop,
-      stroke: noop,
-      clip: noop,
-      save: noop,
-      restore: noop,
-      translate: noop,
-      rotate: noop,
-      scale: noop,
-      fillText: noop,
-      setLineDash: noop,
-      createRadialGradient: () => grad,
-      createLinearGradient: () => grad,
-    } as unknown as CanvasRenderingContext2D;
+    const ctx = stubCtx();
     const pal = ['52,224,166', '52,217,240'];
     for (const [key, fn] of Object.entries(SCENES)) {
       expect(() => fn(ctx, 320, 200, 1.25, pal), key).not.toThrow();
       expect(() => fn(ctx, 320, 200, 0, pal), `${key} @ t=0`).not.toThrow();
     }
   });
+
+  it('keeps a pencil on the write scene at preview and card size, even after the stroke', () => {
+    const pal = ['244,63,94', '251,113,133'];
+    const drawFn = SCENES.draw;
+    expect(drawFn).toBeTypeOf('function');
+
+    // (t * 0.16) % 1.25 >= 1 → stroke finished, old code hid the pencil.
+    const afterStroke = 7;
+    expect((afterStroke * 0.16) % 1.25).toBeGreaterThanOrEqual(1);
+
+    const sizes: Array<[number, number]> = [
+      [280, 168], // home preview
+      [520, 420], // full deck card
+    ];
+    for (const [w, h] of sizes) {
+      for (const t of [0, 2.4, afterStroke]) {
+        const counts = { rotate: 0, translate: 0, fill: 0 };
+        const ctx = stubCtx({
+          rotate: () => {
+            counts.rotate += 1;
+          },
+          translate: () => {
+            counts.translate += 1;
+          },
+          fill: () => {
+            counts.fill += 1;
+          },
+        });
+        expect(() => drawFn!(ctx, w, h, t, pal), `${w}×${h} t=${t}`).not.toThrow();
+        expect(counts.rotate, `pencil rotate ${w}×${h} t=${t}`).toBeGreaterThan(0);
+        expect(counts.translate, `pencil translate ${w}×${h} t=${t}`).toBeGreaterThan(0);
+        expect(counts.fill, `pencil body fill ${w}×${h} t=${t}`).toBeGreaterThan(3);
+      }
+    }
+  });
 });
+
+function stubCtx(overrides: Partial<Record<string, unknown>> = {}): CanvasRenderingContext2D {
+  const grad = { addColorStop: () => undefined };
+  const noop = () => undefined;
+  return {
+    fillStyle: '',
+    strokeStyle: '',
+    lineWidth: 1,
+    lineCap: 'butt',
+    lineJoin: 'miter',
+    shadowColor: '',
+    shadowBlur: 0,
+    globalCompositeOperation: 'source-over',
+    font: '',
+    textAlign: 'center',
+    textBaseline: 'middle',
+    beginPath: noop,
+    closePath: noop,
+    moveTo: noop,
+    lineTo: noop,
+    quadraticCurveTo: noop,
+    bezierCurveTo: noop,
+    arc: noop,
+    ellipse: noop,
+    arcTo: noop,
+    rect: noop,
+    fillRect: noop,
+    fill: noop,
+    stroke: noop,
+    clip: noop,
+    save: noop,
+    restore: noop,
+    translate: noop,
+    rotate: noop,
+    scale: noop,
+    fillText: noop,
+    setLineDash: noop,
+    createRadialGradient: () => grad,
+    createLinearGradient: () => grad,
+    ...overrides,
+  } as unknown as CanvasRenderingContext2D;
+}

@@ -292,12 +292,101 @@ function waves(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal
   x.globalCompositeOperation = 'source-over';
 }
 
+/**
+ * Side-view pencil: graphite nib, wood cone, jewel barrel, ferrule, eraser.
+ * Local space: writing tip at the origin, barrel along −x. `s` is half the barrel width.
+ * Parts are laid out as left-edges so they stay one connected silhouette.
+ */
+function pencil(x: CanvasRenderingContext2D, pal: string[], s: number): void {
+  const hw = s;
+  const graphite = s * 0.95;
+  const wood = s * 1.55;
+  const bodyLen = s * 7.2;
+  const ferrule = s * 0.7;
+  const eraser = s * 0.95;
+  const graphiteL = -graphite;
+  const woodL = graphiteL - wood;
+  const bodyL = woodL - bodyLen;
+  const ferruleL = bodyL - ferrule;
+  const eraserL = ferruleL - eraser;
+  const lw = Math.max(1.1, s * 0.1);
+  const facetR = Math.min(1.6, hw * 0.12);
+
+  x.lineJoin = 'round';
+  x.lineCap = 'butt';
+
+  // Eraser (back).
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  rr(x, eraserL, -hw * 0.9, eraser, hw * 1.8, Math.min(hw * 0.42, eraser * 0.4));
+  x.fill();
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = lw;
+  rr(x, eraserL, -hw * 0.9, eraser, hw * 1.8, Math.min(hw * 0.42, eraser * 0.4));
+  x.stroke();
+
+  // Metal ferrule with two bands — the pink / silver / barrel sandwich.
+  x.fillStyle = 'rgba(220,228,240,0.88)';
+  rr(x, ferruleL, -hw * 1.05, ferrule, hw * 2.1, 1);
+  x.fill();
+  x.strokeStyle = 'rgba(255,255,255,0.7)';
+  x.lineWidth = Math.max(1, s * 0.07);
+  rr(x, ferruleL, -hw * 1.05, ferrule, hw * 2.1, 1);
+  x.stroke();
+  x.strokeStyle = 'rgba(40,48,64,0.35)';
+  x.lineWidth = Math.max(1, s * 0.06);
+  line(x, ferruleL + ferrule * 0.32, -hw * 0.98, ferruleL + ferrule * 0.32, hw * 0.98);
+  line(x, ferruleL + ferrule * 0.68, -hw * 0.98, ferruleL + ferrule * 0.68, hw * 0.98);
+
+  // Barrel.
+  x.fillStyle = `rgba(${p0(pal)},0.95)`;
+  rr(x, bodyL, -hw, bodyLen, hw * 2, Math.min(hw * 0.18, bodyLen * 0.03));
+  x.fill();
+  x.fillStyle = 'rgba(255,255,255,0.28)';
+  rr(x, bodyL + s * 0.2, -hw * 0.62, bodyLen - s * 0.4, hw * 0.38, facetR);
+  x.fill();
+  x.fillStyle = `rgba(${p0(pal)},0.4)`;
+  rr(x, bodyL + s * 0.2, hw * 0.22, bodyLen - s * 0.4, hw * 0.58, facetR);
+  x.fill();
+  x.strokeStyle = `rgba(${p0(pal)},0.98)`;
+  x.lineWidth = Math.max(1.3, s * 0.11);
+  rr(x, bodyL, -hw, bodyLen, hw * 2, Math.min(hw * 0.18, bodyLen * 0.03));
+  x.stroke();
+
+  // Sharpened wood cone + center seam — the cue that this is a pencil.
+  x.fillStyle = `rgba(${p1(pal)},0.82)`;
+  x.beginPath();
+  x.moveTo(graphiteL, -hw * 0.2);
+  x.lineTo(woodL, -hw);
+  x.lineTo(woodL, hw);
+  x.lineTo(graphiteL, hw * 0.2);
+  x.closePath();
+  x.fill();
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = lw;
+  x.stroke();
+  x.strokeStyle = 'rgba(40,30,24,0.45)';
+  x.lineWidth = Math.max(1, s * 0.08);
+  line(x, woodL, 0, graphiteL, 0);
+
+  // Graphite nib sitting on the stroke.
+  x.fillStyle = 'rgba(28,26,36,0.96)';
+  x.beginPath();
+  x.moveTo(0, 0);
+  x.lineTo(graphiteL, -hw * 0.2);
+  x.lineTo(graphiteL, hw * 0.2);
+  x.closePath();
+  x.fill();
+  x.strokeStyle = 'rgba(12,10,18,0.9)';
+  x.lineWidth = Math.max(0.9, s * 0.07);
+  x.stroke();
+}
+
 // Pencil writing on a page (write / draw).
 function draw(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal: string[]): void {
-  const pageX = W * 0.16,
-    pageY = H * 0.22,
-    pageW = W * 0.68,
-    pageH = H * 0.56;
+  const pageX = W * 0.14,
+    pageY = H * 0.16,
+    pageW = W * 0.72,
+    pageH = H * 0.64;
   x.fillStyle = 'rgba(245,242,230,0.12)';
   rr(x, pageX, pageY, pageW, pageH, 6);
   x.fill();
@@ -312,19 +401,20 @@ function draw(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal:
     line(x, pageX + 12, y, pageX + pageW - 12, y);
   }
 
-  const x0 = pageX + 16,
-    x1 = pageX + pageW - 20,
-    midY = pageY + pageH * 0.45,
-    amp = pageH * 0.18,
+  const x0 = pageX + Math.max(28, pageW * 0.2),
+    x1 = pageX + pageW - Math.max(16, pageW * 0.1),
+    midY = pageY + pageH * 0.5,
+    amp = pageH * 0.16,
     SEG = 160;
   const prog = (t * 0.16) % 1.25,
     tip = Math.min(1, prog);
   const fy = (f: number): number =>
     midY + Math.sin(f * 8) * amp * Math.sin(f * Math.PI) + Math.sin(f * 21) * amp * 0.14;
 
-  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
-  x.lineWidth = 2.6;
+  x.strokeStyle = `rgba(${p0(pal)},0.92)`;
+  x.lineWidth = Math.max(3.2, Math.min(W, H) * 0.018);
   x.lineCap = 'round';
+  x.lineJoin = 'round';
   x.beginPath();
   const tipN = Math.floor(SEG * tip);
   for (let n = 0; n <= tipN; n++) {
@@ -335,28 +425,20 @@ function draw(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal:
   }
   x.stroke();
 
-  if (tipN > 0 && tip < 1) {
-    const f = tipN / SEG,
-      px = x0 + (x1 - x0) * f,
-      py = fy(f);
-    const ang = Math.atan2(fy(Math.min(1, f + 0.01)) - py, 6);
-    x.save();
-    x.translate(px, py);
-    x.rotate(ang);
-    // Pencil: graphite, wood, body, eraser.
-    x.fillStyle = 'rgba(40,40,50,0.95)';
-    x.beginPath();
-    x.moveTo(10, 0);
-    x.lineTo(0, -4);
-    x.lineTo(0, 4);
-    x.closePath();
-    x.fill();
-    x.fillStyle = `rgba(${p0(pal)},0.95)`;
-    x.fillRect(-36, -4, 36, 8);
-    x.fillStyle = `rgba(${p1(pal)},0.9)`;
-    x.fillRect(-44, -4, 8, 8);
-    x.restore();
-  }
+  // Always park the pencil on the current tip — including t=0 (reduced motion)
+  // and the hold after the stroke finishes. Hiding it left only a round line-cap,
+  // which read as a dot dragging a line at home-preview size.
+  const f = tip;
+  const px = x0 + (x1 - x0) * f;
+  const py = fy(f);
+  const ahead = Math.min(1, f + 0.03);
+  const along = Math.atan2(fy(ahead) - py, Math.max(8, (x1 - x0) * 0.03));
+  const s = Math.max(7, Math.min(11, Math.min(W, H) * 0.05));
+  x.save();
+  x.translate(px, py);
+  x.rotate(along + 0.72);
+  pencil(x, pal, s);
+  x.restore();
 }
 
 // Analog clock face with 12/3/6/9 (time).
