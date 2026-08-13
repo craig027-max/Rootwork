@@ -1,173 +1,46 @@
 /* ============================================================
-   Word Roots — Canvas scene engine (ported from roots-scenes.js)
+   Word Roots — Canvas scene engine
    Each scene: fn(ctx, w, h, t, pal)
      ctx = CanvasRenderingContext2D (already DPR-scaled)
      w,h = CSS pixel size of the scene
      t   = elapsed seconds (frozen if prefers-reduced-motion)
      pal = [ "r,g,b", "r,g,b" ]  the card's two scene colors
-   Ported verbatim from the vanilla-JS prototype; drawing math
-   is unchanged. Array indexing into `pal` / palette tables is
-   guarded with fallbacks for TS strict + noUncheckedIndexedAccess.
+   Marquee scenes (dna, light, water, heat, stars) live in sceneMarquee.ts.
+   Meaning-true scenes that replace contradicting generics live in
+   sceneMeanings.ts. Array indexing into `pal` is guarded for TS strict.
    ============================================================ */
 
-export type SceneFn = (
-  ctx: CanvasRenderingContext2D,
-  w: number,
-  h: number,
-  t: number,
-  pal: string[],
-) => void;
-
-const TAU = 6.2831853;
-const RUNG = ['239,68,68', '245,158,11', '52,224,122', '6,182,212', '59,130,246'];
-
-// Fallback rgb when a palette entry is missing.
-const WHITE = '255,255,255';
-const p0 = (pal: string[]): string => pal[0] ?? WHITE;
-const p1 = (pal: string[]): string => pal[1] ?? WHITE;
-const rung = (i: number): string => RUNG[((i % RUNG.length) + RUNG.length) % RUNG.length] ?? WHITE;
-
-function rr(
-  x: CanvasRenderingContext2D,
-  X: number,
-  Y: number,
-  w: number,
-  h: number,
-  r: number,
-): void {
-  x.beginPath();
-  x.moveTo(X + r, Y);
-  x.arcTo(X + w, Y, X + w, Y + h, r);
-  x.arcTo(X + w, Y + h, X, Y + h, r);
-  x.arcTo(X, Y + h, X, Y, r);
-  x.arcTo(X, Y, X + w, Y, r);
-  x.closePath();
-}
-
-function glow(
-  x: CanvasRenderingContext2D,
-  px: number,
-  py: number,
-  r: number,
-  col: string,
-  a: number,
-): void {
-  const g = x.createRadialGradient(px, py, 0, px, py, r);
-  g.addColorStop(0, `rgba(${col},${a})`);
-  g.addColorStop(1, `rgba(${col},0)`);
-  x.fillStyle = g;
-  x.beginPath();
-  x.arc(px, py, r, 0, TAU);
-  x.fill();
-}
-
-// DNA helix + drifting cells (life) ──────────────────────
-interface Cell {
-  x: number;
-  y: number;
-  r: number;
-  sp: number;
-  sway: number;
-  hue: string;
-  a: number;
-}
-let cells: Cell[] | null = null;
-let cellW = 0;
-let cellH = 0;
-function seedCells(W: number, H: number): void {
-  cells = [];
-  const n = Math.round(Math.max(14, Math.min(34, (W * H) / 9000)));
-  for (let i = 0; i < n; i++)
-    cells.push({
-      x: Math.random(),
-      y: Math.random(),
-      r: 2 + Math.random() * 5,
-      sp: 0.004 + Math.random() * 0.01,
-      sway: Math.random() * 6.28,
-      hue: Math.random() < 0.5 ? '52,224,122' : '79,195,247',
-      a: 0.1 + Math.random() * 0.22,
-    });
-  cellW = W;
-  cellH = H;
-}
-
-interface Node {
-  x: number;
-  y: number;
-  d: number;
-  c: string;
-}
-function dna(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal: string[]): void {
-  if (!cells || cellW !== W || cellH !== H) seedCells(W, H);
-  const cs = cells ?? [];
-  x.globalCompositeOperation = 'lighter';
-  for (const c of cs) {
-    c.y -= c.sp;
-    c.sway += 0.016;
-    if (c.y < -0.05) {
-      c.y = 1.05;
-      c.x = Math.random();
-    }
-    const px = (c.x + Math.sin(c.sway) * 0.02) * W,
-      py = c.y * H;
-    glow(x, px, py, c.r * 3, c.hue, c.a);
-  }
-  const cx = W * 0.5,
-    amp = Math.min(W * 0.26, 96),
-    top = H * 0.1,
-    span = H * 0.8,
-    N = 46,
-    freq = 3.1,
-    nodes: Node[] = [];
-  for (let i = 0; i <= N; i++) {
-    const f = i / N,
-      y = top + f * span,
-      ph = f * freq * TAU + t * 0.9;
-    const x1 = cx + Math.sin(ph) * amp,
-      x2 = cx + Math.sin(ph + Math.PI) * amp;
-    const d1 = (Math.cos(ph) + 1) / 2,
-      d2 = (Math.cos(ph + Math.PI) + 1) / 2;
-    if (i % 2 === 0) {
-      const dm = (d1 + d2) / 2,
-        col = rung(i / 2);
-      x.strokeStyle = `rgba(${col},${0.12 + dm * 0.5})`;
-      x.lineWidth = 1.4 + dm * 2.2;
-      x.beginPath();
-      x.moveTo(x1, y);
-      x.lineTo(x2, y);
-      x.stroke();
-    }
-    nodes.push({ x: x1, y, d: d1, c: p0(pal) });
-    nodes.push({ x: x2, y, d: d2, c: p1(pal) });
-  }
-  for (const phase of [0, Math.PI]) {
-    x.beginPath();
-    for (let i = 0; i <= N; i++) {
-      const f = i / N,
-        y = top + f * span,
-        ph = f * freq * TAU + t * 0.9 + phase,
-        xx = cx + Math.sin(ph) * amp;
-      if (i) x.lineTo(xx, y); else x.moveTo(xx, y);
-    }
-    x.strokeStyle = `rgba(${phase === 0 ? p0(pal) : p1(pal)},0.18)`;
-    x.lineWidth = 2;
-    x.stroke();
-  }
-  nodes.sort((a, b) => a.d - b.d);
-  for (const n of nodes) {
-    const r = 2.4 + n.d * 4.6,
-      a = 0.25 + n.d * 0.7;
-    const g = x.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 2.4);
-    g.addColorStop(0, `rgba(255,255,255,${a * 0.9})`);
-    g.addColorStop(0.35, `rgba(${n.c},${a})`);
-    g.addColorStop(1, `rgba(${n.c},0)`);
-    x.fillStyle = g;
-    x.beginPath();
-    x.arc(n.x, n.y, r * 2.4, 0, TAU);
-    x.fill();
-  }
-  x.globalCompositeOperation = 'source-over';
-}
+import type { SceneFn } from './sceneUtil';
+import { TAU, glow, p0, p1, rr } from './sceneUtil';
+export type { SceneFn } from './sceneUtil';
+import { dna, heat, light, stars, water } from './sceneMarquee';
+import {
+  air,
+  build,
+  circle,
+  equal,
+  fall,
+  hang,
+  hold,
+  lift,
+  loop,
+  loosen,
+  many,
+  morph,
+  nature,
+  one,
+  place,
+  pull,
+  shut,
+  stand,
+  step,
+  straight,
+  three,
+  touch,
+  twist,
+  two,
+  wing,
+} from './sceneMeanings';
 
 // Rotating wireframe globe (earth) ───────────────────────
 function globe(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal: string[]): void {
@@ -217,53 +90,16 @@ function globe(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal
   x.arc(cx, cy, R, 0, TAU);
   x.stroke();
   x.shadowBlur = 0;
+  // Atmosphere halo.
+  x.strokeStyle = `rgba(${p0(pal)},0.22)`;
+  x.lineWidth = 10;
+  x.beginPath();
+  x.arc(cx, cy, R * 1.08, 0, TAU);
+  x.stroke();
   const oa = t * 0.8,
     ox = cx + Math.cos(oa) * R * 1.55,
     oy = cy + Math.sin(oa) * R * 0.5;
   glow(x, ox, oy, 9, '255,255,255', 0.9);
-  x.globalCompositeOperation = 'source-over';
-}
-
-// Radiating sun + photons (light) ────────────────────────
-function light(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal: string[]): void {
-  const cx = W / 2,
-    cy = H / 2,
-    maxR = Math.min(W, H) * 0.46;
-  x.globalCompositeOperation = 'lighter';
-  const rays = 26;
-  for (let k = 0; k < rays; k++) {
-    const a = (k / rays) * TAU + t * 0.3,
-      fl = Math.abs(Math.sin(k * 1.7 + t)),
-      len = maxR * (0.5 + 0.5 * fl);
-    x.strokeStyle = `rgba(${p0(pal)},${0.04 + 0.12 * fl})`;
-    x.lineWidth = 2;
-    x.beginPath();
-    x.moveTo(cx + Math.cos(a) * 28, cy + Math.sin(a) * 28);
-    x.lineTo(cx + Math.cos(a) * len, cy + Math.sin(a) * len);
-    x.stroke();
-  }
-  for (let i = 0; i < 64; i++) {
-    const d = (t * 0.25 + i * 0.137) % 1,
-      r = d * maxR,
-      a = i * 2.39996,
-      px = cx + Math.cos(a) * r,
-      py = cy + Math.sin(a) * r,
-      al = (1 - d) * 0.8,
-      s = 1.4 + (1 - d) * 2.2;
-    x.fillStyle = `rgba(${p0(pal)},${al})`;
-    x.beginPath();
-    x.arc(px, py, s, 0, TAU);
-    x.fill();
-  }
-  const g = x.createRadialGradient(cx, cy, 0, cx, cy, maxR * 0.42);
-  g.addColorStop(0, 'rgba(255,255,255,0.95)');
-  g.addColorStop(0.22, `rgba(${p0(pal)},0.85)`);
-  g.addColorStop(0.55, `rgba(${p1(pal)},0.22)`);
-  g.addColorStop(1, `rgba(${p1(pal)},0)`);
-  x.fillStyle = g;
-  x.beginPath();
-  x.arc(cx, cy, maxR * 0.42, 0, TAU);
-  x.fill();
   x.globalCompositeOperation = 'source-over';
 }
 
@@ -360,86 +196,6 @@ function draw(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal:
     x.arc(px, py, 14, 0, TAU);
     x.fill();
   }
-  x.globalCompositeOperation = 'source-over';
-}
-
-// Flowing waves + bubbles (water) ────────────────────────
-function water(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal: string[]): void {
-  x.globalCompositeOperation = 'lighter';
-  for (let r = 0; r < 4; r++) {
-    const y = H * (0.3 + r * 0.14);
-    x.strokeStyle = `rgba(${r % 2 ? p1(pal) : p0(pal)},${0.2 - r * 0.03})`;
-    x.lineWidth = 2;
-    x.beginPath();
-    for (let i = 0; i <= W; i += 6) {
-      const yy = y + Math.sin(i * 0.025 + t * 1.5 + r) * 8 + Math.sin(i * 0.06 - t) * 4;
-      if (i) x.lineTo(i, yy); else x.moveTo(i, yy);
-    }
-    x.stroke();
-  }
-  for (let i = 0; i < 20; i++) {
-    const d = (t * 0.3 + i * 0.11) % 1,
-      bx = W * ((i * 0.137) % 1),
-      by = H - d * H,
-      a = (1 - d) * 0.4,
-      s = 2 + (i % 3);
-    x.fillStyle = `rgba(${p1(pal)},${a})`;
-    x.beginPath();
-    x.arc(bx, by, s, 0, TAU);
-    x.fill();
-  }
-  x.globalCompositeOperation = 'source-over';
-}
-
-// Rising flames (heat) ───────────────────────────────────
-function heat(x: CanvasRenderingContext2D, W: number, H: number, t: number, _pal: string[]): void {
-  void _pal;
-  const cx = W / 2;
-  x.globalCompositeOperation = 'lighter';
-  for (let i = 0; i < 72; i++) {
-    const seed = i * 0.137,
-      d = (t * 0.6 + seed) % 1;
-    const fx = cx + Math.sin(i * 12.9) * W * 0.34 + Math.sin(d * 6 + i) * 14;
-    const fy = H * 0.92 - d * H * 0.72,
-      a = (1 - d) * 0.7,
-      s = (1 - d) * 16 + 4,
-      gg = Math.round(200 * (1 - d));
-    const g = x.createRadialGradient(fx, fy, 0, fx, fy, s);
-    g.addColorStop(0, `rgba(255,245,200,${a})`);
-    g.addColorStop(0.4, `rgba(255,${gg},40,${a * 0.8})`);
-    g.addColorStop(1, 'rgba(255,60,0,0)');
-    x.fillStyle = g;
-    x.beginPath();
-    x.arc(fx, fy, s, 0, TAU);
-    x.fill();
-  }
-  x.globalCompositeOperation = 'source-over';
-}
-
-// Twinkling starfield (star / space) ─────────────────────
-function stars(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal: string[]): void {
-  x.globalCompositeOperation = 'lighter';
-  for (let i = 0; i < 90; i++) {
-    const sx = (i * 0.0137 * W * 7.3) % W,
-      sy = (i * 0.0297 * H * 5.1) % H;
-    const tw = 0.5 + 0.5 * Math.sin(t * 2 + i),
-      a = 0.2 + tw * 0.6,
-      s = 0.6 + tw * 1.6;
-    x.fillStyle = `rgba(${i % 5 === 0 ? p0(pal) : '255,255,255'},${a})`;
-    x.beginPath();
-    x.arc(sx, sy, s, 0, TAU);
-    x.fill();
-  }
-  const p = (t * 0.22) % 1,
-    stx = W * 0.12 + p * W * 0.7,
-    sty = H * 0.18 + p * H * 0.28;
-  x.strokeStyle = `rgba(${p1(pal)},${Math.sin(p * Math.PI)})`;
-  x.lineWidth = 2;
-  x.beginPath();
-  x.moveTo(stx, sty);
-  x.lineTo(stx - 32, sty - 13);
-  x.stroke();
-  glow(x, W * 0.7, H * 0.56, 46, p0(pal), 0.45);
   x.globalCompositeOperation = 'source-over';
 }
 
@@ -699,18 +455,32 @@ function breakx(x: CanvasRenderingContext2D, W: number, H: number, t: number, pa
 // Nested pulsing rings (size / measure) ──────────────────
 function scale(x: CanvasRenderingContext2D, W: number, H: number, t: number, pal: string[]): void {
   const cx = W / 2,
-    cy = H / 2;
+    cy = H / 2,
+    maxR = Math.min(W, H) * 0.42;
   x.globalCompositeOperation = 'lighter';
-  for (let i = 0; i < 6; i++) {
-    const base = Math.min(W, H) * 0.07 * (i + 1),
-      pulse = base + Math.sin(t * 1.5 - i * 0.5) * 6;
-    x.strokeStyle = `rgba(${i % 2 ? p1(pal) : p0(pal)},${0.5 - i * 0.06})`;
-    x.lineWidth = 2;
+  // Outer measure vs tiny inner — size, not just rings.
+  const outer = maxR * (0.92 + 0.06 * Math.sin(t * 1.2));
+  const inner = maxR * (0.12 + 0.03 * Math.sin(t * 1.8));
+  x.strokeStyle = `rgba(${p1(pal)},0.22)`;
+  x.lineWidth = 1;
+  x.setLineDash([4, 6]);
+  x.beginPath();
+  x.moveTo(cx - outer - 10, cy);
+  x.lineTo(cx + outer + 10, cy);
+  x.moveTo(cx, cy - outer - 10);
+  x.lineTo(cx, cy + outer + 10);
+  x.stroke();
+  x.setLineDash([]);
+  for (let i = 0; i < 5; i++) {
+    const f = (i + 1) / 5,
+      pulse = inner + (outer - inner) * f + Math.sin(t * 1.5 - i * 0.5) * 4;
+    x.strokeStyle = `rgba(${i % 2 ? p1(pal) : p0(pal)},${0.55 - i * 0.07})`;
+    x.lineWidth = i === 4 ? 2.4 : 1.6;
     x.beginPath();
     x.arc(cx, cy, pulse, 0, TAU);
     x.stroke();
   }
-  glow(x, cx, cy, 8 + 2 * Math.sin(t * 2), p0(pal), 0.9);
+  glow(x, cx, cy, inner * 1.6, p0(pal), 0.9);
   x.globalCompositeOperation = 'source-over';
 }
 
@@ -843,4 +613,77 @@ export const SCENES: Record<string, SceneFn> = {
   heart,
   mind,
   people,
+  stand,
+  hold,
+  touch,
+  lift,
+  air,
+  wing,
+  shut,
+  loop,
+  straight,
+  build,
+  circle,
+  equal,
+  one,
+  two,
+  three,
+  many,
+  pull,
+  hang,
+  nature,
+  morph,
+  step,
+  fall,
+  place,
+  loosen,
+  twist,
+};
+
+/** Emoji used on the deck strip + scene caption, keyed by scene name. */
+export const SCENE_EMOJI: Record<string, string> = {
+  dna: '🧬',
+  globe: '🌍',
+  light: '☀️',
+  waves: '📡',
+  draw: '✍️',
+  water: '💧',
+  heat: '🔥',
+  stars: '✨',
+  clock: '⏳',
+  sound: '🔊',
+  eye: '👁️',
+  motion: '➡️',
+  gear: '⚙️',
+  speak: '💬',
+  breakx: '💥',
+  scale: '🔎',
+  people: '👥',
+  mind: '🧠',
+  heart: '💗',
+  stand: '🏛️',
+  hold: '✊',
+  touch: '👆',
+  lift: '🎈',
+  air: '💨',
+  wing: '🪽',
+  shut: '🚪',
+  loop: '🔁',
+  straight: '📏',
+  build: '🧱',
+  circle: '⭕',
+  equal: '⚖️',
+  one: '①',
+  two: '②',
+  three: '③',
+  many: '🔢',
+  pull: '🧲',
+  hang: '🪝',
+  nature: '🌿',
+  morph: '🔷',
+  step: '👣',
+  fall: '⬇️',
+  place: '📍',
+  loosen: '🔓',
+  twist: '🌀',
 };

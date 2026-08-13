@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import { PALETTES } from '../../data/roots';
 import { paletteVars, type CSSVars } from '../components/styleVars';
 import { Button } from '../components/Button';
+import { Scene } from '../Scene';
+import { SCENE_EMOJI } from '../scenes';
 
 export interface DetailVM {
   /** PALETTES key driving the panel theme. */
@@ -20,6 +22,8 @@ export interface DetailVM {
   moreCount: number;
   primary: { label: string; disabled?: boolean };
   secondary?: { label: string };
+  /** Live canvas teaser in the preview header. Decorative — no pointer events. */
+  scene?: { key: string; pal: [string, string]; caption: string };
 }
 
 /**
@@ -38,8 +42,20 @@ export function DetailPanel({
   onSecondary: () => void;
 }) {
   const p = PALETTES[vm.jewel] ?? PALETTES.green!;
+  const emoji = vm.scene ? (SCENE_EMOJI[vm.scene.key] ?? '✨') : null;
   return (
-    <div className="ww-detail" style={paletteVars(p.c1rgb, p.grad)}>
+    <div
+      className={`ww-detail${vm.locked ? ' is-locked' : ''}${vm.scene ? ' has-scene' : ''}`}
+      style={paletteVars(p.c1rgb, p.grad)}
+    >
+      {vm.scene ? (
+        <div className="ww-detail-scene" aria-hidden="true">
+          <Scene scene={vm.scene.key} pal={vm.scene.pal} />
+          <span className="ww-detail-scene-cap">
+            {emoji} {vm.scene.caption}
+          </span>
+        </div>
+      ) : null}
       <div className={`ww-detail-anim${vm.locked ? ' ww-locked-state' : ''}`} key={vm.animKey}>
         <span className="ww-detail-eyebrow">
           <span className="dot" aria-hidden="true" />
