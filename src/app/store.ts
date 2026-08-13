@@ -13,8 +13,10 @@ import {
   saveProgress as saveRemoteProgress,
 } from '../core/progress';
 import { addStudentProfile, deleteStudentProfile, renameStudentProfile } from '../core/profile';
+import { localDayKey } from '../core/daily';
 import {
   EMPTY_STATS,
+  recordDailyComplete as applyDailyComplete,
   recordRootLearned,
   recordRun,
   type GameStats,
@@ -26,6 +28,7 @@ export type AppView =
   | 'home'
   | 'deck'
   | 'quiz'
+  | 'daily'
   | 'auth'
   | 'consent'
   | 'dashboard'
@@ -145,15 +148,6 @@ function saveStats(stats: GameStats, studentId: string | null): void {
   }
 }
 
-/** Local calendar day (YYYY-MM-DD) used to drive the daily streak. */
-function todayKey(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
 interface WondralStore {
   // Top-level view.
   view: AppView;
@@ -220,6 +214,8 @@ interface WondralStore {
   stats: GameStats;
   /** Record a finished Root Rush run; returns the run summary for the UI. */
   recordQuizRun: (correct: number, total: number) => RunResult;
+  /** Bank a finished Daily Challenge (XP + streak; no-op if already done today). */
+  recordDailyComplete: () => void;
 }
 
 const INITIAL_ACTIVE_STUDENT = loadActiveStudentId();
@@ -345,10 +341,16 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   stats: INITIAL_STATS,
   recordQuizRun: (correct, total) => {
     const studentId = get().activeStudentId;
-    const { stats, run } = recordRun(get().stats, { correct, total, day: todayKey() });
+    const { stats, run } = recordRun(get().stats, { correct, total, day: localDayKey() });
     saveStats(stats, studentId);
     set({ stats });
     return run;
+  },
+  recordDailyComplete: () => {
+    const studentId = get().activeStudentId;
+    const stats = applyDailyComplete(get().stats, { day: localDayKey() });
+    saveStats(stats, studentId);
+    set({ stats });
   },
   completeRoot: (id) => {
     const cur = get().progress;
@@ -357,7 +359,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
     const completedAt = Date.now();
     const next: RootProgress = { ...cur, [id]: { completed: true, completedAt } };
     saveProgress(next, studentId);
-    const nextStats = recordRootLearned(get().stats, { day: todayKey() });
+    const nextStats = recordRootLearned(get().stats, { day: localDayKey() });
     saveStats(nextStats, studentId);
     set({
       progress: next,

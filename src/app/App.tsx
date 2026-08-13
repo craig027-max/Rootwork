@@ -7,6 +7,7 @@ import { useShowUpgrade } from './hooks';
 import { Home } from '../ui/Home';
 import { Deck } from '../ui/Deck';
 import { RootRush } from '../ui/RootRush';
+import { DailyChallenge } from '../ui/DailyChallenge';
 import { AuthScreen } from '../ui/AuthScreen';
 import { Consent } from '../ui/Consent';
 import { Paywall } from '../ui/Paywall';
@@ -66,6 +67,8 @@ function Screen({ view }: { view: AppView }) {
       return <Deck />;
     case 'quiz':
       return <RootRush />;
+    case 'daily':
+      return <DailyChallenge />;
     case 'auth':
       return <AuthScreen />;
     case 'consent':

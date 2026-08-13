@@ -68,12 +68,18 @@ export function tierStats(t: TierNum, completed: Set<string>): TierStat {
  * Build the home menu: Root Rush + Daily Challenge, then the five tiers. A tier
  * is locked when it isn't free (Tier 1) and the learner isn't entitled — the
  * same free/paid line the gating module enforces. `currentTier` marks the HERE
- * pill; `rushBest` is the pre-formatted best-run meta for the Root Rush row.
+ * pill; `rushBest` is the pre-formatted best-run meta for the Root Rush row;
+ * `dailyStreak` / `dailyDone` light up the Daily Challenge row.
  */
 export function buildMenu(
   completed: Set<string>,
   entitled: boolean,
-  opts: { currentTier?: TierNum; rushBest?: string } = {},
+  opts: {
+    currentTier?: TierNum;
+    rushBest?: string;
+    dailyStreak?: number;
+    dailyDone?: boolean;
+  } = {},
 ): MenuItem[] {
   const modes: MenuItem[] = [
     {
@@ -91,9 +97,11 @@ export function buildMenu(
       icon: '📅',
       jewel: 'gold',
       title: 'Daily Challenge',
-      sub: 'New roots every day · coming soon',
-      badge: 'SOON',
-      disabled: true,
+      sub: opts.dailyDone
+        ? 'Done for today · same five until tomorrow'
+        : 'Five fresh roots · keep your streak',
+      badge: opts.dailyDone ? 'DONE' : undefined,
+      best: opts.dailyStreak && opts.dailyStreak > 0 ? `🔥 ${opts.dailyStreak}` : undefined,
     },
   ];
 
