@@ -1,10 +1,21 @@
 /**
  * Home master-detail menu model — ported from the design package
- * (rootwork/ui_kits/rootwork-app/home.html `ITEMS`). The rows are the two game
- * modes followed by the five curriculum tiers; tier stats are derived live from
- * the learner's completed-root set (no placeholder numbers).
+ * (rootwork/ui_kits/rootwork-app/home.html `ITEMS`).
+ *
+ * First visit (0 roots owned): Starter leads, modes follow, tiers 2–5 are
+ * tucked so a kid sees one obvious play target. Returning visit: modes then
+ * unlocked tiers (resume), locked paid tiers stay tucked. Tier stats are
+ * derived live from the learner's completed-root set.
  */
-import { TIERS, rootsInTier, rootId, type TierNum } from '../../data/roots';
+import {
+  ROOTS_BY_ID,
+  TIERS,
+  isRootOpenable,
+  resumeRootId,
+  rootsInTier,
+  rootId,
+  type TierNum,
+} from '../../data/roots';
 import { starsForPct } from '../../core/stats';
 
 /** Per-tier presentation: emoji chip + the PALETTES jewel key that themes the row. */
@@ -43,16 +54,28 @@ export interface TierItem {
   locked: boolean;
   /** Collection stars (0–5) from tier completion — the gold ★★★☆☆ row. */
   stars: number;
-  /** The tier the learner is currently working through — the HERE pill. */
+  /** The tier the learner is currently working through — the HERE / PLAY pill. */
   current: boolean;
 }
 
 export type MenuItem = ModeItem | TierItem;
 
+export interface HomeMenu {
+  /** Rows in the main listbox (playable / not tucked). */
+  items: MenuItem[];
+  /** Tiers folded under "More tiers" so they don't dominate the first screen. */
+  tucked: TierItem[];
+}
+
 export interface TierStat {
   done: number;
   total: number;
   pct: number;
+}
+
+/** Brand-new learner: no roots owned yet. Entitlement does not matter. */
+export function isFirstVisit(completed: Set<string>): boolean {
+  return completed.size === 0;
 }
 
 /** Live owned/total/percent for a tier from the completed-root set. */
@@ -64,12 +87,68 @@ export function tierStats(t: TierNum, completed: Set<string>): TierStat {
   return { done, total, pct };
 }
 
+/** The tier the learner is currently working through (drives the default selection). */
+export function pickCurrentTier(completed: Set<string>, entitled: boolean): TierNum {
+  const resumeId = resumeRootId(completed, entitled);
+  if (resumeId) return ROOTS_BY_ID[resumeId]!.t;
+  for (let t = 1 as TierNum; t <= 5; t = (t + 1) as TierNum) {
+    const s = tierStats(t, completed);
+    if (s.total > 0 && s.pct < 100 && (t === 1 || entitled)) return t;
+  }
+  return 1;
+}
+
+/** First incomplete & openable root in a tier (the resume point), else its first root. */
+export function tierEntryRoot(t: TierNum, completed: Set<string>, entitled: boolean) {
+  const roots = rootsInTier(t);
+  return (
+    roots.find((r) => isRootOpenable(rootId(r), entitled) && !completed.has(rootId(r))) ?? roots[0]
+  );
+}
+
+/** Display name of the root a tap on this tier should open (e.g. "Bio"). */
+export function entryRootName(t: TierNum, completed: Set<string>, entitled: boolean): string {
+  return tierEntryRoot(t, completed, entitled)?.root ?? 'Bio';
+}
+
 /**
- * Build the home menu: Root Rush + Daily Challenge, then the five tiers. A tier
- * is locked when it isn't free (Tier 1) and the learner isn't entitled — the
- * same free/paid line the gating module enforces. `currentTier` marks the HERE
- * pill; `rushBest` is the pre-formatted best-run meta for the Root Rush row;
- * `dailyStreak` / `dailyDone` light up the Daily Challenge row.
+ * Index into `items` (the main list, not tucked rows) for the current tier.
+ * First visit puts Starter at 0; returning visit finds the resume tier after the modes.
+ */
+export function defaultSelectedIndex(items: MenuItem[], currentTier: TierNum): number {
+  const idx = items.findIndex((it) => it.kind === 'tier' && it.t === currentTier && !it.locked);
+  return idx >= 0 ? idx : 0;
+}
+
+/** Kid-facing list heading: start/play on first visit, resume once they own a root. */
+export function listHeading(firstVisit: boolean): string {
+  return firstVisit ? 'Start playing' : 'Jump back in';
+}
+
+/** Primary CTA on a playable tier. First visit says play, not continue. */
+export function tierPrimaryLabel(opts: {
+  firstVisit: boolean;
+  complete: boolean;
+  rootName: string;
+}): string {
+  if (opts.firstVisit) return `Play ${opts.rootName} ›`;
+  if (opts.complete) return 'Replay tier ›';
+  return `Continue ${opts.rootName} ›`;
+}
+
+/** Collapsed-row label for tucked higher tiers. */
+export function tuckedSummary(tucked: TierItem[]): string {
+  if (tucked.length === 0) return '';
+  const allLocked = tucked.every((t) => t.locked);
+  return allLocked ? 'More tiers 🔒' : 'More tiers';
+}
+
+/**
+ * Build the home menu. A tier is locked when it isn't free (Tier 1) and the
+ * learner isn't entitled — the same free/paid line the gating module enforces.
+ *
+ * First visit: Starter, then Root Rush / Daily; tiers 2–5 are tucked.
+ * Returning: Root Rush / Daily, then unlocked tiers; locked paid tiers tucked.
  */
 export function buildMenu(
   completed: Set<string>,
@@ -79,8 +158,10 @@ export function buildMenu(
     rushBest?: string;
     dailyStreak?: number;
     dailyDone?: boolean;
+    firstVisit?: boolean;
   } = {},
-): MenuItem[] {
+): HomeMenu {
+  const firstVisit = opts.firstVisit ?? isFirstVisit(completed);
   const modes: MenuItem[] = [
     {
       kind: 'mode',
@@ -105,7 +186,7 @@ export function buildMenu(
     },
   ];
 
-  const tiers: MenuItem[] = TIERS.map((tier, i) => {
+  const tiers: TierItem[] = TIERS.map((tier, i) => {
     const t = (i + 1) as TierNum;
     const meta = TIER_META[i]!;
     const { done, total, pct } = tierStats(t, completed);
@@ -127,5 +208,13 @@ export function buildMenu(
     };
   });
 
-  return [...modes, ...tiers];
+  const starter = tiers.find((t) => t.t === 1)!;
+  const higher = tiers.filter((t) => t.t !== 1);
+  const unlocked = tiers.filter((t) => !t.locked);
+  const locked = tiers.filter((t) => t.locked);
+
+  if (firstVisit) {
+    return { items: [starter, ...modes], tucked: higher };
+  }
+  return { items: [...modes, ...unlocked], tucked: locked };
 }

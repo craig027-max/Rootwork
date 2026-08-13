@@ -1,7 +1,7 @@
-import { useRef, type KeyboardEvent } from 'react';
+import { useEffect, useRef, type KeyboardEvent } from 'react';
 import { PALETTES } from '../../data/roots';
 import { paletteVars } from '../components/styleVars';
-import type { MenuItem } from './menu';
+import { tuckedSummary, type MenuItem, type TierItem } from './menu';
 
 function jewelVarsOf(jewel: string) {
   const p = PALETTES[jewel] ?? PALETTES.green!;
@@ -12,22 +12,36 @@ function jewelVarsOf(jewel: string) {
  * The signature selectable menu (master column). A real listbox: tap/click a
  * row to preview it in the detail panel; tap the already-selected row (or
  * press Enter) to start. Arrow keys still move the selection on desktop.
+ * Locked / later tiers render inside a collapsed disclosure so they don't
+ * dominate a first visit.
  */
 export function TierMenu({
   items,
+  tucked = [],
   selectedIndex,
+  firstVisit = false,
   onSelect,
   onActivate,
 }: {
   items: MenuItem[];
+  tucked?: TierItem[];
   selectedIndex: number;
+  firstVisit?: boolean;
   onSelect: (index: number) => void;
   onActivate: (item: MenuItem) => void;
 }) {
   const rowRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const moreRef = useRef<HTMLDetailsElement | null>(null);
+  const allItems: MenuItem[] = [...items, ...tucked];
+
+  useEffect(() => {
+    if (selectedIndex >= items.length && moreRef.current) {
+      moreRef.current.open = true;
+    }
+  }, [selectedIndex, items.length]);
 
   function move(delta: number) {
-    const next = (selectedIndex + delta + items.length) % items.length;
+    const next = (selectedIndex + delta + allItems.length) % allItems.length;
     onSelect(next);
     rowRefs.current[next]?.focus();
   }
@@ -41,78 +55,94 @@ export function TierMenu({
       move(-1);
     } else if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onActivate(items[selectedIndex]!);
+      onActivate(allItems[selectedIndex]!);
     }
+  }
+
+  function renderRow(it: MenuItem, i: number) {
+    const sel = i === selectedIndex;
+    const locked = it.kind === 'tier' && it.locked;
+    const playNow = firstVisit && it.kind === 'tier' && it.current;
+    return (
+      <button
+        key={it.key}
+        ref={(el) => {
+          rowRefs.current[i] = el;
+        }}
+        type="button"
+        role="option"
+        aria-selected={sel}
+        tabIndex={sel ? 0 : -1}
+        className={`ww-menu-row${sel ? ' sel' : ''}${playNow ? ' play' : ''}`}
+        style={jewelVarsOf(it.jewel)}
+        onClick={() => {
+          if (sel) onActivate(it);
+          else onSelect(i);
+        }}
+      >
+        <span className={`ww-menu-chip${locked ? ' lock' : ''}`} aria-hidden="true">
+          {it.icon}
+        </span>
+        <span className="ww-menu-body">
+          <span className="t">
+            {it.title}
+            {it.kind === 'mode' && it.badge ? <span className="ww-tag">{it.badge}</span> : null}
+            {it.kind === 'tier' && it.t === 1 ? <span className="ww-tag">FREE</span> : null}
+            {playNow ? <span className="ww-tag here">PLAY</span> : null}
+            {it.kind === 'tier' && it.current && !playNow ? (
+              <span className="ww-tag here">HERE</span>
+            ) : null}
+          </span>
+          <span className="sub">{it.sub}</span>
+          {it.kind === 'tier' && !it.locked && !playNow ? (
+            <span className="ww-menu-bar">
+              <i style={{ width: `${it.pct}%` }} />
+            </span>
+          ) : null}
+        </span>
+        <span className="ww-menu-meta">
+          {it.kind === 'tier' ? (
+            it.locked ? (
+              <span className="locklbl">🔒 Locked</span>
+            ) : playNow ? (
+              <span className="pct">Play ›</span>
+            ) : (
+              <>
+                <span className="pct">{it.pct}%</span>
+                <span className="stars" aria-label={`${it.stars} of 5 stars`}>
+                  {'★'.repeat(it.stars)}
+                  {'☆'.repeat(5 - it.stars)}
+                </span>
+              </>
+            )
+          ) : it.disabled ? (
+            <span className="locklbl">Soon</span>
+          ) : it.best ? (
+            <>
+              <span className="pct">{it.best}</span>
+              <span className="stars">best</span>
+            </>
+          ) : (
+            <span className="pct" aria-hidden="true">
+              ›
+            </span>
+          )}
+        </span>
+      </button>
+    );
   }
 
   return (
     <div className="ww-menu" role="listbox" aria-label="Choose what to play" onKeyDown={onKeyDown}>
-      {items.map((it, i) => {
-        const sel = i === selectedIndex;
-        const locked = it.kind === 'tier' && it.locked;
-        return (
-          <button
-            key={it.key}
-            ref={(el) => {
-              rowRefs.current[i] = el;
-            }}
-            type="button"
-            role="option"
-            aria-selected={sel}
-            tabIndex={sel ? 0 : -1}
-            className={`ww-menu-row${sel ? ' sel' : ''}`}
-            style={jewelVarsOf(it.jewel)}
-            onClick={() => {
-              if (sel) onActivate(it);
-              else onSelect(i);
-            }}
-          >
-            <span className={`ww-menu-chip${locked ? ' lock' : ''}`} aria-hidden="true">
-              {it.icon}
-            </span>
-            <span className="ww-menu-body">
-              <span className="t">
-                {it.title}
-                {it.kind === 'mode' && it.badge ? <span className="ww-tag">{it.badge}</span> : null}
-                {it.kind === 'tier' && it.t === 1 ? <span className="ww-tag">FREE</span> : null}
-                {it.kind === 'tier' && it.current ? <span className="ww-tag here">HERE</span> : null}
-              </span>
-              <span className="sub">{it.sub}</span>
-              {it.kind === 'tier' && !it.locked ? (
-                <span className="ww-menu-bar">
-                  <i style={{ width: `${it.pct}%` }} />
-                </span>
-              ) : null}
-            </span>
-            <span className="ww-menu-meta">
-              {it.kind === 'tier' ? (
-                it.locked ? (
-                  <span className="locklbl">🔒 Locked</span>
-                ) : (
-                  <>
-                    <span className="pct">{it.pct}%</span>
-                    <span className="stars" aria-label={`${it.stars} of 5 stars`}>
-                      {'★'.repeat(it.stars)}
-                      {'☆'.repeat(5 - it.stars)}
-                    </span>
-                  </>
-                )
-              ) : it.disabled ? (
-                <span className="locklbl">Soon</span>
-              ) : it.best ? (
-                <>
-                  <span className="pct">{it.best}</span>
-                  <span className="stars">best</span>
-                </>
-              ) : (
-                <span className="pct" aria-hidden="true">
-                  ›
-                </span>
-              )}
-            </span>
-          </button>
-        );
-      })}
+      {items.map((it, i) => renderRow(it, i))}
+      {tucked.length > 0 ? (
+        <details className="ww-menu-more" ref={moreRef}>
+          <summary>{tuckedSummary(tucked)}</summary>
+          <div className="ww-menu-more-list">
+            {tucked.map((it, j) => renderRow(it, items.length + j))}
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }
