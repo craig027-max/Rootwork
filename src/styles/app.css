@@ -358,11 +358,19 @@
   align-items: baseline;
   gap: 10px;
   margin: 0 0 12px 2px;
+  flex-wrap: wrap;
 }
 .ww-panel-label .n {
   font-family: var(--font-game);
   font-weight: 800;
   font-size: 1.04rem;
+}
+.ww-panel-label .s {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--text-muted);
 }
 .ww-panel-label .s.tap-hint {
   display: none;
