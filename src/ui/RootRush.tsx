@@ -3,6 +3,7 @@ import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
 import { PALETTES, ROOTS, TIERS, rootId, isRootOpenable, type Root } from '../data/roots';
 import type { RunResult } from '../core/stats';
+import { Scene } from './Scene';
 
 /**
  * Root Rush — the full-screen jewel-themed quiz overlay, ported from the design
@@ -428,6 +429,12 @@ export function RootRush() {
               <span style={{ width: `${(qi / questions.length) * 100}%` }} />
             </div>
             <div className="q-ask">{q.ask}</div>
+            <div className="q-scene">
+              <Scene
+                scene={q.root.scene}
+                pal={(PALETTES[q.root.pal] ?? PALETTES.green!).pal}
+              />
+            </div>
             <div className="q-prompt">
               <div className="q-big">{q.big}</div>
               {q.say ? <div className="q-say">{q.say}</div> : null}

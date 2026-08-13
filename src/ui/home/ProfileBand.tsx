@@ -1,13 +1,6 @@
 import { ROOTS } from '../../data/roots';
 import { accuracyPct, levelForXp, XP_PER_LEVEL, type GameStats } from '../../core/stats';
-
-/** Local calendar day as YYYY-MM-DD — mirrors the store's todayKey(). */
-function todayKey(): string {
-  const d = new Date();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${d.getFullYear()}-${m}-${day}`;
-}
+import { localDayKey } from '../../core/daily';
 
 /**
  * Profile band — avatar + level badge, identity, and the gamified stats, all
@@ -34,7 +27,7 @@ export function ProfileBand({
   const intoLevel = stats.xp % XP_PER_LEVEL;
   const xpToNext = XP_PER_LEVEL - intoLevel;
   const firstRun = rootsOwned === 0 && stats.runs === 0;
-  const activeToday = stats.lastActiveDay === todayKey();
+  const activeToday = stats.lastActiveDay === localDayKey();
 
   return (
     <section className="ww-profile">

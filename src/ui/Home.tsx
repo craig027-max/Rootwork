@@ -15,6 +15,7 @@ import {
 } from '../data/roots';
 import { DEFAULT_AVATAR } from '../data/avatars';
 import { gradeForPct } from '../core/stats';
+import { dailySeed, localDayKey, pickDailyRoots } from '../core/daily';
 import { buildMenu, tierStats, type MenuItem } from './home/menu';
 import { ProfileBand } from './home/ProfileBand';
 import { TierMenu } from './home/TierMenu';
@@ -82,7 +83,18 @@ export function Home() {
   const currentTier = pickCurrentTier(completed, entitled);
   const rushBest =
     stats.runs > 0 ? `${gradeForPct(stats.bestPct)} · ${stats.bestStars}★` : undefined;
-  const items = buildMenu(completed, entitled, { currentTier, rushBest });
+  const day = localDayKey();
+  const dailyDone = stats.lastDailyDay === day;
+  const dailyRoots = pickDailyRoots(
+    ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
+    dailySeed(day, activeStudentId),
+  );
+  const items = buildMenu(completed, entitled, {
+    currentTier,
+    rushBest,
+    dailyStreak: stats.streakCurrent,
+    dailyDone,
+  });
   const [selectedIndex, setSelectedIndex] = useState(() => tierMenuIndex(currentTier));
   const selected = items[Math.min(selectedIndex, items.length - 1)]!;
 
@@ -101,6 +113,7 @@ export function Home() {
   function onPrimary(item: MenuItem) {
     if (item.kind === 'mode') {
       if (item.key === 'rush') setView('quiz');
+      if (item.key === 'daily') setView('daily');
       return;
     }
     if (item.locked) requestUpgrade();
@@ -117,7 +130,7 @@ export function Home() {
     else openTier(item.t);
   }
 
-  const vm = buildDetailVM(selected);
+  const vm = buildDetailVM(selected, { dailyRoots, dailyDone, streak: stats.streakCurrent });
 
   return (
     <div className="ww-home">
@@ -159,7 +172,10 @@ export function Home() {
 }
 
 /** Derive the detail-panel view model from the selected menu row + live progress. */
-function buildDetailVM(item: MenuItem): DetailVM {
+function buildDetailVM(
+  item: MenuItem,
+  extra: { dailyRoots: Root[]; dailyDone: boolean; streak: number },
+): DetailVM {
   if (item.kind === 'mode') {
     const starter = rootsInTier(1).slice(0, 3);
     if (item.key === 'rush') {
@@ -176,16 +192,24 @@ function buildDetailVM(item: MenuItem): DetailVM {
         scene: sceneFrom(undefined, { key: 'heat', palKey: 'fire', caption: 'Root Rush' }),
       };
     }
+    const dailySamples = extra.dailyRoots.length > 0 ? extra.dailyRoots : starter;
+    const streakLine =
+      extra.streak > 0
+        ? extra.dailyDone
+          ? ` Streak banked — 🔥 ${extra.streak} day${extra.streak === 1 ? '' : 's'}.`
+          : ` You're on a 🔥 ${extra.streak}-day streak.`
+        : '';
     return {
       jewel: item.jewel,
       animKey: item.key,
       eyebrow: 'Daily Challenge',
       big: 'Daily',
-      lead: 'Five fresh roots every day to keep your streak alive. This mode is coming soon.',
-      samples: starter.map((r) => ({ root: r.root, mean: r.mean })),
+      lead: `Five fresh roots every day. See the animation, tap what it means, keep your streak.${streakLine}`,
+      samples: dailySamples.map((r) => ({ root: r.root, mean: r.mean })),
       moreCount: 0,
-      primary: { label: 'Coming soon', disabled: true },
-      scene: sceneFrom(undefined, { key: 'stars', palKey: 'gold', caption: 'Night sky' }),
+      primary: { label: extra.dailyDone ? 'Play again 📅' : 'Start daily 📅' },
+      secondary: { label: 'Browse roots' },
+      scene: sceneFrom(dailySamples[0], { key: 'stars', palKey: 'gold', caption: 'Daily' }),
     };
   }
 

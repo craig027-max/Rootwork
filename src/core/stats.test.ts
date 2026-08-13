@@ -5,10 +5,12 @@ import {
   bumpStreak,
   gradeForPct,
   levelForXp,
+  recordDailyComplete,
   recordRootLearned,
   recordRun,
   starsForPct,
   xpForRun,
+  XP_PER_DAILY,
   XP_PER_ROOT,
 } from './stats';
 
@@ -156,5 +158,29 @@ describe('recordRootLearned', () => {
     const next = recordRootLearned(EMPTY_STATS, { day: '2026-06-29' });
     expect(next.xp).toBe(XP_PER_ROOT);
     expect(next.streakCurrent).toBe(1);
+  });
+});
+
+describe('recordDailyComplete', () => {
+  it('awards XP, stamps lastDailyDay, and starts a streak', () => {
+    const next = recordDailyComplete(EMPTY_STATS, { day: '2026-08-13' });
+    expect(next.xp).toBe(XP_PER_DAILY);
+    expect(next.lastDailyDay).toBe('2026-08-13');
+    expect(next.streakCurrent).toBe(1);
+    expect(next.lastActiveDay).toBe('2026-08-13');
+  });
+
+  it('is a no-op when the daily was already banked that day', () => {
+    const first = recordDailyComplete(EMPTY_STATS, { day: '2026-08-13' });
+    const again = recordDailyComplete(first, { day: '2026-08-13' });
+    expect(again).toEqual(first);
+  });
+
+  it('increments the streak on the next calendar day', () => {
+    const first = recordDailyComplete(EMPTY_STATS, { day: '2026-08-13' });
+    const next = recordDailyComplete(first, { day: '2026-08-14' });
+    expect(next.streakCurrent).toBe(2);
+    expect(next.lastDailyDay).toBe('2026-08-14');
+    expect(next.xp).toBe(XP_PER_DAILY * 2);
   });
 });

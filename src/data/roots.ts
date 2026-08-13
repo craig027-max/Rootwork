@@ -1,7 +1,7 @@
 /**
  * Root curriculum + gating for Wondral Words.
  *
- * The raw content (152 roots / 5 tiers / palettes) lives in `roots.data.ts`,
+ * The raw content (roots / 5 tiers / palettes) lives in `roots.data.ts`,
  * ported from the design package. This module adds the ids, lookups, and the
  * pure gating functions — the free/paid line and linear unlock — mirroring the
  * sibling chemistry app's `data/lessons.ts` so the spine stays liftable. The

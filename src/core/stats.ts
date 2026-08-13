@@ -28,6 +28,8 @@ export interface GameStats {
   streakLongest: number;
   /** Last active calendar day (YYYY-MM-DD, local), or null if never active. */
   lastActiveDay: string | null;
+  /** Last calendar day the Daily Challenge was finished (local YYYY-MM-DD). */
+  lastDailyDay: string | null;
 }
 
 export const EMPTY_STATS: GameStats = {
@@ -42,9 +44,11 @@ export const EMPTY_STATS: GameStats = {
   streakCurrent: 0,
   streakLongest: 0,
   lastActiveDay: null,
+  lastDailyDay: null,
 };
 
 export const XP_PER_ROOT = 10;
+export const XP_PER_DAILY = 15;
 export const XP_PER_LEVEL = 100;
 
 export type Grade = 'S' | 'A' | 'B' | 'C' | 'D';
@@ -167,6 +171,20 @@ export function recordRootLearned(stats: GameStats, input: { day: string }): Gam
   return {
     ...stats,
     xp: stats.xp + XP_PER_ROOT,
+    ...bumpStreak(stats, input.day),
+  };
+}
+
+/**
+ * Bank a finished Daily Challenge. Same day is a no-op (replay is free, no
+ * double XP). A new day awards XP and counts as the day's learning action.
+ */
+export function recordDailyComplete(stats: GameStats, input: { day: string }): GameStats {
+  if (stats.lastDailyDay === input.day) return stats;
+  return {
+    ...stats,
+    xp: stats.xp + XP_PER_DAILY,
+    lastDailyDay: input.day,
     ...bumpStreak(stats, input.day),
   };
 }

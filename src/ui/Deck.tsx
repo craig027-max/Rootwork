@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
 import {
@@ -10,6 +10,7 @@ import {
   isRootOpenable,
   type Root,
 } from '../data/roots';
+import { buildRecall, type RecallBeat } from '../core/recall';
 import { paletteVars } from './components/styleVars';
 import { Scene } from './Scene';
 import { SCENE_EMOJI } from './scenes';
@@ -57,6 +58,15 @@ export function Deck() {
   const entitled = useEntitledForDisplay();
 
   const [indexOpen, setIndexOpen] = useState(false);
+  const [recall, setRecall] = useState<{ beat: RecallBeat; picked: number | null } | null>(null);
+  const pool = useMemo(
+    () => ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
+    [entitled],
+  );
+
+  useEffect(() => {
+    setRecall(null);
+  }, [currentRootId]);
 
   const root = currentRootId ? ROOTS_BY_ID[currentRootId] : undefined;
   if (!root) {
@@ -95,10 +105,27 @@ export function Deck() {
   const tierName = TIERS[root.t - 1]?.n ?? 'Starter';
   const lang = root.org.split(' ')[0];
   const emoji = SCENE_EMOJI[root.scene] ?? '🔤';
+  const studying = recall !== null;
+  const card = root;
 
   function go(dir: 1 | -1) {
     const next = neighborOpenable(id, dir, entitled);
     if (next) openRoot(next);
+  }
+
+  function startRecall() {
+    setRecall({ beat: buildRecall({ root: card, pool, choices: 3 }), picked: null });
+  }
+
+  function pickRecall(idx: number) {
+    if (!recall || recall.picked !== null) return;
+    const opt = recall.beat.opts[idx];
+    if (opt?.ok) {
+      completeRoot(id);
+      setRecall(null);
+      return;
+    }
+    setRecall({ ...recall, picked: idx });
   }
 
   return (
@@ -135,41 +162,76 @@ export function Deck() {
                 <span className="arrow" aria-hidden="true">
                   →
                 </span>
-                <span className="word">{root.mean}</span>
-                <span className="alt">{root.alt}</span>
+                <span className="word">{studying ? '?' : root.mean}</span>
+                <span className="alt">{studying ? 'prove you know it' : root.alt}</span>
               </div>
-              {/* `lead` is static, authored curriculum content (only our own <b>
-                  tags in roots.data.ts) — never user input, so no XSS surface. */}
-              <p className="ww-lead2" dangerouslySetInnerHTML={{ __html: root.lead }} />
+              {studying ? (
+                <p className="ww-lead2">Look at the scene. Then tap what {root.root} means — or which word it builds.</p>
+              ) : (
+                /* `lead` is static, authored curriculum content (only our own <b>
+                    tags in roots.data.ts) — never user input, so no XSS surface. */
+                <p className="ww-lead2" dangerouslySetInnerHTML={{ __html: root.lead }} />
+              )}
             </div>
             <div className="ww-scene2">
               <Scene scene={root.scene} pal={p.pal} />
               <span className="ww-caption">
-                {emoji} {root.mean} — {root.alt}
+                {studying ? `${emoji} watch the scene` : `${emoji} ${root.mean} — ${root.alt}`}
               </span>
             </div>
           </div>
 
-          <div className="ww-words">
-            {root.words.map((w) => (
-              <div className="ww-word" key={w.w}>
-                <span className="ico" aria-hidden="true">
-                  {w.i}
-                </span>
-                <h3>{highlight(w.w, w.hl)}</h3>
-                <div className="build">{w.b}</div>
-                <p>{w.d}</p>
+          {studying ? null : (
+            <div className="ww-words">
+              {root.words.map((w) => (
+                <div className="ww-word" key={w.w}>
+                  <span className="ico" aria-hidden="true">
+                    {w.i}
+                  </span>
+                  <h3>{highlight(w.w, w.hl)}</h3>
+                  <div className="build">{w.b}</div>
+                  <p>{w.d}</p>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {recall ? (
+            <div className="ww-recall">
+              <div className="ww-recall-ask">{recall.beat.ask}</div>
+              <div className="ww-recall-opts">
+                {recall.beat.opts.map((o, idx) => {
+                  let cls = 'ww-recall-opt';
+                  if (recall.picked !== null) {
+                    cls += ' done';
+                    if (idx === recall.picked && !o.ok) cls += ' wrong';
+                  }
+                  return (
+                    <button key={o.label} type="button" className={cls} onClick={() => pickRecall(idx)}>
+                      <span className="k">{idx + 1}</span>
+                      {o.label}
+                    </button>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+              {recall.picked !== null ? (
+                <div className="ww-recall-teach">
+                  <p>{recall.beat.teach}</p>
+                  <Button onClick={startRecall}>Try again — you've got this</Button>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
 
           <div className="ww-card-actions">
             {done ? (
               <Badge variant="solid" jewel="jade">
                 ✓ Learned
               </Badge>
+            ) : recall ? (
+              <span className="ww-muted">One tap. No shame if you miss — we'll show you.</span>
             ) : (
-              <Button onClick={() => completeRoot(id)}>Mark as learned ✓</Button>
+              <Button onClick={startRecall}>I know this ✓</Button>
             )}
             <Button variant="ghost" onClick={() => go(1)}>
               Next root →
@@ -180,7 +242,7 @@ export function Deck() {
 
       <DeckNav
         rootLabel={root.root}
-        meaning={root.mean}
+        meaning={studying ? '?' : root.mean}
         tierName={tierName}
         position={position}
         total={ROOTS.length}
