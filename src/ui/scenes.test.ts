@@ -39,6 +39,93 @@ describe('scene registry', () => {
     expect(byRoot.Therm).toBe('heat');
     expect(byRoot.Bio).toBe('dna');
     expect(byRoot.Pyr).toBe('heat');
+    expect(byRoot.Semi).toBe('half');
+    expect(byRoot.Circum).toBe('circle');
+    expect(byRoot.Cycl).toBe('circle');
+    expect(byRoot.Sub).toBe('under');
+    expect(byRoot.Hypo).toBe('under');
+    expect(byRoot.Manu).toBe('hand');
+    expect(byRoot.Sect).toBe('cut');
+    expect(byRoot.Fort).toBe('strong');
+    expect(byRoot.Cent).toBe('hundred');
+    expect(byRoot.Dis).toBe('apart');
+    expect(byRoot.Mis).toBe('wrong');
+    expect(byRoot.Anti).toBe('against');
+    expect(byRoot.Contra).toBe('against');
+    expect(byRoot.Mort).toBe('death');
+    expect(byRoot.Rupt).toBe('breakx');
+    expect(byRoot.Fract).toBe('breakx');
+  });
+
+  it('keeps breakx for break-roots only', () => {
+    const onBreak = ROOTS.filter((r) => r.scene === 'breakx').map((r) => r.root);
+    expect(onBreak.sort()).toEqual(['Fract', 'Rupt']);
+  });
+
+  it('keeps water for water-roots only', () => {
+    const onWater = ROOTS.filter((r) => r.scene === 'water').map((r) => r.root);
+    expect(onWater.sort()).toEqual(['Aqua', 'Flu', 'Hydro', 'Mar']);
+  });
+
+  it('keeps clock for time-roots only', () => {
+    const onClock = ROOTS.filter((r) => r.scene === 'clock').map((r) => r.root);
+    expect(onClock.sort()).toEqual(['Ann', 'Chrono']);
+  });
+
+  it('wires the rest of the assignment-audit remaps', () => {
+    const byRoot = Object.fromEntries(ROOTS.map((r) => [r.root, r.scene]));
+    expect(byRoot.Anim).toBe('dna');
+    expect(byRoot.Inter).toBe('between');
+    expect(byRoot.Auto).toBe('self');
+    expect(byRoot.Carn).toBe('body');
+    expect(byRoot.Plac).toBe('calm');
+    expect(byRoot.Duc).toBe('lead');
+    expect(byRoot.Junct).toBe('join');
+    expect(byRoot.Jud).toBe('equal');
+    expect(byRoot.Naut).toBe('boat');
+    expect(byRoot.Dyna).toBe('power');
+    expect(byRoot.Bene).toBe('good');
+    expect(byRoot.Mal).toBe('wrong');
+    expect(byRoot.Nov).toBe('new');
+    expect(byRoot.Bibl).toBe('book');
+    expect(byRoot.Chrom).toBe('color');
+    expect(byRoot.Lith).toBe('stone');
+    expect(byRoot.Crat).toBe('rule');
+    expect(byRoot.Urb).toBe('city');
+    expect(byRoot.Jur).toBe('equal');
+    expect(byRoot.Arch).toBe('rule');
+    expect(byRoot.Polis).toBe('city');
+    expect(byRoot.Techno).toBe('gear');
+    expect(byRoot.Bel).toBe('against');
+    expect(byRoot.Somn).toBe('sleep');
+    expect(byRoot.Ver).toBe('straight');
+    expect(byRoot.Omni).toBe('many');
+    expect(byRoot.Sequ).toBe('lead');
+    expect(byRoot.Corp).toBe('body');
+    expect(byRoot.Pug).toBe('against');
+    expect(byRoot.Fin).toBe('end');
+    expect(byRoot.Osteo).toBe('bone');
+    expect(byRoot.Odont).toBe('tooth');
+    expect(byRoot.Eu).toBe('good');
+    expect(byRoot.Dys).toBe('wrong');
+    expect(byRoot.Xeno).toBe('stranger');
+    expect(byRoot.Necro).toBe('death');
+    expect(byRoot.Onym).toBe('name');
+    expect(byRoot.Pseudo).toBe('wrong');
+    expect(byRoot.Ichthy).toBe('fish');
+    expect(byRoot.Sesqui).toBe('onehalf');
+    expect(byRoot.Thanato).toBe('death');
+    expect(byRoot.Caco).toBe('wrong');
+    expect(byRoot.Calli).toBe('beauty');
+    expect(byRoot.Pan).toBe('many');
+    expect(byRoot.Proto).toBe('before');
+    expect(byRoot.Pre).toBe('before');
+    expect(byRoot.Hetero).toBe('different');
+    expect(byRoot.Agog).toBe('lead');
+    expect(byRoot.Graph).toBe('draw');
+    expect(byRoot.Scrib).toBe('draw');
+    expect(byRoot.Aqua).toBe('water');
+    expect(byRoot.Struct).toBe('build');
   });
 
   it('lets every scene paint a frame without throwing', () => {

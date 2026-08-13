@@ -105,6 +105,28 @@ export function cloud(
   disc(x, px + s * 0.08, py - s * 0.28, s * 0.36, fill);
 }
 
+/** Stick figure standing on `footY` — people / lead / self / stranger. */
+export function person(
+  x: CanvasRenderingContext2D,
+  px: number,
+  footY: number,
+  col: string,
+  phase = 0,
+): void {
+  const bob = Math.sin(phase) * 2;
+  const hy = footY - 48 + bob;
+  disc(x, px, hy, 7, `rgba(${col},0.9)`);
+  x.strokeStyle = `rgba(${col},0.9)`;
+  x.lineWidth = 2.8;
+  x.lineCap = 'round';
+  line(x, px, hy + 7, px, footY - 20 + bob);
+  const swing = Math.sin(phase) * 8;
+  line(x, px, footY - 20 + bob, px - 7 + swing, footY);
+  line(x, px, footY - 20 + bob, px + 7 - swing, footY);
+  line(x, px, hy + 14, px - 11, hy + 26);
+  line(x, px, hy + 14, px + 11, hy + 24);
+}
+
 /** Simple leaf silhouette with a midrib. */
 export function leaf(
   x: CanvasRenderingContext2D,
