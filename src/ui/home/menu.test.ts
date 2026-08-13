@@ -17,7 +17,6 @@ if (!first) throw new Error('fixture: expected at least one root');
 const firstId = rootId(first);
 const second = rootsInTier(1)[1];
 if (!second) throw new Error('fixture: expected a second free root');
-const secondId = rootId(second);
 
 function keysOf(items: { key: string }[]) {
   return items.map((it) => it.key);
