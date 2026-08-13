@@ -16,7 +16,7 @@ React 19 + TypeScript (strict) + Vite · Zustand · Supabase (auth + Postgres + 
 src/
   core/      # the liftable "spine" (auth, profile, entitlement, progress, checkout,
              # hydrate, consentGate) — forked from the chemistry app, no app-specific imports
-  data/      # roots.data.ts (152 roots / 5 tiers), roots.ts (ids + gating), avatars
+  data/      # roots.data.ts (curriculum / 5 tiers), roots.ts (ids + gating), avatars
   ui/        # screens (Home, Deck, RootRush, Auth, Consent, Paywall, ParentDashboard),
              # Scene (canvas), and the design-system primitives in ui/components
   app/       # store.ts (Zustand), App.tsx (router), hooks

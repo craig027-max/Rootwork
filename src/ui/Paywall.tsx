@@ -6,6 +6,7 @@ import { useOnline, hasSupabaseConfig } from '../app/hooks';
 import { Button } from './components/Button';
 import { Card } from './components/Card';
 import { LegalLink } from './components/LegalLink';
+import { ROOTS } from '../data/roots';
 
 // PRICE SOURCE OF TRUTH: the amounts actually charged come from the Stripe price
 // objects behind STRIPE_PRICE_SINGLE / STRIPE_PRICE_MULTI (Cloudflare Pages env —
@@ -17,7 +18,7 @@ const TIERS: Array<{ id: CheckoutTier; name: string; price: string; blurb: strin
     id: 'single',
     name: 'Single Scholar',
     price: '$49 / year',
-    blurb: 'One learner. All 152 roots across every tier, plus the full Root Rush quiz.',
+    blurb: `One learner. All ${ROOTS.length} roots across every tier, plus the full Root Rush quiz.`,
     jewel: 'jade',
   },
   {
