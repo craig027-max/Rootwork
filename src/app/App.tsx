@@ -135,7 +135,7 @@ export function App() {
   const signedIn = authUser && !authUser.isAnonymous;
 
   return (
-    <div className="ww-app rw-ambient">
+    <div className={`ww-app rw-ambient ww-app--${view}`}>
       <header className="ww-topbar">
         <button className="ww-brand" onClick={() => closeRoot()} aria-label="Wondral Words home">
           <span className="ww-mark" aria-hidden="true">
