@@ -5,6 +5,7 @@ import {
   ROOTS,
   ROOTS_BY_ID,
   TIERS,
+  PALETTES,
   rootsInTier,
   rootId,
   isRootOpenable,
@@ -21,6 +22,16 @@ import { TierMenu } from './home/TierMenu';
 import { DetailPanel, type DetailVM } from './home/DetailPanel';
 
 const SAMPLE_COUNT = 4;
+
+function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: string; caption: string }) {
+  const palKey = root?.pal ?? fallback.palKey;
+  const p = PALETTES[palKey] ?? PALETTES.green!;
+  return {
+    key: root?.scene ?? fallback.key,
+    pal: p.pal,
+    caption: root ? `${root.root} · ${root.mean}` : fallback.caption,
+  };
+}
 
 /** Menu index for a tier number (modes occupy slots 0–1). */
 const tierMenuIndex = (t: TierNum) => t + 1;
@@ -178,6 +189,7 @@ function buildDetailVM(
         moreCount: 0,
         primary: { label: 'Start the run 🎯' },
         secondary: { label: 'Browse roots' },
+        scene: sceneFrom(undefined, { key: 'heat', palKey: 'fire', caption: 'Root Rush' }),
       };
     }
     const dailySamples = extra.dailyRoots.length > 0 ? extra.dailyRoots : starter;
@@ -197,12 +209,14 @@ function buildDetailVM(
       moreCount: 0,
       primary: { label: extra.dailyDone ? 'Play again 📅' : 'Start daily 📅' },
       secondary: { label: 'Browse roots' },
+      scene: sceneFrom(dailySamples[0], { key: 'stars', palKey: 'gold', caption: 'Daily' }),
     };
   }
 
   const roots = rootsInTier(item.t);
   const samples = roots.slice(0, SAMPLE_COUNT);
   const name = TIERS[item.t - 1]?.n ?? 'Starter';
+  const preview = sceneFrom(samples[0], { key: 'dna', palKey: item.jewel, caption: name });
 
   if (item.locked) {
     return {
@@ -215,6 +229,7 @@ function buildDetailVM(
       samples: samples.map((r) => ({ root: r.root, mean: r.mean })),
       moreCount: Math.max(0, item.total - samples.length),
       primary: { label: '🔓 Ask a grown-up to unlock' },
+      scene: preview,
     };
   }
 
@@ -232,5 +247,6 @@ function buildDetailVM(
     moreCount: Math.max(0, item.total - samples.length),
     primary: { label: complete ? 'Replay tier ›' : 'Continue tier ›' },
     secondary: { label: 'See all roots' },
+    scene: preview,
   };
 }

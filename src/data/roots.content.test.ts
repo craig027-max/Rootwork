@@ -1,28 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { PALETTES, ROOTS, rootId } from './roots';
+import { SCENES } from '../ui/scenes';
 
-/** Scene keys that already exist in src/ui/scenes.ts — do not invent new ones here. */
-const SCENE_KEYS = new Set([
-  'dna',
-  'globe',
-  'light',
-  'waves',
-  'draw',
-  'water',
-  'heat',
-  'stars',
-  'clock',
-  'sound',
-  'eye',
-  'motion',
-  'gear',
-  'speak',
-  'breakx',
-  'scale',
-  'heart',
-  'mind',
-  'people',
-]);
+/** Scene keys registered in src/ui/scenes.ts — do not invent new ones here. */
+const SCENE_KEYS = new Set(Object.keys(SCENES));
 
 const SCHOOL_LIST_GAPS = [
   'Inter',

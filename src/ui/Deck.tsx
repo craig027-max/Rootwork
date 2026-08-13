@@ -13,33 +13,11 @@ import {
 import { buildRecall, type RecallBeat } from '../core/recall';
 import { paletteVars } from './components/styleVars';
 import { Scene } from './Scene';
+import { SCENE_EMOJI } from './scenes';
 import { Badge } from './components/Badge';
 import { Button } from './components/Button';
 import { DeckNav } from './deck/DeckNav';
 import { RootIndex } from './deck/RootIndex';
-
-/** Emoji used on the strip badge + scene caption, keyed by scene name. */
-const SCENE_EMOJI: Record<string, string> = {
-  dna: '🧬',
-  globe: '🌍',
-  light: '☀️',
-  waves: '📡',
-  draw: '✍️',
-  water: '💧',
-  heat: '🔥',
-  stars: '✨',
-  clock: '⏳',
-  sound: '🔊',
-  eye: '👁️',
-  motion: '➡️',
-  gear: '⚙️',
-  speak: '💬',
-  breakx: '💥',
-  scale: '🔎',
-  people: '👥',
-  mind: '🧠',
-  heart: '💗',
-};
 
 function palOf(root: Root) {
   return PALETTES[root.pal] ?? PALETTES.green!;
