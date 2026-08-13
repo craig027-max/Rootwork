@@ -353,6 +353,17 @@
   gap: clamp(16px, 2.2vw, 24px);
   align-items: start;
 }
+
+/* First visit on a phone: preview + Play sit above the list so one tap starts. */
+@media (max-width: 860px) {
+  .ww-home-grid.is-first {
+    display: flex;
+    flex-direction: column;
+  }
+  .ww-home-grid.is-first .ww-home-preview {
+    order: -1;
+  }
+}
 .ww-panel-label {
   display: flex;
   align-items: baseline;
@@ -692,6 +703,15 @@
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+}
+.ww-detail-hero-cta {
+  padding: 14px clamp(16px, 2.4vw, 24px) 0;
+  position: relative;
+  z-index: 1;
+}
+.ww-detail-hero-cta .btn {
+  min-height: 56px;
+  font-size: 1.12rem;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1636,6 +1656,46 @@
   background: var(--grad);
   color: var(--text-on-bright, #08070f);
 }
+.ww-menu-row.play {
+  border-color: rgba(var(--spark-rgb), 0.55);
+}
+.ww-menu-more {
+  border-radius: var(--radius-lg);
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.015);
+  padding: 4px 8px 4px 12px;
+}
+.ww-menu-more summary {
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 10px 6px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}
+.ww-menu-more summary::-webkit-details-marker {
+  display: none;
+}
+.ww-menu-more summary::before {
+  content: '▸';
+  margin-right: 8px;
+  font-size: 0.7rem;
+}
+.ww-menu-more[open] summary::before {
+  content: '▾';
+}
+.ww-menu-more-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 0 0 10px;
+  opacity: 0.72;
+}
 .ww-locked-state .lk {
   font-size: 2.4rem;
   line-height: 1;
@@ -1664,6 +1724,16 @@
   }
   .ww-stat .v {
     font-size: 1.2rem;
+  }
+  .ww-home.is-first .ww-detail-hero-cta {
+    padding: 12px 14px 0;
+  }
+  .ww-home.is-first .ww-detail-hero-cta .btn {
+    min-height: 56px;
+    font-size: 1.08rem;
+  }
+  .ww-home.is-first .ww-detail.has-scene .ww-detail-anim {
+    padding-top: 16px;
   }
   .ww-decknav {
     max-width: calc(100vw - 16px);

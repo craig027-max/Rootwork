@@ -24,6 +24,8 @@ export interface DetailVM {
   secondary?: { label: string };
   /** Live canvas teaser in the preview header. Decorative — no pointer events. */
   scene?: { key: string; pal: [string, string]; caption: string };
+  /** First-run: park the primary button directly under the scene so one tap starts. */
+  heroCta?: boolean;
 }
 
 /**
@@ -54,6 +56,13 @@ export function DetailPanel({
           <span className="ww-detail-scene-cap">
             {emoji} {vm.scene.caption}
           </span>
+        </div>
+      ) : null}
+      {vm.heroCta ? (
+        <div className="ww-detail-hero-cta">
+          <Button size="lg" block onClick={onPrimary} disabled={vm.primary.disabled}>
+            {vm.primary.label}
+          </Button>
         </div>
       ) : null}
       <div className={`ww-detail-anim${vm.locked ? ' ww-locked-state' : ''}`} key={vm.animKey}>
@@ -91,16 +100,18 @@ export function DetailPanel({
           {vm.moreCount > 0 ? <div className="ww-more">+ {vm.moreCount} more</div> : null}
         </div>
 
-        <div className="ww-detail-cta">
-          <Button onClick={onPrimary} disabled={vm.primary.disabled}>
-            {vm.primary.label}
-          </Button>
-          {vm.secondary ? (
-            <Button variant="ghost" onClick={onSecondary}>
-              {vm.secondary.label}
+        {vm.heroCta ? null : (
+          <div className="ww-detail-cta">
+            <Button onClick={onPrimary} disabled={vm.primary.disabled}>
+              {vm.primary.label}
             </Button>
-          ) : null}
-        </div>
+            {vm.secondary ? (
+              <Button variant="ghost" onClick={onSecondary}>
+                {vm.secondary.label}
+              </Button>
+            ) : null}
+          </div>
+        )}
       </div>
     </div>
   );

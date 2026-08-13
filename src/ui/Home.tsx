@@ -3,20 +3,28 @@ import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
 import {
   ROOTS,
-  ROOTS_BY_ID,
-  TIERS,
   PALETTES,
+  TIERS,
   rootsInTier,
   rootId,
   isRootOpenable,
-  resumeRootId,
   type Root,
   type TierNum,
 } from '../data/roots';
 import { DEFAULT_AVATAR } from '../data/avatars';
 import { gradeForPct } from '../core/stats';
 import { dailySeed, localDayKey, pickDailyRoots } from '../core/daily';
-import { buildMenu, tierStats, type MenuItem } from './home/menu';
+import {
+  buildMenu,
+  defaultSelectedIndex,
+  entryRootName,
+  isFirstVisit,
+  listHeading,
+  pickCurrentTier,
+  tierEntryRoot,
+  tierPrimaryLabel,
+  type MenuItem,
+} from './home/menu';
 import { ProfileBand } from './home/ProfileBand';
 import { TierMenu } from './home/TierMenu';
 import { DetailPanel, type DetailVM } from './home/DetailPanel';
@@ -33,42 +41,6 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
   };
 }
 
-/** Menu index for a tier number (modes occupy slots 0–1). */
-const tierMenuIndex = (t: TierNum) => t + 1;
-
-/** First incomplete & openable root in a tier (the resume point), else its first root. */
-function tierEntryRoot(t: TierNum, completed: Set<string>, entitled: boolean): Root | undefined {
-  const roots = rootsInTier(t);
-  return (
-    roots.find((r) => isRootOpenable(rootId(r), entitled) && !completed.has(rootId(r))) ?? roots[0]
-  );
-}
-
-/** The tier the learner is currently working through (drives the default selection). */
-function pickCurrentTier(completed: Set<string>, entitled: boolean): TierNum {
-  const resumeId = resumeRootId(completed, entitled);
-  if (resumeId) return ROOTS_BY_ID[resumeId]!.t;
-  for (let t = 1 as TierNum; t <= 5; t = (t + 1) as TierNum) {
-    const s = tierStats(t, completed);
-    if (s.total > 0 && s.pct < 100 && (t === 1 || entitled)) return t;
-  }
-  return 1;
-}
-
-function leadWithRoots(prefix: string, samples: Root[]): ReactNode {
-  return (
-    <>
-      {prefix}
-      {samples.map((r, i) => (
-        <span key={rootId(r)}>
-          <b>{r.root}</b>
-          {i < samples.length - 1 ? ', ' : '.'}
-        </span>
-      ))}
-    </>
-  );
-}
-
 export function Home() {
   const entitled = useEntitledForDisplay();
   const completed = useWondralStore((s) => s.completedRoots);
@@ -80,6 +52,7 @@ export function Home() {
   const setView = useWondralStore((s) => s.setView);
   const setSelectedTier = useWondralStore((s) => s.setSelectedTier);
 
+  const firstVisit = isFirstVisit(completed);
   const currentTier = pickCurrentTier(completed, entitled);
   const rushBest =
     stats.runs > 0 ? `${gradeForPct(stats.bestPct)} · ${stats.bestStars}★` : undefined;
@@ -89,14 +62,16 @@ export function Home() {
     ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
     dailySeed(day, activeStudentId),
   );
-  const items = buildMenu(completed, entitled, {
+  const { items, tucked } = buildMenu(completed, entitled, {
     currentTier,
     rushBest,
     dailyStreak: stats.streakCurrent,
     dailyDone,
+    firstVisit,
   });
-  const [selectedIndex, setSelectedIndex] = useState(() => tierMenuIndex(currentTier));
-  const selected = items[Math.min(selectedIndex, items.length - 1)]!;
+  const allItems = [...items, ...tucked];
+  const [selectedIndex, setSelectedIndex] = useState(() => defaultSelectedIndex(items, currentTier));
+  const selected = allItems[Math.min(selectedIndex, allItems.length - 1)]!;
 
   const activeStudent = students.find((s) => s.id === activeStudentId) ?? null;
   const name = activeStudent?.nickname ?? 'Explorer';
@@ -130,27 +105,40 @@ export function Home() {
     else openTier(item.t);
   }
 
-  const vm = buildDetailVM(selected, { dailyRoots, dailyDone, streak: stats.streakCurrent });
+  const vm = buildDetailVM(selected, {
+    dailyRoots,
+    dailyDone,
+    streak: stats.streakCurrent,
+    firstVisit,
+    completed,
+    entitled,
+  });
 
   return (
-    <div className="ww-home">
+    <div className={`ww-home${firstVisit ? ' is-first' : ''}`}>
       <ProfileBand name={name} avatar={avatar} rootsOwned={completed.size} stats={stats} />
 
-      <div className="ww-home-grid">
-        <div>
+      <div className={`ww-home-grid${firstVisit ? ' is-first' : ''}`}>
+        <div className="ww-home-list">
           <div className="ww-panel-label">
-            <span className="n">Jump back in</span>
-            <span className="s kb-hint">↑ ↓ to browse · Enter to start</span>
-            <span className="s tap-hint">Tap to preview · tap again to start</span>
+            <span className="n">{listHeading(firstVisit)}</span>
+            {firstVisit ? null : (
+              <>
+                <span className="s kb-hint">↑ ↓ to browse · Enter to start</span>
+                <span className="s tap-hint">Tap to preview · tap again to start</span>
+              </>
+            )}
           </div>
           <TierMenu
             items={items}
+            tucked={tucked}
             selectedIndex={selectedIndex}
+            firstVisit={firstVisit}
             onSelect={setSelectedIndex}
             onActivate={onPrimary}
           />
         </div>
-        <div>
+        <div className="ww-home-preview">
           <div className="ww-panel-label">
             <span className="n">Preview</span>
             <span className="s">
@@ -158,7 +146,9 @@ export function Home() {
                 ? 'Game mode'
                 : selected.locked
                   ? 'Locked tier'
-                  : 'Your progress'}
+                  : firstVisit
+                    ? 'Tap play'
+                    : 'Your progress'}
             </span>
           </div>
           <DetailPanel
@@ -175,7 +165,14 @@ export function Home() {
 /** Derive the detail-panel view model from the selected menu row + live progress. */
 function buildDetailVM(
   item: MenuItem,
-  extra: { dailyRoots: Root[]; dailyDone: boolean; streak: number },
+  extra: {
+    dailyRoots: Root[];
+    dailyDone: boolean;
+    streak: number;
+    firstVisit: boolean;
+    completed: Set<string>;
+    entitled: boolean;
+  },
 ): DetailVM {
   if (item.kind === 'mode') {
     const starter = rootsInTier(1).slice(0, 3);
@@ -218,6 +215,7 @@ function buildDetailVM(
   const samples = roots.slice(0, SAMPLE_COUNT);
   const name = TIERS[item.t - 1]?.n ?? 'Starter';
   const preview = sceneFrom(samples[0], { key: 'dna', palKey: item.jewel, caption: name });
+  const rootName = entryRootName(item.t, extra.completed, extra.entitled);
 
   if (item.locked) {
     return {
@@ -235,19 +233,37 @@ function buildDetailVM(
   }
 
   const complete = item.pct === 100;
+  const firstPlay = extra.firstVisit && item.t === 1;
   return {
     jewel: item.jewel,
     animKey: item.key,
     eyebrow: item.title,
     big: name,
-    lead: leadWithRoots(`${item.sub} — roots like `, samples.slice(0, 3)),
-    ring: { pct: item.pct, label: complete ? '✓' : `${item.pct}%` },
-    pmA: `${item.done} of ${item.total} roots owned`,
-    pmB: complete ? 'Tier complete' : `${item.total - item.done} roots to go`,
+    lead: firstPlay
+      ? leadWithRoots('Play to meet ', samples.slice(0, 3))
+      : leadWithRoots(`${item.sub} — roots like `, samples.slice(0, 3)),
+    ring: firstPlay ? undefined : { pct: item.pct, label: complete ? '✓' : `${item.pct}%` },
+    pmA: firstPlay ? undefined : `${item.done} of ${item.total} roots owned`,
+    pmB: firstPlay ? undefined : complete ? 'Tier complete' : `${item.total - item.done} roots to go`,
     samples: samples.map((r) => ({ root: r.root, mean: r.mean })),
     moreCount: Math.max(0, item.total - samples.length),
-    primary: { label: complete ? 'Replay tier ›' : 'Continue tier ›' },
-    secondary: { label: 'See all roots' },
+    primary: { label: tierPrimaryLabel({ firstVisit: firstPlay, complete, rootName }) },
+    secondary: firstPlay ? undefined : { label: 'See all roots' },
     scene: preview,
+    heroCta: firstPlay,
   };
+}
+
+function leadWithRoots(prefix: string, samples: Root[]): ReactNode {
+  return (
+    <>
+      {prefix}
+      {samples.map((r, i) => (
+        <span key={rootId(r)}>
+          <b>{r.root}</b>
+          {i < samples.length - 1 ? ', ' : '.'}
+        </span>
+      ))}
+    </>
+  );
 }
