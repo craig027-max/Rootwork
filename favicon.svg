@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#34e0a6"/>
+      <stop offset="1" stop-color="#34d9f0"/>
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#g)"/>
+  <!-- sprout: stem + two leaves, the Wondral Words 🌱 mark -->
+  <path d="M32 52 V30" stroke="#08301f" stroke-width="5" stroke-linecap="round"/>
+  <path d="M32 34 C22 34 15 28 14 18 C24 18 31 24 32 34 Z" fill="#0b4a2f"/>
+  <path d="M32 30 C42 30 49 24 50 14 C40 14 33 20 32 30 Z" fill="#0e5c3a"/>
+</svg>
