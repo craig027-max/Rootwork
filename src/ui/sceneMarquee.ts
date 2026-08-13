@@ -1,495 +1,451 @@
-/* Marquee scenes — the ones kids show parents. Layered depth, jewel palettes. */
+/* Marquee scenes — the ones kids show parents. Readable 2D illustrations. */
 
-import { TAU, disc, glow, p0, p1, rung, type SceneFn } from './sceneUtil';
+import { TAU, cloud, disc, glow, leaf, line, p0, p1, rung, type SceneFn } from './sceneUtil';
 
-interface Cell {
-  x: number;
-  y: number;
-  r: number;
-  sp: number;
-  sway: number;
-  hue: string;
-  a: number;
-}
-let cells: Cell[] | null = null;
-let cellW = 0;
-let cellH = 0;
-function seedCells(W: number, H: number): void {
-  cells = [];
-  const n = Math.round(Math.max(14, Math.min(34, (W * H) / 9000)));
-  for (let i = 0; i < n; i++)
-    cells.push({
-      x: Math.random(),
-      y: Math.random(),
-      r: 2 + Math.random() * 5,
-      sp: 0.004 + Math.random() * 0.01,
-      sway: Math.random() * 6.28,
-      hue: Math.random() < 0.5 ? '52,224,122' : '79,195,247',
-      a: 0.1 + Math.random() * 0.22,
-    });
-  cellW = W;
-  cellH = H;
-}
+const LAND = '72,168,110';
+const SAND = '210,170,90';
 
-interface Node {
-  x: number;
-  y: number;
-  d: number;
-  c: string;
-}
-
-/** Double helix with membrane-cells and depth-sorted base pairs (life). */
+/** Textbook double helix + a cell and a leaf (life). */
 export const dna: SceneFn = (x, W, H, t, pal) => {
-  if (!cells || cellW !== W || cellH !== H) seedCells(W, H);
-  const cs = cells ?? [];
-
-  const room = x.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, Math.max(W, H) * 0.62);
-  room.addColorStop(0, `rgba(${p0(pal)},0.16)`);
-  room.addColorStop(0.55, `rgba(${p1(pal)},0.05)`);
+  const room = x.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, Math.max(W, H) * 0.7);
+  room.addColorStop(0, `rgba(${p0(pal)},0.14)`);
   room.addColorStop(1, 'rgba(0,0,0,0)');
   x.fillStyle = room;
   x.fillRect(0, 0, W, H);
 
-  x.globalCompositeOperation = 'lighter';
-  for (const c of cs) {
-    c.y -= c.sp;
-    c.sway += 0.016;
-    if (c.y < -0.05) {
-      c.y = 1.05;
-      c.x = Math.random();
-    }
-    const px = (c.x + Math.sin(c.sway) * 0.02) * W,
-      py = c.y * H;
-    x.strokeStyle = `rgba(${c.hue},${c.a + 0.18})`;
-    x.lineWidth = 1;
-    x.beginPath();
-    x.arc(px, py, c.r * 1.35, 0, TAU);
-    x.stroke();
-    glow(x, px, py, c.r * 2.6, c.hue, c.a);
-    disc(x, px, py, Math.max(1.1, c.r * 0.35), `rgba(255,255,255,${c.a + 0.15})`);
-  }
+  // One animal cell — membrane, nucleus — so "life" is not just a twisty ribbon.
+  const cellX = W * 0.2,
+    cellY = H * 0.42,
+    cellR = Math.min(W, H) * 0.22;
+  x.strokeStyle = `rgba(${p0(pal)},0.55)`;
+  x.lineWidth = 3.2;
+  x.beginPath();
+  x.arc(cellX, cellY, cellR, 0, TAU);
+  x.stroke();
+  x.strokeStyle = `rgba(${p0(pal)},0.28)`;
+  x.lineWidth = 1.6;
+  x.beginPath();
+  x.arc(cellX, cellY, cellR * 0.88, 0, TAU);
+  x.stroke();
+  glow(x, cellX, cellY, cellR * 0.7, p0(pal), 0.18);
+  disc(x, cellX + cellR * 0.08, cellY - cellR * 0.05, cellR * 0.34, `rgba(${p1(pal)},0.45)`);
+  disc(x, cellX + cellR * 0.08, cellY - cellR * 0.05, cellR * 0.14, `rgba(${p1(pal)},0.8)`);
+  x.strokeStyle = `rgba(${p1(pal)},0.4)`;
+  x.lineWidth = 1.2;
+  x.beginPath();
+  x.ellipse(cellX - cellR * 0.42, cellY + cellR * 0.22, cellR * 0.16, cellR * 0.08, 0.4, 0, TAU);
+  x.stroke();
+  x.beginPath();
+  x.ellipse(cellX + cellR * 0.38, cellY + cellR * 0.35, cellR * 0.12, cellR * 0.06, -0.3, 0, TAU);
+  x.stroke();
+  leaf(x, cellX - cellR * 0.15, cellY + cellR * 1.15, -0.4, cellR * 0.42, `rgba(${LAND},0.7)`, `rgba(${p0(pal)},0.55)`);
 
-  const cx = W * 0.5,
-    amp = Math.min(W * 0.28, 104),
-    top = H * 0.08,
-    span = H * 0.84,
-    N = 52,
-    freq = 3.15,
-    nodes: Node[] = [];
+  const cx = W * 0.66,
+    amp = Math.min(W * 0.18, 56),
+    top = H * 0.06,
+    span = H * 0.88,
+    steps = 20;
 
-  for (const phase of [0, Math.PI]) {
-    const col = phase === 0 ? p0(pal) : p1(pal);
-    x.beginPath();
-    for (let i = 0; i <= N; i++) {
-      const f = i / N,
-        y = top + f * span,
-        ph = f * freq * TAU + t * 0.85 + phase,
-        xx = cx + Math.sin(ph) * amp;
-      if (i) x.lineTo(xx, y);
-      else x.moveTo(xx, y);
-    }
-    x.strokeStyle = `rgba(${col},0.22)`;
-    x.lineWidth = 5.5;
-    x.lineJoin = 'round';
-    x.stroke();
-    x.strokeStyle = `rgba(${col},0.55)`;
-    x.lineWidth = 1.8;
-    x.stroke();
-  }
-
-  for (let i = 0; i <= N; i++) {
-    const f = i / N,
+  type Sample = { x: number; y: number; z: number };
+  const a: Sample[] = [];
+  const b: Sample[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const f = i / steps,
       y = top + f * span,
-      ph = f * freq * TAU + t * 0.85;
-    const x1 = cx + Math.sin(ph) * amp,
-      x2 = cx + Math.sin(ph + Math.PI) * amp;
-    const d1 = (Math.cos(ph) + 1) / 2,
-      d2 = (Math.cos(ph + Math.PI) + 1) / 2;
-    if (i % 2 === 0) {
-      const dm = (d1 + d2) / 2,
-        col = rung(i / 2);
-      x.strokeStyle = `rgba(${col},${0.16 + dm * 0.55})`;
-      x.lineWidth = 2.2 + dm * 2.4;
-      x.lineCap = 'round';
-      x.beginPath();
-      x.moveTo(x1, y);
-      x.lineTo(x2, y);
-      x.stroke();
-      glow(x, (x1 + x2) / 2, y, 6 + dm * 5, col, 0.18 + dm * 0.28);
-    }
-    nodes.push({ x: x1, y, d: d1, c: p0(pal) });
-    nodes.push({ x: x2, y, d: d2, c: p1(pal) });
+      ph = f * 2.35 * TAU + t * 0.7;
+    a.push({ x: cx + Math.sin(ph) * amp, y, z: Math.cos(ph) });
+    b.push({ x: cx + Math.sin(ph + Math.PI) * amp, y, z: Math.cos(ph + Math.PI) });
   }
 
-  nodes.sort((a, b) => a.d - b.d);
-  for (const n of nodes) {
-    const r = 2.6 + n.d * 5.2,
-      a = 0.28 + n.d * 0.72;
-    const g = x.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 2.6);
-    g.addColorStop(0, `rgba(255,255,255,${a * 0.95})`);
-    g.addColorStop(0.32, `rgba(${n.c},${a})`);
-    g.addColorStop(1, `rgba(${n.c},0)`);
-    x.fillStyle = g;
+  x.lineCap = 'round';
+  x.lineJoin = 'round';
+  x.globalCompositeOperation = 'lighter';
+
+  function strokeBackbone(pts: Sample[], col: string, frontOnly: boolean): void {
     x.beginPath();
-    x.arc(n.x, n.y, r * 2.6, 0, TAU);
-    x.fill();
+    let started = false;
+    for (const p of pts) {
+      if (frontOnly && p.z < 0) {
+        started = false;
+        continue;
+      }
+      if (!started) {
+        x.moveTo(p.x, p.y);
+        started = true;
+      } else x.lineTo(p.x, p.y);
+    }
+    x.strokeStyle = `rgba(${col},${frontOnly ? 0.95 : 0.3})`;
+    x.lineWidth = frontOnly ? 5.4 : 3.4;
+    x.stroke();
   }
+  strokeBackbone(a, p0(pal), false);
+  strokeBackbone(b, p1(pal), false);
+
+  for (let i = 0; i <= steps; i++) {
+    const pa = a[i],
+      pb = b[i];
+    if (!pa || !pb || i % 2 !== 0) continue;
+    const depth = (pa.z + pb.z) * 0.25 + 0.5;
+    const midX = (pa.x + pb.x) / 2;
+    const cA = rung(i / 2),
+      cB = rung(i / 2 + 2);
+    x.lineWidth = 2.6 + depth * 1.4;
+    x.strokeStyle = `rgba(${cA},${0.4 + depth * 0.55})`;
+    line(x, pa.x, pa.y, midX, pa.y);
+    x.strokeStyle = `rgba(${cB},${0.4 + depth * 0.55})`;
+    line(x, pb.x, pb.y, midX, pb.y);
+    disc(x, pa.x, pa.y, 2.4 + (pa.z + 1) * 1.1, `rgba(${cA},0.9)`);
+    disc(x, pb.x, pb.y, 2.4 + (pb.z + 1) * 1.1, `rgba(${cB},0.9)`);
+  }
+
+  strokeBackbone(a, p0(pal), true);
+  strokeBackbone(b, p1(pal), true);
   x.globalCompositeOperation = 'source-over';
 };
 
-/** Volumetric sun, corona, and streaming photons (light). */
+/** Sun, rays, and a beam lighting a tree (light). */
 export const light: SceneFn = (x, W, H, t, pal) => {
-  const cx = W / 2,
-    cy = H / 2,
-    maxR = Math.min(W, H) * 0.5;
-  x.globalCompositeOperation = 'lighter';
+  const sx = W * 0.28,
+    sy = H * 0.28,
+    sunR = Math.min(W, H) * 0.14;
+  const ground = H * 0.82;
+  const tx = W * 0.72;
 
-  const haze = x.createRadialGradient(cx, cy, 0, cx, cy, maxR);
-  haze.addColorStop(0, `rgba(${p0(pal)},0.22)`);
-  haze.addColorStop(0.45, `rgba(${p1(pal)},0.08)`);
-  haze.addColorStop(1, 'rgba(0,0,0,0)');
-  x.fillStyle = haze;
+  const sky = x.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, `rgba(${p0(pal)},0.16)`);
+  sky.addColorStop(0.55, `rgba(${p1(pal)},0.05)`);
+  sky.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = sky;
   x.fillRect(0, 0, W, H);
 
-  // Tapered volumetric rays (wedges), not hairline spokes.
-  const rays = 18;
+  x.globalCompositeOperation = 'lighter';
+
+  const rays = 16;
   for (let k = 0; k < rays; k++) {
-    const a = (k / rays) * TAU + t * 0.18,
-      fl = 0.45 + 0.55 * Math.abs(Math.sin(k * 1.3 + t * 0.9)),
-      len = maxR * (0.55 + 0.45 * fl),
-      half = 0.045 + fl * 0.03;
-    const g = x.createLinearGradient(
-      cx,
-      cy,
-      cx + Math.cos(a) * len,
-      cy + Math.sin(a) * len,
-    );
-    g.addColorStop(0, `rgba(255,255,255,${0.18 * fl})`);
-    g.addColorStop(0.25, `rgba(${p0(pal)},${0.14 * fl})`);
+    const a = (k / rays) * TAU + t * 0.12,
+      fl = 0.45 + 0.55 * Math.abs(Math.sin(k * 1.3 + t * 0.8)),
+      len = sunR * (2.4 + fl * 1.6),
+      half = 0.05 + fl * 0.025;
+    const g = x.createLinearGradient(sx, sy, sx + Math.cos(a) * len, sy + Math.sin(a) * len);
+    g.addColorStop(0, `rgba(255,255,255,${0.22 * fl})`);
+    g.addColorStop(0.4, `rgba(${p0(pal)},${0.16 * fl})`);
     g.addColorStop(1, `rgba(${p1(pal)},0)`);
     x.fillStyle = g;
     x.beginPath();
-    x.moveTo(cx + Math.cos(a - half) * 18, cy + Math.sin(a - half) * 18);
-    x.lineTo(cx + Math.cos(a - half * 0.35) * len, cy + Math.sin(a - half * 0.35) * len);
-    x.lineTo(cx + Math.cos(a + half * 0.35) * len, cy + Math.sin(a + half * 0.35) * len);
-    x.lineTo(cx + Math.cos(a + half) * 18, cy + Math.sin(a + half) * 18);
+    x.moveTo(sx + Math.cos(a - half) * sunR * 0.7, sy + Math.sin(a - half) * sunR * 0.7);
+    x.lineTo(sx + Math.cos(a - half * 0.4) * len, sy + Math.sin(a - half * 0.4) * len);
+    x.lineTo(sx + Math.cos(a + half * 0.4) * len, sy + Math.sin(a + half * 0.4) * len);
+    x.lineTo(sx + Math.cos(a + half) * sunR * 0.7, sy + Math.sin(a + half) * sunR * 0.7);
     x.closePath();
     x.fill();
   }
 
-  // Photons — four-point sparkles streaming outward.
-  for (let i = 0; i < 48; i++) {
-    const d = (t * 0.22 + i * 0.137) % 1,
-      r = 22 + d * maxR,
-      a = i * 2.39996 + t * 0.05,
-      px = cx + Math.cos(a) * r,
-      py = cy + Math.sin(a) * r,
-      al = (1 - d) * 0.85,
-      s = 1.2 + (1 - d) * 2.4;
-    x.fillStyle = `rgba(${i % 3 === 0 ? p1(pal) : '255,255,255'},${al})`;
-    x.beginPath();
-    x.moveTo(px, py - s * 1.6);
-    x.lineTo(px + s * 0.35, py);
-    x.lineTo(px, py + s * 1.6);
-    x.lineTo(px - s * 0.35, py);
-    x.closePath();
-    x.fill();
-  }
-
-  // Corona rings.
-  for (let i = 0; i < 3; i++) {
-    const pr = maxR * (0.2 + i * 0.07) + Math.sin(t * 1.4 + i) * 3;
-    x.strokeStyle = `rgba(${p0(pal)},${0.18 - i * 0.04})`;
-    x.lineWidth = 2;
-    x.beginPath();
-    x.arc(cx, cy, pr, 0, TAU);
-    x.stroke();
-  }
-
-  const core = x.createRadialGradient(cx, cy, 0, cx, cy, maxR * 0.38);
+  const core = x.createRadialGradient(sx - sunR * 0.2, sy - sunR * 0.2, 0, sx, sy, sunR);
   core.addColorStop(0, 'rgba(255,255,255,0.98)');
-  core.addColorStop(0.18, `rgba(${p0(pal)},0.9)`);
-  core.addColorStop(0.5, `rgba(${p1(pal)},0.28)`);
-  core.addColorStop(1, `rgba(${p1(pal)},0)`);
+  core.addColorStop(0.35, `rgba(${p0(pal)},0.95)`);
+  core.addColorStop(1, `rgba(${p1(pal)},0.15)`);
   x.fillStyle = core;
   x.beginPath();
-  x.arc(cx, cy, maxR * 0.38, 0, TAU);
+  x.arc(sx, sy, sunR, 0, TAU);
   x.fill();
 
-  // Lens flare — horizontal streak + ghost discs.
-  const flareA = 0.22 + 0.08 * Math.sin(t * 1.1);
-  x.strokeStyle = `rgba(255,255,255,${flareA})`;
-  x.lineWidth = 1.5;
+  // Beam from the sun hitting the tree.
+  const hitX = tx,
+    hitY = ground - 52;
+  const beam = x.createLinearGradient(sx, sy, hitX, hitY);
+  beam.addColorStop(0, `rgba(255,255,255,0.12)`);
+  beam.addColorStop(0.7, `rgba(${p0(pal)},0.18)`);
+  beam.addColorStop(1, `rgba(${p0(pal)},0.08)`);
+  x.fillStyle = beam;
   x.beginPath();
-  x.moveTo(cx - maxR * 0.7, cy);
-  x.lineTo(cx + maxR * 0.7, cy);
-  x.stroke();
-  glow(x, cx + maxR * 0.42, cy, 10, p1(pal), 0.35);
-  glow(x, cx - maxR * 0.38, cy, 7, p0(pal), 0.22);
+  x.moveTo(sx + 8, sy + 8);
+  x.lineTo(sx + 18, sy + 4);
+  x.lineTo(hitX + 22, hitY);
+  x.lineTo(hitX - 18, hitY + 8);
+  x.closePath();
+  x.fill();
+  glow(x, hitX, hitY, 36, p0(pal), 0.45 + 0.12 * Math.sin(t * 2));
 
   x.globalCompositeOperation = 'source-over';
+
+  // Ground + a simple tree so the beam has something to light.
+  x.strokeStyle = `rgba(${p1(pal)},0.35)`;
+  x.lineWidth = 2;
+  line(x, W * 0.08, ground, W * 0.95, ground);
+  x.fillStyle = `rgba(${SAND},0.35)`;
+  x.fillRect(W * 0.08, ground, W * 0.87, 6);
+
+  x.fillStyle = `rgba(90,55,40,0.85)`;
+  x.fillRect(tx - 4, ground - 38, 8, 38);
+  x.fillStyle = `rgba(${LAND},0.85)`;
+  x.beginPath();
+  x.moveTo(tx, ground - 88);
+  x.lineTo(tx + 28, ground - 34);
+  x.lineTo(tx - 28, ground - 34);
+  x.closePath();
+  x.fill();
+  x.beginPath();
+  x.moveTo(tx, ground - 78);
+  x.lineTo(tx + 22, ground - 42);
+  x.lineTo(tx - 22, ground - 42);
+  x.closePath();
+  x.fill();
 };
 
-/** Layered sea: depth body, caustics, stacked swells, foam, bubbles (water). */
+/** Sea, waves, and a shoreline (water). */
 export const water: SceneFn = (x, W, H, t, pal) => {
-  const body = x.createLinearGradient(0, 0, 0, H);
-  body.addColorStop(0, `rgba(${p0(pal)},0.03)`);
-  body.addColorStop(0.32, `rgba(${p0(pal)},0.09)`);
-  body.addColorStop(0.68, `rgba(${p1(pal)},0.18)`);
-  body.addColorStop(1, `rgba(${p1(pal)},0.32)`);
+  const horizon = H * 0.38;
+
+  const sky = x.createLinearGradient(0, 0, 0, horizon);
+  sky.addColorStop(0, `rgba(${p1(pal)},0.18)`);
+  sky.addColorStop(1, `rgba(${p0(pal)},0.08)`);
+  x.fillStyle = sky;
+  x.fillRect(0, 0, W, horizon);
+  cloud(x, W * 0.18, H * 0.14, 22, `rgba(255,255,255,0.16)`);
+  cloud(x, W * 0.72, H * 0.12, 16, `rgba(255,255,255,0.12)`);
+
+  // Distant land.
+  x.fillStyle = `rgba(${LAND},0.35)`;
+  x.beginPath();
+  x.moveTo(0, horizon);
+  x.quadraticCurveTo(W * 0.18, horizon - 18, W * 0.32, horizon);
+  x.quadraticCurveTo(W * 0.55, horizon - 28, W * 0.78, horizon);
+  x.lineTo(W, horizon);
+  x.lineTo(0, horizon);
+  x.fill();
+
+  x.strokeStyle = `rgba(255,255,255,0.25)`;
+  x.lineWidth = 1;
+  line(x, 0, horizon, W, horizon);
+
+  const body = x.createLinearGradient(0, horizon, 0, H);
+  body.addColorStop(0, `rgba(${p0(pal)},0.22)`);
+  body.addColorStop(0.55, `rgba(${p1(pal)},0.38)`);
+  body.addColorStop(1, `rgba(${p1(pal)},0.55)`);
   x.fillStyle = body;
-  x.fillRect(0, 0, W, H);
+  x.fillRect(0, horizon, W, H - horizon);
 
   x.save();
   x.globalCompositeOperation = 'lighter';
-
-  // Light shaft from the surface.
-  const shaft = x.createLinearGradient(W * 0.38, 0, W * 0.52, H);
-  shaft.addColorStop(0, 'rgba(255,255,255,0.11)');
-  shaft.addColorStop(0.55, `rgba(${p0(pal)},0.04)`);
-  shaft.addColorStop(1, 'rgba(255,255,255,0)');
-  x.fillStyle = shaft;
-  x.beginPath();
-  x.moveTo(W * 0.24, 0);
-  x.lineTo(W * 0.5, 0);
-  x.lineTo(W * 0.66, H);
-  x.lineTo(W * 0.16, H);
-  x.fill();
-
-  // Caustic ribbons on the floor.
-  for (let i = 0; i < 20; i++) {
-    const sx = ((i * 97.3 + t * 26) % (W + 48)) - 24;
-    const sy = H * (0.58 + (i % 6) * 0.065);
-    const tw = 0.5 + 0.5 * Math.sin(t * 2.1 + i * 0.7);
-    x.fillStyle = `rgba(255,255,255,${0.03 + tw * 0.08})`;
-    x.beginPath();
-    x.ellipse(sx, sy, 16 + tw * 12, 2.4, 0.18, 0, TAU);
-    x.fill();
-  }
-
-  for (let r = 0; r < 6; r++) {
-    const depth = r / 5;
-    const y0 = H * (0.2 + r * 0.112);
-    const amp = 5 + depth * 13;
+  for (let r = 0; r < 5; r++) {
+    const y0 = horizon + 8 + r * (H - horizon) * 0.16;
+    const amp = 4 + r * 3.5;
     const col = r % 2 ? p1(pal) : p0(pal);
-    const wave = (i: number): number =>
+    const waveY = (i: number): number =>
       y0 +
-      Math.sin(i * 0.017 + t * (1.05 + depth * 0.35) + r * 0.8) * amp +
-      Math.sin(i * 0.05 - t * 1.25 + r * 1.6) * amp * 0.38;
-
+      Math.sin(i * 0.028 + t * (1.1 + r * 0.15) + r) * amp +
+      Math.sin(i * 0.07 - t * 1.3 + r * 1.4) * amp * 0.35;
     x.beginPath();
-    x.moveTo(0, H);
-    for (let i = 0; i <= W; i += 5) x.lineTo(i, wave(i));
-    x.lineTo(W, H);
-    x.closePath();
-    x.fillStyle = `rgba(${col},${0.05 + depth * 0.085})`;
-    x.fill();
-
-    x.beginPath();
-    for (let i = 0; i <= W; i += 5) {
-      if (i) x.lineTo(i, wave(i));
-      else x.moveTo(i, wave(i));
+    for (let i = 0; i <= W; i += 6) {
+      if (i) x.lineTo(i, waveY(i));
+      else x.moveTo(i, waveY(i));
     }
-    x.strokeStyle = `rgba(${col},${0.14 + depth * 0.3})`;
-    x.lineWidth = 1 + depth * 1.7;
+    x.strokeStyle = `rgba(${col},${0.25 + r * 0.08})`;
+    x.lineWidth = 1.4 + r * 0.25;
     x.stroke();
-
-    if (r >= 4) {
-      for (let i = 0; i <= W; i += 16) {
-        const crest = Math.sin(i * 0.017 + t * 1.4 + r);
-        if (crest > 0.52) {
-          x.fillStyle = `rgba(255,255,255,${(crest - 0.52) * 0.4})`;
-          x.beginPath();
-          x.arc(i, wave(i) - 1.2, 1.7, 0, TAU);
-          x.fill();
+    if (r >= 3) {
+      for (let i = 0; i <= W; i += 18) {
+        const crest = Math.sin(i * 0.028 + t * 1.3 + r);
+        if (crest > 0.55) {
+          disc(x, i, waveY(i) - 1, 1.6, `rgba(255,255,255,${(crest - 0.55) * 0.7})`);
         }
       }
     }
   }
-
-  for (let i = 0; i < 20; i++) {
-    const d = (t * 0.22 + i * 0.11) % 1,
-      bx = W * ((i * 0.137) % 1) + Math.sin(t * 0.8 + i) * 8,
-      by = H - d * H * 0.92,
-      a = (1 - d) * 0.5,
-      s = 2 + (i % 4);
-    x.strokeStyle = `rgba(${p1(pal)},${a})`;
-    x.lineWidth = 1.15;
-    x.beginPath();
-    x.arc(bx, by, s, 0, TAU);
-    x.stroke();
-    x.fillStyle = `rgba(255,255,255,${a * 0.55})`;
-    x.beginPath();
-    x.arc(bx - s * 0.28, by - s * 0.32, Math.max(0.8, s * 0.32), 0, TAU);
-    x.fill();
-  }
-
   x.restore();
+
+  // Shoreline — sand in the foreground so this is a beach, not a texture.
+  x.fillStyle = `rgba(${SAND},0.55)`;
+  x.beginPath();
+  x.moveTo(0, H);
+  x.lineTo(0, H * 0.72);
+  x.quadraticCurveTo(W * 0.22, H * 0.68 + Math.sin(t * 1.2) * 3, W * 0.48, H);
+  x.closePath();
+  x.fill();
+  x.fillStyle = `rgba(255,255,255,0.2)`;
+  x.beginPath();
+  x.moveTo(0, H * 0.74);
+  x.quadraticCurveTo(W * 0.2, H * 0.7 + Math.sin(t * 1.2) * 3, W * 0.4, H * 0.96);
+  x.strokeStyle = `rgba(255,255,255,0.35)`;
+  x.lineWidth = 2;
+  x.stroke();
+
+  x.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 10; i++) {
+    const d = (t * 0.2 + i * 0.17) % 1;
+    disc(
+      x,
+      W * (0.45 + (i % 5) * 0.1) + Math.sin(t + i) * 6,
+      H * 0.9 - d * H * 0.45,
+      2 + (i % 3),
+      `rgba(255,255,255,${(1 - d) * 0.35})`,
+    );
+  }
   x.globalCompositeOperation = 'source-over';
 };
 
-/** Coal bed, flame tongues, rising embers (heat / fire). */
+/** Campfire: logs, coals, flame tongues (heat / fire). */
 export const heat: SceneFn = (x, W, H, t, pal) => {
   const cx = W / 2;
   const hot = p0(pal);
   const gold = p1(pal);
+  const bedY = H * 0.82;
 
-  // Ember bed — the fire has a source.
-  const bed = x.createRadialGradient(cx, H * 0.96, 0, cx, H * 0.96, W * 0.48);
-  bed.addColorStop(0, `rgba(${hot},0.5)`);
-  bed.addColorStop(0.45, `rgba(${gold},0.18)`);
+  const bed = x.createRadialGradient(cx, bedY, 0, cx, bedY, W * 0.42);
+  bed.addColorStop(0, `rgba(${hot},0.45)`);
+  bed.addColorStop(0.5, `rgba(${gold},0.12)`);
   bed.addColorStop(1, 'rgba(0,0,0,0)');
   x.fillStyle = bed;
-  x.fillRect(0, H * 0.5, W, H * 0.5);
+  x.fillRect(0, H * 0.4, W, H * 0.6);
+
+  // Logs in a campfire star — the fire has a place.
+  x.fillStyle = 'rgba(72,42,28,0.92)';
+  x.save();
+  x.translate(cx, bedY);
+  for (let i = 0; i < 3; i++) {
+    x.save();
+    x.rotate((i / 3) * Math.PI + 0.2);
+    x.beginPath();
+    x.ellipse(0, 0, 38, 7, 0, 0, TAU);
+    x.fill();
+    x.restore();
+  }
+  x.restore();
 
   x.globalCompositeOperation = 'lighter';
-
-  // Tongue-shaped flames (bezier teardrops), back to front.
-  const tongues = 11;
+  const tongues = 9;
   for (let i = 0; i < tongues; i++) {
     const seed = i * 1.7;
     const flick = Math.sin(t * 3.2 + seed) * 0.5 + 0.5;
-    const lean = Math.sin(t * 2.1 + seed) * 18;
-    const baseX = cx + Math.sin(seed * 2.1) * W * 0.28;
-    const hgt = H * (0.38 + flick * 0.28 + (i % 3) * 0.04);
-    const bw = 10 + (i % 4) * 5;
+    const lean = Math.sin(t * 2.1 + seed) * 14;
+    const baseX = cx + Math.sin(seed * 2.1) * 22;
+    const hgt = H * (0.28 + flick * 0.22 + (i % 3) * 0.03);
+    const bw = 8 + (i % 4) * 4;
     const col = i % 2 ? gold : hot;
     x.beginPath();
-    x.moveTo(baseX - bw, H * 0.94);
-    x.bezierCurveTo(
-      baseX - bw * 0.7 + lean * 0.4,
-      H * 0.94 - hgt * 0.35,
-      baseX + lean,
-      H * 0.94 - hgt * 0.72,
-      baseX + lean * 0.25,
-      H * 0.94 - hgt,
-    );
-    x.bezierCurveTo(
-      baseX + bw * 0.4 + lean,
-      H * 0.94 - hgt * 0.55,
-      baseX + bw + lean * 0.2,
-      H * 0.94 - hgt * 0.18,
-      baseX + bw,
-      H * 0.94,
-    );
+    x.moveTo(baseX - bw, bedY);
+    x.bezierCurveTo(baseX - bw * 0.6 + lean * 0.4, bedY - hgt * 0.35, baseX + lean, bedY - hgt * 0.72, baseX + lean * 0.2, bedY - hgt);
+    x.bezierCurveTo(baseX + bw * 0.4 + lean, bedY - hgt * 0.55, baseX + bw + lean * 0.2, bedY - hgt * 0.18, baseX + bw, bedY);
     x.closePath();
-    const fg = x.createLinearGradient(baseX, H * 0.94, baseX, H * 0.94 - hgt);
-    fg.addColorStop(0, `rgba(${hot},0.55)`);
-    fg.addColorStop(0.45, `rgba(${col},0.4)`);
+    const fg = x.createLinearGradient(baseX, bedY, baseX, bedY - hgt);
+    fg.addColorStop(0, `rgba(${hot},0.6)`);
+    fg.addColorStop(0.45, `rgba(${col},0.45)`);
     fg.addColorStop(1, 'rgba(255,245,210,0)');
     x.fillStyle = fg;
     x.fill();
   }
 
-  // Hot core blobs.
-  for (let i = 0; i < 36; i++) {
-    const seed = i * 0.137,
-      d = (t * 0.55 + seed) % 1;
-    const fx = cx + Math.sin(i * 12.9) * W * 0.3 + Math.sin(d * 6 + i) * 12;
-    const fy = H * 0.93 - d * H * 0.62,
-      a = (1 - d) * 0.72,
-      s = (1 - d) * 14 + 3;
-    const g = x.createRadialGradient(fx, fy, 0, fx, fy, s);
-    g.addColorStop(0, `rgba(255,250,220,${a})`);
-    g.addColorStop(0.35, `rgba(${gold},${a * 0.75})`);
-    g.addColorStop(1, `rgba(${hot},0)`);
-    x.fillStyle = g;
+  for (let i = 0; i < 14; i++) {
+    const d = (t * 0.4 + i * 0.191) % 1;
+    disc(
+      x,
+      cx + Math.sin(i * 7.1) * 28 + Math.sin(d * 9 + i) * 16,
+      bedY - 10 - d * H * 0.7,
+      1.3,
+      `rgba(255,230,180,${(1 - d) * 0.9})`,
+    );
+  }
+
+  // Heat shimmer above the fire.
+  x.strokeStyle = `rgba(${gold},0.22)`;
+  x.lineWidth = 1.4;
+  for (let i = 0; i < 5; i++) {
+    const sx = cx + (i - 2) * 16;
     x.beginPath();
-    x.arc(fx, fy, s, 0, TAU);
-    x.fill();
+    for (let y = 0; y < H * 0.35; y += 6) {
+      const px = sx + Math.sin(y * 0.12 + t * 4 + i) * 5;
+      const py = bedY - 50 - y;
+      if (y) x.lineTo(px, py);
+      else x.moveTo(px, py);
+    }
+    x.stroke();
   }
-
-  // Embers that climb past the flames and wink out.
-  for (let i = 0; i < 24; i++) {
-    const d = (t * 0.38 + i * 0.191) % 1;
-    const sx = cx + Math.sin(i * 7.1) * W * 0.3 + Math.sin(d * 9 + i) * 22;
-    const sy = H * 0.9 - d * H * 0.98;
-    const tw = 0.5 + 0.5 * Math.sin(t * 8 + i * 3);
-    const a = (1 - d) * tw * 0.95;
-    disc(x, sx, sy, 1.2 + tw * 0.8, `rgba(255,230,180,${a})`);
-  }
-
   x.globalCompositeOperation = 'source-over';
 };
 
-/** Parallax starfield, nebula, diffraction spikes, shooting star (star / space). */
+/** Night sky: crescent moon, Big Dipper, horizon, shooting star (star / space). */
 export const stars: SceneFn = (x, W, H, t, pal) => {
+  const sky = x.createLinearGradient(0, 0, 0, H);
+  sky.addColorStop(0, 'rgba(8,10,32,0.65)');
+  sky.addColorStop(0.7, `rgba(${p1(pal)},0.08)`);
+  sky.addColorStop(1, `rgba(${p0(pal)},0.12)`);
+  x.fillStyle = sky;
+  x.fillRect(0, 0, W, H);
+
   x.globalCompositeOperation = 'lighter';
+  glow(x, W * 0.3, H * 0.35, Math.min(W, H) * 0.4, p0(pal), 0.1);
+  glow(x, W * 0.7, H * 0.25, Math.min(W, H) * 0.28, p1(pal), 0.08);
 
-  // Nebula wash — two overlapping clouds.
-  glow(x, W * 0.32, H * 0.42, Math.min(W, H) * 0.55, p0(pal), 0.16);
-  glow(x, W * 0.72, H * 0.58, Math.min(W, H) * 0.48, p1(pal), 0.14);
-  glow(x, W * 0.55, H * 0.28, Math.min(W, H) * 0.3, '255,255,255', 0.05);
-
-  // Milky-way band.
-  x.save();
-  x.translate(W * 0.5, H * 0.5);
-  x.rotate(-0.4);
-  const band = x.createLinearGradient(0, -H * 0.08, 0, H * 0.08);
-  band.addColorStop(0, 'rgba(255,255,255,0)');
-  band.addColorStop(0.5, `rgba(${p1(pal)},0.07)`);
-  band.addColorStop(1, 'rgba(255,255,255,0)');
-  x.fillStyle = band;
-  x.fillRect(-W, -H * 0.1, W * 2, H * 0.2);
-  x.restore();
-
-  const layers: Array<[number, number, number, number]> = [
-    [70, 0.4, 0.7, 0.9],
-    [40, 1.0, 1.2, 1.4],
-    [18, 1.8, 1.8, 2.4],
-  ];
-  let n = 0;
-  for (const [count, twSpeed, size, drift] of layers) {
-    for (let i = 0; i < count; i++) {
-      const sx = (n * 0.0137 * W * 7.3 + t * drift * 1.6) % W;
-      const sy = (n * 0.0297 * H * 5.1) % H;
-      const tw = 0.5 + 0.5 * Math.sin(t * twSpeed + n);
-      const a = 0.18 + tw * 0.7;
-      const s = 0.5 * size + tw * 0.7 * size;
-      const col = n % 6 === 0 ? p0(pal) : n % 5 === 0 ? p1(pal) : '255,255,255';
-      disc(x, sx, sy, s, `rgba(${col},${a})`);
-      // Hero stars get diffraction spikes.
-      if (n % 17 === 0) {
-        x.strokeStyle = `rgba(255,255,255,${a * 0.7})`;
-        x.lineWidth = 1;
-        const sp = 5 + tw * 5;
-        x.beginPath();
-        x.moveTo(sx - sp, sy);
-        x.lineTo(sx + sp, sy);
-        x.moveTo(sx, sy - sp);
-        x.lineTo(sx, sy + sp);
-        x.stroke();
-      }
-      n += 1;
+  const nStars = 48;
+  for (let i = 0; i < nStars; i++) {
+    const sx = ((i * 97.3) % 100) * 0.01 * W;
+    const sy = ((i * 53.1) % 100) * 0.01 * H * 0.72;
+    const tw = 0.45 + 0.55 * Math.sin(t * (0.8 + (i % 5) * 0.3) + i);
+    const s = i % 9 === 0 ? 1.8 : 0.8;
+    disc(x, sx, sy, s * tw, `rgba(255,255,255,${0.25 + tw * 0.7})`);
+    if (i % 11 === 0) {
+      x.strokeStyle = `rgba(255,255,255,${tw * 0.55})`;
+      x.lineWidth = 1;
+      const sp = 4 + tw * 3;
+      line(x, sx - sp, sy, sx + sp, sy);
+      line(x, sx, sy - sp, sx, sy + sp);
     }
   }
 
-  // Shooting star with a particle trail.
-  const p = (t * 0.18) % 1,
-    stx = W * 0.08 + p * W * 0.85,
-    sty = H * 0.12 + p * H * 0.32,
-    trail = Math.sin(p * Math.PI);
-  for (let k = 0; k < 8; k++) {
-    const f = k / 8;
-    disc(
-      x,
-      stx - 38 * f,
-      sty - 15 * f,
-      1.6 * (1 - f),
-      `rgba(${p1(pal)},${trail * (1 - f) * 0.7})`,
-    );
+  // Big Dipper — a constellation a kid can name.
+  const dip: Array<[number, number]> = [
+    [0.16, 0.3],
+    [0.24, 0.26],
+    [0.33, 0.28],
+    [0.4, 0.34],
+    [0.48, 0.42],
+    [0.58, 0.44],
+    [0.68, 0.38],
+  ];
+  x.strokeStyle = `rgba(${p1(pal)},0.45)`;
+  x.lineWidth = 1.3;
+  x.beginPath();
+  dip.forEach(([u, v], i) => {
+    const px = u * W,
+      py = v * H;
+    if (i === 0) x.moveTo(px, py);
+    else x.lineTo(px, py);
+  });
+  x.stroke();
+  line(x, dip[0]![0] * W, dip[0]![1] * H, dip[3]![0] * W, dip[3]![1] * H);
+  for (const [u, v] of dip) {
+    glow(x, u * W, v * H, 8, '255,255,255', 0.55);
+    disc(x, u * W, v * H, 2.2, 'rgba(255,255,255,0.95)');
   }
+
+  x.globalCompositeOperation = 'source-over';
+
+  // Crescent moon.
+  const mx = W * 0.82,
+    my = H * 0.2,
+    mr = Math.min(W, H) * 0.09;
+  disc(x, mx, my, mr, 'rgba(255,244,210,0.95)');
+  disc(x, mx + mr * 0.38, my - mr * 0.12, mr * 0.88, 'rgba(10,12,36,0.98)');
+
+  // Horizon hills so it's a night landscape, not a particle field.
+  x.fillStyle = `rgba(${p0(pal)},0.22)`;
+  x.beginPath();
+  x.moveTo(0, H);
+  x.lineTo(0, H * 0.78);
+  x.quadraticCurveTo(W * 0.22, H * 0.62, W * 0.45, H * 0.76);
+  x.quadraticCurveTo(W * 0.7, H * 0.88, W, H * 0.7);
+  x.lineTo(W, H);
+  x.closePath();
+  x.fill();
+
+  x.globalCompositeOperation = 'lighter';
+  const p = (t * 0.16) % 1,
+    stx = W * 0.1 + p * W * 0.7,
+    sty = H * 0.12 + p * H * 0.22,
+    trail = Math.sin(p * Math.PI);
   x.strokeStyle = `rgba(255,255,255,${trail})`;
   x.lineWidth = 2;
-  x.beginPath();
-  x.moveTo(stx, sty);
-  x.lineTo(stx - 42, sty - 17);
-  x.stroke();
+  line(x, stx, sty, stx - 40, sty - 16);
   glow(x, stx, sty, 8, '255,255,255', trail);
-
-  // Distant planet.
-  glow(x, W * 0.78, H * 0.62, 52, p0(pal), 0.32);
-  disc(x, W * 0.78, H * 0.62, 9, `rgba(${p0(pal)},0.55)`);
-
   x.globalCompositeOperation = 'source-over';
 };

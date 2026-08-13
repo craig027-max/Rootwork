@@ -63,3 +63,72 @@ export function disc(
   x.arc(px, py, r, 0, TAU);
   x.fill();
 }
+
+export function line(
+  x: CanvasRenderingContext2D,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+): void {
+  x.beginPath();
+  x.moveTo(x0, y0);
+  x.lineTo(x1, y1);
+  x.stroke();
+}
+
+export function poly(
+  x: CanvasRenderingContext2D,
+  pts: ReadonlyArray<readonly [number, number]>,
+): void {
+  x.beginPath();
+  for (let i = 0; i < pts.length; i++) {
+    const p = pts[i];
+    if (!p) continue;
+    if (i === 0) x.moveTo(p[0], p[1]);
+    else x.lineTo(p[0], p[1]);
+  }
+  x.closePath();
+}
+
+/** Puff cloud — instantly reads as sky / weather. */
+export function cloud(
+  x: CanvasRenderingContext2D,
+  px: number,
+  py: number,
+  s: number,
+  fill: string,
+): void {
+  disc(x, px, py, s * 0.52, fill);
+  disc(x, px - s * 0.48, py + s * 0.1, s * 0.4, fill);
+  disc(x, px + s * 0.5, py + s * 0.12, s * 0.42, fill);
+  disc(x, px + s * 0.08, py - s * 0.28, s * 0.36, fill);
+}
+
+/** Simple leaf silhouette with a midrib. */
+export function leaf(
+  x: CanvasRenderingContext2D,
+  px: number,
+  py: number,
+  rot: number,
+  s: number,
+  fill: string,
+  vein: string,
+): void {
+  x.save();
+  x.translate(px, py);
+  x.rotate(rot);
+  x.fillStyle = fill;
+  x.beginPath();
+  x.moveTo(0, -s);
+  x.quadraticCurveTo(s * 0.72, -s * 0.15, 0, s);
+  x.quadraticCurveTo(-s * 0.72, -s * 0.15, 0, -s);
+  x.fill();
+  x.strokeStyle = vein;
+  x.lineWidth = 1;
+  x.beginPath();
+  x.moveTo(0, -s * 0.75);
+  x.lineTo(0, s * 0.7);
+  x.stroke();
+  x.restore();
+}
