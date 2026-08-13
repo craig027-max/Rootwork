@@ -1128,6 +1128,7 @@
   align-items: flex-start;
   gap: 8px;
   min-height: 44px;
+  min-width: 0;
   padding: 8px 10px;
   border-radius: var(--radius-md);
   border: 1px solid rgba(var(--spark-rgb), 0.22);
@@ -1370,6 +1371,37 @@
   .ww-hero-text {
     padding: 8px 14px 6px;
   }
+  /* Compact wrapping chips: the word stays fully visible. A forced 3-col
+     grid is only ~100px per chip on a 375px phone and crushes Photosynthesis. */
+  .ww-words {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 10px;
+  }
+  .ww-card2 .ww-word {
+    flex: 0 1 auto;
+    align-items: center;
+    min-height: 36px;
+    min-width: 0;
+    max-width: 100%;
+    padding: 6px 10px;
+    gap: 6px;
+  }
+  .ww-word .ico {
+    width: 22px;
+    height: 22px;
+    font-size: 0.85rem;
+  }
+  .ww-word h3 {
+    font-size: 0.86rem;
+    margin: 0;
+    white-space: nowrap;
+  }
+  .ww-word p {
+    display: none;
+  }
   .ww-nav-cur {
     min-width: 96px;
   }
@@ -1405,13 +1437,21 @@
   }
   .ww-scene2 {
     min-height: 132px;
-    max-height: min(168px, 24svh);
+    max-height: min(160px, 24svh);
+  }
+  .ww-card2 {
+    margin-bottom: 8px;
   }
   .ww-word p {
     -webkit-line-clamp: 1;
   }
   .ww-pron {
     font-size: 0.74rem;
+  }
+  /* Nav is fixed; extra wrap padding was creating a 26px phantom scroll
+     on iPhone SE after the card already cleared the footer. */
+  .ww-deck-wrap {
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
   }
 }
 
