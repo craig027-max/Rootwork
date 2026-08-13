@@ -40,4 +40,50 @@ describe('scene registry', () => {
     expect(byRoot.Bio).toBe('dna');
     expect(byRoot.Pyr).toBe('heat');
   });
+
+  it('lets every scene paint a frame without throwing', () => {
+    const grad = { addColorStop: () => undefined };
+    const noop = () => undefined;
+    const ctx = {
+      fillStyle: '',
+      strokeStyle: '',
+      lineWidth: 1,
+      lineCap: 'butt',
+      lineJoin: 'miter',
+      shadowColor: '',
+      shadowBlur: 0,
+      globalCompositeOperation: 'source-over',
+      font: '',
+      textAlign: 'center',
+      textBaseline: 'middle',
+      beginPath: noop,
+      closePath: noop,
+      moveTo: noop,
+      lineTo: noop,
+      quadraticCurveTo: noop,
+      bezierCurveTo: noop,
+      arc: noop,
+      ellipse: noop,
+      arcTo: noop,
+      rect: noop,
+      fillRect: noop,
+      fill: noop,
+      stroke: noop,
+      clip: noop,
+      save: noop,
+      restore: noop,
+      translate: noop,
+      rotate: noop,
+      scale: noop,
+      fillText: noop,
+      setLineDash: noop,
+      createRadialGradient: () => grad,
+      createLinearGradient: () => grad,
+    } as unknown as CanvasRenderingContext2D;
+    const pal = ['52,224,166', '52,217,240'];
+    for (const [key, fn] of Object.entries(SCENES)) {
+      expect(() => fn(ctx, 320, 200, 1.25, pal), key).not.toThrow();
+      expect(() => fn(ctx, 320, 200, 0, pal), `${key} @ t=0`).not.toThrow();
+    }
+  });
 });
