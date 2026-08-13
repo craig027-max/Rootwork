@@ -140,7 +140,8 @@ export function Home() {
         <div>
           <div className="ww-panel-label">
             <span className="n">Jump back in</span>
-            <span className="s">↑ ↓ to browse · Enter to start</span>
+            <span className="s kb-hint">↑ ↓ to browse · Enter to start</span>
+            <span className="s tap-hint">Tap to preview · tap again to start</span>
           </div>
           <TierMenu
             items={items}

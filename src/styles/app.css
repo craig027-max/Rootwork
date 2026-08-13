@@ -8,8 +8,13 @@
 
 .ww-app {
   min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .ww-topbar {
@@ -55,7 +60,7 @@
   width: 100%;
   max-width: 1120px;
   margin: 0 auto;
-  padding: 0 clamp(16px, 5vw, 40px) 64px;
+  padding: 0 clamp(16px, 5vw, 40px) calc(64px + env(safe-area-inset-bottom, 0px));
 }
 
 .ww-eyebrow {
@@ -297,6 +302,7 @@
   text-transform: uppercase;
   color: var(--jewel-cobalt);
   margin-top: 9px;
+  overflow-wrap: anywhere;
 }
 .ww-stats {
   margin-left: auto;
@@ -358,12 +364,17 @@
   font-weight: 800;
   font-size: 1.04rem;
 }
-.ww-panel-label .s {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+.ww-panel-label .s.tap-hint {
+  display: none;
+}
+
+@media (max-width: 860px), (pointer: coarse) {
+  .ww-panel-label .s.kb-hint {
+    display: none;
+  }
+  .ww-panel-label .s.tap-hint {
+    display: inline;
+  }
 }
 
 /* Selectable menu (master) */
@@ -380,6 +391,7 @@
   text-align: left;
   cursor: pointer;
   padding: 13px 14px;
+  min-height: 52px;
   border-radius: var(--radius-lg);
   border: 1px solid rgba(255, 255, 255, 0.07);
   background: rgba(255, 255, 255, 0.02);
@@ -724,7 +736,19 @@
     min-height: 0;
   }
   .ww-detail-scene {
-    height: 140px;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    min-height: 150px;
+    max-height: min(180px, 28svh);
+  }
+  .ww-menu-row {
+    min-height: 56px;
+    padding: 14px 16px;
+  }
+  .ww-topbar {
+    gap: var(--space-2);
+    padding-left: 12px;
+    padding-right: 12px;
   }
 }
 
@@ -739,7 +763,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  padding-bottom: 92px; /* clearance for the fixed bottom nav */
+  padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px)); /* clearance for the fixed bottom nav */
 }
 .ww-deck-back {
   align-self: flex-start;
@@ -751,7 +775,8 @@
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px 2px;
+  padding: 10px 8px;
+  min-height: 44px;
 }
 .ww-deck-back:hover {
   color: var(--text-primary);
@@ -787,6 +812,7 @@
   gap: 12px;
   text-align: left;
   padding: 12px 14px;
+  min-height: 48px;
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.025);
@@ -1138,8 +1164,8 @@
   box-shadow: var(--shadow-card);
 }
 .ww-nav-btn {
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.04);
@@ -1263,6 +1289,7 @@
   text-align: left;
   cursor: pointer;
   padding: 11px 13px;
+  min-height: 48px;
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(255, 255, 255, 0.025);
@@ -1293,7 +1320,10 @@
     grid-template-columns: 1fr;
   }
   .ww-scene2 {
-    min-height: 280px;
+    min-height: 200px;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    max-height: min(280px, 38svh);
     border-left: none;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
     order: 2;
@@ -1305,7 +1335,10 @@
     transform: none;
   }
   .ww-nav-cur {
-    min-width: 110px;
+    min-width: 96px;
+  }
+  .ww-index {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -1602,3 +1635,57 @@
   margin: 6px 0 2px;
   filter: drop-shadow(0 0 14px rgba(var(--spark-rgb), 0.35));
 }
+
+.ww-celebrate {
+  padding: calc(20px + env(safe-area-inset-top, 0px)) 20px calc(20px + env(safe-area-inset-bottom, 0px));
+}
+
+.ww-card-actions {
+  gap: 12px;
+}
+.ww-card-actions .btn {
+  min-height: 48px;
+}
+
+@media (max-width: 400px) {
+  .ww-brand span:not(.ww-mark) {
+    font-size: 0.92rem;
+  }
+  .ww-pinfo h1 {
+    font-size: 1.55rem;
+  }
+  .ww-stat .v {
+    font-size: 1.2rem;
+  }
+  .ww-decknav {
+    max-width: calc(100vw - 16px);
+    gap: 4px;
+    padding: 6px 7px;
+  }
+}
+
+/* Touch: hover-lift is a mouse affordance; use press feedback instead. */
+@media (hover: none) {
+  .ww-menu-row:hover,
+  .ww-word:hover,
+  .ww-recall-opt:hover,
+  .ww-ichip:hover,
+  .ww-deck-back:hover,
+  .ww-nav-btn:hover {
+    transform: none;
+  }
+  .ww-menu-row:active,
+  .ww-recall-opt:active,
+  .ww-ichip:active {
+    border-color: rgba(var(--spark-rgb), 0.5);
+    background: rgba(var(--spark-rgb), 0.08);
+  }
+}
+
+@media (pointer: coarse) {
+  .btn-sm {
+    min-height: 44px;
+    padding: 10px 14px;
+  }
+}
+

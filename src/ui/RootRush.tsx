@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
-import { PALETTES, ROOTS, TIERS, rootId, isRootOpenable, type Root } from '../data/roots';
+import { PALETTES, ROOTS, TIERS, rootId, isRootOpenable } from '../data/roots';
+import { shuffleWith } from '../core/daily';
+import { buildRushQuestion, type RushQuestion } from '../core/rush';
 import type { RunResult } from '../core/stats';
 import { Scene } from './Scene';
 
@@ -22,146 +24,6 @@ const AUTO_ADVANCE_MS = 900;
  * store.ts is being edited concurrently, so best-score persistence writes the
  * freshly-recorded stats blob (plus bestScore) back to the same slot here. */
 const STATS_STORAGE_PREFIX = 'wondral:stats:v1:';
-
-// ── question building ─────────────────────────────────────────
-
-/** Near-identical meanings that must never appear as rival tiles. */
-const SYNONYM_GROUPS: string[][] = [
-  ['great', 'huge', 'large'],
-  ['feeling', 'feel'],
-  ['born', 'birth'],
-  ['war', 'fight'],
-  ['believe', 'faith'],
-  ['lead', 'leader'],
-];
-
-const SYNONYM_CANON = new Map<string, string>();
-for (const group of SYNONYM_GROUPS) {
-  for (const word of group) SYNONYM_CANON.set(word, group[0]!);
-}
-
-/** Canonical form for dedupe: lowercase, synonym groups collapse to one key. */
-function canon(label: string): string {
-  const k = label.trim().toLowerCase();
-  return SYNONYM_CANON.get(k) ?? k;
-}
-
-function shuffle<T>(arr: readonly T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    const tmp = a[i]!;
-    a[i] = a[j]!;
-    a[j] = tmp;
-  }
-  return a;
-}
-
-function rnd<T>(arr: readonly T[]): T {
-  return arr[Math.floor(Math.random() * arr.length)]!;
-}
-
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
-
-/**
- * Draw up to `n` labels that are canonically unique against `exclude` AND each
- * other (fixes the design bug where two tiles could both read "life"). Pools
- * are tried in order, so a tier-scoped pool can fall back to the wider one.
- */
-function sampleUnique(pools: readonly string[][], n: number, exclude: readonly string[]): string[] {
-  const seen = new Set(exclude.map(canon));
-  const out: string[] = [];
-  for (const pool of pools) {
-    for (const v of shuffle(pool)) {
-      const k = canon(v);
-      if (seen.has(k)) continue;
-      seen.add(k);
-      out.push(v);
-      if (out.length >= n) return out;
-    }
-  }
-  return out;
-}
-
-type QuestionType = 'mean' | 'root' | 'word';
-
-interface Option {
-  label: string;
-  ok: boolean;
-}
-
-interface Question {
-  root: Root;
-  type: QuestionType;
-  ask: string;
-  big: string;
-  say?: string;
-  sub?: string;
-  opts: Option[];
-}
-
-/**
- * Build one question about root `d`. Distractors come from `scoped` (the tiers
- * the player selected AND can access), topping up from `all` (every openable
- * root) only if the scoped pool runs dry.
- */
-function buildQuestion(d: Root, scoped: readonly Root[], all: readonly Root[]): Question {
-  const type = rnd<QuestionType>(['mean', 'root', 'word']);
-
-  if (type === 'mean') {
-    const pools = [scoped, all].map((set) => set.filter((r) => r !== d).map((r) => r.mean));
-    const distract = sampleUnique(pools, 3, [d.mean]);
-    return {
-      root: d,
-      type,
-      ask: 'What does this root mean?',
-      big: d.root,
-      say: d.say,
-      sub: `from ${d.org}`,
-      opts: shuffle([{ label: d.mean, ok: true }, ...distract.map((label) => ({ label, ok: false }))]),
-    };
-  }
-
-  if (type === 'root') {
-    // Exclude roots whose meaning collides with the prompt (canonically), so a
-    // second "correct" root can never appear as a distractor.
-    const pools = [scoped, all].map((set) =>
-      set.filter((r) => r !== d && canon(r.mean) !== canon(d.mean)).map((r) => r.root),
-    );
-    const distract = sampleUnique(pools, 3, [d.root]);
-    return {
-      root: d,
-      type,
-      ask: 'Which root carries this meaning?',
-      big: cap(d.mean),
-      sub: d.alt,
-      opts: shuffle([{ label: d.root, ok: true }, ...distract.map((label) => ({ label, ok: false }))]),
-    };
-  }
-
-  const correctWord = rnd(d.words).w;
-  const core = d.root.toLowerCase();
-  const pools = [scoped, all].map((set) => {
-    const words: string[] = [];
-    for (const r of set) {
-      if (r === d) continue;
-      for (const w of r.words) {
-        if (!w.w.toLowerCase().includes(core)) words.push(w.w);
-      }
-    }
-    return words;
-  });
-  const distract = sampleUnique(pools, 3, [correctWord]);
-  return {
-    root: d,
-    type,
-    ask: 'Which word is built from this root?',
-    big: d.root,
-    say: d.say,
-    sub: `means “${d.mean}”`,
-    opts: shuffle([{ label: correctWord, ok: true }, ...distract.map((label) => ({ label, ok: false }))]),
-  };
-}
 
 // ── accent (jewel re-theming) ─────────────────────────────────
 
@@ -232,9 +94,9 @@ export function RootRush() {
 
   // Question set for the current run — reseeded by `runSeed` so "Play again"
   // always deals a fresh round.
-  const questions = useMemo<Question[]>(() => {
-    const chosen = shuffle(avail).slice(0, Math.min(ROUND, avail.length));
-    return chosen.map((d) => buildQuestion(d, avail, pool));
+  const questions = useMemo<RushQuestion[]>(() => {
+    const chosen = shuffleWith(avail).slice(0, Math.min(ROUND, avail.length));
+    return chosen.map((d) => buildRushQuestion({ root: d, scoped: avail, all: pool }));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- runSeed reshuffles on purpose
   }, [avail, pool, runSeed]);
 
