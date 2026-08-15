@@ -204,7 +204,7 @@ interface WondralStore {
   closeRoot: () => void;
   progress: RootProgress;
   completedRoots: Set<string>;
-  completeRoot: (id: string) => void;
+  completeRoot: (id: string, opts?: { celebrate?: boolean }) => void;
   celebration: { rootId: string } | null;
   dismissCelebration: () => void;
   resetProgress: () => void;
@@ -352,7 +352,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
     saveStats(stats, studentId);
     set({ stats });
   },
-  completeRoot: (id) => {
+  completeRoot: (id, opts) => {
     const cur = get().progress;
     if (cur[id]) return;
     const studentId = get().activeStudentId;
@@ -365,7 +365,8 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       progress: next,
       completedRoots: completedIdSet(next),
       stats: nextStats,
-      celebration: { rootId: id },
+      // Recall auto-advances with a one-line beat; skip the noisy overlay.
+      celebration: opts?.celebrate === false ? get().celebration : { rootId: id },
     });
 
     const moduleId = moduleIdOfRoot(id);

@@ -1,20 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
-import { ROOTS, ROOTS_BY_ID, PALETTES, rootId, isRootOpenable } from '../data/roots';
+import { ROOTS_BY_ID, PALETTES, neighborOpenable } from '../data/roots';
 import { XP_PER_ROOT } from '../core/stats';
 import { paletteVars } from './components/styleVars';
 import { Button } from './components/Button';
-
-/** Next openable root after `fromId` in curriculum order, or null. */
-function nextOpenable(fromId: string, entitled: boolean): string | null {
-  const i = ROOTS.findIndex((r) => rootId(r) === fromId);
-  for (let j = i + 1; j < ROOTS.length; j++) {
-    const id = rootId(ROOTS[j]!);
-    if (isRootOpenable(id, entitled)) return id;
-  }
-  return null;
-}
 
 /** One confetti burst on a full-screen canvas, in the root's jewel colors + gold. */
 function Confetti({ rgb }: { rgb: string }) {
@@ -109,7 +99,7 @@ export function Celebration() {
   if (!celebration || !root) return null;
 
   const p = PALETTES[root.pal] ?? PALETTES.green!;
-  const next = nextOpenable(celebration.rootId, entitled);
+  const next = neighborOpenable(celebration.rootId, 1, entitled);
 
   return (
     <div

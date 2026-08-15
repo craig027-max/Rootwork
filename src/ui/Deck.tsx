@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
 import {
@@ -8,9 +8,12 @@ import {
   PALETTES,
   rootId,
   isRootOpenable,
+  neighborOpenable,
   type Root,
 } from '../data/roots';
+import { afterCorrectRecall, SUCCESS_BEAT_MS } from '../core/deckFlow';
 import { buildRecall, type RecallBeat } from '../core/recall';
+import { speakRoot } from '../core/speak';
 import { paletteVars } from './components/styleVars';
 import { Scene } from './Scene';
 import { SCENE_EMOJI } from './scenes';
@@ -21,16 +24,6 @@ import { RootIndex } from './deck/RootIndex';
 
 function palOf(root: Root) {
   return PALETTES[root.pal] ?? PALETTES.green!;
-}
-
-/** Nearest openable root in a direction (+1 next, -1 prev), skipping locked ones. */
-function neighborOpenable(fromId: string, dir: 1 | -1, entitled: boolean): string | null {
-  const i = ROOTS.findIndex((r) => rootId(r) === fromId);
-  for (let j = i + dir; j >= 0 && j < ROOTS.length; j += dir) {
-    const id = rootId(ROOTS[j]!);
-    if (isRootOpenable(id, entitled)) return id;
-  }
-  return null;
 }
 
 /** Render an example word with its root letters wrapped in the jewel-gradient .hl span. */
@@ -53,12 +46,18 @@ export function Deck() {
   const completeRoot = useWondralStore((s) => s.completeRoot);
   const openRoot = useWondralStore((s) => s.openRoot);
   const closeRoot = useWondralStore((s) => s.closeRoot);
+  const dismissCelebration = useWondralStore((s) => s.dismissCelebration);
   const setView = useWondralStore((s) => s.setView);
   const requestUpgrade = useWondralStore((s) => s.requestUpgrade);
   const entitled = useEntitledForDisplay();
 
   const [indexOpen, setIndexOpen] = useState(false);
-  const [recall, setRecall] = useState<{ beat: RecallBeat; picked: number | null } | null>(null);
+  const [recall, setRecall] = useState<{
+    beat: RecallBeat;
+    picked: number | null;
+    win: string | null;
+  } | null>(null);
+  const pendingAdvance = useRef<ReturnType<typeof afterCorrectRecall> | null>(null);
   const pool = useMemo(
     () => ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
     [entitled],
@@ -66,7 +65,20 @@ export function Deck() {
 
   useEffect(() => {
     setRecall(null);
+    pendingAdvance.current = null;
   }, [currentRootId]);
+
+  useEffect(() => {
+    if (!recall?.win) return;
+    const dest = pendingAdvance.current;
+    const t = window.setTimeout(() => {
+      if (pendingAdvance.current !== dest) return;
+      pendingAdvance.current = null;
+      if (dest?.kind === 'next') openRoot(dest.id);
+      else closeRoot();
+    }, SUCCESS_BEAT_MS);
+    return () => window.clearTimeout(t);
+  }, [recall?.win, openRoot, closeRoot]);
 
   const root = currentRootId ? ROOTS_BY_ID[currentRootId] : undefined;
   if (!root) {
@@ -105,24 +117,32 @@ export function Deck() {
   const tierName = TIERS[root.t - 1]?.n ?? 'Starter';
   const lang = root.org.split(' ')[0];
   const emoji = SCENE_EMOJI[root.scene] ?? '🔤';
+  const won = Boolean(recall?.win);
   const studying = recall !== null;
   const card = root;
 
   function go(dir: 1 | -1) {
+    pendingAdvance.current = null;
     const next = neighborOpenable(id, dir, entitled);
     if (next) openRoot(next);
+    else if (dir === 1) closeRoot();
   }
 
   function startRecall() {
-    setRecall({ beat: buildRecall({ root: card, pool, choices: 3 }), picked: null });
+    setRecall({ beat: buildRecall({ root: card, pool, choices: 3 }), picked: null, win: null });
   }
 
   function pickRecall(idx: number) {
-    if (!recall || recall.picked !== null) return;
+    if (!recall || recall.picked !== null || recall.win) return;
     const opt = recall.beat.opts[idx];
     if (opt?.ok) {
-      completeRoot(id);
-      setRecall(null);
+      // Don't setRecall(null) — that parked kids on a ✓ Learned card
+      // hunting for Next. Quiet one-line beat, then neighborOpenable(+1).
+      completeRoot(id, { celebrate: false });
+      dismissCelebration();
+      const dest = afterCorrectRecall(id, entitled);
+      pendingAdvance.current = dest;
+      setRecall({ beat: recall.beat, picked: idx, win: dest.line });
       return;
     }
     setRecall({ ...recall, picked: idx });
@@ -161,7 +181,22 @@ export function Deck() {
               </span>
               <div className="ww-root">{root.root}</div>
               <div className="ww-pron">
-                {root.say} &nbsp;·&nbsp; <span className="origin">from {root.org}</span>
+                <button
+                  type="button"
+                  className="ww-hear"
+                  aria-label={`Hear ${root.root}`}
+                  onClick={() => speakRoot(root.root, root.say)}
+                >
+                  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                    <path
+                      fill="currentColor"
+                      d="M4 9v6h4l5 4V5L8 9H4zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM16 6.3a7 7 0 0 1 0 11.4v-2.2a5 5 0 0 0 0-7z"
+                    />
+                  </svg>
+                </button>
+                <span>
+                  {root.say} &nbsp;·&nbsp; <span className="origin">from {root.org}</span>
+                </span>
               </div>
               <div className="ww-means">
                 <span className="arrow" aria-hidden="true">
@@ -196,7 +231,7 @@ export function Deck() {
             </div>
           )}
 
-          {recall ? (
+          {recall && !won ? (
             <div className="ww-recall">
               <div className="ww-recall-ask">{recall.beat.ask}</div>
               <div className="ww-recall-opts">
@@ -223,8 +258,18 @@ export function Deck() {
             </div>
           ) : null}
 
+          {won ? (
+            <div className="ww-recall ww-recall-win" role="status" aria-live="polite">
+              <p>{recall!.win}</p>
+            </div>
+          ) : null}
+
           <div className="ww-card-actions">
-            {done ? (
+            {won ? (
+              <span className="ww-card-win-mark" aria-hidden="true">
+                ✓
+              </span>
+            ) : done ? (
               <Badge variant="solid" jewel="jade">
                 ✓ Learned
               </Badge>

@@ -115,6 +115,21 @@ export function isRootOpenable(id: RootId, entitled: boolean): boolean {
 }
 
 /**
+ * Nearest openable root in a direction (+1 next, -1 prev), skipping locked
+ * ones. Shared by the deck Next/Prev buttons and the post-recall auto-advance
+ * so they can never drift apart.
+ */
+export function neighborOpenable(fromId: RootId, dir: 1 | -1, entitled: boolean): RootId | null {
+  const i = ROOTS.findIndex((r) => rootId(r) === fromId);
+  if (i < 0) return null;
+  for (let j = i + dir; j >= 0 && j < ROOTS.length; j += dir) {
+    const id = rootId(ROOTS[j]!);
+    if (isRootOpenable(id, entitled)) return id;
+  }
+  return null;
+}
+
+/**
  * Which root a returning learner should resume into on boot, or null to stay on
  * home. Fires only for someone who has already started (≥1 root complete), and
  * only when the next incomplete root is actually accessible — a locked next root
