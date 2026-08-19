@@ -1033,6 +1033,10 @@
   }
 }
 .ww-pron {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
   font-family: var(--font-mono);
   font-size: 0.86rem;
   color: var(--text-secondary);
@@ -1040,6 +1044,52 @@
 }
 .ww-pron .origin {
   color: var(--text-muted);
+}
+.ww-hear {
+  box-sizing: border-box;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin-block: -10px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .ww-hear:hover {
+    color: rgb(var(--spark-rgb));
+    border-color: rgba(var(--spark-rgb), 0.4);
+  }
+}
+.ww-hear:focus-visible {
+  outline: 2px solid rgb(var(--spark-rgb));
+  outline-offset: 2px;
+}
+.ww-hear:active {
+  color: rgb(var(--spark-rgb));
+  border-color: rgba(var(--spark-rgb), 0.45);
+  background: rgba(var(--spark-rgb), 0.1);
+}
+.ww-recall-win {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.ww-recall-win p {
+  margin: 0;
+  font-family: var(--font-game);
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: rgb(var(--spark-rgb));
+}
+.ww-card-win-mark {
+  font-family: var(--font-game);
+  font-weight: 800;
+  color: rgb(var(--spark-rgb));
 }
 .ww-means {
   margin-top: 8px;
@@ -1468,6 +1518,9 @@
   .ww-pron {
     font-size: 0.74rem;
   }
+  .ww-hear {
+    margin-block: -12px;
+  }
   /* Nav is fixed; extra wrap padding was creating a 26px phantom scroll
      on iPhone SE after the card already cleared the footer. */
   .ww-deck-wrap {
@@ -1862,6 +1915,7 @@
   .ww-recall-opt:hover,
   .ww-ichip:hover,
   .ww-deck-back:hover,
+  .ww-hear:hover,
   .ww-nav-btn:hover {
     transform: none;
   }
