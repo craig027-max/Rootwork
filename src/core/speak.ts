@@ -1,18 +1,26 @@
 /**
  * Kid-safe pronunciation from baked neural clips.
  *
- * Files ship with the app (`public/audio/hear/{id}.mp3`). One tap from the
- * Hear button. No Web Speech, no runtime TTS, no network on tap. A missing
- * clip fails quietly — never falls back to Safari speechSynthesis.
+ * Hear files ship at `public/audio/hear/{id}.mp3`. Yes files (correct recall)
+ * ship at `public/audio/yes/{id}.mp3`. No Web Speech, no runtime TTS, no
+ * network on tap. A missing clip fails quietly — never falls back to Safari
+ * speechSynthesis.
  */
 import { HEAR_CLIP_IDS } from './hearClips';
+import { YES_CLIP_IDS } from './yesClips';
 
-/** Phrase baked into each clip: root name, then the say-spelling. */
+/** Phrase baked into each Hear clip: root name, then the say-spelling. */
 export function utteranceText(root: string, say: string): string {
   const spokenSay = say.replace(/[·•]/g, '-').replace(/\s+/g, ' ').trim();
   if (!spokenSay) return `${root}.`;
   if (spokenSay.toLowerCase() === root.toLowerCase()) return `${root}.`;
   return `${root}. ${spokenSay}.`;
+}
+
+/** Phrase baked into each Yes clip — same sentence the card shows. */
+export function yesUtteranceText(root: string, mean: string): string {
+  const spokenMean = mean.replace(/\s+/g, ' ').trim();
+  return `Yes — ${root} means ${spokenMean}.`;
 }
 
 export function hearClipId(root: string): string {
@@ -23,15 +31,33 @@ function assetBase(base: string): string {
   return base.endsWith('/') ? base : `${base}/`;
 }
 
-/** URL for a baked clip, or null when this root has no file. */
+function clipUrl(
+  root: string,
+  folder: 'hear' | 'yes',
+  clipIds: ReadonlySet<string>,
+  base: string,
+): string | null {
+  const id = hearClipId(root);
+  if (!id || !clipIds.has(id)) return null;
+  return `${assetBase(base)}audio/${folder}/${id}.mp3`;
+}
+
+/** URL for a baked Hear clip, or null when this root has no file. */
 export function hearClipUrl(
   root: string,
   clipIds: ReadonlySet<string> = HEAR_CLIP_IDS,
   base: string = import.meta.env.BASE_URL,
 ): string | null {
-  const id = hearClipId(root);
-  if (!id || !clipIds.has(id)) return null;
-  return `${assetBase(base)}audio/hear/${id}.mp3`;
+  return clipUrl(root, 'hear', clipIds, base);
+}
+
+/** URL for a baked Yes clip, or null when this root has no file. */
+export function yesClipUrl(
+  root: string,
+  clipIds: ReadonlySet<string> = YES_CLIP_IDS,
+  base: string = import.meta.env.BASE_URL,
+): string | null {
+  return clipUrl(root, 'yes', clipIds, base);
 }
 
 export interface HearPlayer {
@@ -65,8 +91,19 @@ function defaultPlay(url: string): void {
   }
 }
 
+function playUrl(url: string | null, player?: HearPlayer | null): boolean {
+  if (!url) return false;
+  try {
+    (player ?? { play: defaultPlay }).play(url);
+    return true;
+  } catch {
+    // Missing Audio, blocked play, or a bad player — fail quietly.
+    return false;
+  }
+}
+
 /**
- * Play the baked clip for this root. `say` is unused at playback (it is
+ * Play the baked Hear clip for this root. `say` is unused at playback (it is
  * already in the file). Safe when Audio or the clip is missing — returns
  * without throwing and never calls speechSynthesis.
  */
@@ -75,11 +112,18 @@ export function speakRoot(
   _say?: string,
   player?: HearPlayer | null,
 ): void {
-  const url = hearClipUrl(root);
-  if (!url) return;
-  try {
-    (player ?? { play: defaultPlay }).play(url);
-  } catch {
-    // Missing Audio, blocked play, or a bad player — fail quietly.
-  }
+  playUrl(hearClipUrl(root), player);
+}
+
+/**
+ * Play the baked Yes clip after a correct recall. `mean` is unused at
+ * playback (it is already in the file). Missing clip: fail quietly, no
+ * speechSynthesis. Returns whether a clip URL was handed to the player.
+ */
+export function speakYes(
+  root: string,
+  _mean?: string,
+  player?: HearPlayer | null,
+): boolean {
+  return playUrl(yesClipUrl(root), player);
 }

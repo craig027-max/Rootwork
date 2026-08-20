@@ -11,6 +11,18 @@ import { ROOTS_BY_ID, neighborOpenable, type Root, type RootId } from '../data/r
 /** Quiet pause so a kid can read the one-line win before the next card. */
 export const SUCCESS_BEAT_MS = 900;
 
+/**
+ * When a baked Yes clip is present, hold the beat long enough for Jenny to
+ * finish ("Yes — Bio means life") then go to Geo. Trimmed Bio is ~1.9s;
+ * 2.2s leaves a breath without feeling stuck.
+ */
+export const SUCCESS_BEAT_WITH_CLIP_MS = 2200;
+
+/** Hold a little longer when Jenny is speaking the Yes line; else the 900ms read. */
+export function successBeatMs(hasYesClip: boolean): number {
+  return hasYesClip ? SUCCESS_BEAT_WITH_CLIP_MS : SUCCESS_BEAT_MS;
+}
+
 export type AfterCorrectRecall =
   | { kind: 'next'; id: RootId; line: string }
   | { kind: 'home'; line: string };
