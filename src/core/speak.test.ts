@@ -1,82 +1,80 @@
-import { describe, expect, it } from 'vitest';
-import { NOVELTY_VOICE, pickKidSafeEnglishVoice, speakRoot, utteranceText } from './speak';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { HEAR_CLIP_IDS } from './hearClips';
+import { hearClipId, hearClipUrl, speakRoot, utteranceText } from './speak';
 
-describe('speakRoot', () => {
-  it('does not throw when speechSynthesis is absent', () => {
-    expect(() => speakRoot('Bio', 'BY-oh', null)).not.toThrow();
-    expect(() => speakRoot('Bio', 'BY-oh', undefined)).not.toThrow();
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe('utteranceText', () => {
+  it('speaks the root name and its say-spelling', () => {
+    expect(utteranceText('Bio', 'BY-oh')).toBe('Bio. BY-oh.');
+    expect(utteranceText('Aqua', 'AH-kwuh')).toBe('Aqua. AH-kwuh.');
+    expect(utteranceText('Port', 'PORT')).toBe('Port.');
+  });
+});
+
+describe('hearClipUrl', () => {
+  it('returns a static asset URL only when the clip is listed', () => {
+    const ids = new Set(['bio']);
+    expect(hearClipUrl('Bio', ids, '/')).toBe('/audio/hear/bio.mp3');
+    expect(hearClipUrl('Bio', ids, '/Rootwork/')).toBe('/Rootwork/audio/hear/bio.mp3');
+    expect(hearClipUrl('NoSuchRoot', ids, '/')).toBeNull();
   });
 
-  it('does not throw when SpeechSynthesisUtterance is missing (Node / old WebViews)', () => {
-    expect(typeof SpeechSynthesisUtterance).toBe('undefined');
+  it('uses the lowercase root id as the filename', () => {
+    expect(hearClipId('Bio')).toBe('bio');
+    expect(hearClipId('Photo')).toBe('photo');
+  });
+});
+
+describe('speakRoot', () => {
+  it('plays a baked clip when one is present', () => {
+    expect(HEAR_CLIP_IDS.has('bio')).toBe(true);
+    const played: string[] = [];
+    speakRoot('Bio', 'BY-oh', {
+      play(url) {
+        played.push(url);
+      },
+    });
+    expect(played).toHaveLength(1);
+    expect(played[0]).toMatch(/audio\/hear\/bio\.mp3$/);
+  });
+
+  it('does not throw and does not use speechSynthesis when the clip is missing', () => {
+    const synth = {
+      speak: vi.fn(),
+      cancel: vi.fn(),
+    };
+    vi.stubGlobal('speechSynthesis', synth);
+    const played: string[] = [];
+    expect(() =>
+      speakRoot('NoSuchRoot', 'NO-pe', {
+        play(url) {
+          played.push(url);
+        },
+      }),
+    ).not.toThrow();
+    expect(played).toEqual([]);
+    expect(synth.speak).not.toHaveBeenCalled();
+    expect(synth.cancel).not.toHaveBeenCalled();
+  });
+
+  it('does not throw when the player itself throws', () => {
+    expect(HEAR_CLIP_IDS.has('bio')).toBe(true);
     expect(() =>
       speakRoot('Bio', 'BY-oh', {
-        speak() {
-          throw new Error('engine should not be called');
+        play() {
+          throw new Error('blocked');
         },
       }),
     ).not.toThrow();
   });
 
-  it('does not throw when the engine itself throws', () => {
-    const Utterance = class {
-      text: string;
-      lang = '';
-      rate = 1;
-      pitch = 1;
-      voice = null;
-      constructor(text: string) {
-        this.text = text;
-      }
-    };
-    const prev = (globalThis as { SpeechSynthesisUtterance?: unknown }).SpeechSynthesisUtterance;
-    (globalThis as { SpeechSynthesisUtterance?: unknown }).SpeechSynthesisUtterance = Utterance;
-    try {
-      expect(() =>
-        speakRoot('Bio', 'BY-oh', {
-          speak() {
-            throw new Error('blocked');
-          },
-          getVoices: () => [],
-        }),
-      ).not.toThrow();
-    } finally {
-      if (prev) (globalThis as { SpeechSynthesisUtterance?: unknown }).SpeechSynthesisUtterance = prev;
-      else delete (globalThis as { SpeechSynthesisUtterance?: unknown }).SpeechSynthesisUtterance;
-    }
-  });
-});
-
-describe('utteranceText', () => {
-  it('speaks the root name and a hyphen-free say-spelling', () => {
-    expect(utteranceText('Bio', 'BY-oh')).toBe('Bio. BY oh');
-    expect(utteranceText('Port', 'PORT')).toBe('Port');
-    expect(utteranceText('Aqua', 'AH-kwuh')).toBe('Aqua. AH kwuh');
-  });
-});
-
-describe('pickKidSafeEnglishVoice', () => {
-  it('skips novelty voices and prefers a clear English one', () => {
-    const picked = pickKidSafeEnglishVoice([
-      { name: 'Zarvox', lang: 'en-US', localService: true },
-      { name: 'Whisper', lang: 'en-US', localService: true },
-      { name: 'Samantha', lang: 'en-US', localService: true },
-      { name: 'Thomas', lang: 'fr-FR', localService: true },
-    ]);
-    expect(picked?.name).toBe('Samantha');
-  });
-
-  it('returns null when only novelty or non-English voices exist', () => {
-    expect(
-      pickKidSafeEnglishVoice([
-        { name: 'Zarvox', lang: 'en-US' },
-        { name: 'Thomas', lang: 'fr-FR' },
-      ]),
-    ).toBeNull();
-  });
-
-  it('treats known novelty names as unsafe', () => {
-    expect(NOVELTY_VOICE.test('Pipe Organ')).toBe(true);
-    expect(NOVELTY_VOICE.test('Samantha')).toBe(false);
+  it('never calls speechSynthesis when a clip plays', () => {
+    const synth = { speak: vi.fn(), cancel: vi.fn() };
+    vi.stubGlobal('speechSynthesis', synth);
+    speakRoot('Bio', 'BY-oh', { play() {} });
+    expect(synth.speak).not.toHaveBeenCalled();
   });
 });
