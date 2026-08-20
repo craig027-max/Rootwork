@@ -1,76 +1,85 @@
 /**
- * Kid-safe pronunciation via the Web Speech API only.
+ * Kid-safe pronunciation from baked neural clips.
  *
- * No audio files, no backend, no tracking. One tap from the deck card.
- * Missing engines, empty voice lists, and iOS quirks fail quietly.
+ * Files ship with the app (`public/audio/hear/{id}.mp3`). One tap from the
+ * Hear button. No Web Speech, no runtime TTS, no network on tap. A missing
+ * clip fails quietly — never falls back to Safari speechSynthesis.
  */
+import { HEAR_CLIP_IDS } from './hearClips';
 
-/** Novelty / character voices we never pick for kids. */
-export const NOVELTY_VOICE =
-  /bells|boing|bubbles|cellos|deranged|good news|bad news|hysterical|pipe organ|trinoids|whisper|zarvox|albert|bahh|jester|superstar|\borgan\b/i;
-
-const PREFERRED_VOICE = /samantha|karen|daniel|moira|serena|siri|google us english|google uk english|aria|jenny|susan/i;
-
+/** Phrase baked into each clip: root name, then the say-spelling. */
 export function utteranceText(root: string, say: string): string {
-  const spokenSay = say.replace(/[-·•]/g, ' ').replace(/\s+/g, ' ').trim();
-  if (!spokenSay) return root;
-  if (spokenSay.toLowerCase() === root.toLowerCase()) return root;
-  return `${root}. ${spokenSay}`;
+  const spokenSay = say.replace(/[·•]/g, '-').replace(/\s+/g, ' ').trim();
+  if (!spokenSay) return `${root}.`;
+  if (spokenSay.toLowerCase() === root.toLowerCase()) return `${root}.`;
+  return `${root}. ${spokenSay}.`;
 }
 
-export interface SpeakVoice {
-  name: string;
-  lang: string;
-  localService?: boolean;
+export function hearClipId(root: string): string {
+  return root.trim().toLowerCase();
 }
 
-/** Prefer a clear local English voice; never a novelty/character voice. */
-export function pickKidSafeEnglishVoice<T extends SpeakVoice>(voices: readonly T[]): T | null {
-  const english = voices.filter((v) => /^en\b/i.test(v.lang) && !NOVELTY_VOICE.test(v.name));
-  if (english.length === 0) return null;
-  const preferred = english.find((v) => PREFERRED_VOICE.test(v.name));
-  if (preferred) return preferred;
-  const local = english.find((v) => v.localService);
-  return local ?? english[0] ?? null;
+function assetBase(base: string): string {
+  return base.endsWith('/') ? base : `${base}/`;
 }
 
-export interface SpeakSynth {
-  cancel?: () => void;
-  speak: (utterance: SpeechSynthesisUtterance) => void;
-  getVoices?: () => SpeakVoice[];
-  paused?: boolean;
-  resume?: () => void;
+/** URL for a baked clip, or null when this root has no file. */
+export function hearClipUrl(
+  root: string,
+  clipIds: ReadonlySet<string> = HEAR_CLIP_IDS,
+  base: string = import.meta.env.BASE_URL,
+): string | null {
+  const id = hearClipId(root);
+  if (!id || !clipIds.has(id)) return null;
+  return `${assetBase(base)}audio/hear/${id}.mp3`;
 }
 
-function defaultSynth(): SpeakSynth | null {
-  if (typeof window === 'undefined') return null;
-  return window.speechSynthesis ?? null;
+export interface HearPlayer {
+  play: (url: string) => void;
+}
+
+let current: HTMLAudioElement | null = null;
+
+function stopCurrent(): void {
+  if (!current) return;
+  try {
+    current.pause();
+    current.removeAttribute('src');
+    current.load();
+  } catch {
+    // Detached or already released.
+  }
+  current = null;
+}
+
+function defaultPlay(url: string): void {
+  if (typeof Audio === 'undefined') return;
+  stopCurrent();
+  const audio = new Audio(url);
+  current = audio;
+  const playResult = audio.play();
+  if (playResult && typeof playResult.catch === 'function') {
+    playResult.catch(() => {
+      // 404, decode error, or iOS quirk — fail quietly.
+    });
+  }
 }
 
 /**
- * Speak the root name and its say-spelling. Safe to call when
- * `speechSynthesis` is missing — returns without throwing.
+ * Play the baked clip for this root. `say` is unused at playback (it is
+ * already in the file). Safe when Audio or the clip is missing — returns
+ * without throwing and never calls speechSynthesis.
  */
 export function speakRoot(
   root: string,
-  say: string,
-  synth: SpeakSynth | null | undefined = defaultSynth(),
+  _say?: string,
+  player?: HearPlayer | null,
 ): void {
-  if (!synth) return;
-  if (typeof SpeechSynthesisUtterance === 'undefined') return;
+  const url = hearClipUrl(root);
+  if (!url) return;
   try {
-    const text = utteranceText(root, say);
-    if (!text) return;
-    if (synth.paused) synth.resume?.();
-    synth.cancel?.();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = 'en-US';
-    u.rate = 0.9;
-    u.pitch = 1;
-    const voice = pickKidSafeEnglishVoice(synth.getVoices?.() ?? []);
-    if (voice) u.voice = voice as SpeechSynthesisVoice;
-    synth.speak(u);
+    (player ?? { play: defaultPlay }).play(url);
   } catch {
-    // Missing engine, iOS quirk, or blocked — fail quietly.
+    // Missing Audio, blocked play, or a bad player — fail quietly.
   }
 }

@@ -9,7 +9,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "hear:clips": "python3 scripts/generate-hear-clips.py"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.106.1",
