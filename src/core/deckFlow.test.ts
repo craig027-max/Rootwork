@@ -1,6 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { ROOTS, neighborOpenable, rootId, rootsInTier } from '../data/roots';
-import { afterCorrectRecall, allDoneLine, starterDoneLine, successLine } from './deckFlow';
+import {
+  afterCorrectRecall,
+  allDoneLine,
+  allowManualStep,
+  commitCorrectAdvance,
+  deckEntryForOpen,
+  entryAfterSuccess,
+  lessonAfterCorrect,
+  showExampleWords,
+  starterDoneLine,
+  successLine,
+  winLineOnCard,
+} from './deckFlow';
 
 const bio = ROOTS.find((r) => r.root === 'Bio');
 const geo = ROOTS.find((r) => r.root === 'Geo');
@@ -58,5 +70,85 @@ describe('afterCorrectRecall', () => {
     expect(successLine(bio)).toBe('Yes — Bio means life.');
     expect(successLine(bio).toLowerCase()).not.toMatch(/wrong|fail|shame|stupid|nope|loser/);
     expect(starterDoneLine().toLowerCase()).toContain('starter done');
+  });
+});
+
+describe('Craig path: correct Bio → Geo, recall not nulled into examples', () => {
+  it('shows one Yes line, then opens Geo in recall — never the examples screen', () => {
+    const path = lessonAfterCorrect(bioId, false);
+    expect(path.dest).toEqual({
+      kind: 'next',
+      id: geoId,
+      line: 'Yes — Bio means life.',
+    });
+    expect(path.duringYes.winLine).toBe('Yes — Bio means life.');
+    expect(path.duringYes.showExamples).toBe(false);
+    expect(path.afterBeat).toEqual({
+      action: 'open',
+      currentRootId: geoId,
+      entry: 'recall',
+      showExamples: false,
+    });
+    expect(commitCorrectAdvance(path.dest)).toEqual({
+      kind: 'open',
+      id: geoId,
+      entry: 'recall',
+    });
+    expect(entryAfterSuccess(path.dest)).toBe('recall');
+  });
+
+  it('the live #18 reset (null recall + teach entry) is the examples screen Craig saw', () => {
+    expect(
+      showExampleWords({
+        recall: null,
+        currentRootId: geoId,
+        entry: 'teach',
+        correctAdvance: null,
+      }),
+    ).toBe(true);
+    expect(
+      showExampleWords({
+        recall: null,
+        currentRootId: bioId,
+        entry: 'teach',
+        correctAdvance: null,
+      }),
+    ).toBe(true);
+    expect(deckEntryForOpen()).toBe('teach');
+    expect(deckEntryForOpen({ entry: 'recall' })).toBe('recall');
+  });
+
+  it('a remount mid-Yes does not null recall into examples', () => {
+    const dest = afterCorrectRecall(bioId, false);
+    const remounted = {
+      recall: null,
+      currentRootId: bioId,
+      entry: 'teach' as const,
+      correctAdvance: { fromId: bioId, dest },
+    };
+    expect(showExampleWords(remounted)).toBe(false);
+    expect(winLineOnCard(remounted)).toBe('Yes — Bio means life.');
+    expect(allowManualStep(remounted.correctAdvance)).toBe(false);
+    expect(allowManualStep(null)).toBe(true);
+  });
+
+  it('wrong answers never produce an advance dest — they stay on this card', () => {
+    expect(allowManualStep(null)).toBe(true);
+    expect(
+      showExampleWords({
+        recall: { win: null, rootId: bioId },
+        currentRootId: bioId,
+        entry: 'teach',
+        correctAdvance: null,
+      }),
+    ).toBe(false);
+  });
+
+  it('last starter still goes home after the Yes line — no examples flash', () => {
+    const path = lessonAfterCorrect(lastFreeId, false);
+    expect(path.dest.kind).toBe('home');
+    expect(path.duringYes.showExamples).toBe(false);
+    expect(path.afterBeat.action).toBe('home');
+    expect(commitCorrectAdvance(path.dest)).toEqual({ kind: 'home' });
   });
 });

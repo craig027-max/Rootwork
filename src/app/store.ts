@@ -23,6 +23,12 @@ import {
   type RunResult,
 } from '../core/stats';
 import type { Entitlement, LessonProgressRow, Profile, StudentProfile } from '../core/supabase';
+import {
+  deckEntryForOpen,
+  type AfterCorrectRecall,
+  type CorrectAdvance,
+  type DeckEntry,
+} from '../core/deckFlow';
 
 export type AppView =
   | 'home'
@@ -200,8 +206,14 @@ interface WondralStore {
 
   // Root (flashcard) tracking.
   currentRootId: string | null;
-  openRoot: (id: string) => void;
+  /** How the current card opened. `recall` skips examples after a correct Yes beat. */
+  deckEntry: DeckEntry;
+  /** In-flight Yes beat — survives a Deck remount so examples cannot flash back. */
+  correctAdvance: CorrectAdvance | null;
+  openRoot: (id: string, opts?: { entry?: DeckEntry }) => void;
   closeRoot: () => void;
+  beginCorrectAdvance: (fromId: string, dest: AfterCorrectRecall) => void;
+  clearCorrectAdvance: () => void;
   progress: RootProgress;
   completedRoots: Set<string>;
   completeRoot: (id: string, opts?: { celebrate?: boolean }) => void;
@@ -287,6 +299,9 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       completedRoots: completedIdSet(freePlay),
       stats: loadStats(null),
       view: 'home',
+      currentRootId: null,
+      deckEntry: 'teach',
+      correctAdvance: null,
     });
   },
 
@@ -334,8 +349,19 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   setSelectedTier: (t) => set({ selectedTier: t }),
 
   currentRootId: null,
-  openRoot: (id) => set({ currentRootId: id, view: 'deck' }),
-  closeRoot: () => set({ currentRootId: null, view: 'home' }),
+  deckEntry: 'teach',
+  correctAdvance: null,
+  openRoot: (id, opts) =>
+    set({
+      currentRootId: id,
+      view: 'deck',
+      deckEntry: deckEntryForOpen(opts),
+      correctAdvance: null,
+    }),
+  closeRoot: () =>
+    set({ currentRootId: null, view: 'home', deckEntry: 'teach', correctAdvance: null }),
+  beginCorrectAdvance: (fromId, dest) => set({ correctAdvance: { fromId, dest } }),
+  clearCorrectAdvance: () => set({ correctAdvance: null }),
   progress: INITIAL_PROGRESS,
   completedRoots: completedIdSet(INITIAL_PROGRESS),
   stats: INITIAL_STATS,
