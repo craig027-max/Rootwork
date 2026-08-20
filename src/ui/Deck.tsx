@@ -18,11 +18,11 @@ import {
   isLessonStudying,
   showExampleWords,
   winLineOnCard,
-  SUCCESS_BEAT_MS,
+  successBeatMs,
   type AfterCorrectRecall,
 } from '../core/deckFlow';
 import { buildRecall, type RecallBeat } from '../core/recall';
-import { speakRoot } from '../core/speak';
+import { speakRoot, speakYes, yesClipUrl } from '../core/speak';
 import { paletteVars } from './components/styleVars';
 import { Scene } from './Scene';
 import { SCENE_EMOJI } from './scenes';
@@ -95,14 +95,15 @@ export function Deck() {
   function armAdvance(dest: AfterCorrectRecall) {
     cancelAdvanceTimer();
     // Armed from the tap (and again on remount). Not from [openRoot, closeRoot]
-    // — that effect retriggered, cleared the 900ms timer, and let examples back in.
+    // — that effect retriggered, cleared the timer, and let examples back in.
+    // Clip present: hold ~2.2s so Jenny can finish. Missing: the 900ms read.
     advanceTimer.current = window.setTimeout(() => {
       advanceTimer.current = null;
       const live = useWondralStore.getState().correctAdvance;
       if (!live || live.dest.kind !== dest.kind || live.dest.line !== dest.line) return;
       if (dest.kind === 'next' && live.dest.kind === 'next' && live.dest.id !== dest.id) return;
       fireAdvance(dest);
-    }, SUCCESS_BEAT_MS);
+    }, successBeatMs(Boolean(currentRootId && yesClipUrl(currentRootId))));
   }
 
   useEffect(() => () => cancelAdvanceTimer(), []);
@@ -218,6 +219,8 @@ export function Deck() {
       const dest = afterCorrectRecall(id, entitled);
       beginCorrectAdvance(id, dest);
       setRecall({ beat: recall.beat, picked: idx, win: dest.line, rootId: id });
+      // User gesture — play the baked Yes line now. Missing clip: silent.
+      speakYes(card.root, card.mean);
       armAdvance(dest);
       return;
     }

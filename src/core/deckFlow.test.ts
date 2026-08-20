@@ -10,6 +10,9 @@ import {
   lessonAfterCorrect,
   showExampleWords,
   starterDoneLine,
+  SUCCESS_BEAT_MS,
+  SUCCESS_BEAT_WITH_CLIP_MS,
+  successBeatMs,
   successLine,
   winLineOnCard,
 } from './deckFlow';
@@ -150,5 +153,24 @@ describe('Craig path: correct Bio → Geo, recall not nulled into examples', () 
     expect(path.duringYes.showExamples).toBe(false);
     expect(path.afterBeat.action).toBe('home');
     expect(commitCorrectAdvance(path.dest)).toEqual({ kind: 'home' });
+  });
+
+  it('auto-advance still reaches the next root in recall mode when a Yes clip plays', () => {
+    const path = lessonAfterCorrect(bioId, false);
+    expect(successBeatMs(true)).toBe(SUCCESS_BEAT_WITH_CLIP_MS);
+    expect(successBeatMs(false)).toBe(SUCCESS_BEAT_MS);
+    expect(SUCCESS_BEAT_WITH_CLIP_MS).toBeGreaterThan(SUCCESS_BEAT_MS);
+    expect(SUCCESS_BEAT_WITH_CLIP_MS).toBeLessThanOrEqual(2500);
+    expect(path.afterBeat).toEqual({
+      action: 'open',
+      currentRootId: geoId,
+      entry: 'recall',
+      showExamples: false,
+    });
+    expect(commitCorrectAdvance(path.dest)).toEqual({
+      kind: 'open',
+      id: geoId,
+      entry: 'recall',
+    });
   });
 });
