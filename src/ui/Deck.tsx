@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
 import {
@@ -11,7 +11,16 @@ import {
   neighborOpenable,
   type Root,
 } from '../data/roots';
-import { afterCorrectRecall, SUCCESS_BEAT_MS } from '../core/deckFlow';
+import {
+  afterCorrectRecall,
+  allowManualStep,
+  commitCorrectAdvance,
+  isLessonStudying,
+  showExampleWords,
+  winLineOnCard,
+  SUCCESS_BEAT_MS,
+  type AfterCorrectRecall,
+} from '../core/deckFlow';
 import { buildRecall, type RecallBeat } from '../core/recall';
 import { speakRoot } from '../core/speak';
 import { paletteVars } from './components/styleVars';
@@ -49,6 +58,9 @@ export function Deck() {
   const dismissCelebration = useWondralStore((s) => s.dismissCelebration);
   const setView = useWondralStore((s) => s.setView);
   const requestUpgrade = useWondralStore((s) => s.requestUpgrade);
+  const deckEntry = useWondralStore((s) => s.deckEntry);
+  const correctAdvance = useWondralStore((s) => s.correctAdvance);
+  const beginCorrectAdvance = useWondralStore((s) => s.beginCorrectAdvance);
   const entitled = useEntitledForDisplay();
 
   const [indexOpen, setIndexOpen] = useState(false);
@@ -56,29 +68,81 @@ export function Deck() {
     beat: RecallBeat;
     picked: number | null;
     win: string | null;
+    rootId: string;
   } | null>(null);
-  const pendingAdvance = useRef<ReturnType<typeof afterCorrectRecall> | null>(null);
+  const advanceTimer = useRef<number | null>(null);
   const pool = useMemo(
     () => ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
     [entitled],
   );
+  const poolRef = useRef(pool);
+  poolRef.current = pool;
 
-  useEffect(() => {
-    setRecall(null);
-    pendingAdvance.current = null;
-  }, [currentRootId]);
+  function cancelAdvanceTimer() {
+    if (advanceTimer.current != null) {
+      window.clearTimeout(advanceTimer.current);
+      advanceTimer.current = null;
+    }
+  }
 
-  useEffect(() => {
-    if (!recall?.win) return;
-    const dest = pendingAdvance.current;
-    const t = window.setTimeout(() => {
-      if (pendingAdvance.current !== dest) return;
-      pendingAdvance.current = null;
-      if (dest?.kind === 'next') openRoot(dest.id);
-      else closeRoot();
+  function fireAdvance(dest: AfterCorrectRecall) {
+    useWondralStore.getState().clearCorrectAdvance();
+    const next = commitCorrectAdvance(dest);
+    if (next.kind === 'open') useWondralStore.getState().openRoot(next.id, { entry: next.entry });
+    else useWondralStore.getState().closeRoot();
+  }
+
+  function armAdvance(dest: AfterCorrectRecall) {
+    cancelAdvanceTimer();
+    // Armed from the tap (and again on remount). Not from [openRoot, closeRoot]
+    // — that effect retriggered, cleared the 900ms timer, and let examples back in.
+    advanceTimer.current = window.setTimeout(() => {
+      advanceTimer.current = null;
+      const live = useWondralStore.getState().correctAdvance;
+      if (!live || live.dest.kind !== dest.kind || live.dest.line !== dest.line) return;
+      if (dest.kind === 'next' && live.dest.kind === 'next' && live.dest.id !== dest.id) return;
+      fireAdvance(dest);
     }, SUCCESS_BEAT_MS);
-    return () => window.clearTimeout(t);
-  }, [recall?.win, openRoot, closeRoot]);
+  }
+
+  useEffect(() => () => cancelAdvanceTimer(), []);
+
+  useLayoutEffect(() => {
+    const opened = currentRootId ? ROOTS_BY_ID[currentRootId] : undefined;
+    if (!opened || !currentRootId) {
+      setRecall(null);
+      return;
+    }
+    const live = useWondralStore.getState().correctAdvance;
+    if (live && live.fromId === currentRootId) {
+      setRecall((prev) =>
+        prev?.win && prev.rootId === currentRootId
+          ? prev
+          : {
+              beat: prev?.beat ?? { kind: 'mean', ask: '', opts: [], teach: '' },
+              picked: prev?.picked ?? 0,
+              win: live.dest.line,
+              rootId: currentRootId,
+            },
+      );
+      armAdvance(live.dest);
+      return;
+    }
+    if (deckEntry === 'recall') {
+      setRecall((prev) =>
+        prev && prev.rootId === currentRootId
+          ? prev
+          : {
+              beat: buildRecall({ root: opened, pool: poolRef.current, choices: 3 }),
+              picked: null,
+              win: null,
+              rootId: currentRootId,
+            },
+      );
+      return;
+    }
+    setRecall(null);
+  }, [currentRootId, deckEntry]);
 
   const root = currentRootId ? ROOTS_BY_ID[currentRootId] : undefined;
   if (!root) {
@@ -117,32 +181,44 @@ export function Deck() {
   const tierName = TIERS[root.t - 1]?.n ?? 'Starter';
   const lang = root.org.split(' ')[0];
   const emoji = SCENE_EMOJI[root.scene] ?? '🔤';
-  const won = Boolean(recall?.win);
-  const studying = recall !== null;
+  const lesson = { recall, currentRootId: id, entry: deckEntry, correctAdvance };
+  const winLine = winLineOnCard(lesson);
+  const won = Boolean(winLine);
+  const studying = isLessonStudying(lesson);
+  const examples = showExampleWords(lesson);
   const card = root;
+  const quizRecall = recall && recall.rootId === id && !won ? recall : null;
 
   function go(dir: 1 | -1) {
-    pendingAdvance.current = null;
+    if (!allowManualStep(useWondralStore.getState().correctAdvance)) return;
+    cancelAdvanceTimer();
     const next = neighborOpenable(id, dir, entitled);
     if (next) openRoot(next);
     else if (dir === 1) closeRoot();
   }
 
   function startRecall() {
-    setRecall({ beat: buildRecall({ root: card, pool, choices: 3 }), picked: null, win: null });
+    setRecall({
+      beat: buildRecall({ root: card, pool, choices: 3 }),
+      picked: null,
+      win: null,
+      rootId: id,
+    });
   }
 
   function pickRecall(idx: number) {
-    if (!recall || recall.picked !== null || recall.win) return;
+    if (!recall || recall.rootId !== id || recall.picked !== null || recall.win) return;
     const opt = recall.beat.opts[idx];
     if (opt?.ok) {
       // Don't setRecall(null) — that parked kids on a ✓ Learned card
-      // hunting for Next. Quiet one-line beat, then neighborOpenable(+1).
+      // hunting for Next. Quiet one-line beat, then neighborOpenable(+1)
+      // opened as recall so Geo never flashes the examples screen.
       completeRoot(id, { celebrate: false });
       dismissCelebration();
       const dest = afterCorrectRecall(id, entitled);
-      pendingAdvance.current = dest;
-      setRecall({ beat: recall.beat, picked: idx, win: dest.line });
+      beginCorrectAdvance(id, dest);
+      setRecall({ beat: recall.beat, picked: idx, win: dest.line, rootId: id });
+      armAdvance(dest);
       return;
     }
     setRecall({ ...recall, picked: idx });
@@ -215,7 +291,7 @@ export function Deck() {
             </div>
           </div>
 
-          {studying ? null : (
+          {examples ? (
             <div className="ww-words">
               {root.words.map((w) => (
                 <div className="ww-word" key={w.w} title={`${w.b} — ${w.d}`}>
@@ -229,17 +305,17 @@ export function Deck() {
                 </div>
               ))}
             </div>
-          )}
+          ) : null}
 
-          {recall && !won ? (
+          {quizRecall ? (
             <div className="ww-recall">
-              <div className="ww-recall-ask">{recall.beat.ask}</div>
+              <div className="ww-recall-ask">{quizRecall.beat.ask}</div>
               <div className="ww-recall-opts">
-                {recall.beat.opts.map((o, idx) => {
+                {quizRecall.beat.opts.map((o, idx) => {
                   let cls = 'ww-recall-opt';
-                  if (recall.picked !== null) {
+                  if (quizRecall.picked !== null) {
                     cls += ' done';
-                    if (idx === recall.picked && !o.ok) cls += ' wrong';
+                    if (idx === quizRecall.picked && !o.ok) cls += ' wrong';
                   }
                   return (
                     <button key={o.label} type="button" className={cls} onClick={() => pickRecall(idx)}>
@@ -249,9 +325,9 @@ export function Deck() {
                   );
                 })}
               </div>
-              {recall.picked !== null ? (
+              {quizRecall.picked !== null ? (
                 <div className="ww-recall-teach">
-                  <p>{recall.beat.teach}</p>
+                  <p>{quizRecall.beat.teach}</p>
                   <Button onClick={startRecall}>Try again — you've got this</Button>
                 </div>
               ) : null}
@@ -260,7 +336,7 @@ export function Deck() {
 
           {won ? (
             <div className="ww-recall ww-recall-win" role="status" aria-live="polite">
-              <p>{recall!.win}</p>
+              <p>{winLine}</p>
             </div>
           ) : null}
 
@@ -273,14 +349,16 @@ export function Deck() {
               <Badge variant="solid" jewel="jade">
                 ✓ Learned
               </Badge>
-            ) : recall ? (
+            ) : quizRecall ? (
               <span className="ww-muted">One tap. No shame if you miss — we'll show you.</span>
             ) : (
               <Button onClick={startRecall}>I know this ✓</Button>
             )}
-            <Button variant="ghost" onClick={() => go(1)}>
-              Next root →
-            </Button>
+            {won ? null : (
+              <Button variant="ghost" onClick={() => go(1)}>
+                Next root →
+              </Button>
+            )}
           </div>
         </article>
       </div>
