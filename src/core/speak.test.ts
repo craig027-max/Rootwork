@@ -23,6 +23,14 @@ describe('utteranceText', () => {
     expect(utteranceText('Aqua', 'AH-kwuh')).toBe('Aqua. AH-kwuh.');
     expect(utteranceText('Port', 'PORT')).toBe('Port.');
   });
+
+  it('spells Geo as letters; on-card say stays JEE-oh', () => {
+    const geo = ROOTS.find((r) => r.root === 'Geo');
+    if (!geo) throw new Error('fixture: Geo');
+    expect(geo.say).toBe('JEE-oh');
+    expect(utteranceText(geo.root, geo.say)).toBe('Geo. The letters G. E. O.');
+    expect(utteranceText('Geo', 'JEE-oh')).not.toContain('JEE-oh');
+  });
 });
 
 describe('hearClipUrl', () => {
@@ -96,6 +104,13 @@ describe('yesUtteranceText', () => {
     if (!bio) throw new Error('fixture: Bio');
     expect(yesUtteranceText('Bio', 'life')).toBe('Yes — Bio means life.');
     expect(yesUtteranceText(bio.root, bio.mean)).toBe(successLine(bio));
+  });
+
+  it('keeps Geo Yes as meaning-only (no JEE-oh smash)', () => {
+    const geo = ROOTS.find((r) => r.root === 'Geo');
+    if (!geo) throw new Error('fixture: Geo');
+    expect(yesUtteranceText(geo.root, geo.mean)).toBe('Yes — Geo means earth.');
+    expect(yesUtteranceText(geo.root, geo.mean)).toBe(successLine(geo));
   });
 });
 

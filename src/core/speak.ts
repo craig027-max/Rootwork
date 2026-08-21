@@ -11,6 +11,11 @@ import { YES_CLIP_IDS } from './yesClips';
 
 /** Phrase baked into each Hear clip: root name, then the say-spelling. */
 export function utteranceText(root: string, say: string): string {
+  // Geo's name already sounds like JEE-oh — spelling the letters keeps
+  // Jenny from saying the same two syllables twice with no gap.
+  if (root.trim().toLowerCase() === 'geo') {
+    return 'Geo. The letters G. E. O.';
+  }
   const spokenSay = say.replace(/[·•]/g, '-').replace(/\s+/g, ' ').trim();
   if (!spokenSay) return `${root}.`;
   if (spokenSay.toLowerCase() === root.toLowerCase()) return `${root}.`;
