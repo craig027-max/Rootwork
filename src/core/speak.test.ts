@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { successLine } from './deckFlow';
 import { HEAR_CLIP_IDS } from './hearClips';
@@ -5,6 +7,9 @@ import { ROOTS } from '../data/roots';
 import {
   hearClipId,
   hearClipUrl,
+  letterNames,
+  SPEAKABLE_SYLLABLES,
+  speakablePronunciation,
   speakRoot,
   speakYes,
   utteranceText,
@@ -17,65 +22,173 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe('speakablePronunciation', () => {
+  it('overrides BY / FOH so Jenny does not letter-name the respelling', () => {
+    expect(SPEAKABLE_SYLLABLES.by).toBe('bye');
+    expect(SPEAKABLE_SYLLABLES.foh).toBe('foe');
+    expect(speakablePronunciation('BY-oh')).toBe('bye oh');
+    expect(speakablePronunciation('FOH-toh')).toBe('foe toh');
+  });
+
+  it('overrides YOO / SYKE / KOH / PREE and other catalog traps', () => {
+    expect(speakablePronunciation('YOO-nee')).toBe('you nee');
+    expect(speakablePronunciation('YOO')).toBe('you');
+    expect(speakablePronunciation('SYKE')).toBe('sike');
+    expect(speakablePronunciation('KOH')).toBe('koe');
+    expect(speakablePronunciation('PREE')).toBe('pree');
+    expect(speakablePronunciation('HY-droh')).toBe('high droh');
+    expect(speakablePronunciation('SY')).toBe('sigh');
+    expect(speakablePronunciation('DY-nuh')).toBe('dye nuh');
+    expect(speakablePronunciation('OH-dont')).toBe('oh dahnt');
+  });
+
+  it('defaults to lowercase split when the syllable is already speakable', () => {
+    expect(speakablePronunciation('JEE-oh')).toBe('jee oh');
+    expect(speakablePronunciation('THAN-uh-toh')).toBe('thann uh toh');
+    expect(speakablePronunciation('PORT')).toBe('port');
+    expect(speakablePronunciation('AH-kwuh')).toBe('ah kwuh');
+  });
+
+  it('keeps the Python generator override map in lockstep', () => {
+    const py = readFileSync(
+      join(process.cwd(), 'scripts', 'generate-hear-clips.py'),
+      'utf8',
+    );
+    for (const [key, value] of Object.entries(SPEAKABLE_SYLLABLES)) {
+      expect(py, key).toContain(`"${key}": "${value}"`);
+    }
+  });
+});
+
 describe('utteranceText', () => {
-  it('speaks name, say, and spelled letters for Bio; on-card say stays BY-oh', () => {
+  it('speaks Bio as bye oh; on-card say stays BY-oh; raw say is not in the line', () => {
     const bio = ROOTS.find((r) => r.root === 'Bio');
     if (!bio) throw new Error('fixture: Bio');
     expect(bio.say).toBe('BY-oh');
     expect(utteranceText(bio.root, bio.say)).toBe(
-      'Bio. BY-oh. The letters B. I. O.',
+      'Bio. bye oh. The letters B. I. O.',
     );
+    expect(utteranceText(bio.root, bio.say)).not.toContain(bio.say);
+    expect(utteranceText(bio.root, bio.say)).not.toContain('BY');
   });
 
-  it('speaks name, say, and spelled letters for Geo; on-card say stays JEE-oh', () => {
+  it('speaks Geo as jee oh; on-card say stays JEE-oh; raw say is not in the line', () => {
     const geo = ROOTS.find((r) => r.root === 'Geo');
     if (!geo) throw new Error('fixture: Geo');
     expect(geo.say).toBe('JEE-oh');
     expect(utteranceText(geo.root, geo.say)).toBe(
-      'Geo. JEE-oh. The letters G. E. O.',
+      'Geo. jee oh. The letters G. E. O.',
     );
+    expect(utteranceText(geo.root, geo.say)).not.toContain(geo.say);
+    expect(utteranceText(geo.root, geo.say)).not.toContain('JEE');
   });
 
-  it('speaks name, say, and spelled letters for a longer root (Thanato)', () => {
+  it('speaks Photo as foe toh; on-card say stays FOH-toh; raw say is not in the line', () => {
+    const photo = ROOTS.find((r) => r.root === 'Photo');
+    if (!photo) throw new Error('fixture: Photo');
+    expect(photo.say).toBe('FOH-toh');
+    expect(utteranceText(photo.root, photo.say)).toBe(
+      'Photo. foe toh. The letters P. H. O. T. O.',
+    );
+    expect(utteranceText(photo.root, photo.say)).not.toContain(photo.say);
+    expect(utteranceText(photo.root, photo.say)).not.toContain('FOH');
+  });
+
+  it('covers more catalog roots: Uni, Psych, Co, Pre, Sci, Hydro, Bi, Scope', () => {
+    const by = Object.fromEntries(ROOTS.map((r) => [r.root, r]));
+    expect(by.Uni?.say).toBe('YOO-nee');
+    expect(utteranceText(by.Uni!.root, by.Uni!.say)).toBe(
+      'Uni. you nee. The letters U. N. I.',
+    );
+    expect(utteranceText(by.Uni!.root, by.Uni!.say)).not.toContain(by.Uni!.say);
+
+    expect(by.Psych?.say).toBe('SYKE');
+    expect(utteranceText(by.Psych!.root, by.Psych!.say)).toBe(
+      'Psych. sike. The letters P. S. Y. C. H.',
+    );
+    expect(utteranceText(by.Psych!.root, by.Psych!.say)).not.toContain('SYKE');
+
+    expect(by.Co?.say).toBe('KOH');
+    expect(utteranceText(by.Co!.root, by.Co!.say)).toBe(
+      'Co. koe. The letters C. O.',
+    );
+    expect(utteranceText(by.Co!.root, by.Co!.say)).not.toContain('KOH');
+
+    expect(by.Pre?.say).toBe('PREE');
+    expect(utteranceText(by.Pre!.root, by.Pre!.say)).toBe(
+      'Pre. pree. The letters P. R. E.',
+    );
+    expect(utteranceText(by.Pre!.root, by.Pre!.say)).not.toContain('PREE');
+
+    expect(by.Sci?.say).toBe('SY');
+    expect(utteranceText(by.Sci!.root, by.Sci!.say)).toBe(
+      'Sci. sigh. The letters S. C. I.',
+    );
+
+    expect(by.Hydro?.say).toBe('HY-droh');
+    expect(utteranceText(by.Hydro!.root, by.Hydro!.say)).toBe(
+      'Hydro. high droh. The letters H. Y. D. R. O.',
+    );
+    expect(utteranceText(by.Hydro!.root, by.Hydro!.say)).not.toContain('HY');
+
+    expect(by.Bi?.say).toBe('BY');
+    expect(utteranceText(by.Bi!.root, by.Bi!.say)).toBe(
+      'Bi. bye. The letters B. I.',
+    );
+
+    expect(by.Scope?.say).toBe('SKOHP');
+    expect(utteranceText(by.Scope!.root, by.Scope!.say)).toBe(
+      'Scope. scope. The letters S. C. O. P. E.',
+    );
+    expect(utteranceText(by.Scope!.root, by.Scope!.say)).not.toContain('SKOHP');
+  });
+
+  it('speaks name, spoken sound, and spelled letters for a longer root (Thanato)', () => {
     const thanato = ROOTS.find((r) => r.root === 'Thanato');
     if (!thanato) throw new Error('fixture: Thanato');
     expect(thanato.say).toBe('THAN-uh-toh');
     expect(utteranceText(thanato.root, thanato.say)).toBe(
-      'Thanato. THAN-uh-toh. The letters T. H. A. N. A. T. O.',
+      'Thanato. thann uh toh. The letters T. H. A. N. A. T. O.',
     );
+    expect(utteranceText(thanato.root, thanato.say)).not.toContain(thanato.say);
   });
 
   it('spells only A–Z letters when the written form has extra characters', () => {
     expect(utteranceText('X-ray2', 'EKS-ray')).toBe(
-      'X-ray2. EKS-ray. The letters X. R. A. Y.',
+      'X-ray2. eks ray. The letters X. R. A. Y.',
     );
   });
 
-  it('keeps say even when it matches the root name (Port)', () => {
+  it('lowercases say when it matches the root name (Port)', () => {
     const port = ROOTS.find((r) => r.root === 'Port');
     if (!port) throw new Error('fixture: Port');
     expect(port.say).toBe('PORT');
     expect(utteranceText(port.root, port.say)).toBe(
-      'Port. PORT. The letters P. O. R. T.',
+      'Port. port. The letters P. O. R. T.',
     );
+    expect(utteranceText(port.root, port.say)).not.toContain('PORT');
   });
 
   it('uses periods after each letter, not commas', () => {
     expect(utteranceText('Geo', 'JEE-oh')).not.toContain(',');
     expect(utteranceText('Bio', 'BY-oh')).not.toBe(
-      'Bio. BY-oh. The letters B, I, O.',
+      'Bio. bye oh. The letters B, I, O.',
     );
   });
 
-  it('builds name + say + letters for every catalog root without changing on-card say', () => {
+  it('builds name + spoken sound + letters for every catalog root without changing on-card say', () => {
     const cardSay = Object.fromEntries(ROOTS.map((r) => [r.root, r.say]));
     for (const r of ROOTS) {
+      const spoken = speakablePronunciation(r.say);
       const line = utteranceText(r.root, r.say);
-      expect(line.startsWith(`${r.root}. ${r.say}. The letters `), r.root).toBe(
-        true,
+      expect(line, r.root).toBe(
+        `${r.root}. ${spoken}. The letters ${letterNames(r.root)}`,
       );
       expect(line, r.root).toMatch(/The letters [A-Z]\.( [A-Z]\.)*$/);
       expect(r.say, r.root).toBe(cardSay[r.root]);
+      if (r.say !== spoken) {
+        expect(line, r.root).not.toContain(r.say);
+      }
     }
   });
 });

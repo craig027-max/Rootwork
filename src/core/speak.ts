@@ -18,15 +18,104 @@ export function letterNames(root: string): string {
 }
 
 /**
+ * Syllables Jenny would misread if the lowercase say-spelling were spoken
+ * as-is (letter-names, the wrong English word, or a known TTS trap).
+ * Keys are lowercase dictionary syllables.
+ * Keep in lockstep with SPEAKABLE_SYLLABLES in scripts/generate-hear-clips.py.
+ */
+export const SPEAKABLE_SYLLABLES: Readonly<Record<string, string>> = {
+  ag: 'agg',
+  awd: 'awed',
+  by: 'bye',
+  dont: 'dahnt',
+  dook: 'duke',
+  dy: 'dye',
+  ek: 'eck',
+  fak: 'fack',
+  fil: 'fill',
+  fiz: 'fizz',
+  floo: 'flu',
+  foh: 'foe',
+  fohn: 'fone',
+  fren: 'frenn',
+  gr: 'gruh',
+  hy: 'high',
+  ih: 'ihh',
+  ik: 'ick',
+  im: 'ihm',
+  jood: 'jude',
+  joor: 'jure',
+  kak: 'cack',
+  kal: 'cal',
+  kap: 'cap',
+  klood: 'clued',
+  kog: 'cog',
+  koh: 'koe',
+  kon: 'con',
+  koz: 'kahz',
+  krohm: 'chrome',
+  loh: 'low',
+  lohk: 'loke',
+  moht: 'moat',
+  nawt: 'naught',
+  nayt: 'nate',
+  og: 'ogg',
+  om: 'ahm',
+  os: 'oss',
+  pol: 'pahl',
+  poz: 'pahz',
+  pree: 'pree',
+  proh: 'pro',
+  ses: 'sess',
+  sfeer: 'sphere',
+  siv: 'sieve',
+  skohp: 'scope',
+  sof: 'soff',
+  som: 'sahm',
+  soo: 'sue',
+  sur: 'sir',
+  sy: 'sigh',
+  syke: 'sike',
+  syne: 'sign',
+  tek: 'tech',
+  than: 'thann',
+  tr: 'truh',
+  vohk: 'voke',
+  vyt: 'vite',
+  yoo: 'you',
+  zoh: 'zoe',
+};
+
+/**
+ * Lowercase syllables a kid would hear. Hyphens become pauses (spaces).
+ * Never letter-names of the dictionary respelling.
+ * Keep in lockstep with speakable_pronunciation() in
+ * scripts/generate-hear-clips.py.
+ */
+export function speakablePronunciation(say: string): string {
+  const normalized = say.replace(/[·•]/g, '-').replace(/\s+/g, ' ').trim();
+  if (!normalized) return '';
+  return normalized
+    .split(/[-\s]+/)
+    .map((part) => {
+      const key = part.toLowerCase();
+      return SPEAKABLE_SYLLABLES[key] ?? key;
+    })
+    .filter(Boolean)
+    .join(' ');
+}
+
+/**
  * Phrase baked into each Hear clip:
- * `{Root}. {say}. The letters {A. B. C.}`
+ * `{Root}. {spoken sound}. The letters {A. B. C.}`
+ * Spoken sound is speakablePronunciation(say), not raw card `say`.
  * Letters come from the written root (geo → G. E. O.), not from the say-spelling.
  */
 export function utteranceText(root: string, say: string): string {
-  const spokenSay = say.replace(/[·•]/g, '-').replace(/\s+/g, ' ').trim();
+  const spoken = speakablePronunciation(say);
   const letters = letterNames(root);
-  if (!spokenSay) return `${root}. The letters ${letters}`;
-  return `${root}. ${spokenSay}. The letters ${letters}`;
+  if (!spoken) return `${root}. The letters ${letters}`;
+  return `${root}. ${spoken}. The letters ${letters}`;
 }
 
 /** Phrase baked into each Yes clip — same sentence the card shows. */
