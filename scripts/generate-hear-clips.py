@@ -36,6 +36,10 @@ ROW = re.compile(r"\{\s*t:(\d+)\s*,\s*root:'([^']+)'\s*,\s*say:'([^']+)'")
 
 
 def utterance_text(root: str, say: str) -> str:
+    # Keep in lockstep with utteranceText() in src/core/speak.ts.
+    # Geo's name already sounds like JEE-oh — spell the letters instead.
+    if root.strip().lower() == "geo":
+        return "Geo. The letters G. E. O."
     spoken = re.sub(r"[·•]", "-", say)
     spoken = re.sub(r"\s+", " ", spoken).strip()
     if not spoken or spoken.lower() == root.lower():
