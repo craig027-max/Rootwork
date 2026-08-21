@@ -35,16 +35,20 @@ RATE = "-12%"
 ROW = re.compile(r"\{\s*t:(\d+)\s*,\s*root:'([^']+)'\s*,\s*say:'([^']+)'")
 
 
+def letter_names(root: str) -> str:
+    # Keep in lockstep with letterNames() in src/core/speak.ts.
+    return " ".join(f"{ch.upper()}." for ch in root if ch.isalpha())
+
+
 def utterance_text(root: str, say: str) -> str:
     # Keep in lockstep with utteranceText() in src/core/speak.ts.
-    # Geo's name already sounds like JEE-oh — spell the letters instead.
-    if root.strip().lower() == "geo":
-        return "Geo. The letters G. E. O."
+    # `{Root}. {say}. The letters {A. B. C.}` — letters from the written root.
     spoken = re.sub(r"[·•]", "-", say)
     spoken = re.sub(r"\s+", " ", spoken).strip()
-    if not spoken or spoken.lower() == root.lower():
-        return f"{root}."
-    return f"{root}. {spoken}."
+    letters = letter_names(root)
+    if not spoken:
+        return f"{root}. The letters {letters}"
+    return f"{root}. {spoken}. The letters {letters}"
 
 
 def parse_roots() -> list[tuple[int, str, str, str]]:
