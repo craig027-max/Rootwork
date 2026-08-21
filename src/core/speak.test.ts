@@ -18,18 +18,65 @@ afterEach(() => {
 });
 
 describe('utteranceText', () => {
-  it('speaks the root name and its say-spelling', () => {
-    expect(utteranceText('Bio', 'BY-oh')).toBe('Bio. BY-oh.');
-    expect(utteranceText('Aqua', 'AH-kwuh')).toBe('Aqua. AH-kwuh.');
-    expect(utteranceText('Port', 'PORT')).toBe('Port.');
+  it('speaks name, say, and spelled letters for Bio; on-card say stays BY-oh', () => {
+    const bio = ROOTS.find((r) => r.root === 'Bio');
+    if (!bio) throw new Error('fixture: Bio');
+    expect(bio.say).toBe('BY-oh');
+    expect(utteranceText(bio.root, bio.say)).toBe(
+      'Bio. BY-oh. The letters B. I. O.',
+    );
   });
 
-  it('spells Geo as letters; on-card say stays JEE-oh', () => {
+  it('speaks name, say, and spelled letters for Geo; on-card say stays JEE-oh', () => {
     const geo = ROOTS.find((r) => r.root === 'Geo');
     if (!geo) throw new Error('fixture: Geo');
     expect(geo.say).toBe('JEE-oh');
-    expect(utteranceText(geo.root, geo.say)).toBe('Geo. The letters G. E. O.');
-    expect(utteranceText('Geo', 'JEE-oh')).not.toContain('JEE-oh');
+    expect(utteranceText(geo.root, geo.say)).toBe(
+      'Geo. JEE-oh. The letters G. E. O.',
+    );
+  });
+
+  it('speaks name, say, and spelled letters for a longer root (Thanato)', () => {
+    const thanato = ROOTS.find((r) => r.root === 'Thanato');
+    if (!thanato) throw new Error('fixture: Thanato');
+    expect(thanato.say).toBe('THAN-uh-toh');
+    expect(utteranceText(thanato.root, thanato.say)).toBe(
+      'Thanato. THAN-uh-toh. The letters T. H. A. N. A. T. O.',
+    );
+  });
+
+  it('spells only A–Z letters when the written form has extra characters', () => {
+    expect(utteranceText('X-ray2', 'EKS-ray')).toBe(
+      'X-ray2. EKS-ray. The letters X. R. A. Y.',
+    );
+  });
+
+  it('keeps say even when it matches the root name (Port)', () => {
+    const port = ROOTS.find((r) => r.root === 'Port');
+    if (!port) throw new Error('fixture: Port');
+    expect(port.say).toBe('PORT');
+    expect(utteranceText(port.root, port.say)).toBe(
+      'Port. PORT. The letters P. O. R. T.',
+    );
+  });
+
+  it('uses periods after each letter, not commas', () => {
+    expect(utteranceText('Geo', 'JEE-oh')).not.toContain(',');
+    expect(utteranceText('Bio', 'BY-oh')).not.toBe(
+      'Bio. BY-oh. The letters B, I, O.',
+    );
+  });
+
+  it('builds name + say + letters for every catalog root without changing on-card say', () => {
+    const cardSay = Object.fromEntries(ROOTS.map((r) => [r.root, r.say]));
+    for (const r of ROOTS) {
+      const line = utteranceText(r.root, r.say);
+      expect(line.startsWith(`${r.root}. ${r.say}. The letters `), r.root).toBe(
+        true,
+      );
+      expect(line, r.root).toMatch(/The letters [A-Z]\.( [A-Z]\.)*$/);
+      expect(r.say, r.root).toBe(cardSay[r.root]);
+    }
   });
 });
 

@@ -9,17 +9,24 @@
 import { HEAR_CLIP_IDS } from './hearClips';
 import { YES_CLIP_IDS } from './yesClips';
 
-/** Phrase baked into each Hear clip: root name, then the say-spelling. */
+/** Uppercase A–Z letters in writing order, each followed by a period. */
+export function letterNames(root: string): string {
+  return [...root]
+    .filter((ch) => /[A-Za-z]/.test(ch))
+    .map((ch) => `${ch.toUpperCase()}.`)
+    .join(' ');
+}
+
+/**
+ * Phrase baked into each Hear clip:
+ * `{Root}. {say}. The letters {A. B. C.}`
+ * Letters come from the written root (geo → G. E. O.), not from the say-spelling.
+ */
 export function utteranceText(root: string, say: string): string {
-  // Geo's name already sounds like JEE-oh — spelling the letters keeps
-  // Jenny from saying the same two syllables twice with no gap.
-  if (root.trim().toLowerCase() === 'geo') {
-    return 'Geo. The letters G. E. O.';
-  }
   const spokenSay = say.replace(/[·•]/g, '-').replace(/\s+/g, ' ').trim();
-  if (!spokenSay) return `${root}.`;
-  if (spokenSay.toLowerCase() === root.toLowerCase()) return `${root}.`;
-  return `${root}. ${spokenSay}.`;
+  const letters = letterNames(root);
+  if (!spokenSay) return `${root}. The letters ${letters}`;
+  return `${root}. ${spokenSay}. The letters ${letters}`;
 }
 
 /** Phrase baked into each Yes clip — same sentence the card shows. */
