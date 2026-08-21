@@ -19,11 +19,13 @@ import subprocess
 import sys
 from pathlib import Path
 
-try:
-    import edge_tts
-except ImportError:
-    sys.stderr.write("Install edge-tts first: pip3 install edge-tts\n")
-    sys.exit(1)
+def _edge_tts():
+    try:
+        import edge_tts
+    except ImportError:
+        sys.stderr.write("Install edge-tts first: pip3 install edge-tts\n")
+        sys.exit(1)
+    return edge_tts
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "src" / "data" / "roots.data.ts"
@@ -35,16 +37,96 @@ RATE = "-12%"
 ROW = re.compile(r"\{\s*t:(\d+)\s*,\s*root:'([^']+)'\s*,\s*say:'([^']+)'")
 
 
+# Keep in lockstep with SPEAKABLE_SYLLABLES in src/core/speak.ts.
+SPEAKABLE_SYLLABLES = {
+    "ag": "agg",
+    "awd": "awed",
+    "by": "bye",
+    "dont": "dahnt",
+    "dook": "duke",
+    "dy": "dye",
+    "ek": "eck",
+    "fak": "fack",
+    "fil": "fill",
+    "fiz": "fizz",
+    "floo": "flu",
+    "foh": "foe",
+    "fohn": "fone",
+    "fren": "frenn",
+    "gr": "gruh",
+    "hy": "high",
+    "ih": "ihh",
+    "ik": "ick",
+    "im": "ihm",
+    "jood": "jude",
+    "joor": "jure",
+    "kak": "cack",
+    "kal": "cal",
+    "kap": "cap",
+    "klood": "clued",
+    "kog": "cog",
+    "koh": "koe",
+    "kon": "con",
+    "koz": "kahz",
+    "krohm": "chrome",
+    "loh": "low",
+    "lohk": "loke",
+    "moht": "moat",
+    "nawt": "naught",
+    "nayt": "nate",
+    "og": "ogg",
+    "om": "ahm",
+    "os": "oss",
+    "pol": "pahl",
+    "poz": "pahz",
+    "pree": "pree",
+    "proh": "pro",
+    "ses": "sess",
+    "sfeer": "sphere",
+    "siv": "sieve",
+    "skohp": "scope",
+    "sof": "soff",
+    "som": "sahm",
+    "soo": "sue",
+    "sur": "sir",
+    "sy": "sigh",
+    "syke": "sike",
+    "syne": "sign",
+    "tek": "tech",
+    "than": "thann",
+    "tr": "truh",
+    "vohk": "voke",
+    "vyt": "vite",
+    "yoo": "you",
+    "zoh": "zoe",
+}
+
+
 def letter_names(root: str) -> str:
     # Keep in lockstep with letterNames() in src/core/speak.ts.
     return " ".join(f"{ch.upper()}." for ch in root if ch.isalpha())
 
 
-def utterance_text(root: str, say: str) -> str:
-    # Keep in lockstep with utteranceText() in src/core/speak.ts.
-    # `{Root}. {say}. The letters {A. B. C.}` — letters from the written root.
+def speakable_pronunciation(say: str) -> str:
+    # Keep in lockstep with speakablePronunciation() in src/core/speak.ts.
+    # Lowercase syllables a kid would hear. Hyphens become pauses (spaces).
     spoken = re.sub(r"[·•]", "-", say)
     spoken = re.sub(r"\s+", " ", spoken).strip()
+    if not spoken:
+        return ""
+    parts = []
+    for part in re.split(r"[-\s]+", spoken):
+        if not part:
+            continue
+        key = part.lower()
+        parts.append(SPEAKABLE_SYLLABLES.get(key, key))
+    return " ".join(parts)
+
+
+def utterance_text(root: str, say: str) -> str:
+    # Keep in lockstep with utteranceText() in src/core/speak.ts.
+    # `{Root}. {spoken sound}. The letters {A. B. C.}` — not raw card say.
+    spoken = speakable_pronunciation(say)
     letters = letter_names(root)
     if not spoken:
         return f"{root}. The letters {letters}"
@@ -108,12 +190,15 @@ def compress_mp3(path: Path) -> None:
     tmp.replace(path)
 
 
-async def bake_one(root: str, say: str, dest: Path, sem: asyncio.Semaphore) -> None:
+async def bake_one(
+    root: str, say: str, dest: Path, sem: asyncio.Semaphore
+) -> str:
     text = utterance_text(root, say)
     async with sem:
-        communicate = edge_tts.Communicate(text, VOICE, rate=RATE)
+        communicate = _edge_tts().Communicate(text, VOICE, rate=RATE)
         await communicate.save(str(dest))
     compress_mp3(dest)
+    return text
 
 
 async def main() -> None:
@@ -125,6 +210,11 @@ async def main() -> None:
         help="Only these tiers (repeatable). Default: all catalog roots.",
     )
     parser.add_argument("--force", action="store_true", help="Regenerate existing files")
+    parser.add_argument(
+        "--list",
+        action="store_true",
+        help="Print every Hear line (id + utterance) and exit.",
+    )
     args = parser.parse_args()
 
     rows = parse_roots()
@@ -133,6 +223,11 @@ async def main() -> None:
         rows = [r for r in rows if r[0] in wanted]
     if not rows:
         raise SystemExit("No roots matched --tier")
+
+    if args.list:
+        for _tier, root, say, clip_id in rows:
+            print(f"- `{clip_id}`: {utterance_text(root, say)}")
+        return
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     sem = asyncio.Semaphore(4)
