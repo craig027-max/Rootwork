@@ -1050,20 +1050,28 @@
   flex: none;
   width: 44px;
   height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   margin-block: -10px;
   padding: 0;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(var(--spark-rgb), 0.5);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text-secondary);
+  background: rgba(var(--spark-rgb), 0.18);
+  color: rgb(var(--spark-rgb));
   cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  transition:
+    background var(--dur-fast),
+    border-color var(--dur-fast),
+    color var(--dur-fast);
 }
 @media (hover: hover) {
   .ww-hear:hover {
-    color: rgb(var(--spark-rgb));
-    border-color: rgba(var(--spark-rgb), 0.4);
+    color: var(--text-primary);
+    border-color: rgba(var(--spark-rgb), 0.72);
+    background: rgba(var(--spark-rgb), 0.28);
   }
 }
 .ww-hear:focus-visible {
@@ -1071,9 +1079,9 @@
   outline-offset: 2px;
 }
 .ww-hear:active {
-  color: rgb(var(--spark-rgb));
-  border-color: rgba(var(--spark-rgb), 0.45);
-  background: rgba(var(--spark-rgb), 0.1);
+  color: var(--text-primary);
+  border-color: rgba(var(--spark-rgb), 0.78);
+  background: rgba(var(--spark-rgb), 0.32);
 }
 .ww-recall-win {
   padding-top: 8px;
