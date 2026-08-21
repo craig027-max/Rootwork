@@ -28,7 +28,7 @@ function rulesFor(source: string, selector: string): string[] {
 describe('phone card: one-line meaning + chips', () => {
   it('keeps example chips on the teach card', () => {
     expect(deck).toContain('className="ww-words"');
-    expect(deck).toContain('className="ww-word"');
+    expect(deck).toMatch(/className=\{`ww-word/);
     expect(deck).toContain('root.words.map');
   });
 

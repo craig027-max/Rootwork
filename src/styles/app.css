@@ -1230,9 +1230,32 @@
   border-radius: var(--radius-md);
   border: 1px solid rgba(var(--spark-rgb), 0.22);
   background: rgba(var(--spark-rgb), 0.06);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
   transition:
     background var(--dur-med) var(--ease-snap),
     border-color var(--dur-med) var(--ease-snap);
+}
+.ww-word.is-open {
+  background: rgba(var(--spark-rgb), 0.16);
+  border-color: rgba(var(--spark-rgb), 0.55);
+}
+.ww-word-split {
+  margin: 0;
+  padding: 0 12px 8px;
+  text-align: center;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.25;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .ww-word:hover {
   background: rgba(var(--spark-rgb), 0.12);
@@ -1505,6 +1528,12 @@
     display: block;
     padding: 0 12px 8px;
     font-size: 0.88rem;
+  }
+  /* Tap reveal: authored part-split (`b`) — not a title tooltip. */
+  .ww-word-split {
+    display: block;
+    padding: 2px 12px 6px;
+    font-size: 0.78rem;
   }
   .ww-means {
     display: flex;
@@ -1962,6 +1991,7 @@
     transform: none;
   }
   .ww-menu-row:active,
+  .ww-word:active,
   .ww-recall-opt:active,
   .ww-ichip:active {
     border-color: rgba(var(--spark-rgb), 0.5);
