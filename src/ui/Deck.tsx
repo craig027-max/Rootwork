@@ -295,18 +295,24 @@ export function Deck() {
           </div>
 
           {examples ? (
-            <div className="ww-words">
-              {root.words.map((w) => (
-                <div className="ww-word" key={w.w} title={`${w.b} — ${w.d}`}>
-                  <span className="ico" aria-hidden="true">
-                    {w.i}
-                  </span>
-                  <div className="ww-word-body">
-                    <h3>{highlight(w.w, w.hl)}</h3>
-                    <p>{w.d}</p>
+            <div className="ww-examples">
+              <div className="ww-words">
+                {root.words.map((w) => (
+                  <div className="ww-word" key={w.w} title={`${w.b} — ${w.d}`}>
+                    <span className="ico" aria-hidden="true">
+                      {w.i}
+                    </span>
+                    <div className="ww-word-body">
+                      <h3>{highlight(w.w, w.hl)}</h3>
+                      <p>{w.d}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+              {/* Phone chips hide per-word glosses; keep one readable root meaning. */}
+              <p className="ww-mean-line">
+                <strong>{root.root}</strong> means {root.mean}
+              </p>
             </div>
           ) : null}
 
