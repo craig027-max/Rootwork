@@ -30,6 +30,7 @@ import { Badge } from './components/Badge';
 import { Button } from './components/Button';
 import { DeckNav } from './deck/DeckNav';
 import { RootIndex } from './deck/RootIndex';
+import { splitForOpenWord, toggleOpenWord } from './wordSplit';
 
 function palOf(root: Root) {
   return PALETTES[root.pal] ?? PALETTES.green!;
@@ -64,6 +65,7 @@ export function Deck() {
   const entitled = useEntitledForDisplay();
 
   const [indexOpen, setIndexOpen] = useState(false);
+  const [openWord, setOpenWord] = useState<string | null>(null);
   const [recall, setRecall] = useState<{
     beat: RecallBeat;
     picked: number | null;
@@ -107,6 +109,10 @@ export function Deck() {
   }
 
   useEffect(() => () => cancelAdvanceTimer(), []);
+
+  useEffect(() => {
+    setOpenWord(null);
+  }, [currentRootId]);
 
   useLayoutEffect(() => {
     const opened = currentRootId ? ROOTS_BY_ID[currentRootId] : undefined;
@@ -189,6 +195,7 @@ export function Deck() {
   const examples = showExampleWords(lesson);
   const card = root;
   const quizRecall = recall && recall.rootId === id && !won ? recall : null;
+  const openSplit = splitForOpenWord(root.words, openWord);
 
   function go(dir: 1 | -1) {
     if (!allowManualStep(useWondralStore.getState().correctAdvance)) return;
@@ -298,7 +305,15 @@ export function Deck() {
             <div className="ww-examples">
               <div className="ww-words">
                 {root.words.map((w) => (
-                  <div className="ww-word" key={w.w} title={`${w.b} — ${w.d}`}>
+                  <button
+                    type="button"
+                    className={`ww-word${openWord === w.w ? ' is-open' : ''}`}
+                    key={w.w}
+                    title={`${w.b} — ${w.d}`}
+                    aria-expanded={openWord === w.w}
+                    aria-controls="ww-word-split"
+                    onClick={() => setOpenWord((cur) => toggleOpenWord(cur, w.w))}
+                  >
                     <span className="ico" aria-hidden="true">
                       {w.i}
                     </span>
@@ -306,9 +321,14 @@ export function Deck() {
                       <h3>{highlight(w.w, w.hl)}</h3>
                       <p>{w.d}</p>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
+              {openSplit ? (
+                <p className="ww-word-split" id="ww-word-split">
+                  {openSplit}
+                </p>
+              ) : null}
               {/* Phone chips hide per-word glosses; keep one readable root meaning. */}
               <p className="ww-mean-line">
                 <strong>{root.root}</strong> means {root.mean}
