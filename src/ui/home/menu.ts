@@ -2,10 +2,10 @@
  * Home master-detail menu model — ported from the design package
  * (rootwork/ui_kits/rootwork-app/home.html `ITEMS`).
  *
- * First visit (0 roots owned): Starter leads, modes follow, tiers 2–5 are
- * tucked so a kid sees one obvious play target. Returning visit: modes then
- * unlocked tiers (resume), locked paid tiers stay tucked. Tier stats are
- * derived live from the learner's completed-root set.
+ * First visit (0 roots owned): Starter only — Root Rush, Daily, and locked
+ * tiers stay hidden so a kid sees one tap into Bio. Returning visit (≥1 root):
+ * modes then unlocked tiers (resume); locked paid tiers tuck under
+ * "More tiers". Tier stats are derived live from the completed-root set.
  */
 import {
   ROOTS_BY_ID,
@@ -147,7 +147,8 @@ export function tuckedSummary(tucked: TierItem[]): string {
  * Build the home menu. A tier is locked when it isn't free (Tier 1) and the
  * learner isn't entitled — the same free/paid line the gating module enforces.
  *
- * First visit: Starter, then Root Rush / Daily; tiers 2–5 are tucked.
+ * First visit: Starter only. Root Rush, Daily, and tiers 2–5 stay off the
+ * board until the learner owns a root.
  * Returning: Root Rush / Daily, then unlocked tiers; locked paid tiers tucked.
  */
 export function buildMenu(
@@ -209,12 +210,11 @@ export function buildMenu(
   });
 
   const starter = tiers.find((t) => t.t === 1)!;
-  const higher = tiers.filter((t) => t.t !== 1);
   const unlocked = tiers.filter((t) => !t.locked);
   const locked = tiers.filter((t) => t.locked);
 
   if (firstVisit) {
-    return { items: [starter, ...modes], tucked: higher };
+    return { items: [starter], tucked: [] };
   }
   return { items: [...modes, ...unlocked], tucked: locked };
 }

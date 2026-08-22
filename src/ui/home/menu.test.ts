@@ -32,20 +32,18 @@ describe('isFirstVisit', () => {
 describe('buildMenu — first visit', () => {
   const { items, tucked } = buildMenu(NONE, false, { currentTier: 1, firstVisit: true });
 
-  it('leads with Tier 1 Starter, then Rush and Daily — not a quiz', () => {
-    expect(keysOf(items)).toEqual(['tier-1', 'rush', 'daily']);
+  it('shows only Tier 1 Starter — Root Rush, Daily, and locked tiers stay hidden', () => {
+    expect(keysOf(items)).toEqual(['tier-1']);
     expect(items[0]).toMatchObject({ kind: 'tier', t: 1, locked: false, current: true });
+    expect(keysOf(tucked)).toEqual([]);
   });
 
-  it('tucks tiers 2–5 so locked rows do not dominate', () => {
-    expect(keysOf(tucked)).toEqual(['tier-2', 'tier-3', 'tier-4', 'tier-5']);
-    expect(tucked.every((t) => t.locked)).toBe(true);
-    expect(tuckedSummary(tucked)).toBe('More tiers 🔒');
-  });
-
-  it('still locks paid tiers when not entitled (gating unchanged)', () => {
-    expect(tucked.every((t) => t.t !== 1 && t.locked)).toBe(true);
-    expect(items.filter((it) => it.kind === 'tier').every((it) => !it.locked)).toBe(true);
+  it('does not expose Root Rush or locked-tier CTAs on a 0-learned home', () => {
+    const titles = [...items, ...tucked].map((it) => it.title);
+    expect(titles).toEqual(['Tier 1 · Starter']);
+    expect(titles.join(' ')).not.toMatch(/Root Rush|Daily|Locked/);
+    expect(tuckedSummary(tucked)).toBe('');
+    expect(items.every((it) => it.kind !== 'tier' || !it.locked)).toBe(true);
   });
 
   it('defaults selection to Starter (index 0), not Root Rush', () => {
@@ -53,12 +51,17 @@ describe('buildMenu — first visit', () => {
     expect(items[defaultSelectedIndex(items, 1)]).toMatchObject({ key: 'tier-1' });
   });
 
-  it('tucks higher tiers even when entitled so five rows do not bury Play', () => {
+  it('still hides Rush and higher tiers when entitled — 0 learned means one tap', () => {
     const entitled = buildMenu(NONE, true, { currentTier: 1, firstVisit: true });
-    expect(keysOf(entitled.items)).toEqual(['tier-1', 'rush', 'daily']);
-    expect(keysOf(entitled.tucked)).toEqual(['tier-2', 'tier-3', 'tier-4', 'tier-5']);
-    expect(entitled.tucked.every((t) => !t.locked)).toBe(true);
-    expect(tuckedSummary(entitled.tucked)).toBe('More tiers');
+    expect(keysOf(entitled.items)).toEqual(['tier-1']);
+    expect(keysOf(entitled.tucked)).toEqual([]);
+  });
+
+  it('names the primary control Play Bio', () => {
+    expect(entryRootName(1, NONE, false)).toBe('Bio');
+    expect(tierPrimaryLabel({ firstVisit: true, complete: false, rootName: 'Bio' })).toBe(
+      'Play Bio ›',
+    );
   });
 });
 
@@ -66,13 +69,15 @@ describe('buildMenu — returning visit', () => {
   const owned = new Set<RootId>([firstId]);
   const { items, tucked } = buildMenu(owned, false, { currentTier: 1, firstVisit: false });
 
-  it('keeps Rush and Daily, then the unlocked resume tier', () => {
+  it('reveals Root Rush and Daily, then the unlocked resume tier', () => {
     expect(keysOf(items)).toEqual(['rush', 'daily', 'tier-1']);
+    expect(items.map((it) => it.title)).toContain('Root Rush');
   });
 
-  it('tucks locked paid tiers and leaves gating in place', () => {
+  it('tucks locked paid tiers under More tiers once they have learned something', () => {
     expect(keysOf(tucked)).toEqual(['tier-2', 'tier-3', 'tier-4', 'tier-5']);
     expect(tucked.every((t) => t.locked)).toBe(true);
+    expect(tuckedSummary(tucked)).toBe('More tiers 🔒');
   });
 
   it('defaults selection to the current tier, not Rush', () => {
