@@ -13,20 +13,21 @@ function jewelVarsOf(jewel: string) {
  * row to preview it in the detail panel; tap the already-selected row (or
  * press Enter) to start. Arrow keys still move the selection on desktop.
  * Locked / later tiers render inside a collapsed disclosure so they don't
- * dominate a first visit.
+ * dominate the next-Play board.
  */
 export function TierMenu({
   items,
   tucked = [],
   selectedIndex,
-  firstVisit = false,
+  nextPlay = false,
   onSelect,
   onActivate,
 }: {
   items: MenuItem[];
   tucked?: TierItem[];
   selectedIndex: number;
-  firstVisit?: boolean;
+  /** Next-Play board: one fat Play row, PLAY pill, no progress bar. */
+  nextPlay?: boolean;
   onSelect: (index: number) => void;
   onActivate: (item: MenuItem) => void;
 }) {
@@ -62,7 +63,7 @@ export function TierMenu({
   function renderRow(it: MenuItem, i: number) {
     const sel = i === selectedIndex;
     const locked = it.kind === 'tier' && it.locked;
-    const playNow = firstVisit && it.kind === 'tier' && it.current;
+    const playNow = nextPlay && it.kind === 'tier' && it.current;
     return (
       <button
         key={it.key}
