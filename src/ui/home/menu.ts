@@ -2,10 +2,12 @@
  * Home master-detail menu model — ported from the design package
  * (rootwork/ui_kits/rootwork-app/home.html `ITEMS`).
  *
- * First visit (0 roots owned): Starter only — Root Rush, Daily, and locked
- * tiers stay hidden so a kid sees one tap into Bio. Returning visit (≥1 root):
- * modes then unlocked tiers (resume); locked paid tiers tuck under
- * "More tiers". Tier stats are derived live from the completed-root set.
+ * Next-Play board (the next Starter / Tier 1 root is still unlearned):
+ * Starter only — Root Rush, Daily, and locked tiers stay hidden so a kid
+ * sees one fat Play (Bio, then Geo, then Photo…). Not a count threshold.
+ * After every Starter root is owned: modes then unlocked tiers (resume);
+ * locked paid tiers tuck under "More tiers". Tier stats are derived live
+ * from the completed-root set.
  */
 import {
   ROOTS_BY_ID,
@@ -78,6 +80,16 @@ export function isFirstVisit(completed: Set<string>): boolean {
   return completed.size === 0;
 }
 
+/**
+ * One fat next Play — hide Rush / Daily / locked tiers — while the next
+ * Starter (Tier 1) root is still unlearned. Bio → Geo → Photo … until
+ * every Starter root is owned; then the returning dashboard comes back.
+ * Not a magic "after N roots" count.
+ */
+export function isNextPlayHome(completed: Set<string>): boolean {
+  return rootsInTier(1).some((r) => !completed.has(rootId(r)));
+}
+
 /** Live owned/total/percent for a tier from the completed-root set. */
 export function tierStats(t: TierNum, completed: Set<string>): TierStat {
   const roots = rootsInTier(t);
@@ -113,25 +125,26 @@ export function entryRootName(t: TierNum, completed: Set<string>, entitled: bool
 
 /**
  * Index into `items` (the main list, not tucked rows) for the current tier.
- * First visit puts Starter at 0; returning visit finds the resume tier after the modes.
+ * Next-Play board puts Starter at 0; returning dashboard finds the resume
+ * tier after the modes.
  */
 export function defaultSelectedIndex(items: MenuItem[], currentTier: TierNum): number {
   const idx = items.findIndex((it) => it.kind === 'tier' && it.t === currentTier && !it.locked);
   return idx >= 0 ? idx : 0;
 }
 
-/** Kid-facing list heading: start/play on first visit, resume once they own a root. */
-export function listHeading(firstVisit: boolean): string {
-  return firstVisit ? 'Start playing' : 'Jump back in';
+/** Kid-facing list heading: start/play on the next-Play board, resume after Starter. */
+export function listHeading(nextPlay: boolean): string {
+  return nextPlay ? 'Start playing' : 'Jump back in';
 }
 
-/** Primary CTA on a playable tier. First visit says play, not continue. */
+/** Primary CTA on a playable tier. Next-Play board says Play, not Continue. */
 export function tierPrimaryLabel(opts: {
-  firstVisit: boolean;
+  nextPlay: boolean;
   complete: boolean;
   rootName: string;
 }): string {
-  if (opts.firstVisit) return `Play ${opts.rootName} ›`;
+  if (opts.nextPlay) return `Play ${opts.rootName} ›`;
   if (opts.complete) return 'Replay tier ›';
   return `Continue ${opts.rootName} ›`;
 }
@@ -147,9 +160,9 @@ export function tuckedSummary(tucked: TierItem[]): string {
  * Build the home menu. A tier is locked when it isn't free (Tier 1) and the
  * learner isn't entitled — the same free/paid line the gating module enforces.
  *
- * First visit: Starter only. Root Rush, Daily, and tiers 2–5 stay off the
- * board until the learner owns a root.
- * Returning: Root Rush / Daily, then unlocked tiers; locked paid tiers tucked.
+ * Next-Play board: Starter only. Root Rush, Daily, and tiers 2–5 stay off
+ * the board while the next Starter root is unlearned.
+ * After Starter: Root Rush / Daily, then unlocked tiers; locked paid tiers tucked.
  */
 export function buildMenu(
   completed: Set<string>,
@@ -159,10 +172,10 @@ export function buildMenu(
     rushBest?: string;
     dailyStreak?: number;
     dailyDone?: boolean;
-    firstVisit?: boolean;
+    nextPlay?: boolean;
   } = {},
 ): HomeMenu {
-  const firstVisit = opts.firstVisit ?? isFirstVisit(completed);
+  const nextPlay = opts.nextPlay ?? isNextPlayHome(completed);
   const modes: MenuItem[] = [
     {
       kind: 'mode',
@@ -213,7 +226,7 @@ export function buildMenu(
   const unlocked = tiers.filter((t) => !t.locked);
   const locked = tiers.filter((t) => t.locked);
 
-  if (firstVisit) {
+  if (nextPlay) {
     return { items: [starter], tucked: [] };
   }
   return { items: [...modes, ...unlocked], tucked: locked };

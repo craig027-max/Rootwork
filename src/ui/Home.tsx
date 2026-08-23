@@ -18,7 +18,7 @@ import {
   buildMenu,
   defaultSelectedIndex,
   entryRootName,
-  isFirstVisit,
+  isNextPlayHome,
   listHeading,
   pickCurrentTier,
   tierEntryRoot,
@@ -52,7 +52,7 @@ export function Home() {
   const setView = useWondralStore((s) => s.setView);
   const setSelectedTier = useWondralStore((s) => s.setSelectedTier);
 
-  const firstVisit = isFirstVisit(completed);
+  const nextPlay = isNextPlayHome(completed);
   const currentTier = pickCurrentTier(completed, entitled);
   const rushBest =
     stats.runs > 0 ? `${gradeForPct(stats.bestPct)} · ${stats.bestStars}★` : undefined;
@@ -67,7 +67,7 @@ export function Home() {
     rushBest,
     dailyStreak: stats.streakCurrent,
     dailyDone,
-    firstVisit,
+    nextPlay,
   });
   const allItems = [...items, ...tucked];
   const [selectedIndex, setSelectedIndex] = useState(() => defaultSelectedIndex(items, currentTier));
@@ -109,20 +109,20 @@ export function Home() {
     dailyRoots,
     dailyDone,
     streak: stats.streakCurrent,
-    firstVisit,
+    nextPlay,
     completed,
     entitled,
   });
 
   return (
-    <div className={`ww-home${firstVisit ? ' is-first' : ''}`}>
+    <div className={`ww-home${nextPlay ? ' is-first' : ''}`}>
       <ProfileBand name={name} avatar={avatar} rootsOwned={completed.size} stats={stats} />
 
-      <div className={`ww-home-grid${firstVisit ? ' is-first' : ''}`}>
+      <div className={`ww-home-grid${nextPlay ? ' is-first' : ''}`}>
         <div className="ww-home-list">
           <div className="ww-panel-label">
-            <span className="n">{listHeading(firstVisit)}</span>
-            {firstVisit ? null : (
+            <span className="n">{listHeading(nextPlay)}</span>
+            {nextPlay ? null : (
               <>
                 <span className="s kb-hint">↑ ↓ to browse · Enter to start</span>
                 <span className="s tap-hint">Tap to preview · tap again to start</span>
@@ -133,7 +133,7 @@ export function Home() {
             items={items}
             tucked={tucked}
             selectedIndex={selectedIndex}
-            firstVisit={firstVisit}
+            nextPlay={nextPlay}
             onSelect={setSelectedIndex}
             onActivate={onPrimary}
           />
@@ -146,7 +146,7 @@ export function Home() {
                 ? 'Game mode'
                 : selected.locked
                   ? 'Locked tier'
-                  : firstVisit
+                  : nextPlay
                     ? 'Tap play'
                     : 'Your progress'}
             </span>
@@ -169,7 +169,7 @@ function buildDetailVM(
     dailyRoots: Root[];
     dailyDone: boolean;
     streak: number;
-    firstVisit: boolean;
+    nextPlay: boolean;
     completed: Set<string>;
     entitled: boolean;
   },
@@ -233,7 +233,7 @@ function buildDetailVM(
   }
 
   const complete = item.pct === 100;
-  const firstPlay = extra.firstVisit && item.t === 1;
+  const firstPlay = extra.nextPlay && item.t === 1;
   return {
     jewel: item.jewel,
     animKey: item.key,
@@ -247,7 +247,7 @@ function buildDetailVM(
     pmB: firstPlay ? undefined : complete ? 'Tier complete' : `${item.total - item.done} roots to go`,
     samples: samples.map((r) => ({ root: r.root, mean: r.mean })),
     moreCount: Math.max(0, item.total - samples.length),
-    primary: { label: tierPrimaryLabel({ firstVisit: firstPlay, complete, rootName }) },
+    primary: { label: tierPrimaryLabel({ nextPlay: firstPlay, complete, rootName }) },
     secondary: firstPlay ? undefined : { label: 'See all roots' },
     scene: preview,
     heroCta: firstPlay,
