@@ -4,9 +4,12 @@ import {
   buildMenu,
   defaultSelectedIndex,
   entryRootName,
+  hasChosenMode,
+  hasStartedPostStarter,
   isFirstVisit,
   isNextPlayHome,
   listHeading,
+  nextPlayRoot,
   pickCurrentTier,
   tierPrimaryLabel,
   tuckedSummary,
@@ -20,6 +23,10 @@ const starter = rootsInTier(1);
 const second = starter[1];
 if (!second) throw new Error('fixture: expected a second Starter root');
 const starterDone = new Set<RootId>(starter.map((r) => rootId(r)));
+const builder = rootsInTier(2);
+const firstBuilder = builder[0];
+if (!firstBuilder) throw new Error('fixture: expected a first Builder (Tier 2) root');
+const startedBuilder = new Set<RootId>([...starterDone, rootId(firstBuilder)]);
 
 function keysOf(items: { key: string }[]) {
   return items.map((it) => it.key);
@@ -44,8 +51,23 @@ describe('isNextPlayHome', () => {
     expect(isNextPlayHome(new Set<RootId>([firstId, rootId(second)]))).toBe(true);
   });
 
-  it('is false only after every Starter root is owned', () => {
-    expect(isNextPlayHome(starterDone)).toBe(false);
+  it('stays true just after Starter — next Play is the first next-tier root', () => {
+    expect(isNextPlayHome(starterDone)).toBe(true);
+    expect(isNextPlayHome(starterDone, false)).toBe(true);
+    expect(isNextPlayHome(starterDone, true)).toBe(true);
+    expect(nextPlayRoot(starterDone, true)?.root).toBe(firstBuilder.root);
+    expect(nextPlayRoot(starterDone, false)?.root).toBe(firstBuilder.root);
+    expect(firstBuilder.root).toBe('Auto');
+  });
+
+  it('is false after they start the next tier or choose a mode', () => {
+    expect(hasStartedPostStarter(starterDone)).toBe(false);
+    expect(hasStartedPostStarter(startedBuilder)).toBe(true);
+    expect(isNextPlayHome(startedBuilder, true)).toBe(false);
+    expect(isNextPlayHome(starterDone, true, { choseMode: true })).toBe(false);
+    expect(hasChosenMode({ runs: 1, lastDailyDay: null })).toBe(true);
+    expect(hasChosenMode({ runs: 0, lastDailyDay: '2026-08-24' })).toBe(true);
+    expect(hasChosenMode({ runs: 0, lastDailyDay: null })).toBe(false);
   });
 });
 
@@ -116,30 +138,72 @@ describe('buildMenu — 1 learned Bio (Play Geo)', () => {
     expect(keysOf(entitled.items)).toEqual(['tier-1']);
     expect(keysOf(entitled.tucked)).toEqual([]);
   });
+
+  it('keeps #29 even if they somehow have mode stats mid-Starter', () => {
+    expect(isNextPlayHome(owned, false, { choseMode: true })).toBe(true);
+    const menu = buildMenu(owned, false, { currentTier: 1, choseMode: true });
+    expect(keysOf(menu.items)).toEqual(['tier-1']);
+    expect(keysOf(menu.tucked)).toEqual([]);
+  });
 });
 
-describe('buildMenu — after Starter (returning dashboard)', () => {
-  const { items, tucked } = buildMenu(starterDone, false, { currentTier: 1 });
+describe('buildMenu — Starter just finished (Play Auto)', () => {
+  const { items, tucked } = buildMenu(starterDone, false, { currentTier: 2 });
 
-  it('reveals Root Rush and Daily once every Starter root is owned', () => {
+  it('keeps one fat next Play for the first next-tier root — no Rush / Daily / locked dump', () => {
+    expect(keysOf(items)).toEqual(['tier-2']);
+    expect(items[0]).toMatchObject({ kind: 'tier', t: 2, locked: false, current: true });
+    expect(keysOf(tucked)).toEqual([]);
+    expect(tuckedSummary(tucked)).toBe('');
+    const titles = titlesOf({ items, tucked });
+    expect(titles).toEqual(['Tier 2 · Builder']);
+    expect(titles.join(' ')).not.toMatch(/Root Rush|Daily|Locked/);
+  });
+
+  it('names the primary control Play Auto and opens that first Builder root', () => {
+    expect(entryRootName(2, starterDone, false)).toBe(firstBuilder.root);
+    expect(entryRootName(2, starterDone, true)).toBe(firstBuilder.root);
+    expect(tierPrimaryLabel({ nextPlay: true, complete: false, rootName: firstBuilder.root })).toBe(
+      'Play Auto ›',
+    );
+  });
+
+  it('defaults selection to Builder (index 0) — no modes in front', () => {
+    expect(defaultSelectedIndex(items, 2)).toBe(0);
+    expect(items[0]).toMatchObject({ key: 'tier-2', current: true, locked: false });
+  });
+
+  it('still hides Rush when entitled — Starter-done is not the dashboard yet', () => {
+    const entitled = buildMenu(starterDone, true, { currentTier: 2 });
+    expect(keysOf(entitled.items)).toEqual(['tier-2']);
+    expect(keysOf(entitled.tucked)).toEqual([]);
+    expect(titlesOf(entitled).join(' ')).not.toMatch(/Root Rush|Daily|Locked/);
+  });
+});
+
+describe('buildMenu — started next tier (returning dashboard)', () => {
+  const { items, tucked } = buildMenu(startedBuilder, false, { currentTier: 2 });
+
+  it('reveals Root Rush and Daily after they start the next tier', () => {
     expect(keysOf(items)).toEqual(['rush', 'daily', 'tier-1']);
     expect(items.map((it) => it.title)).toContain('Root Rush');
     expect(items.map((it) => it.title)).toContain('Daily Challenge');
   });
 
-  it('tucks locked paid tiers under More tiers after Starter', () => {
+  it('tucks locked paid tiers under More tiers once past first-run', () => {
     expect(keysOf(tucked)).toEqual(['tier-2', 'tier-3', 'tier-4', 'tier-5']);
     expect(tucked.every((t) => t.locked)).toBe(true);
     expect(tuckedSummary(tucked)).toBe('More tiers 🔒');
   });
 
-  it('defaults selection to the current tier, not Rush', () => {
-    expect(defaultSelectedIndex(items, 1)).toBe(2);
-    expect(items[2]).toMatchObject({ key: 'tier-1', current: true });
+  it('defaults selection to Builder once entitled and they have started it', () => {
+    const entitled = buildMenu(startedBuilder, true, { currentTier: 2 });
+    expect(defaultSelectedIndex(entitled.items, 2)).toBe(3);
+    expect(entitled.items[3]).toMatchObject({ key: 'tier-2', current: true });
   });
 
   it('shows unlocked higher tiers in the main list once entitled', () => {
-    const entitled = buildMenu(starterDone, true, { currentTier: 2 });
+    const entitled = buildMenu(startedBuilder, true, { currentTier: 2 });
     expect(keysOf(entitled.items)).toEqual([
       'rush',
       'daily',
@@ -150,6 +214,12 @@ describe('buildMenu — after Starter (returning dashboard)', () => {
       'tier-5',
     ]);
     expect(entitled.tucked).toEqual([]);
+  });
+
+  it('also reveals the dashboard if they chose a mode without starting Builder', () => {
+    const chose = buildMenu(starterDone, false, { currentTier: 1, choseMode: true });
+    expect(keysOf(chose.items)).toEqual(['rush', 'daily', 'tier-1']);
+    expect(keysOf(chose.tucked)).toEqual(['tier-2', 'tier-3', 'tier-4', 'tier-5']);
   });
 });
 
@@ -164,10 +234,15 @@ describe('pickCurrentTier / entry root', () => {
     expect(pickCurrentTier(owned, false)).toBe(1);
     expect(entryRootName(1, owned, false)).toBe(second.root);
   });
+
+  it('points at Builder after Starter when the next root is openable', () => {
+    expect(pickCurrentTier(starterDone, true)).toBe(2);
+    expect(entryRootName(2, starterDone, true)).toBe(firstBuilder.root);
+  });
 });
 
 describe('copy', () => {
-  it('says start/play on the next-Play board and jump back in after Starter', () => {
+  it('says start/play on the next-Play board and jump back in on the dashboard', () => {
     expect(listHeading(true)).toBe('Start playing');
     expect(listHeading(false)).toBe('Jump back in');
   });
