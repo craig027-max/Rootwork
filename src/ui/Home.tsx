@@ -18,6 +18,7 @@ import {
   buildMenu,
   defaultSelectedIndex,
   entryRootName,
+  hasChosenMode,
   isNextPlayHome,
   listHeading,
   pickCurrentTier,
@@ -52,7 +53,8 @@ export function Home() {
   const setView = useWondralStore((s) => s.setView);
   const setSelectedTier = useWondralStore((s) => s.setSelectedTier);
 
-  const nextPlay = isNextPlayHome(completed);
+  const choseMode = hasChosenMode(stats);
+  const nextPlay = isNextPlayHome(completed, entitled, { choseMode });
   const currentTier = pickCurrentTier(completed, entitled);
   const rushBest =
     stats.runs > 0 ? `${gradeForPct(stats.bestPct)} · ${stats.bestStars}★` : undefined;
@@ -233,7 +235,7 @@ function buildDetailVM(
   }
 
   const complete = item.pct === 100;
-  const firstPlay = extra.nextPlay && item.t === 1;
+  const firstPlay = extra.nextPlay;
   return {
     jewel: item.jewel,
     animKey: item.key,
