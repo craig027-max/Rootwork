@@ -7,6 +7,7 @@ import { ROOTS } from '../data/roots';
 import {
   hearClipId,
   hearClipUrl,
+  HEAR_BEAT_PAUSE,
   letterNames,
   SPEAKABLE_SYLLABLES,
   speakablePronunciation,
@@ -57,16 +58,30 @@ describe('speakablePronunciation', () => {
     for (const [key, value] of Object.entries(SPEAKABLE_SYLLABLES)) {
       expect(py, key).toContain(`"${key}": "${value}"`);
     }
+    expect(py).toContain(`HEAR_BEAT_PAUSE = "${HEAR_BEAT_PAUSE}"`);
   });
 });
 
 describe('utteranceText', () => {
+  it('separates name, spoken sound, and letters with the Hear beat pause', () => {
+    expect(HEAR_BEAT_PAUSE).toBe('…');
+    const bio = utteranceText('Bio', 'BY-oh');
+    expect(bio).toBe(
+      `Bio. ${HEAR_BEAT_PAUSE} bye oh. ${HEAR_BEAT_PAUSE} The letters B. I. O.`,
+    );
+    expect(bio.split(HEAR_BEAT_PAUSE).map((part) => part.trim())).toEqual([
+      'Bio.',
+      'bye oh.',
+      'The letters B. I. O.',
+    ]);
+  });
+
   it('speaks Bio as bye oh; on-card say stays BY-oh; raw say is not in the line', () => {
     const bio = ROOTS.find((r) => r.root === 'Bio');
     if (!bio) throw new Error('fixture: Bio');
     expect(bio.say).toBe('BY-oh');
     expect(utteranceText(bio.root, bio.say)).toBe(
-      'Bio. bye oh. The letters B. I. O.',
+      `Bio. ${HEAR_BEAT_PAUSE} bye oh. ${HEAR_BEAT_PAUSE} The letters B. I. O.`,
     );
     expect(utteranceText(bio.root, bio.say)).not.toContain(bio.say);
     expect(utteranceText(bio.root, bio.say)).not.toContain('BY');
@@ -77,7 +92,7 @@ describe('utteranceText', () => {
     if (!geo) throw new Error('fixture: Geo');
     expect(geo.say).toBe('JEE-oh');
     expect(utteranceText(geo.root, geo.say)).toBe(
-      'Geo. jee oh. The letters G. E. O.',
+      `Geo. ${HEAR_BEAT_PAUSE} jee oh. ${HEAR_BEAT_PAUSE} The letters G. E. O.`,
     );
     expect(utteranceText(geo.root, geo.say)).not.toContain(geo.say);
     expect(utteranceText(geo.root, geo.say)).not.toContain('JEE');
@@ -88,7 +103,7 @@ describe('utteranceText', () => {
     if (!photo) throw new Error('fixture: Photo');
     expect(photo.say).toBe('FOH-toh');
     expect(utteranceText(photo.root, photo.say)).toBe(
-      'Photo. foe toh. The letters P. H. O. T. O.',
+      `Photo. ${HEAR_BEAT_PAUSE} foe toh. ${HEAR_BEAT_PAUSE} The letters P. H. O. T. O.`,
     );
     expect(utteranceText(photo.root, photo.say)).not.toContain(photo.say);
     expect(utteranceText(photo.root, photo.say)).not.toContain('FOH');
@@ -98,47 +113,47 @@ describe('utteranceText', () => {
     const by = Object.fromEntries(ROOTS.map((r) => [r.root, r]));
     expect(by.Uni?.say).toBe('YOO-nee');
     expect(utteranceText(by.Uni!.root, by.Uni!.say)).toBe(
-      'Uni. you nee. The letters U. N. I.',
+      `Uni. ${HEAR_BEAT_PAUSE} you nee. ${HEAR_BEAT_PAUSE} The letters U. N. I.`,
     );
     expect(utteranceText(by.Uni!.root, by.Uni!.say)).not.toContain(by.Uni!.say);
 
     expect(by.Psych?.say).toBe('SYKE');
     expect(utteranceText(by.Psych!.root, by.Psych!.say)).toBe(
-      'Psych. sike. The letters P. S. Y. C. H.',
+      `Psych. ${HEAR_BEAT_PAUSE} sike. ${HEAR_BEAT_PAUSE} The letters P. S. Y. C. H.`,
     );
     expect(utteranceText(by.Psych!.root, by.Psych!.say)).not.toContain('SYKE');
 
     expect(by.Co?.say).toBe('KOH');
     expect(utteranceText(by.Co!.root, by.Co!.say)).toBe(
-      'Co. koe. The letters C. O.',
+      `Co. ${HEAR_BEAT_PAUSE} koe. ${HEAR_BEAT_PAUSE} The letters C. O.`,
     );
     expect(utteranceText(by.Co!.root, by.Co!.say)).not.toContain('KOH');
 
     expect(by.Pre?.say).toBe('PREE');
     expect(utteranceText(by.Pre!.root, by.Pre!.say)).toBe(
-      'Pre. pree. The letters P. R. E.',
+      `Pre. ${HEAR_BEAT_PAUSE} pree. ${HEAR_BEAT_PAUSE} The letters P. R. E.`,
     );
     expect(utteranceText(by.Pre!.root, by.Pre!.say)).not.toContain('PREE');
 
     expect(by.Sci?.say).toBe('SY');
     expect(utteranceText(by.Sci!.root, by.Sci!.say)).toBe(
-      'Sci. sigh. The letters S. C. I.',
+      `Sci. ${HEAR_BEAT_PAUSE} sigh. ${HEAR_BEAT_PAUSE} The letters S. C. I.`,
     );
 
     expect(by.Hydro?.say).toBe('HY-droh');
     expect(utteranceText(by.Hydro!.root, by.Hydro!.say)).toBe(
-      'Hydro. high droh. The letters H. Y. D. R. O.',
+      `Hydro. ${HEAR_BEAT_PAUSE} high droh. ${HEAR_BEAT_PAUSE} The letters H. Y. D. R. O.`,
     );
     expect(utteranceText(by.Hydro!.root, by.Hydro!.say)).not.toContain('HY');
 
     expect(by.Bi?.say).toBe('BY');
     expect(utteranceText(by.Bi!.root, by.Bi!.say)).toBe(
-      'Bi. bye. The letters B. I.',
+      `Bi. ${HEAR_BEAT_PAUSE} bye. ${HEAR_BEAT_PAUSE} The letters B. I.`,
     );
 
     expect(by.Scope?.say).toBe('SKOHP');
     expect(utteranceText(by.Scope!.root, by.Scope!.say)).toBe(
-      'Scope. scope. The letters S. C. O. P. E.',
+      `Scope. ${HEAR_BEAT_PAUSE} scope. ${HEAR_BEAT_PAUSE} The letters S. C. O. P. E.`,
     );
     expect(utteranceText(by.Scope!.root, by.Scope!.say)).not.toContain('SKOHP');
   });
@@ -148,14 +163,14 @@ describe('utteranceText', () => {
     if (!thanato) throw new Error('fixture: Thanato');
     expect(thanato.say).toBe('THAN-uh-toh');
     expect(utteranceText(thanato.root, thanato.say)).toBe(
-      'Thanato. thann uh toh. The letters T. H. A. N. A. T. O.',
+      `Thanato. ${HEAR_BEAT_PAUSE} thann uh toh. ${HEAR_BEAT_PAUSE} The letters T. H. A. N. A. T. O.`,
     );
     expect(utteranceText(thanato.root, thanato.say)).not.toContain(thanato.say);
   });
 
   it('spells only A–Z letters when the written form has extra characters', () => {
     expect(utteranceText('X-ray2', 'EKS-ray')).toBe(
-      'X-ray2. eks ray. The letters X. R. A. Y.',
+      `X-ray2. ${HEAR_BEAT_PAUSE} eks ray. ${HEAR_BEAT_PAUSE} The letters X. R. A. Y.`,
     );
   });
 
@@ -164,7 +179,7 @@ describe('utteranceText', () => {
     if (!port) throw new Error('fixture: Port');
     expect(port.say).toBe('PORT');
     expect(utteranceText(port.root, port.say)).toBe(
-      'Port. port. The letters P. O. R. T.',
+      `Port. ${HEAR_BEAT_PAUSE} port. ${HEAR_BEAT_PAUSE} The letters P. O. R. T.`,
     );
     expect(utteranceText(port.root, port.say)).not.toContain('PORT');
   });
@@ -182,8 +197,9 @@ describe('utteranceText', () => {
       const spoken = speakablePronunciation(r.say);
       const line = utteranceText(r.root, r.say);
       expect(line, r.root).toBe(
-        `${r.root}. ${spoken}. The letters ${letterNames(r.root)}`,
+        `${r.root}. ${HEAR_BEAT_PAUSE} ${spoken}. ${HEAR_BEAT_PAUSE} The letters ${letterNames(r.root)}`,
       );
+      expect(line.split(HEAR_BEAT_PAUSE), r.root).toHaveLength(3);
       expect(line, r.root).toMatch(/The letters [A-Z]\.( [A-Z]\.)*$/);
       expect(r.say, r.root).toBe(cardSay[r.root]);
       if (r.say !== spoken) {

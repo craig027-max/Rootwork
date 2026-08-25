@@ -106,16 +106,25 @@ export function speakablePronunciation(say: string): string {
 }
 
 /**
+ * Pause mark between the three Hear beats (name / spoken sound / letters).
+ * Jenny does not treat extra periods, ellipses, or newlines as more silence —
+ * and she skips the sentence pause when name ≈ sound (Geo / jee oh). The clip
+ * baker splits on this mark and inserts a short gap. Keep in lockstep with
+ * HEAR_BEAT_PAUSE in scripts/generate-hear-clips.py.
+ */
+export const HEAR_BEAT_PAUSE = '…';
+
+/**
  * Phrase baked into each Hear clip:
- * `{Root}. {spoken sound}. The letters {A. B. C.}`
+ * `{Root}. … {spoken sound}. … The letters {A. B. C.}`
  * Spoken sound is speakablePronunciation(say), not raw card `say`.
  * Letters come from the written root (geo → G. E. O.), not from the say-spelling.
  */
 export function utteranceText(root: string, say: string): string {
   const spoken = speakablePronunciation(say);
   const letters = letterNames(root);
-  if (!spoken) return `${root}. The letters ${letters}`;
-  return `${root}. ${spoken}. The letters ${letters}`;
+  if (!spoken) return `${root}. ${HEAR_BEAT_PAUSE} The letters ${letters}`;
+  return `${root}. ${HEAR_BEAT_PAUSE} ${spoken}. ${HEAR_BEAT_PAUSE} The letters ${letters}`;
 }
 
 /** Phrase baked into each Yes clip — same sentence the card shows. */
