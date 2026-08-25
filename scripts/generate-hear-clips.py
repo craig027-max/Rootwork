@@ -17,6 +17,7 @@ import asyncio
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 def _edge_tts():
@@ -34,6 +35,20 @@ MANIFEST = ROOT / "src" / "core" / "hearClips.ts"
 
 VOICE = "en-US-JennyNeural"
 RATE = "-12%"
+# Keep in lockstep with HEAR_BEAT_PAUSE in src/core/speak.ts.
+# Jenny ignores extra periods / ellipses / newlines; the baker splits on this
+# mark and inserts HEAR_BEAT_GAP_S of silence so name / sound / letters stay
+# separate even when they sound alike (Geo / jee oh).
+HEAR_BEAT_PAUSE = "…"
+HEAR_BEAT_GAP_S = 0.6
+# Drop leading / trailing pad on each beat so the inserted gap is the pause.
+BEAT_TRIM_AF = (
+    "silenceremove=start_periods=1:start_silence=0.04:start_threshold=-35dB,"
+    "areverse,"
+    "silenceremove=start_periods=1:start_silence=0.08:start_threshold=-35dB,"
+    "areverse,"
+    "aformat=sample_fmts=fltp:sample_rates=24000:channel_layouts=mono"
+)
 ROW = re.compile(r"\{\s*t:(\d+)\s*,\s*root:'([^']+)'\s*,\s*say:'([^']+)'")
 
 
@@ -125,12 +140,18 @@ def speakable_pronunciation(say: str) -> str:
 
 def utterance_text(root: str, say: str) -> str:
     # Keep in lockstep with utteranceText() in src/core/speak.ts.
-    # `{Root}. {spoken sound}. The letters {A. B. C.}` — not raw card say.
+    # `{Root}. … {spoken sound}. … The letters {A. B. C.}` — not raw card say.
     spoken = speakable_pronunciation(say)
     letters = letter_names(root)
     if not spoken:
-        return f"{root}. The letters {letters}"
-    return f"{root}. {spoken}. The letters {letters}"
+        return f"{root}. {HEAR_BEAT_PAUSE} The letters {letters}"
+    return (
+        f"{root}. {HEAR_BEAT_PAUSE} {spoken}. {HEAR_BEAT_PAUSE} The letters {letters}"
+    )
+
+
+def utterance_beats(text: str) -> list[str]:
+    return [part.strip() for part in text.split(HEAR_BEAT_PAUSE) if part.strip()]
 
 
 def parse_roots() -> list[tuple[int, str, str, str]]:
@@ -165,14 +186,63 @@ export const HEAR_CLIP_IDS: ReadonlySet<string> = new Set([
     )
 
 
-def compress_mp3(path: Path) -> None:
-    tmp = path.with_suffix(".tmp.mp3")
+def stitch_beats(paths: list[Path], dest: Path) -> None:
+    if not paths:
+        raise ValueError("no beats to stitch")
+    if len(paths) == 1:
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-i",
+                str(paths[0]),
+                "-af",
+                BEAT_TRIM_AF,
+                "-codec:a",
+                "libmp3lame",
+                "-b:a",
+                "48k",
+                "-ac",
+                "1",
+                "-ar",
+                "22050",
+                str(dest),
+            ],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return
+
+    inputs: list[str] = []
+    for path in paths:
+        inputs.extend(["-i", str(path)])
+    parts = [
+        f"[{i}:a]{BEAT_TRIM_AF}[a{i}]" for i in range(len(paths))
+    ]
+    silences = [
+        f"anullsrc=r=24000:cl=mono:d={HEAR_BEAT_GAP_S}[s{i}]"
+        for i in range(len(paths) - 1)
+    ]
+    concat_in = ""
+    concat_n = 0
+    for i in range(len(paths)):
+        concat_in += f"[a{i}]"
+        concat_n += 1
+        if i < len(paths) - 1:
+            concat_in += f"[s{i}]"
+            concat_n += 1
+    filt = ";".join(silences + parts) + f";{concat_in}concat=n={concat_n}:v=0:a=1[out]"
+    tmp = dest.with_suffix(".tmp.mp3")
     subprocess.run(
         [
             "ffmpeg",
             "-y",
-            "-i",
-            str(path),
+            *inputs,
+            "-filter_complex",
+            filt,
+            "-map",
+            "[out]",
             "-codec:a",
             "libmp3lame",
             "-b:a",
@@ -187,17 +257,35 @@ def compress_mp3(path: Path) -> None:
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     )
-    tmp.replace(path)
+    tmp.replace(dest)
+
+
+async def _save_beat(text: str, dest: Path, sem: asyncio.Semaphore) -> None:
+    edge_tts = _edge_tts()
+    last_error: Exception | None = None
+    for attempt in range(3):
+        try:
+            async with sem:
+                await edge_tts.Communicate(text, VOICE, rate=RATE).save(str(dest))
+            return
+        except Exception as error:  # noqa: BLE001 — retry transient Edge TTS drops
+            last_error = error
+            await asyncio.sleep(1.5 * (attempt + 1))
+    raise last_error if last_error else RuntimeError("beat bake failed")
 
 
 async def bake_one(
     root: str, say: str, dest: Path, sem: asyncio.Semaphore
 ) -> str:
     text = utterance_text(root, say)
-    async with sem:
-        communicate = _edge_tts().Communicate(text, VOICE, rate=RATE)
-        await communicate.save(str(dest))
-    compress_mp3(dest)
+    beats = utterance_beats(text)
+    with tempfile.TemporaryDirectory() as tmp:
+        paths = []
+        for index, beat in enumerate(beats):
+            raw = Path(tmp) / f"beat{index}.mp3"
+            await _save_beat(beat, raw, sem)
+            paths.append(raw)
+        stitch_beats(paths, dest)
     return text
 
 
