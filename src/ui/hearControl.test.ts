@@ -19,6 +19,9 @@ describe('Hear control', () => {
     expect(deck.indexOf('className="ww-hear"')).toBeLessThan(deck.indexOf('className="ww-means"'));
     expect(deck).toContain('aria-label={`Hear ${root.root}`}');
     expect(deck).toContain('speakRoot(root.root, root.say)');
+    expect(deck).toContain('waitOutCorrectAdvance');
+    expect(deck).toContain('whenCurrentClipEnds');
+    expect(deck).toContain('speakYes(card.root, card.mean)');
   });
 
   it('keeps a 44px minimum tap target', () => {

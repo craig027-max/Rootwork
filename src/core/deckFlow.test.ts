@@ -5,6 +5,7 @@ import {
   allDoneLine,
   allowManualStep,
   commitCorrectAdvance,
+  decideCorrectAdvance,
   deckEntryForOpen,
   entryAfterSuccess,
   lessonAfterCorrect,
@@ -14,6 +15,7 @@ import {
   SUCCESS_BEAT_WITH_CLIP_MS,
   successBeatMs,
   successLine,
+  waitOutCorrectAdvance,
   winLineOnCard,
 } from './deckFlow';
 
@@ -167,6 +169,164 @@ describe('Craig path: correct Bio → Geo, recall not nulled into examples', () 
       entry: 'recall',
       showExamples: false,
     });
+    expect(commitCorrectAdvance(path.dest)).toEqual({
+      kind: 'open',
+      id: geoId,
+      entry: 'recall',
+    });
+  });
+
+  it('on-card say stays BY-oh / JEE-oh / FOH-toh', () => {
+    const photo = ROOTS.find((r) => r.root === 'Photo');
+    expect(bio.say).toBe('BY-oh');
+    expect(geo.say).toBe('JEE-oh');
+    expect(photo?.say).toBe('FOH-toh');
+  });
+
+  it('lengthens the Yes beat to the playing clip so a 3-beat Hear is not cut off', () => {
+    expect(successBeatMs(true, 4200)).toBe(4200);
+    expect(successBeatMs(true, 1900)).toBe(1900);
+    expect(successBeatMs(true, 400)).toBe(SUCCESS_BEAT_MS);
+    expect(successBeatMs(true, null)).toBe(SUCCESS_BEAT_WITH_CLIP_MS);
+    expect(successBeatMs(false, 4200)).toBe(4200);
+  });
+
+  it('does not open Geo while Bio Hear/Yes is still playing past the old 2.2s beat', () => {
+    expect(
+      decideCorrectAdvance({
+        elapsedMs: 0,
+        hasYesClip: true,
+        playing: true,
+        remainingMs: 4200,
+        playbackEnded: false,
+      }),
+    ).toEqual({ action: 'wait', ms: 4200 });
+
+    expect(
+      decideCorrectAdvance({
+        elapsedMs: 2200,
+        hasYesClip: true,
+        playing: true,
+        remainingMs: 2000,
+        playbackEnded: false,
+      }),
+    ).toEqual({ action: 'wait', ms: 2000 });
+
+    expect(
+      decideCorrectAdvance({
+        elapsedMs: 4200,
+        hasYesClip: true,
+        playing: false,
+        remainingMs: 0,
+        playbackEnded: true,
+      }),
+    ).toEqual({ action: 'fire' });
+  });
+
+  it('keeps the 900ms read beat when the clip is already done', () => {
+    expect(
+      decideCorrectAdvance({
+        elapsedMs: 400,
+        hasYesClip: true,
+        playing: false,
+        remainingMs: 0,
+        playbackEnded: true,
+      }),
+    ).toEqual({ action: 'wait', ms: SUCCESS_BEAT_MS - 400 });
+
+    expect(
+      decideCorrectAdvance({
+        elapsedMs: SUCCESS_BEAT_MS,
+        hasYesClip: false,
+        playing: false,
+        remainingMs: null,
+        playbackEnded: true,
+      }),
+    ).toEqual({ action: 'fire' });
+  });
+
+  it('uses the 2.2s fallback only when a Yes clip is listed and duration is unknown', () => {
+    expect(
+      decideCorrectAdvance({
+        elapsedMs: 0,
+        hasYesClip: true,
+        playing: false,
+        remainingMs: null,
+        playbackEnded: false,
+      }),
+    ).toEqual({ action: 'wait', ms: SUCCESS_BEAT_WITH_CLIP_MS });
+
+    expect(
+      decideCorrectAdvance({
+        elapsedMs: SUCCESS_BEAT_WITH_CLIP_MS,
+        hasYesClip: true,
+        playing: false,
+        remainingMs: null,
+        playbackEnded: false,
+      }),
+    ).toEqual({ action: 'fire' });
+  });
+});
+
+describe('waitOutCorrectAdvance: Bio audio must finish before Geo can open', () => {
+  async function flush(): Promise<void> {
+    await Promise.resolve();
+    await Promise.resolve();
+  }
+
+  it('does not fire while Bio is still playing after 2.2s; fires only after ended', async () => {
+    let now = 0;
+    let playing = true;
+    let remaining: number | null = 4200;
+    let resolveEnded: (() => void) | undefined;
+    const ended = new Promise<void>((resolve) => {
+      resolveEnded = resolve;
+    });
+    const pendingSleeps: Array<{ ms: number; resolve: () => void }> = [];
+
+    let result: 'fire' | 'cancel' | null = null;
+    void waitOutCorrectAdvance(
+      { hasYesClip: true, startedAt: 0 },
+      {
+        now: () => now,
+        sleep: (ms) =>
+          new Promise<void>((resolve) => {
+            pendingSleeps.push({ ms, resolve });
+          }),
+        isPlaying: () => playing,
+        remainingMs: () => remaining,
+        whenEnded: () => ended,
+        cancelled: () => false,
+      },
+    ).then((value) => {
+      result = value;
+    });
+
+    await flush();
+    expect(result).toBeNull();
+    expect(pendingSleeps[0]?.ms).toBe(4200);
+
+    // Old 2.2s Yes beat would have opened Geo here — Bio Hear is still going.
+    now = 2200;
+    remaining = 2000;
+    expect(result).toBeNull();
+
+    now = 4200;
+    remaining = 0;
+    playing = false;
+    resolveEnded?.();
+    pendingSleeps[0]?.resolve();
+    await flush();
+    expect(result).toBe('fire');
+  });
+
+  it('still opens Geo in recall after the wait — #19 loop is intact', async () => {
+    const path = lessonAfterCorrect(bioId, false);
+    expect(path.afterBeat.action).toBe('open');
+    if (path.afterBeat.action !== 'open') throw new Error('expected open');
+    expect(path.afterBeat.currentRootId).toBe(geoId);
+    expect(path.afterBeat.entry).toBe('recall');
+    expect(path.afterBeat.showExamples).toBe(false);
     expect(commitCorrectAdvance(path.dest)).toEqual({
       kind: 'open',
       id: geoId,

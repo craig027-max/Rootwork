@@ -17,12 +17,20 @@ import {
   commitCorrectAdvance,
   isLessonStudying,
   showExampleWords,
+  waitOutCorrectAdvance,
   winLineOnCard,
-  successBeatMs,
   type AfterCorrectRecall,
 } from '../core/deckFlow';
 import { buildRecall, type RecallBeat } from '../core/recall';
-import { speakRoot, speakYes, yesClipUrl } from '../core/speak';
+import {
+  currentClipRemainingMs,
+  isClipPlaying,
+  speakRoot,
+  speakYes,
+  stopSpeaking,
+  whenCurrentClipEnds,
+  yesClipUrl,
+} from '../core/speak';
 import { paletteVars } from './components/styleVars';
 import { Scene } from './Scene';
 import { SCENE_EMOJI } from './scenes';
@@ -73,6 +81,8 @@ export function Deck() {
     rootId: string;
   } | null>(null);
   const advanceTimer = useRef<number | null>(null);
+  const advanceGen = useRef(0);
+  const sleepResolve = useRef<(() => void) | null>(null);
   const pool = useMemo(
     () => ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
     [entitled],
@@ -81,13 +91,20 @@ export function Deck() {
   poolRef.current = pool;
 
   function cancelAdvanceTimer() {
+    advanceGen.current += 1;
     if (advanceTimer.current != null) {
       window.clearTimeout(advanceTimer.current);
       advanceTimer.current = null;
     }
+    const resolveSleep = sleepResolve.current;
+    sleepResolve.current = null;
+    resolveSleep?.();
   }
 
   function fireAdvance(dest: AfterCorrectRecall) {
+    // Prefer waiting for ended; if we must open while audio remains, cut it
+    // so Geo/Photo cannot speak over leftover Bio.
+    if (isClipPlaying()) stopSpeaking();
     useWondralStore.getState().clearCorrectAdvance();
     const next = commitCorrectAdvance(dest);
     if (next.kind === 'open') useWondralStore.getState().openRoot(next.id, { entry: next.entry });
@@ -98,14 +115,38 @@ export function Deck() {
     cancelAdvanceTimer();
     // Armed from the tap (and again on remount). Not from [openRoot, closeRoot]
     // — that effect retriggered, cleared the timer, and let examples back in.
-    // Clip present: hold ~2.2s so Jenny can finish. Missing: the 900ms read.
-    advanceTimer.current = window.setTimeout(() => {
-      advanceTimer.current = null;
+    // Hold until the playing Hear/Yes element ends (or the 900ms read). The
+    // old 2.2s guess is only a fallback before Safari reports duration.
+    const gen = advanceGen.current;
+    const startedAt = Date.now();
+    const fromId = useWondralStore.getState().correctAdvance?.fromId ?? currentRootId;
+    const hasYesClip = Boolean(fromId && yesClipUrl(fromId));
+
+    void waitOutCorrectAdvance(
+      { hasYesClip, startedAt },
+      {
+        now: () => Date.now(),
+        sleep: (ms) =>
+          new Promise<void>((resolve) => {
+            sleepResolve.current = resolve;
+            advanceTimer.current = window.setTimeout(() => {
+              advanceTimer.current = null;
+              sleepResolve.current = null;
+              resolve();
+            }, ms);
+          }),
+        isPlaying: isClipPlaying,
+        remainingMs: currentClipRemainingMs,
+        whenEnded: whenCurrentClipEnds,
+        cancelled: () => advanceGen.current !== gen,
+      },
+    ).then((result) => {
+      if (result !== 'fire') return;
       const live = useWondralStore.getState().correctAdvance;
       if (!live || live.dest.kind !== dest.kind || live.dest.line !== dest.line) return;
       if (dest.kind === 'next' && live.dest.kind === 'next' && live.dest.id !== dest.id) return;
       fireAdvance(dest);
-    }, successBeatMs(Boolean(currentRootId && yesClipUrl(currentRootId))));
+    });
   }
 
   useEffect(() => () => cancelAdvanceTimer(), []);

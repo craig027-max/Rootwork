@@ -12,15 +12,124 @@ import { ROOTS_BY_ID, neighborOpenable, type Root, type RootId } from '../data/r
 export const SUCCESS_BEAT_MS = 900;
 
 /**
- * When a baked Yes clip is present, hold the beat long enough for Jenny to
- * finish ("Yes — Bio means life") then go to Geo. Trimmed Bio is ~1.9s;
- * 2.2s leaves a breath without feeling stuck.
+ * Fallback when a Yes clip is listed but the element has no duration yet
+ * (Safari before `loadedmetadata`). Trimmed Bio Yes is ~1.9s; 2.2s was
+ * enough before Hear grew 0.6s beats. Prefer the live remaining time.
  */
 export const SUCCESS_BEAT_WITH_CLIP_MS = 2200;
 
-/** Hold a little longer when Jenny is speaking the Yes line; else the 900ms read. */
-export function successBeatMs(hasYesClip: boolean): number {
+/** Safety cap so a missing `ended` on Phone Safari cannot hang the lesson. */
+export const ADVANCE_ENDED_FALLBACK_MS = 10_000;
+
+/**
+ * How long to hold the Yes beat. When we know the playing clip length
+ * (Hear leftover or a long 3-beat Yes), use that so Geo cannot slam over it.
+ */
+export function successBeatMs(
+  hasYesClip: boolean,
+  clipDurationMs?: number | null,
+): number {
+  if (clipDurationMs != null && Number.isFinite(clipDurationMs) && clipDurationMs > 0) {
+    return Math.max(SUCCESS_BEAT_MS, Math.round(clipDurationMs));
+  }
   return hasYesClip ? SUCCESS_BEAT_WITH_CLIP_MS : SUCCESS_BEAT_MS;
+}
+
+export type AdvanceGate = {
+  /** ms since the correct tap (or remount re-arm). */
+  elapsedMs: number;
+  hasYesClip: boolean;
+  playing: boolean;
+  remainingMs: number | null;
+  /** Current element has ended (or there was nothing to wait for). */
+  playbackEnded: boolean;
+};
+
+export type AdvanceDecision =
+  | { action: 'fire' }
+  | { action: 'wait'; ms: number }
+  | { action: 'wait-ended' };
+
+/**
+ * Bio correct → do not open Geo while Bio's Hear/Yes is still playing.
+ * After the clip ends, keep the 900ms read beat if it has not elapsed.
+ */
+export function decideCorrectAdvance(gate: AdvanceGate): AdvanceDecision {
+  const minLeft = Math.max(0, SUCCESS_BEAT_MS - gate.elapsedMs);
+
+  if (gate.playing) {
+    if (gate.remainingMs != null && gate.remainingMs > 0) {
+      return { action: 'wait', ms: Math.max(minLeft, gate.remainingMs) };
+    }
+    return minLeft > 0 ? { action: 'wait', ms: minLeft } : { action: 'wait-ended' };
+  }
+
+  if (!gate.playbackEnded && gate.hasYesClip) {
+    const fallbackLeft = Math.max(0, SUCCESS_BEAT_WITH_CLIP_MS - gate.elapsedMs);
+    if (fallbackLeft > 0 || minLeft > 0) {
+      return { action: 'wait', ms: Math.max(minLeft, fallbackLeft) };
+    }
+    return { action: 'fire' };
+  }
+
+  return minLeft > 0 ? { action: 'wait', ms: minLeft } : { action: 'fire' };
+}
+
+export interface AdvanceWaitHooks {
+  now: () => number;
+  sleep: (ms: number) => Promise<void>;
+  isPlaying: () => boolean;
+  remainingMs: () => number | null;
+  whenEnded: () => Promise<void>;
+  cancelled: () => boolean;
+}
+
+/**
+ * Hold until decideCorrectAdvance says fire. Used by Deck so auto-advance
+ * cannot open the next root (or start its Hear) over leftover Bio audio.
+ */
+export async function waitOutCorrectAdvance(
+  opts: { hasYesClip: boolean; startedAt: number },
+  hooks: AdvanceWaitHooks,
+): Promise<'fire' | 'cancel'> {
+  let playbackEnded = !hooks.isPlaying() && !opts.hasYesClip;
+
+  while (!hooks.cancelled()) {
+    const decision = decideCorrectAdvance({
+      elapsedMs: hooks.now() - opts.startedAt,
+      hasYesClip: opts.hasYesClip,
+      playing: hooks.isPlaying(),
+      remainingMs: hooks.remainingMs(),
+      playbackEnded: playbackEnded && !hooks.isPlaying(),
+    });
+
+    if (decision.action === 'fire') return 'fire';
+
+    if (decision.action === 'wait-ended') {
+      let ended = false;
+      await Promise.race([
+        hooks.whenEnded().then(() => {
+          ended = true;
+          playbackEnded = true;
+        }),
+        hooks.sleep(ADVANCE_ENDED_FALLBACK_MS),
+      ]);
+      if (!hooks.isPlaying()) playbackEnded = true;
+      // Phone Safari never fired `ended` — open rather than hang.
+      if (!ended && hooks.isPlaying()) return 'fire';
+      continue;
+    }
+
+    await Promise.race([
+      hooks.sleep(decision.ms),
+      hooks.whenEnded().then(() => {
+        playbackEnded = true;
+      }),
+    ]);
+    if (!hooks.isPlaying()) playbackEnded = true;
+  }
+
+  return 'cancel';
 }
 
 export type AfterCorrectRecall =
