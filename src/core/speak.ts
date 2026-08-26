@@ -175,6 +175,12 @@ export interface HearPlayer {
 }
 
 let current: HTMLAudioElement | null = null;
+const endedWaiters: Array<() => void> = [];
+
+function notifyClipEnded(): void {
+  const waiters = endedWaiters.splice(0, endedWaiters.length);
+  for (const waiter of waiters) waiter();
+}
 
 function stopCurrent(): void {
   if (!current) return;
@@ -188,17 +194,74 @@ function stopCurrent(): void {
   current = null;
 }
 
+function attachClipFinish(audio: HTMLAudioElement): void {
+  const finish = () => {
+    if (current !== audio) return;
+    current = null;
+    notifyClipEnded();
+  };
+  audio.addEventListener('ended', finish);
+  audio.addEventListener('error', finish);
+}
+
 function defaultPlay(url: string): void {
   if (typeof Audio === 'undefined') return;
+  // Replace without notifying — waiters stay pending so they cover the new clip
+  // (Hear → Yes, or a Hear tap during the Yes beat).
   stopCurrent();
   const audio = new Audio(url);
   current = audio;
+  attachClipFinish(audio);
   const playResult = audio.play();
   if (playResult && typeof playResult.catch === 'function') {
     playResult.catch(() => {
       // 404, decode error, or iOS quirk — fail quietly.
+      if (current === audio) {
+        current = null;
+        notifyClipEnded();
+      }
     });
   }
+}
+
+/** True while the shared Hear/Yes element is mid-play. */
+export function isClipPlaying(): boolean {
+  return Boolean(current && !current.paused && !current.ended);
+}
+
+/** An element is loaded (or starting) and has not ended — includes play-pending. */
+export function hasActiveClip(): boolean {
+  return Boolean(current && !current.ended);
+}
+
+/**
+ * Remaining ms on the current element, or null when Safari has not given a
+ * finite duration yet (common until `loadedmetadata`).
+ */
+export function currentClipRemainingMs(): number | null {
+  if (!current) return null;
+  const { duration, currentTime } = current;
+  if (!Number.isFinite(duration) || duration <= 0) return null;
+  const used = Number.isFinite(currentTime) && currentTime > 0 ? currentTime : 0;
+  return Math.max(0, Math.round((duration - used) * 1000));
+}
+
+/**
+ * Resolves when the current Hear/Yes element ends, errors, or is explicitly
+ * stopped. A replace-play (Yes after Hear) keeps this pending until the new
+ * clip finishes — so auto-advance cannot open Geo while Bio is still talking.
+ */
+export function whenCurrentClipEnds(): Promise<void> {
+  if (!current || current.ended) return Promise.resolve();
+  return new Promise((resolve) => {
+    endedWaiters.push(resolve);
+  });
+}
+
+/** Stop leftover speech before opening the next root (fallback / slam path). */
+export function stopSpeaking(): void {
+  stopCurrent();
+  notifyClipEnded();
 }
 
 function playUrl(url: string | null, player?: HearPlayer | null): boolean {

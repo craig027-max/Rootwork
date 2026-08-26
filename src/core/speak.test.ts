@@ -5,21 +5,27 @@ import { successLine } from './deckFlow';
 import { HEAR_CLIP_IDS } from './hearClips';
 import { ROOTS } from '../data/roots';
 import {
+  currentClipRemainingMs,
   hearClipId,
   hearClipUrl,
   HEAR_BEAT_PAUSE,
+  isClipPlaying,
   letterNames,
   SPEAKABLE_SYLLABLES,
   speakablePronunciation,
   speakRoot,
   speakYes,
+  stopSpeaking,
   utteranceText,
+  whenCurrentClipEnds,
   yesClipUrl,
   yesUtteranceText,
 } from './speak';
+import { decideCorrectAdvance } from './deckFlow';
 import { YES_CLIP_IDS } from './yesClips';
 
 afterEach(() => {
+  stopSpeaking();
   vi.unstubAllGlobals();
 });
 
@@ -348,5 +354,139 @@ describe('correct recall Yes clip', () => {
     vi.stubGlobal('speechSynthesis', synth);
     speakYes('Bio', 'life', { play() {} });
     expect(synth.speak).not.toHaveBeenCalled();
+  });
+});
+
+class FakeAudio {
+  src: string;
+  paused = true;
+  ended = false;
+  duration = Number.NaN;
+  currentTime = 0;
+  private readonly listeners = new Map<string, Set<() => void>>();
+
+  constructor(url: string) {
+    this.src = url;
+  }
+
+  play(): Promise<void> {
+    this.paused = false;
+    return Promise.resolve();
+  }
+
+  pause(): void {
+    this.paused = true;
+  }
+
+  load(): void {}
+
+  removeAttribute(): void {}
+
+  addEventListener(type: string, fn: () => void): void {
+    const set = this.listeners.get(type) ?? new Set();
+    set.add(fn);
+    this.listeners.set(type, set);
+  }
+
+  removeEventListener(type: string, fn: () => void): void {
+    this.listeners.get(type)?.delete(fn);
+  }
+
+  finish(): void {
+    this.ended = true;
+    this.paused = true;
+    for (const fn of [...(this.listeners.get('ended') ?? [])]) fn();
+  }
+}
+
+describe('current clip wait: Bio must finish before Geo audio', () => {
+  const created: FakeAudio[] = [];
+
+  function stubAudio(): void {
+    created.length = 0;
+    vi.stubGlobal(
+      'Audio',
+      class TrackingAudio extends FakeAudio {
+        constructor(url: string) {
+          super(url);
+          created.push(this);
+        }
+      },
+    );
+  }
+
+  it('does not resolve whenCurrentClipEnds while Bio is still playing', async () => {
+    stubAudio();
+    speakYes('Bio', 'life');
+    expect(created).toHaveLength(1);
+    expect(created[0]?.src).toMatch(/audio\/yes\/bio\.mp3$/);
+    created[0]!.duration = 4.2;
+    expect(isClipPlaying()).toBe(true);
+    expect(currentClipRemainingMs()).toBe(4200);
+
+    let ended = false;
+    void whenCurrentClipEnds().then(() => {
+      ended = true;
+    });
+    await Promise.resolve();
+    expect(ended).toBe(false);
+
+    expect(
+      decideCorrectAdvance({
+        elapsedMs: 2200,
+        hasYesClip: true,
+        playing: isClipPlaying(),
+        remainingMs: currentClipRemainingMs(),
+        playbackEnded: ended,
+      }).action,
+    ).not.toBe('fire');
+
+    created[0]!.finish();
+    await Promise.resolve();
+    expect(ended).toBe(true);
+    expect(isClipPlaying()).toBe(false);
+  });
+
+  it('Geo does not start a new clip until Bio’s element has ended', async () => {
+    stubAudio();
+    speakYes('Bio', 'life');
+    const bio = created[0]!;
+    bio.duration = 4.2;
+
+    let bioEnded = false;
+    void whenCurrentClipEnds().then(() => {
+      bioEnded = true;
+    });
+
+    // Auto-advance (and any next-root Hear) stays closed while Bio is mid-clip.
+    expect(bioEnded).toBe(false);
+    expect(isClipPlaying()).toBe(true);
+    expect(
+      decideCorrectAdvance({
+        elapsedMs: 2200,
+        hasYesClip: true,
+        playing: isClipPlaying(),
+        remainingMs: currentClipRemainingMs(),
+        playbackEnded: bioEnded,
+      }).action,
+    ).toBe('wait');
+
+    bio.finish();
+    await Promise.resolve();
+    expect(bioEnded).toBe(true);
+    expect(isClipPlaying()).toBe(false);
+    expect(
+      decideCorrectAdvance({
+        elapsedMs: 4200,
+        hasYesClip: true,
+        playing: false,
+        remainingMs: 0,
+        playbackEnded: true,
+      }).action,
+    ).toBe('fire');
+
+    speakRoot('Geo', 'JEE-oh');
+    expect(created).toHaveLength(2);
+    expect(created[1]?.src).toMatch(/audio\/hear\/geo\.mp3$/);
   });
 });
