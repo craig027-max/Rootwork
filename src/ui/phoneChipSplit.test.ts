@@ -69,6 +69,6 @@ describe('phone card: tap chip for part-split', () => {
   it('does not change the Hear speaker control', () => {
     expect(deck).toContain('className="ww-hear"');
     expect(deck).toContain('aria-label={`Hear ${root.root}`}');
-    expect(deck).toContain('speakRoot(root.root, root.say)');
+    expect(deck).toContain('speakRoot(card.root, card.say)');
   });
 });
