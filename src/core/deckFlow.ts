@@ -242,6 +242,37 @@ export function allowManualStep(correctAdvance: CorrectAdvance | null): boolean 
   return correctAdvance === null;
 }
 
+export interface AfterHearNextTap {
+  /** Root Rush on the deck nav. Hidden on the next-Play path (#28–#30). */
+  showRush: boolean;
+  /**
+   * Card + nav Next. Hidden after Hear/Yes so the one tap is I know this
+   * (teach) or the quiz option (recall). Auto-advance still opens the next
+   * root with `entry: 'recall'` — this only removes the competing taps.
+   */
+  showNextRoot: boolean;
+}
+
+/**
+ * After Hear/Yes finishes, first-run deck stays on one next tap — no
+ * Rush / Daily / Next dump. Same spirit as Home's one Play (#28–#30).
+ *
+ * `hearFinished` is this card's Hear clip ending. `entry: 'recall'` is the
+ * #19/#32 path: previous Hear/Yes already finished, then this root opened.
+ */
+export function afterHearNextTap(opts: {
+  nextPlay: boolean;
+  hearFinished: boolean;
+  entry: DeckEntry;
+  won: boolean;
+}): AfterHearNextTap {
+  const afterHear = opts.hearFinished || opts.entry === 'recall';
+  return {
+    showRush: !opts.nextPlay,
+    showNextRoot: !opts.won && !(opts.nextPlay && afterHear),
+  };
+}
+
 export interface LessonAfterCorrect {
   dest: AfterCorrectRecall;
   duringYes: { showExamples: boolean; winLine: string };

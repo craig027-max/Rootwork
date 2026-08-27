@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ROOTS, neighborOpenable, rootId, rootsInTier } from '../data/roots';
 import {
   afterCorrectRecall,
+  afterHearNextTap,
   allDoneLine,
   allowManualStep,
   commitCorrectAdvance,
@@ -332,5 +333,40 @@ describe('waitOutCorrectAdvance: Bio audio must finish before Geo can open', () 
       id: geoId,
       entry: 'recall',
     });
+  });
+});
+
+describe('afterHearNextTap: one next tap, no Rush/Daily dump', () => {
+  it('keeps Next on first-run teach until Hear finishes', () => {
+    expect(
+      afterHearNextTap({ nextPlay: true, hearFinished: false, entry: 'teach', won: false }),
+    ).toEqual({ showRush: false, showNextRoot: true });
+  });
+
+  it('after Hear finishes on teach, only I know this remains — no Next or Rush', () => {
+    expect(
+      afterHearNextTap({ nextPlay: true, hearFinished: true, entry: 'teach', won: false }),
+    ).toEqual({ showRush: false, showNextRoot: false });
+  });
+
+  it('after Hear/Yes opens the next root in recall, quiz is the one tap', () => {
+    expect(
+      afterHearNextTap({ nextPlay: true, hearFinished: false, entry: 'recall', won: false }),
+    ).toEqual({ showRush: false, showNextRoot: false });
+  });
+
+  it('returning dashboard still offers Next and Rush', () => {
+    expect(
+      afterHearNextTap({ nextPlay: false, hearFinished: true, entry: 'teach', won: false }),
+    ).toEqual({ showRush: true, showNextRoot: true });
+    expect(
+      afterHearNextTap({ nextPlay: false, hearFinished: false, entry: 'recall', won: false }),
+    ).toEqual({ showRush: true, showNextRoot: true });
+  });
+
+  it('hides Next during the Yes beat even before the clip ends', () => {
+    expect(
+      afterHearNextTap({ nextPlay: true, hearFinished: false, entry: 'teach', won: true }),
+    ).toEqual({ showRush: false, showNextRoot: false });
   });
 });

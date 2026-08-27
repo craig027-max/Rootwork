@@ -13,6 +13,7 @@ import {
 } from '../data/roots';
 import {
   afterCorrectRecall,
+  afterHearNextTap,
   allowManualStep,
   commitCorrectAdvance,
   isLessonStudying,
@@ -24,6 +25,7 @@ import {
 import { buildRecall, type RecallBeat } from '../core/recall';
 import {
   currentClipRemainingMs,
+  hasActiveClip,
   isClipPlaying,
   speakRoot,
   speakYes,
@@ -31,6 +33,7 @@ import {
   whenCurrentClipEnds,
   yesClipUrl,
 } from '../core/speak';
+import { hasChosenMode, isNextPlayHome } from './home/menu';
 import { paletteVars } from './components/styleVars';
 import { Scene } from './Scene';
 import { SCENE_EMOJI } from './scenes';
@@ -61,6 +64,7 @@ function highlight(word: string, hl: string): ReactNode {
 export function Deck() {
   const currentRootId = useWondralStore((s) => s.currentRootId);
   const completed = useWondralStore((s) => s.completedRoots);
+  const stats = useWondralStore((s) => s.stats);
   const completeRoot = useWondralStore((s) => s.completeRoot);
   const openRoot = useWondralStore((s) => s.openRoot);
   const closeRoot = useWondralStore((s) => s.closeRoot);
@@ -74,6 +78,8 @@ export function Deck() {
 
   const [indexOpen, setIndexOpen] = useState(false);
   const [openWord, setOpenWord] = useState<string | null>(null);
+  const [hearFinished, setHearFinished] = useState(false);
+  const hearGen = useRef(0);
   const [recall, setRecall] = useState<{
     beat: RecallBeat;
     picked: number | null;
@@ -153,6 +159,8 @@ export function Deck() {
 
   useEffect(() => {
     setOpenWord(null);
+    hearGen.current += 1;
+    setHearFinished(false);
   }, [currentRootId]);
 
   useLayoutEffect(() => {
@@ -234,6 +242,13 @@ export function Deck() {
   const won = Boolean(winLine);
   const studying = isLessonStudying(lesson);
   const examples = showExampleWords(lesson);
+  const nextPlay = isNextPlayHome(completed, entitled, { choseMode: hasChosenMode(stats) });
+  const nextTap = afterHearNextTap({
+    nextPlay,
+    hearFinished,
+    entry: deckEntry,
+    won,
+  });
   const card = root;
   const quizRecall = recall && recall.rootId === id && !won ? recall : null;
   const openSplit = splitForOpenWord(root.words, openWord);
@@ -244,6 +259,16 @@ export function Deck() {
     const next = neighborOpenable(id, dir, entitled);
     if (next) openRoot(next);
     else if (dir === 1) closeRoot();
+  }
+
+  function onHear() {
+    const gen = ++hearGen.current;
+    speakRoot(card.root, card.say);
+    if (!hasActiveClip()) return;
+    void whenCurrentClipEnds().then(() => {
+      if (hearGen.current !== gen) return;
+      setHearFinished(true);
+    });
   }
 
   function startRecall() {
@@ -312,7 +337,7 @@ export function Deck() {
                   type="button"
                   className="ww-hear"
                   aria-label={`Hear ${root.root}`}
-                  onClick={() => speakRoot(root.root, root.say)}
+                  onClick={onHear}
                 >
                   <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
                     <path
@@ -422,9 +447,15 @@ export function Deck() {
             ) : quizRecall ? (
               <span className="ww-muted">One tap. No shame if you miss — we'll show you.</span>
             ) : (
-              <Button onClick={startRecall}>I know this ✓</Button>
+              <Button
+                onClick={startRecall}
+                block={!nextTap.showNextRoot}
+                size={!nextTap.showNextRoot ? 'lg' : 'md'}
+              >
+                I know this ✓
+              </Button>
             )}
-            {won ? null : (
+            {won || !nextTap.showNextRoot ? null : (
               <Button variant="ghost" onClick={() => go(1)}>
                 Next root →
               </Button>
@@ -443,6 +474,8 @@ export function Deck() {
         onNext={() => go(1)}
         onQuiz={() => setView('quiz')}
         onIndex={() => setIndexOpen(true)}
+        showRush={nextTap.showRush}
+        showNext={nextTap.showNextRoot}
       />
 
       {indexOpen ? (
