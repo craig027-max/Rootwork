@@ -1083,6 +1083,39 @@
   border-color: rgba(var(--spark-rgb), 0.78);
   background: rgba(var(--spark-rgb), 0.32);
 }
+.ww-hear.is-listening {
+  color: var(--text-primary);
+  border-color: rgba(var(--spark-rgb), 0.78);
+  background: rgba(var(--spark-rgb), 0.32);
+  box-shadow:
+    0 0 16px rgba(var(--spark-rgb), 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ww-hear.is-listening {
+    animation: ww-hear-listen 1.4s ease-in-out infinite;
+  }
+}
+@keyframes ww-hear-listen {
+  0%,
+  100% {
+    box-shadow:
+      0 0 12px rgba(var(--spark-rgb), 0.35),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+  50% {
+    box-shadow:
+      0 0 22px rgba(var(--spark-rgb), 0.6),
+      inset 0 1px 0 rgba(255, 255, 255, 0.16);
+  }
+}
+.ww-listen {
+  margin: 4px 0 0;
+  font-family: var(--font-body);
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: rgb(var(--spark-rgb));
+}
 .ww-recall-win {
   padding-top: 8px;
   padding-bottom: 8px;
@@ -1339,6 +1372,11 @@
 .ww-nav-btn:active {
   transform: scale(0.92);
 }
+.ww-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
 .ww-nav-cur {
   min-width: 150px;
   text-align: center;
@@ -1591,6 +1629,11 @@
   }
   .ww-hear {
     margin-block: -12px;
+  }
+  /* Keep the mid-play wait readable — lead/eyebrow hide on short phones. */
+  .ww-listen {
+    display: block;
+    font-size: 0.78rem;
   }
   /* Nav is fixed; extra wrap padding was creating a 26px phantom scroll
      on iPhone SE after the card already cleared the footer. */

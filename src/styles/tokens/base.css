@@ -141,6 +141,19 @@ code, .mono, kbd {
               opacity var(--dur-fast);
 }
 .btn:active { transform: var(--press); }
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+.btn:disabled:hover,
+.btn-spark:disabled:hover,
+.btn-primary:disabled:hover,
+.btn-ghost:disabled:hover {
+  transform: none;
+  opacity: 0.45;
+}
 
 /* Spark — filled with the active jewel gradient. The hero CTA. */
 .btn-spark {

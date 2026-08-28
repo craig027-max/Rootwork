@@ -15,6 +15,8 @@ import {
   afterCorrectRecall,
   afterHearNextTap,
   allowManualStep,
+  allowNextRootTap,
+  clipListening,
   commitCorrectAdvance,
   isLessonStudying,
   showExampleWords,
@@ -79,6 +81,7 @@ export function Deck() {
   const [indexOpen, setIndexOpen] = useState(false);
   const [openWord, setOpenWord] = useState<string | null>(null);
   const [hearFinished, setHearFinished] = useState(false);
+  const [listening, setListening] = useState(false);
   const hearGen = useRef(0);
   const [recall, setRecall] = useState<{
     beat: RecallBeat;
@@ -161,6 +164,7 @@ export function Deck() {
     setOpenWord(null);
     hearGen.current += 1;
     setHearFinished(false);
+    setListening(false);
   }, [currentRootId]);
 
   useLayoutEffect(() => {
@@ -249,29 +253,43 @@ export function Deck() {
     entry: deckEntry,
     won,
   });
+  const listen = clipListening(listening);
   const card = root;
   const quizRecall = recall && recall.rootId === id && !won ? recall : null;
   const openSplit = splitForOpenWord(root.words, openWord);
 
   function go(dir: 1 | -1) {
     if (!allowManualStep(useWondralStore.getState().correctAdvance)) return;
+    if (dir === 1 && !allowNextRootTap(useWondralStore.getState().correctAdvance, listening)) {
+      return;
+    }
     cancelAdvanceTimer();
     const next = neighborOpenable(id, dir, entitled);
     if (next) openRoot(next);
     else if (dir === 1) closeRoot();
   }
 
-  function onHear() {
+  function watchCurrentClip(markHearFinished: boolean) {
     const gen = ++hearGen.current;
-    speakRoot(card.root, card.say);
-    if (!hasActiveClip()) return;
+    if (!hasActiveClip()) {
+      setListening(false);
+      return;
+    }
+    setListening(true);
     void whenCurrentClipEnds().then(() => {
       if (hearGen.current !== gen) return;
-      setHearFinished(true);
+      setListening(false);
+      if (markHearFinished) setHearFinished(true);
     });
   }
 
+  function onHear() {
+    speakRoot(card.root, card.say);
+    watchCurrentClip(true);
+  }
+
   function startRecall() {
+    if (listen.disableKnowThis) return;
     setRecall({
       beat: buildRecall({ root: card, pool, choices: 3 }),
       picked: null,
@@ -294,6 +312,7 @@ export function Deck() {
       setRecall({ beat: recall.beat, picked: idx, win: dest.line, rootId: id });
       // User gesture — play the baked Yes line now. Missing clip: silent.
       speakYes(card.root, card.mean);
+      watchCurrentClip(true);
       armAdvance(dest);
       return;
     }
@@ -335,8 +354,9 @@ export function Deck() {
               <div className="ww-pron">
                 <button
                   type="button"
-                  className="ww-hear"
+                  className={`ww-hear${listen.hearActive ? ' is-listening' : ''}`}
                   aria-label={`Hear ${root.root}`}
+                  aria-pressed={listen.hearActive}
                   onClick={onHear}
                 >
                   <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
@@ -350,6 +370,11 @@ export function Deck() {
                   {root.say} &nbsp;·&nbsp; <span className="origin">from {root.org}</span>
                 </span>
               </div>
+              {listen.line ? (
+                <p className="ww-listen" role="status" aria-live="polite">
+                  {listen.line}
+                </p>
+              ) : null}
               <div className="ww-means">
                 <span className="arrow" aria-hidden="true">
                   →
@@ -449,6 +474,7 @@ export function Deck() {
             ) : (
               <Button
                 onClick={startRecall}
+                disabled={listen.disableKnowThis}
                 block={!nextTap.showNextRoot}
                 size={!nextTap.showNextRoot ? 'lg' : 'md'}
               >
@@ -456,7 +482,7 @@ export function Deck() {
               </Button>
             )}
             {won || !nextTap.showNextRoot ? null : (
-              <Button variant="ghost" onClick={() => go(1)}>
+              <Button variant="ghost" onClick={() => go(1)} disabled={listen.disableNextRoot}>
                 Next root →
               </Button>
             )}
@@ -476,12 +502,14 @@ export function Deck() {
         onIndex={() => setIndexOpen(true)}
         showRush={nextTap.showRush}
         showNext={nextTap.showNextRoot}
+        nextDisabled={listen.disableNextRoot}
       />
 
       {indexOpen ? (
         <RootIndex
           entitled={entitled}
           onPick={(pickId) => {
+            if (!allowNextRootTap(useWondralStore.getState().correctAdvance, listening)) return;
             setIndexOpen(false);
             openRoot(pickId);
           }}
