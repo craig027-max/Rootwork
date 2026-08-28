@@ -13,10 +13,10 @@ function firstRule(source: string, selector: string): string {
 
 describe('Hear control', () => {
   it('keeps the ww-hear class next to the pronunciation', () => {
-    expect(deck).toContain('className="ww-hear"');
+    expect(deck).toContain('ww-hear');
     expect(deck).toContain('className="ww-pron"');
-    expect(deck.indexOf('className="ww-hear"')).toBeGreaterThan(deck.indexOf('className="ww-pron"'));
-    expect(deck.indexOf('className="ww-hear"')).toBeLessThan(deck.indexOf('className="ww-means"'));
+    expect(deck.indexOf('ww-hear')).toBeGreaterThan(deck.indexOf('className="ww-pron"'));
+    expect(deck.indexOf('ww-hear')).toBeLessThan(deck.indexOf('className="ww-means"'));
     expect(deck).toContain('aria-label={`Hear ${root.root}`}');
     expect(deck).toContain('speakRoot(card.root, card.say)');
     expect(deck).toContain('waitOutCorrectAdvance');
@@ -40,5 +40,13 @@ describe('Hear control', () => {
     expect(rule).toMatch(/color:\s*rgb\(var\(--spark-rgb\)\)/);
     expect(rule).toMatch(/background:\s*rgba\(var\(--spark-rgb\)/);
     expect(rule).toMatch(/border:\s*1px solid rgba\(var\(--spark-rgb\)/);
+  });
+
+  it('marks the control active while a clip is playing', () => {
+    expect(deck).toContain('is-listening');
+    expect(deck).toContain('aria-pressed={listen.hearActive}');
+    const active = firstRule(css, '\\.ww-hear\\.is-listening');
+    expect(active).toMatch(/background:\s*rgba\(var\(--spark-rgb\)/);
+    expect(active).toMatch(/box-shadow:/);
   });
 });

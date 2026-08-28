@@ -273,6 +273,48 @@ export function afterHearNextTap(opts: {
   };
 }
 
+/** Kid-facing wait while Hear/Yes is mid-play. Sequential — not smash-together. */
+export const LISTENING_LINE = 'Listening…';
+
+export interface ClipListening {
+  /** Shown on the card while a Hear/Yes clip is active. */
+  line: string | null;
+  /** Hear control looks on / mid-play. */
+  hearActive: boolean;
+  disableKnowThis: boolean;
+  disableNextRoot: boolean;
+}
+
+/**
+ * While the shared Hear/Yes element is playing, the wait is visible and
+ * I-know-this / next-root stay closed. After the clip ends, #33 still
+ * decides whether Next/Rush hide — this only gates the mid-play taps.
+ */
+export function clipListening(playing: boolean): ClipListening {
+  if (!playing) {
+    return {
+      line: null,
+      hearActive: false,
+      disableKnowThis: false,
+      disableNextRoot: false,
+    };
+  }
+  return {
+    line: LISTENING_LINE,
+    hearActive: true,
+    disableKnowThis: true,
+    disableNextRoot: true,
+  };
+}
+
+/** Next-root (card, nav, index) stays closed during the Yes beat and while a clip plays. */
+export function allowNextRootTap(
+  correctAdvance: CorrectAdvance | null,
+  listening: boolean,
+): boolean {
+  return !listening && allowManualStep(correctAdvance);
+}
+
 export interface LessonAfterCorrect {
   dest: AfterCorrectRecall;
   duringYes: { showExamples: boolean; winLine: string };

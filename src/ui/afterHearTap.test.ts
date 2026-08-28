@@ -15,6 +15,7 @@ describe('after Hear: one next tap, no Rush dump', () => {
     expect(deck).toContain('speakRoot(card.root, card.say)');
     expect(deck).toContain('showRush={nextTap.showRush}');
     expect(deck).toContain('showNext={nextTap.showNextRoot}');
+    expect(deck).toContain('nextDisabled={listen.disableNextRoot}');
     expect(deck).toContain('won || !nextTap.showNextRoot ? null');
   });
 
@@ -29,10 +30,12 @@ describe('after Hear: one next tap, no Rush dump', () => {
   it('DeckNav can hide Next and Rush so they do not dump after Hear', () => {
     expect(nav).toContain('showRush');
     expect(nav).toContain('showNext');
+    expect(nav).toContain('nextDisabled');
     expect(nav).toContain('aria-label="Play Root Rush"');
     expect(nav).toContain('aria-label="Next root"');
     expect(nav).toMatch(/showRush \? \(/);
     expect(nav).toMatch(/showNext \? \(/);
+    expect(nav).toContain('disabled={nextDisabled}');
   });
 
   it('keeps the #19/#32 loop: Yes clip then openRoot with entry recall', () => {

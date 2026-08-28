@@ -3,7 +3,10 @@ import { ROOTS, neighborOpenable, rootId, rootsInTier } from '../data/roots';
 import {
   afterCorrectRecall,
   afterHearNextTap,
+  allowNextRootTap,
   allDoneLine,
+  clipListening,
+  LISTENING_LINE,
   allowManualStep,
   commitCorrectAdvance,
   decideCorrectAdvance,
@@ -368,5 +371,43 @@ describe('afterHearNextTap: one next tap, no Rush/Daily dump', () => {
     expect(
       afterHearNextTap({ nextPlay: true, hearFinished: false, entry: 'teach', won: true }),
     ).toEqual({ showRush: false, showNextRoot: false });
+  });
+});
+
+describe('clipListening: visible wait, next-root closed while playing', () => {
+  it('shows Listening… and disables I know this / next while a clip plays', () => {
+    expect(clipListening(true)).toEqual({
+      line: LISTENING_LINE,
+      hearActive: true,
+      disableKnowThis: true,
+      disableNextRoot: true,
+    });
+    expect(LISTENING_LINE).toBe('Listening…');
+    expect(LISTENING_LINE).not.toMatch(/while (Hear|Yes|you listen)/i);
+    expect(LISTENING_LINE).not.toMatch(/starts during/i);
+  });
+
+  it('re-enables I know this / next when the clip ends', () => {
+    expect(clipListening(false)).toEqual({
+      line: null,
+      hearActive: false,
+      disableKnowThis: false,
+      disableNextRoot: false,
+    });
+  });
+
+  it('keeps Next visible on first-run teach while Hear is still playing — disable is separate from #33 hide', () => {
+    expect(
+      afterHearNextTap({ nextPlay: true, hearFinished: false, entry: 'teach', won: false }),
+    ).toEqual({ showRush: false, showNextRoot: true });
+    expect(clipListening(true).disableNextRoot).toBe(true);
+  });
+
+  it('blocks next-root taps while listening, and during the Yes beat', () => {
+    expect(allowNextRootTap(null, true)).toBe(false);
+    expect(allowNextRootTap(null, false)).toBe(true);
+    expect(
+      allowNextRootTap({ fromId: bioId, dest: afterCorrectRecall(bioId, false) }, false),
+    ).toBe(false);
   });
 });

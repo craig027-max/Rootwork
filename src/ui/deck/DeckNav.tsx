@@ -18,6 +18,7 @@ export function DeckNav({
   onIndex,
   showRush = true,
   showNext = true,
+  nextDisabled = false,
 }: {
   rootLabel: string;
   meaning: string;
@@ -32,6 +33,8 @@ export function DeckNav({
   showRush?: boolean;
   /** After Hear/Yes, hide nav Next so it cannot dump the next root mid-listen. */
   showNext?: boolean;
+  /** While a Hear/Yes clip is playing, Next stays visible but closed. */
+  nextDisabled?: boolean;
 }) {
   return (
     <nav className="ww-decknav" aria-label="Deck navigation">
@@ -47,7 +50,13 @@ export function DeckNav({
         </span>
       </button>
       {showNext ? (
-        <button type="button" className="ww-nav-btn" aria-label="Next root" onClick={onNext}>
+        <button
+          type="button"
+          className="ww-nav-btn"
+          aria-label="Next root"
+          disabled={nextDisabled}
+          onClick={onNext}
+        >
           ›
         </button>
       ) : null}
