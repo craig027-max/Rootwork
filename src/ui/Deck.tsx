@@ -26,7 +26,14 @@ import {
 } from '../core/deckFlow';
 import { buildRecall, type RecallBeat } from '../core/recall';
 import {
+  hearBeatChips,
+  hearBeatIndex,
+  hearBeatLabels,
+  hearBeatSplits,
+} from '../core/hearBeats';
+import {
   currentClipRemainingMs,
+  currentClipTime,
   hasActiveClip,
   isClipPlaying,
   speakRoot,
@@ -82,6 +89,8 @@ export function Deck() {
   const [openWord, setOpenWord] = useState<string | null>(null);
   const [hearFinished, setHearFinished] = useState(false);
   const [listening, setListening] = useState(false);
+  const [listenKind, setListenKind] = useState<'hear' | 'yes' | null>(null);
+  const [hearBeat, setHearBeat] = useState<0 | 1 | 2>(0);
   const hearGen = useRef(0);
   const [recall, setRecall] = useState<{
     beat: RecallBeat;
@@ -165,7 +174,27 @@ export function Deck() {
     hearGen.current += 1;
     setHearFinished(false);
     setListening(false);
+    setListenKind(null);
+    setHearBeat(0);
   }, [currentRootId]);
+
+  useEffect(() => {
+    if (!listening || listenKind !== 'hear' || !currentRootId) return;
+    const opened = ROOTS_BY_ID[currentRootId];
+    if (!opened) return;
+    const splits = hearBeatSplits(opened.root);
+    if (!splits) return;
+    const gen = hearGen.current;
+    const tick = () => {
+      if (hearGen.current !== gen) return;
+      const t = currentClipTime();
+      if (t == null) return;
+      setHearBeat(hearBeatIndex(t, splits));
+    };
+    tick();
+    const interval = window.setInterval(tick, 200);
+    return () => window.clearInterval(interval);
+  }, [listening, listenKind, currentRootId]);
 
   useLayoutEffect(() => {
     const opened = currentRootId ? ROOTS_BY_ID[currentRootId] : undefined;
@@ -253,8 +282,12 @@ export function Deck() {
     entry: deckEntry,
     won,
   });
-  const listen = clipListening(listening);
   const card = root;
+  const hearBeats =
+    listenKind === 'hear' && hearBeatSplits(card.root)
+      ? hearBeatChips(hearBeatLabels(card.root, card.say), hearBeat)
+      : null;
+  const listen = clipListening(listening, hearBeats);
   const quizRecall = recall && recall.rootId === id && !won ? recall : null;
   const openSplit = splitForOpenWord(root.words, openWord);
 
@@ -269,23 +302,27 @@ export function Deck() {
     else if (dir === 1) closeRoot();
   }
 
-  function watchCurrentClip(markHearFinished: boolean) {
+  function watchCurrentClip(markHearFinished: boolean, kind: 'hear' | 'yes') {
     const gen = ++hearGen.current;
     if (!hasActiveClip()) {
       setListening(false);
+      setListenKind(null);
       return;
     }
     setListening(true);
+    setListenKind(kind);
+    setHearBeat(0);
     void whenCurrentClipEnds().then(() => {
       if (hearGen.current !== gen) return;
       setListening(false);
+      setListenKind(null);
       if (markHearFinished) setHearFinished(true);
     });
   }
 
   function onHear() {
     speakRoot(card.root, card.say);
-    watchCurrentClip(true);
+    watchCurrentClip(true, 'hear');
   }
 
   function startRecall() {
@@ -312,7 +349,7 @@ export function Deck() {
       setRecall({ beat: recall.beat, picked: idx, win: dest.line, rootId: id });
       // User gesture — play the baked Yes line now. Missing clip: silent.
       speakYes(card.root, card.mean);
-      watchCurrentClip(true);
+      watchCurrentClip(true, 'yes');
       armAdvance(dest);
       return;
     }
@@ -371,9 +408,21 @@ export function Deck() {
                 </span>
               </div>
               {listen.line ? (
-                <p className="ww-listen" role="status" aria-live="polite">
-                  {listen.line}
-                </p>
+                <div className="ww-listen" role="status" aria-live="polite">
+                  <p className="ww-listen-line">{listen.line}</p>
+                  {listen.beats ? (
+                    <p className="ww-listen-beats">
+                      {listen.beats.map((beat) => (
+                        <span
+                          key={beat.kind}
+                          className={`ww-listen-beat${beat.active ? ' is-now' : ''}`}
+                        >
+                          {beat.label}
+                        </span>
+                      ))}
+                    </p>
+                  ) : null}
+                </div>
               ) : null}
               <div className="ww-means">
                 <span className="arrow" aria-hidden="true">

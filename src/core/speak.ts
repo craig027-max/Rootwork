@@ -247,6 +247,18 @@ export function currentClipRemainingMs(): number | null {
 }
 
 /**
+ * Playhead seconds on the shared Hear/Yes element, or null when nothing
+ * is loaded. 0 before the first tick — used to advance the Hear beat
+ * highlight against measured splits.
+ */
+export function currentClipTime(): number | null {
+  if (!current) return null;
+  const { currentTime } = current;
+  if (!Number.isFinite(currentTime) || currentTime < 0) return 0;
+  return currentTime;
+}
+
+/**
  * Resolves when the current Hear/Yes element ends, errors, or is explicitly
  * stopped. A replace-play (Yes after Hear) keeps this pending until the new
  * clip finishes — so auto-advance cannot open Geo while Bio is still talking.

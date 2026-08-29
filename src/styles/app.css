@@ -1116,6 +1116,31 @@
   font-weight: 600;
   color: rgb(var(--spark-rgb));
 }
+.ww-listen-line {
+  margin: 0;
+}
+.ww-listen-beats {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15em 0;
+  margin: 3px 0 0;
+  font-weight: 500;
+}
+.ww-listen-beat {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.ww-listen-beat.is-now {
+  color: rgb(var(--spark-rgb));
+  font-weight: 700;
+}
+.ww-listen-beat + .ww-listen-beat::before {
+  content: '·';
+  margin: 0 0.42em;
+  color: var(--text-muted);
+  font-weight: 500;
+}
 .ww-recall-win {
   padding-top: 8px;
   padding-bottom: 8px;
@@ -1634,6 +1659,9 @@
   .ww-listen {
     display: block;
     font-size: 0.78rem;
+  }
+  .ww-listen-beats {
+    display: flex;
   }
   /* Nav is fixed; extra wrap padding was creating a 26px phantom scroll
      on iPhone SE after the card already cleared the footer. */

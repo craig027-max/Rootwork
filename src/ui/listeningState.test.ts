@@ -33,13 +33,30 @@ describe('listening state while Hear/Yes plays', () => {
     expect(css).toContain('.ww-listen');
   });
 
+  it('highlights the current Hear beat from currentTime vs measured splits', () => {
+    expect(deck).toContain('hearBeatChips');
+    expect(deck).toContain('hearBeatLabels');
+    expect(deck).toContain('hearBeatSplits');
+    expect(deck).toContain('hearBeatIndex');
+    expect(deck).toContain('currentClipTime');
+    expect(deck).toContain("watchCurrentClip(true, 'hear')");
+    expect(deck).toContain("watchCurrentClip(true, 'yes')");
+    expect(deck).toContain('listen.beats');
+    expect(deck).toContain('ww-listen-beat');
+    expect(deck).toContain('is-now');
+    expect(deck).toContain('setInterval(tick, 200)');
+    expect(css).toContain('.ww-listen-beat.is-now');
+    expect(css).not.toMatch(/\.ww-listen-beats\s*\{[^}]*display:\s*none/);
+  });
+
   it('disables I know this and next-root until the clip ends', () => {
     expect(deck).toContain('disabled={listen.disableKnowThis}');
     expect(deck).toContain('disabled={listen.disableNextRoot}');
     expect(deck).toContain('allowNextRootTap');
     expect(deck).toContain('watchCurrentClip');
     expect(deck).toContain('speakYes(card.root, card.mean)');
-    expect(deck).toContain('watchCurrentClip(true)');
+    expect(deck).toContain("watchCurrentClip(true, 'hear')");
+    expect(deck).toContain("watchCurrentClip(true, 'yes')");
     expect(nav).toContain('disabled={nextDisabled}');
   });
 
@@ -47,6 +64,8 @@ describe('listening state while Hear/Yes plays', () => {
     const phone = mediaBlock(css, 'max-height: 720px');
     expect(phone).toMatch(/\.ww-listen\s*\{[^}]*display:\s*block/);
     expect(phone).not.toMatch(/\.ww-listen\s*\{[^}]*display:\s*none/);
+    expect(phone).toMatch(/\.ww-listen-beats\s*\{[^}]*display:\s*flex/);
+    expect(phone).not.toMatch(/\.ww-listen-beats\s*\{[^}]*display:\s*none/);
     expect(phone).toMatch(/\.ww-lead2,\s*\n\s*\.ww-eyebrow2\s*\{[^}]*display:\s*none/);
   });
 

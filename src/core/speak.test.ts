@@ -6,6 +6,7 @@ import { HEAR_CLIP_IDS } from './hearClips';
 import { ROOTS } from '../data/roots';
 import {
   currentClipRemainingMs,
+  currentClipTime,
   hearClipId,
   hearClipUrl,
   HEAR_BEAT_PAUSE,
@@ -400,6 +401,10 @@ class FakeAudio {
 }
 
 describe('current clip wait: Bio must finish before Geo audio', () => {
+  it('currentClipTime is null when no clip is loaded', () => {
+    expect(currentClipTime()).toBeNull();
+  });
+
   const created: FakeAudio[] = [];
 
   function stubAudio(): void {
@@ -422,7 +427,10 @@ describe('current clip wait: Bio must finish before Geo audio', () => {
     expect(created[0]?.src).toMatch(/audio\/yes\/bio\.mp3$/);
     created[0]!.duration = 4.2;
     expect(isClipPlaying()).toBe(true);
+    expect(currentClipTime()).toBe(0);
     expect(currentClipRemainingMs()).toBe(4200);
+    created[0]!.currentTime = 1.241;
+    expect(currentClipTime()).toBe(1.241);
 
     let ended = false;
     void whenCurrentClipEnds().then(() => {

@@ -337,6 +337,8 @@ async def main() -> None:
     # Manifest lists every file we intend to ship for this run, including
     # clips that were already on disk.
     write_manifest(ids)
+    # After clips change, refresh currentTime splits (does not re-bake):
+    #   python3 scripts/measure-hear-beats.py
     sizes = [p.stat().st_size for p in OUT_DIR.glob("*.mp3")]
     total = sum(sizes)
     print(

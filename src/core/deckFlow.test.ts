@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { ROOTS, neighborOpenable, rootId, rootsInTier } from '../data/roots';
+import { hearBeatChips, hearBeatIndex, hearBeatLabels } from './hearBeats';
+import { HEAR_BEAT_SPLITS } from './hearBeatTimes';
 import {
   afterCorrectRecall,
   afterHearNextTap,
@@ -381,6 +383,7 @@ describe('clipListening: visible wait, next-root closed while playing', () => {
       hearActive: true,
       disableKnowThis: true,
       disableNextRoot: true,
+      beats: null,
     });
     expect(LISTENING_LINE).toBe('Listening…');
     expect(LISTENING_LINE).not.toMatch(/while (Hear|Yes|you listen)/i);
@@ -393,6 +396,7 @@ describe('clipListening: visible wait, next-root closed while playing', () => {
       hearActive: false,
       disableKnowThis: false,
       disableNextRoot: false,
+      beats: null,
     });
   });
 
@@ -409,5 +413,26 @@ describe('clipListening: visible wait, next-root closed while playing', () => {
     expect(
       allowNextRootTap({ fromId: bioId, dest: afterCorrectRecall(bioId, false) }, false),
     ).toBe(false);
+  });
+
+  it('shows a moving Hear beat highlight; Yes stays Listening… without three beats', () => {
+    const labels = hearBeatLabels('Bio', 'BY-oh');
+    const splits = HEAR_BEAT_SPLITS.bio!;
+    const at = (t: number) =>
+      clipListening(true, hearBeatChips(labels, hearBeatIndex(t, splits)));
+
+    expect(at(0).beats?.map((b) => [b.kind, b.active])).toEqual([
+      ['name', true],
+      ['sound', false],
+      ['letters', false],
+    ]);
+    expect(at(1.241).beats?.find((b) => b.active)?.kind).toBe('sound');
+    expect(at(2.563).beats?.find((b) => b.active)?.kind).toBe('letters');
+    expect(at(1.241).line).toBe(LISTENING_LINE);
+    expect(at(1.241).disableKnowThis).toBe(true);
+    expect(at(1.241).disableNextRoot).toBe(true);
+
+    expect(clipListening(true).beats).toBeNull();
+    expect(clipListening(true, null).beats).toBeNull();
   });
 });
