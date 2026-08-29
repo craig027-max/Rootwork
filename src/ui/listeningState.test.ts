@@ -55,7 +55,8 @@ describe('listening state while Hear/Yes plays', () => {
     expect(deck).toContain('allowNextRootTap');
     expect(deck).toContain('watchCurrentClip');
     expect(deck).toContain('speakYes(card.root, card.mean)');
-    expect(deck).toContain('watchCurrentClip(true)');
+    expect(deck).toContain("watchCurrentClip(true, 'hear')");
+    expect(deck).toContain("watchCurrentClip(true, 'yes')");
     expect(nav).toContain('disabled={nextDisabled}');
   });
 
