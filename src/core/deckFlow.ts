@@ -7,6 +7,7 @@
  */
 
 import { ROOTS_BY_ID, neighborOpenable, type Root, type RootId } from '../data/roots';
+import type { HearBeatChip } from './hearBeats';
 
 /** Quiet pause so a kid can read the one-line win before the next card. */
 export const SUCCESS_BEAT_MS = 900;
@@ -283,20 +284,32 @@ export interface ClipListening {
   hearActive: boolean;
   disableKnowThis: boolean;
   disableNextRoot: boolean;
+  /**
+   * Three Hear beats under Listening… (name / spoken sound / letters).
+   * Null for Yes — that clip is one line, not three beats.
+   */
+  beats: HearBeatChip[] | null;
 }
 
 /**
  * While the shared Hear/Yes element is playing, the wait is visible and
  * I-know-this / next-root stay closed. After the clip ends, #33 still
  * decides whether Next/Rush hide — this only gates the mid-play taps.
+ *
+ * `beats` is the moving Hear highlight (currentTime vs measured splits).
+ * Pass null for Yes or when splits are missing — never a stuck fake mark.
  */
-export function clipListening(playing: boolean): ClipListening {
+export function clipListening(
+  playing: boolean,
+  beats: HearBeatChip[] | null = null,
+): ClipListening {
   if (!playing) {
     return {
       line: null,
       hearActive: false,
       disableKnowThis: false,
       disableNextRoot: false,
+      beats: null,
     };
   }
   return {
@@ -304,6 +317,7 @@ export function clipListening(playing: boolean): ClipListening {
     hearActive: true,
     disableKnowThis: true,
     disableNextRoot: true,
+    beats,
   };
 }
 

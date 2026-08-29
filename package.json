@@ -11,6 +11,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "hear:clips": "python3 scripts/generate-hear-clips.py",
+    "hear:beats": "python3 scripts/measure-hear-beats.py",
     "yes:clips": "python3 scripts/generate-yes-clips.py"
   },
   "dependencies": {
