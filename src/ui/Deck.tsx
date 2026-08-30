@@ -287,7 +287,7 @@ export function Deck() {
     listenKind === 'hear' && hearBeatSplits(card.root)
       ? hearBeatChips(hearBeatLabels(card.root, card.say), hearBeat)
       : null;
-  const listen = clipListening(listening, hearBeats);
+  const listen = clipListening(listening, hearBeats, listenKind === 'yes');
   const quizRecall = recall && recall.rootId === id && !won ? recall : null;
   const openSplit = splitForOpenWord(root.words, openWord);
 
@@ -504,8 +504,12 @@ export function Deck() {
           ) : null}
 
           {won ? (
-            <div className="ww-recall ww-recall-win" role="status" aria-live="polite">
-              <p>{winLine}</p>
+            <div
+              className={`ww-recall ww-recall-win${listen.yesNow ? ' is-now' : ''}`}
+              role="status"
+              aria-live="polite"
+            >
+              <p className={listen.yesNow ? 'is-now' : undefined}>{winLine}</p>
             </div>
           ) : null}
 
