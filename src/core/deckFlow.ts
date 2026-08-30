@@ -289,6 +289,11 @@ export interface ClipListening {
    * Null for Yes — that clip is one line, not three beats.
    */
   beats: HearBeatChip[] | null;
+  /**
+   * Yes clip highlight: the existing win line is the one beat.
+   * Never a fake three-beat row.
+   */
+  yesNow: boolean;
 }
 
 /**
@@ -298,10 +303,12 @@ export interface ClipListening {
  *
  * `beats` is the moving Hear highlight (currentTime vs measured splits).
  * Pass null for Yes or when splits are missing — never a stuck fake mark.
+ * `yesNow` marks the existing Yes/win line for the whole Yes clip.
  */
 export function clipListening(
   playing: boolean,
   beats: HearBeatChip[] | null = null,
+  yesNow = false,
 ): ClipListening {
   if (!playing) {
     return {
@@ -310,6 +317,7 @@ export function clipListening(
       disableKnowThis: false,
       disableNextRoot: false,
       beats: null,
+      yesNow: false,
     };
   }
   return {
@@ -317,7 +325,9 @@ export function clipListening(
     hearActive: true,
     disableKnowThis: true,
     disableNextRoot: true,
-    beats,
+    // Yes is one spoken sentence — do not keep a Hear three-beat row.
+    beats: yesNow ? null : beats,
+    yesNow,
   };
 }
 

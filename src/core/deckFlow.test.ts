@@ -384,6 +384,7 @@ describe('clipListening: visible wait, next-root closed while playing', () => {
       disableKnowThis: true,
       disableNextRoot: true,
       beats: null,
+      yesNow: false,
     });
     expect(LISTENING_LINE).toBe('Listening…');
     expect(LISTENING_LINE).not.toMatch(/while (Hear|Yes|you listen)/i);
@@ -397,6 +398,7 @@ describe('clipListening: visible wait, next-root closed while playing', () => {
       disableKnowThis: false,
       disableNextRoot: false,
       beats: null,
+      yesNow: false,
     });
   });
 
@@ -434,5 +436,42 @@ describe('clipListening: visible wait, next-root closed while playing', () => {
 
     expect(clipListening(true).beats).toBeNull();
     expect(clipListening(true, null).beats).toBeNull();
+    expect(clipListening(true).yesNow).toBe(false);
+    expect(clipListening(true, hearBeatChips(labels, 0)).yesNow).toBe(false);
+  });
+
+  it('highlights the Yes win line as one beat while Listening — no three-beat row', () => {
+    const labels = hearBeatLabels('Bio', 'BY-oh');
+    const hearChips = hearBeatChips(labels, 0);
+    const yes = clipListening(true, null, true);
+
+    expect(yes.line).toBe(LISTENING_LINE);
+    expect(yes.yesNow).toBe(true);
+    expect(yes.beats).toBeNull();
+    expect(yes.hearActive).toBe(true);
+    expect(yes.disableKnowThis).toBe(true);
+    expect(yes.disableNextRoot).toBe(true);
+
+    // Even if Hear chips leak in, Yes stays one beat — never a fake 3-row.
+    expect(clipListening(true, hearChips, true).beats).toBeNull();
+    expect(clipListening(true, hearChips, true).yesNow).toBe(true);
+    expect(hearChips).toHaveLength(3);
+
+    // Clip end drops the highlight; #19/#32 still opens Geo in recall.
+    expect(clipListening(false, null, true).yesNow).toBe(false);
+    expect(clipListening(false, null, true).line).toBeNull();
+    const path = lessonAfterCorrect(bioId, false);
+    expect(path.duringYes.winLine).toBe('Yes — Bio means life.');
+    expect(path.afterBeat).toEqual({
+      action: 'open',
+      currentRootId: geoId,
+      entry: 'recall',
+      showExamples: false,
+    });
+    expect(commitCorrectAdvance(path.dest)).toEqual({
+      kind: 'open',
+      id: geoId,
+      entry: 'recall',
+    });
   });
 });

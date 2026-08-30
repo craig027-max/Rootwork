@@ -1131,7 +1131,8 @@
   color: var(--text-muted);
   font-weight: 500;
 }
-.ww-listen-beat.is-now {
+.ww-listen-beat.is-now,
+.ww-recall-win p.is-now {
   color: rgb(var(--spark-rgb));
   font-weight: 700;
 }
@@ -1151,6 +1152,28 @@
   font-weight: 700;
   font-size: 1.05rem;
   color: rgb(var(--spark-rgb));
+}
+/* Yes clip: one beat on the existing win line — spark + bold + live glow. */
+.ww-recall-win.is-now {
+  border-radius: var(--radius-md);
+  box-shadow: 0 0 16px rgba(var(--spark-rgb), 0.28);
+}
+.ww-recall-win p.is-now {
+  text-shadow: 0 0 18px rgba(var(--spark-rgb), 0.45);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .ww-recall-win.is-now {
+    animation: ww-yes-now 1.4s ease-in-out infinite;
+  }
+}
+@keyframes ww-yes-now {
+  0%,
+  100% {
+    box-shadow: 0 0 12px rgba(var(--spark-rgb), 0.22);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(var(--spark-rgb), 0.42);
+  }
 }
 .ww-card-win-mark {
   font-family: var(--font-game);
@@ -1662,6 +1685,11 @@
   }
   .ww-listen-beats {
     display: flex;
+  }
+  /* Yes win-line highlight stays with Listening… — lead/eyebrow hide. */
+  .ww-recall-win,
+  .ww-recall-win.is-now {
+    display: block;
   }
   /* Nav is fixed; extra wrap padding was creating a 26px phantom scroll
      on iPhone SE after the card already cleared the footer. */

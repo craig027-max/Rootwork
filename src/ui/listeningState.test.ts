@@ -49,6 +49,20 @@ describe('listening state while Hear/Yes plays', () => {
     expect(css).not.toMatch(/\.ww-listen-beats\s*\{[^}]*display:\s*none/);
   });
 
+  it('highlights the existing Yes win line as one is-now beat, not three', () => {
+    expect(deck).toContain("clipListening(listening, hearBeats, listenKind === 'yes')");
+    expect(deck).toContain('listen.yesNow');
+    expect(deck).toContain('ww-recall-win${listen.yesNow ? \' is-now\' : \'\'}');
+    expect(deck).toContain('listen.yesNow ? \'is-now\' : undefined');
+    expect(deck).toContain('{winLine}');
+    expect(deck).toContain("watchCurrentClip(true, 'yes')");
+    expect(deck).toContain('speakYes(card.root, card.mean)');
+    expect(css).toContain('.ww-recall-win p.is-now');
+    expect(css).toContain('.ww-recall-win.is-now');
+    expect(css).toContain('ww-yes-now');
+    expect(deck).not.toMatch(/listenKind === 'yes'[\s\S]{0,80}hearBeatChips/);
+  });
+
   it('disables I know this and next-root until the clip ends', () => {
     expect(deck).toContain('disabled={listen.disableKnowThis}');
     expect(deck).toContain('disabled={listen.disableNextRoot}');
@@ -66,6 +80,8 @@ describe('listening state while Hear/Yes plays', () => {
     expect(phone).not.toMatch(/\.ww-listen\s*\{[^}]*display:\s*none/);
     expect(phone).toMatch(/\.ww-listen-beats\s*\{[^}]*display:\s*flex/);
     expect(phone).not.toMatch(/\.ww-listen-beats\s*\{[^}]*display:\s*none/);
+    expect(phone).toMatch(/\.ww-recall-win,\s*\n\s*\.ww-recall-win\.is-now\s*\{[^}]*display:\s*block/);
+    expect(phone).not.toMatch(/\.ww-recall-win(?:\.is-now)?\s*\{[^}]*display:\s*none/);
     expect(phone).toMatch(/\.ww-lead2,\s*\n\s*\.ww-eyebrow2\s*\{[^}]*display:\s*none/);
   });
 
