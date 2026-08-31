@@ -116,7 +116,7 @@ export function isRootOpenable(id: RootId, entitled: boolean): boolean {
 
 /**
  * Nearest openable root in a direction (+1 next, -1 prev), skipping locked
- * ones. Shared by the deck Next/Prev buttons and the post-recall auto-advance
+ * ones. Shared by the deck Next/Prev buttons and the post-Yes next tap
  * so they can never drift apart.
  */
 export function neighborOpenable(fromId: RootId, dir: 1 | -1, entitled: boolean): RootId | null {

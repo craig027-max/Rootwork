@@ -14,13 +14,14 @@ import {
 import {
   afterCorrectRecall,
   afterHearNextTap,
+  afterYesNextLabel,
   allowManualStep,
   allowNextRootTap,
+  allowWinNextTap,
   clipListening,
   commitCorrectAdvance,
   isLessonStudying,
   showExampleWords,
-  waitOutCorrectAdvance,
   winLineOnCard,
   type AfterCorrectRecall,
 } from '../core/deckFlow';
@@ -32,7 +33,6 @@ import {
   hearBeatSplits,
 } from '../core/hearBeats';
 import {
-  currentClipRemainingMs,
   currentClipTime,
   hasActiveClip,
   isClipPlaying,
@@ -40,7 +40,6 @@ import {
   speakYes,
   stopSpeaking,
   whenCurrentClipEnds,
-  yesClipUrl,
 } from '../core/speak';
 import { hasChosenMode, isNextPlayHome } from './home/menu';
 import { paletteVars } from './components/styleVars';
@@ -98,9 +97,6 @@ export function Deck() {
     win: string | null;
     rootId: string;
   } | null>(null);
-  const advanceTimer = useRef<number | null>(null);
-  const advanceGen = useRef(0);
-  const sleepResolve = useRef<(() => void) | null>(null);
   const pool = useMemo(
     () => ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
     [entitled],
@@ -108,66 +104,14 @@ export function Deck() {
   const poolRef = useRef(pool);
   poolRef.current = pool;
 
-  function cancelAdvanceTimer() {
-    advanceGen.current += 1;
-    if (advanceTimer.current != null) {
-      window.clearTimeout(advanceTimer.current);
-      advanceTimer.current = null;
-    }
-    const resolveSleep = sleepResolve.current;
-    sleepResolve.current = null;
-    resolveSleep?.();
-  }
-
   function fireAdvance(dest: AfterCorrectRecall) {
-    // Prefer waiting for ended; if we must open while audio remains, cut it
-    // so Geo/Photo cannot speak over leftover Bio.
+    // Cut leftover Yes audio so Geo/Photo cannot speak over Bio.
     if (isClipPlaying()) stopSpeaking();
     useWondralStore.getState().clearCorrectAdvance();
     const next = commitCorrectAdvance(dest);
     if (next.kind === 'open') useWondralStore.getState().openRoot(next.id, { entry: next.entry });
     else useWondralStore.getState().closeRoot();
   }
-
-  function armAdvance(dest: AfterCorrectRecall) {
-    cancelAdvanceTimer();
-    // Armed from the tap (and again on remount). Not from [openRoot, closeRoot]
-    // — that effect retriggered, cleared the timer, and let examples back in.
-    // Hold until the playing Hear/Yes element ends (or the 900ms read). The
-    // old 2.2s guess is only a fallback before Safari reports duration.
-    const gen = advanceGen.current;
-    const startedAt = Date.now();
-    const fromId = useWondralStore.getState().correctAdvance?.fromId ?? currentRootId;
-    const hasYesClip = Boolean(fromId && yesClipUrl(fromId));
-
-    void waitOutCorrectAdvance(
-      { hasYesClip, startedAt },
-      {
-        now: () => Date.now(),
-        sleep: (ms) =>
-          new Promise<void>((resolve) => {
-            sleepResolve.current = resolve;
-            advanceTimer.current = window.setTimeout(() => {
-              advanceTimer.current = null;
-              sleepResolve.current = null;
-              resolve();
-            }, ms);
-          }),
-        isPlaying: isClipPlaying,
-        remainingMs: currentClipRemainingMs,
-        whenEnded: whenCurrentClipEnds,
-        cancelled: () => advanceGen.current !== gen,
-      },
-    ).then((result) => {
-      if (result !== 'fire') return;
-      const live = useWondralStore.getState().correctAdvance;
-      if (!live || live.dest.kind !== dest.kind || live.dest.line !== dest.line) return;
-      if (dest.kind === 'next' && live.dest.kind === 'next' && live.dest.id !== dest.id) return;
-      fireAdvance(dest);
-    });
-  }
-
-  useEffect(() => () => cancelAdvanceTimer(), []);
 
   useEffect(() => {
     setOpenWord(null);
@@ -214,7 +158,6 @@ export function Deck() {
               rootId: currentRootId,
             },
       );
-      armAdvance(live.dest);
       return;
     }
     if (deckEntry === 'recall') {
@@ -296,10 +239,16 @@ export function Deck() {
     if (dir === 1 && !allowNextRootTap(useWondralStore.getState().correctAdvance, listening)) {
       return;
     }
-    cancelAdvanceTimer();
     const next = neighborOpenable(id, dir, entitled);
     if (next) openRoot(next);
     else if (dir === 1) closeRoot();
+  }
+
+  function onWinNext() {
+    if (!allowWinNextTap(useWondralStore.getState().correctAdvance, listening)) return;
+    const live = useWondralStore.getState().correctAdvance;
+    const dest = live?.dest ?? afterCorrectRecall(id, entitled);
+    fireAdvance(dest);
   }
 
   function watchCurrentClip(markHearFinished: boolean, kind: 'hear' | 'yes') {
@@ -340,8 +289,9 @@ export function Deck() {
     const opt = recall.beat.opts[idx];
     if (opt?.ok) {
       // Don't setRecall(null) — that parked kids on a ✓ Learned card
-      // hunting for Next. Quiet one-line beat, then neighborOpenable(+1)
-      // opened as recall so Geo never flashes the examples screen.
+      // hunting for Next. Quiet Yes line stays on this card until Next;
+      // that tap opens neighborOpenable(+1) as recall so Geo never
+      // flashes the examples screen.
       completeRoot(id, { celebrate: false });
       dismissCelebration();
       const dest = afterCorrectRecall(id, entitled);
@@ -350,7 +300,6 @@ export function Deck() {
       // User gesture — play the baked Yes line now. Missing clip: silent.
       speakYes(card.root, card.mean);
       watchCurrentClip(true, 'yes');
-      armAdvance(dest);
       return;
     }
     setRecall({ ...recall, picked: idx });
@@ -515,9 +464,14 @@ export function Deck() {
 
           <div className="ww-card-actions">
             {won ? (
-              <span className="ww-card-win-mark" aria-hidden="true">
-                ✓
-              </span>
+              <Button
+                onClick={onWinNext}
+                disabled={!allowWinNextTap(correctAdvance, listening)}
+                block
+                size="lg"
+              >
+                {afterYesNextLabel(correctAdvance?.dest ?? afterCorrectRecall(id, entitled))}
+              </Button>
             ) : done ? (
               <Badge variant="solid" jewel="jade">
                 ✓ Learned

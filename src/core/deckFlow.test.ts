@@ -5,7 +5,9 @@ import { HEAR_BEAT_SPLITS } from './hearBeatTimes';
 import {
   afterCorrectRecall,
   afterHearNextTap,
+  afterYesNextLabel,
   allowNextRootTap,
+  allowWinNextTap,
   allDoneLine,
   clipListening,
   LISTENING_LINE,
@@ -14,6 +16,7 @@ import {
   decideCorrectAdvance,
   deckEntryForOpen,
   entryAfterSuccess,
+  holdYesAfterClip,
   lessonAfterCorrect,
   showExampleWords,
   starterDoneLine,
@@ -27,10 +30,16 @@ import {
 
 const bio = ROOTS.find((r) => r.root === 'Bio');
 const geo = ROOTS.find((r) => r.root === 'Geo');
-if (!bio || !geo) throw new Error('fixture: expected Bio then Geo in starter');
+const photo = ROOTS.find((r) => r.root === 'Photo');
+const aqua = ROOTS.find((r) => r.root === 'Aqua');
+if (!bio || !geo || !photo || !aqua) {
+  throw new Error('fixture: expected Bio then Geo then Photo then Aqua in starter');
+}
 
 const bioId = rootId(bio);
 const geoId = rootId(geo);
+const photoId = rootId(photo);
+const aquaId = rootId(aqua);
 const lastFree = rootsInTier(1).at(-1);
 if (!lastFree) throw new Error('fixture: expected a last starter root');
 const lastFreeId = rootId(lastFree);
@@ -94,6 +103,13 @@ describe('Craig path: correct Bio → Geo, recall not nulled into examples', () 
     });
     expect(path.duringYes.winLine).toBe('Yes — Bio means life.');
     expect(path.duringYes.showExamples).toBe(false);
+    expect(path.afterClip).toEqual({
+      currentRootId: bioId,
+      winLine: 'Yes — Bio means life.',
+      showExamples: false,
+      nextReady: true,
+      nextLabel: 'Next →',
+    });
     expect(path.afterBeat).toEqual({
       action: 'open',
       currentRootId: geoId,
@@ -159,16 +175,22 @@ describe('Craig path: correct Bio → Geo, recall not nulled into examples', () 
     const path = lessonAfterCorrect(lastFreeId, false);
     expect(path.dest.kind).toBe('home');
     expect(path.duringYes.showExamples).toBe(false);
+    expect(path.afterClip.currentRootId).toBe(lastFreeId);
+    expect(path.afterClip.nextReady).toBe(true);
+    expect(path.afterClip.nextLabel).toBe('Done →');
     expect(path.afterBeat.action).toBe('home');
     expect(commitCorrectAdvance(path.dest)).toEqual({ kind: 'home' });
   });
 
-  it('auto-advance still reaches the next root in recall mode when a Yes clip plays', () => {
+  it('next tap still reaches the next root in recall mode when a Yes clip plays', () => {
     const path = lessonAfterCorrect(bioId, false);
     expect(successBeatMs(true)).toBe(SUCCESS_BEAT_WITH_CLIP_MS);
     expect(successBeatMs(false)).toBe(SUCCESS_BEAT_MS);
     expect(SUCCESS_BEAT_WITH_CLIP_MS).toBeGreaterThan(SUCCESS_BEAT_MS);
     expect(SUCCESS_BEAT_WITH_CLIP_MS).toBeLessThanOrEqual(2500);
+    expect(path.afterClip.currentRootId).toBe(bioId);
+    expect(path.afterClip.winLine).toBe('Yes — Bio means life.');
+    expect(path.afterClip.nextReady).toBe(true);
     expect(path.afterBeat).toEqual({
       action: 'open',
       currentRootId: geoId,
@@ -183,10 +205,9 @@ describe('Craig path: correct Bio → Geo, recall not nulled into examples', () 
   });
 
   it('on-card say stays BY-oh / JEE-oh / FOH-toh', () => {
-    const photo = ROOTS.find((r) => r.root === 'Photo');
     expect(bio.say).toBe('BY-oh');
     expect(geo.say).toBe('JEE-oh');
-    expect(photo?.say).toBe('FOH-toh');
+    expect(photo.say).toBe('FOH-toh');
   });
 
   it('lengthens the Yes beat to the playing clip so a 3-beat Hear is not cut off', () => {
@@ -326,8 +347,11 @@ describe('waitOutCorrectAdvance: Bio audio must finish before Geo can open', () 
     expect(result).toBe('fire');
   });
 
-  it('still opens Geo in recall after the wait — #19 loop is intact', async () => {
+  it('after the wait, the next tap still opens Geo in recall — #19 loop is intact', async () => {
     const path = lessonAfterCorrect(bioId, false);
+    expect(path.afterClip.currentRootId).toBe(bioId);
+    expect(path.afterClip.winLine).toBe('Yes — Bio means life.');
+    expect(path.afterClip.nextReady).toBe(true);
     expect(path.afterBeat.action).toBe('open');
     if (path.afterBeat.action !== 'open') throw new Error('expected open');
     expect(path.afterBeat.currentRootId).toBe(geoId);
@@ -338,6 +362,93 @@ describe('waitOutCorrectAdvance: Bio audio must finish before Geo can open', () 
       id: geoId,
       entry: 'recall',
     });
+  });
+});
+
+describe('after Yes clip: hold the win line until next is tapped', () => {
+  function yesHoldView(fromId: typeof bioId, dest = afterCorrectRecall(fromId, false)) {
+    return {
+      recall: { win: dest.line, rootId: fromId },
+      currentRootId: fromId,
+      entry: 'teach' as const,
+      correctAdvance: { fromId, dest },
+    };
+  }
+
+  it('keeps the Yes win line after the clip — card is not blank', () => {
+    const view = yesHoldView(bioId);
+    const during = holdYesAfterClip(view, true);
+    expect(during.winLine).toBe('Yes — Bio means life.');
+    expect(during.blank).toBe(false);
+    expect(during.nextReady).toBe(false);
+
+    const after = holdYesAfterClip(view, false);
+    expect(after.winLine).toBe('Yes — Bio means life.');
+    expect(after.blank).toBe(false);
+    expect(after.nextReady).toBe(true);
+    expect(clipListening(false, null, true).yesNow).toBe(false);
+    expect(clipListening(false, null, true).beats).toBeNull();
+  });
+
+  it('does not invent a three-beat Yes recap after the clip', () => {
+    const after = clipListening(false, null, true);
+    expect(after.line).toBeNull();
+    expect(after.beats).toBeNull();
+    expect(after.yesNow).toBe(false);
+    expect(hearBeatChips(hearBeatLabels('Bio', 'BY-oh'), 0)).toHaveLength(3);
+  });
+
+  it('next tap opens Geo / Photo / Aqua on that path — not on clip end', () => {
+    const hops = [
+      [bioId, geoId, 'Yes — Bio means life.'],
+      [geoId, photoId, 'Yes — Geo means earth.'],
+      [photoId, aquaId, 'Yes — Photo means light.'],
+    ] as const;
+
+    for (const [from, to, line] of hops) {
+      const path = lessonAfterCorrect(from, false);
+      expect(path.afterClip.currentRootId).toBe(from);
+      expect(path.afterClip.winLine).toBe(line);
+      expect(path.afterClip.showExamples).toBe(false);
+      expect(path.afterClip.nextReady).toBe(true);
+      expect(path.afterClip.nextLabel).toBe('Next →');
+      expect(path.afterBeat).toEqual({
+        action: 'open',
+        currentRootId: to,
+        entry: 'recall',
+        showExamples: false,
+      });
+      expect(commitCorrectAdvance(path.dest)).toEqual({
+        kind: 'open',
+        id: to,
+        entry: 'recall',
+      });
+      expect(afterYesNextLabel(path.dest)).toBe('Next →');
+    }
+  });
+
+  it('the old auto-open is the blank card — dest swapped in, win line gone', () => {
+    const snapped = {
+      recall: { win: null, rootId: geoId },
+      currentRootId: geoId,
+      entry: 'recall' as const,
+      correctAdvance: null,
+    };
+    const hold = holdYesAfterClip(snapped, false);
+    expect(hold.winLine).toBeNull();
+    expect(hold.blank).toBe(true);
+    expect(hold.nextReady).toBe(false);
+  });
+
+  it('closes the next tap while Listening… and re-enables it after the clip', () => {
+    const dest = afterCorrectRecall(bioId, false);
+    const advance = { fromId: bioId, dest };
+    expect(allowWinNextTap(advance, true)).toBe(false);
+    expect(allowWinNextTap(advance, false)).toBe(true);
+    expect(allowWinNextTap(null, false)).toBe(false);
+    expect(clipListening(true, null, true).disableNextRoot).toBe(true);
+    expect(clipListening(false, null, true).disableNextRoot).toBe(false);
+    expect(allowNextRootTap(advance, false)).toBe(false);
   });
 });
 
@@ -457,11 +568,14 @@ describe('clipListening: visible wait, next-root closed while playing', () => {
     expect(clipListening(true, hearChips, true).yesNow).toBe(true);
     expect(hearChips).toHaveLength(3);
 
-    // Clip end drops the highlight; #19/#32 still opens Geo in recall.
+    // Clip end drops the highlight; win line stays; next tap opens Geo.
     expect(clipListening(false, null, true).yesNow).toBe(false);
     expect(clipListening(false, null, true).line).toBeNull();
     const path = lessonAfterCorrect(bioId, false);
     expect(path.duringYes.winLine).toBe('Yes — Bio means life.');
+    expect(path.afterClip.winLine).toBe('Yes — Bio means life.');
+    expect(path.afterClip.currentRootId).toBe(bioId);
+    expect(path.afterClip.nextReady).toBe(true);
     expect(path.afterBeat).toEqual({
       action: 'open',
       currentRootId: geoId,

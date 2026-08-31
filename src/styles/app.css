@@ -1686,10 +1686,13 @@
   .ww-listen-beats {
     display: flex;
   }
-  /* Yes win-line highlight stays with Listening… — lead/eyebrow hide. */
+  /* Yes win-line + Next stay after the clip — lead/eyebrow hide. */
   .ww-recall-win,
   .ww-recall-win.is-now {
     display: block;
+  }
+  .ww-card-actions {
+    display: flex;
   }
   /* Nav is fixed; extra wrap padding was creating a 26px phantom scroll
      on iPhone SE after the card already cleared the footer. */

@@ -206,7 +206,7 @@ interface WondralStore {
 
   // Root (flashcard) tracking.
   currentRootId: string | null;
-  /** How the current card opened. `recall` skips examples after a correct Yes beat. */
+  /** How the current card opened. `recall` skips examples after the Yes next tap. */
   deckEntry: DeckEntry;
   /** In-flight Yes beat — survives a Deck remount so examples cannot flash back. */
   correctAdvance: CorrectAdvance | null;
