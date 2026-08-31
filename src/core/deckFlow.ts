@@ -86,8 +86,9 @@ export interface AdvanceWaitHooks {
 }
 
 /**
- * Hold until decideCorrectAdvance says fire. Used by Deck so auto-advance
- * cannot open the next root (or start its Hear) over leftover Bio audio.
+ * Hold until decideCorrectAdvance says fire. The next root must not open
+ * (or start its Hear) over leftover Bio audio. Deck now waits for a tap
+ * after this; the wait only says when that tap may proceed.
  */
 export async function waitOutCorrectAdvance(
   opts: { hasYesClip: boolean; startedAt: number },
@@ -139,7 +140,7 @@ export type AfterCorrectRecall =
 
 /**
  * How a card opens. `teach` is Play / Next / index (examples + I know this).
- * `recall` is the post-Yes auto-advance — skip examples, stay in the quiz loop.
+ * `recall` is the post-Yes next-tap — skip examples, stay in the quiz loop.
  */
 export type DeckEntry = 'teach' | 'recall';
 
@@ -199,7 +200,7 @@ export function entryAfterSuccess(dest: AfterCorrectRecall): DeckEntry {
 }
 
 /**
- * What the success-beat timer must do. `open` always carries `entry: 'recall'`
+ * What the Yes next tap must do. `open` always carries `entry: 'recall'`
  * so `openRoot(id)` (the Next-button default) cannot sneak examples back in.
  */
 export function commitCorrectAdvance(
@@ -238,7 +239,7 @@ export function showExampleWords(view: LessonView): boolean {
   return !isLessonStudying(view);
 }
 
-/** Next/prev during the Yes beat would cancel auto-advance and open teach. Ignore them. */
+/** Next/prev during the Yes hold would skip the win line and open teach. Ignore them. */
 export function allowManualStep(correctAdvance: CorrectAdvance | null): boolean {
   return correctAdvance === null;
 }
@@ -248,8 +249,9 @@ export interface AfterHearNextTap {
   showRush: boolean;
   /**
    * Card + nav Next. Hidden after Hear/Yes so the one tap is I know this
-   * (teach) or the quiz option (recall). Auto-advance still opens the next
-   * root with `entry: 'recall'` — this only removes the competing taps.
+   * (teach), the Yes hold Next (won), or the quiz option (recall). The
+   * win-line Next still opens the next root with `entry: 'recall'` —
+   * this only removes the competing taps.
    */
   showNextRoot: boolean;
 }
@@ -259,7 +261,8 @@ export interface AfterHearNextTap {
  * Rush / Daily / Next dump. Same spirit as Home's one Play (#28–#30).
  *
  * `hearFinished` is this card's Hear clip ending. `entry: 'recall'` is the
- * #19/#32 path: previous Hear/Yes already finished, then this root opened.
+ * #19 path after the Yes hold: previous Yes finished, kid tapped next,
+ * then this root opened.
  */
 export function afterHearNextTap(opts: {
   nextPlay: boolean;
@@ -331,7 +334,7 @@ export function clipListening(
   };
 }
 
-/** Next-root (card, nav, index) stays closed during the Yes beat and while a clip plays. */
+/** Next-root (card, nav, index) stays closed during the Yes hold and while a clip plays. */
 export function allowNextRootTap(
   correctAdvance: CorrectAdvance | null,
   listening: boolean,
@@ -339,17 +342,60 @@ export function allowNextRootTap(
   return !listening && allowManualStep(correctAdvance);
 }
 
+/**
+ * After Yes, the one next tap may open the dest once the clip has ended.
+ * Closed while Listening… (#34). Available again when the clip ends.
+ */
+export function allowWinNextTap(
+  correctAdvance: CorrectAdvance | null,
+  listening: boolean,
+): boolean {
+  return correctAdvance !== null && !listening;
+}
+
+/** Kid-facing label for the one tap that leaves the Yes hold. */
+export function afterYesNextLabel(dest: AfterCorrectRecall): string {
+  return dest.kind === 'next' ? 'Next →' : 'Done →';
+}
+
+/**
+ * After the Yes clip ends, stay on this card's win line. A blank card is
+ * the old auto-open: dest already swapped in, win line gone.
+ */
+export function holdYesAfterClip(
+  view: LessonView,
+  listening: boolean,
+): { winLine: string | null; blank: boolean; nextReady: boolean } {
+  const winLine = winLineOnCard(view);
+  const stillOnFrom =
+    view.correctAdvance !== null && view.correctAdvance.fromId === view.currentRootId;
+  return {
+    winLine,
+    blank: winLine === null || !stillOnFrom,
+    nextReady: stillOnFrom && winLine !== null && !listening,
+  };
+}
+
 export interface LessonAfterCorrect {
   dest: AfterCorrectRecall;
   duringYes: { showExamples: boolean; winLine: string };
+  /** Clip ended — same card, win line stays, next tap is the only open. */
+  afterClip: {
+    currentRootId: RootId;
+    winLine: string;
+    showExamples: boolean;
+    nextReady: boolean;
+    nextLabel: string;
+  };
   afterBeat:
     | { action: 'open'; currentRootId: RootId; entry: 'recall'; showExamples: boolean }
     | { action: 'home'; currentRootId: null; entry: 'teach'; showExamples: boolean };
 }
 
 /**
- * Craig's path as a pure function: correct Bio → one Yes line → Geo in recall.
- * Examples never come back. A remount mid-Yes still shows the line, not chips.
+ * Craig's path as a pure function: correct Bio → one Yes line → hold →
+ * tap Next → Geo in recall. Examples never come back. A remount mid-Yes
+ * still shows the line, not chips. Clip end does not open the next root.
  */
 export function lessonAfterCorrect(fromId: RootId, entitled: boolean): LessonAfterCorrect {
   const dest = afterCorrectRecall(fromId, entitled);
@@ -363,6 +409,13 @@ export function lessonAfterCorrect(fromId: RootId, entitled: boolean): LessonAft
     showExamples: showExampleWords(duringYesView),
     winLine: winLineOnCard(duringYesView) ?? dest.line,
   };
+  const afterClip = {
+    currentRootId: fromId,
+    winLine: duringYes.winLine,
+    showExamples: showExampleWords(duringYesView),
+    nextReady: allowWinNextTap(duringYesView.correctAdvance, false),
+    nextLabel: afterYesNextLabel(dest),
+  };
   if (dest.kind === 'next') {
     const after: LessonView = {
       recall: null,
@@ -373,6 +426,7 @@ export function lessonAfterCorrect(fromId: RootId, entitled: boolean): LessonAft
     return {
       dest,
       duringYes,
+      afterClip,
       afterBeat: {
         action: 'open',
         currentRootId: dest.id,
@@ -384,6 +438,7 @@ export function lessonAfterCorrect(fromId: RootId, entitled: boolean): LessonAft
   return {
     dest,
     duringYes,
+    afterClip,
     afterBeat: { action: 'home', currentRootId: null, entry: 'teach', showExamples: false },
   };
 }

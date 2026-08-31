@@ -82,6 +82,8 @@ describe('listening state while Hear/Yes plays', () => {
     expect(phone).not.toMatch(/\.ww-listen-beats\s*\{[^}]*display:\s*none/);
     expect(phone).toMatch(/\.ww-recall-win,\s*\n\s*\.ww-recall-win\.is-now\s*\{[^}]*display:\s*block/);
     expect(phone).not.toMatch(/\.ww-recall-win(?:\.is-now)?\s*\{[^}]*display:\s*none/);
+    expect(phone).toMatch(/\.ww-card-actions\s*\{[^}]*display:\s*flex/);
+    expect(phone).not.toMatch(/\.ww-card-actions\s*\{[^}]*display:\s*none/);
     expect(phone).toMatch(/\.ww-lead2,\s*\n\s*\.ww-eyebrow2\s*\{[^}]*display:\s*none/);
   });
 
@@ -94,10 +96,16 @@ describe('listening state while Hear/Yes plays', () => {
     expect(deck).not.toMatch(/overlap/i);
   });
 
-  it('keeps the #19/#32 loop after the clip: Yes line then openRoot recall', () => {
-    expect(deck).toContain('waitOutCorrectAdvance');
+  it('holds the Yes win line after the clip; next tap opens recall', () => {
+    expect(deck).toContain('{winLine}');
+    expect(deck).toContain('onWinNext');
+    expect(deck).toContain('allowWinNextTap');
+    expect(deck).toContain('afterYesNextLabel');
+    expect(deck).toContain('fireAdvance');
     expect(deck).toContain("entry: next.entry");
     expect(deck).toContain('afterHearNextTap');
     expect(deck).toContain('setHearFinished(true)');
+    expect(deck).not.toContain('waitOutCorrectAdvance');
+    expect(deck).not.toContain('armAdvance');
   });
 });

@@ -38,10 +38,13 @@ describe('after Hear: one next tap, no Rush dump', () => {
     expect(nav).toContain('disabled={nextDisabled}');
   });
 
-  it('keeps the #19/#32 loop: Yes clip then openRoot with entry recall', () => {
+  it('holds the Yes win line; next tap opens with entry recall', () => {
     expect(deck).toContain('speakYes(card.root, card.mean)');
-    expect(deck).toContain('waitOutCorrectAdvance');
+    expect(deck).toContain('onWinNext');
+    expect(deck).toContain('allowWinNextTap');
+    expect(deck).toContain('fireAdvance');
     expect(deck).toContain("entry: next.entry");
     expect(deck).toContain("{ entry: next.entry }");
+    expect(deck).not.toContain('waitOutCorrectAdvance');
   });
 });
