@@ -20,6 +20,7 @@ import {
   allowWinNextTap,
   clipListening,
   commitCorrectAdvance,
+  holdHearAfterClip,
   isLessonStudying,
   showExampleWords,
   winLineOnCard,
@@ -231,6 +232,13 @@ export function Deck() {
       ? hearBeatChips(hearBeatLabels(card.root, card.say), hearBeat)
       : null;
   const listen = clipListening(listening, hearBeats, listenKind === 'yes');
+  const hearHold = holdHearAfterClip({
+    hearFinished,
+    listening,
+    won,
+    say: card.say,
+    mean: card.mean,
+  });
   const quizRecall = recall && recall.rootId === id && !won ? recall : null;
   const openSplit = splitForOpenWord(root.words, openWord);
 
@@ -371,6 +379,10 @@ export function Deck() {
                       ))}
                     </p>
                   ) : null}
+                </div>
+              ) : hearHold.line ? (
+                <div className="ww-listen ww-listen-hold" role="status" aria-live="polite">
+                  <p className="ww-listen-line">{hearHold.line}</p>
                 </div>
               ) : null}
               <div className="ww-means">

@@ -16,6 +16,8 @@ import {
   decideCorrectAdvance,
   deckEntryForOpen,
   entryAfterSuccess,
+  hearHoldLine,
+  holdHearAfterClip,
   holdYesAfterClip,
   lessonAfterCorrect,
   showExampleWords,
@@ -449,6 +451,102 @@ describe('after Yes clip: hold the win line until next is tapped', () => {
     expect(clipListening(true, null, true).disableNextRoot).toBe(true);
     expect(clipListening(false, null, true).disableNextRoot).toBe(false);
     expect(allowNextRootTap(advance, false)).toBe(false);
+  });
+});
+
+describe('after Hear clip: hold spoken-sound + meaning until next tap', () => {
+  function hearHold(root: typeof photo, extra: Partial<Parameters<typeof holdHearAfterClip>[0]> = {}) {
+    return holdHearAfterClip({
+      hearFinished: true,
+      listening: false,
+      won: false,
+      say: root.say,
+      mean: root.mean,
+      ...extra,
+    });
+  }
+
+  it('keeps spoken-sound + meaning after Photo / Aqua / Geo Hear — card is not blank', () => {
+    const photoHold = hearHold(photo);
+    expect(photoHold.line).toBe('foe toh · light');
+    expect(photoHold.blank).toBe(false);
+    expect(photoHold.beats).toBeNull();
+    expect(photoHold.knowThisReady).toBe(true);
+    expect(photoHold.line).not.toContain('FOH-toh');
+    expect(photoHold.line).not.toContain('P. H. O. T. O.');
+
+    const aquaHold = hearHold(aqua);
+    expect(aquaHold.line).toBe('ah kwuh · water');
+    expect(aquaHold.blank).toBe(false);
+    expect(aquaHold.knowThisReady).toBe(true);
+
+    const geoHold = hearHold(geo);
+    expect(geoHold.line).toBe('jee oh · earth');
+    expect(geoHold.blank).toBe(false);
+    expect(geoHold.line).not.toContain('JEE-oh');
+
+    const bioHold = hearHold(bio);
+    expect(bioHold.line).toBe('bye oh · life');
+    expect(bioHold.blank).toBe(false);
+  });
+
+  it('does not invent a three-beat Hear recap after the clip', () => {
+    const after = hearHold(photo);
+    expect(after.beats).toBeNull();
+    expect(after.line).toBe('foe toh · light');
+    expect(clipListening(false).line).toBeNull();
+    expect(clipListening(false).beats).toBeNull();
+    expect(hearBeatChips(hearBeatLabels('Photo', 'FOH-toh'), 2)).toHaveLength(3);
+    expect(hearHoldLine('FOH-toh', 'light')).not.toMatch(/Photo|P\. H\. O/);
+  });
+
+  it('closes I-know-this while Listening… and re-enables it after Hear', () => {
+    const during = hearHold(photo, { hearFinished: false, listening: true });
+    expect(during.line).toBeNull();
+    expect(during.knowThisReady).toBe(false);
+    expect(clipListening(true).disableKnowThis).toBe(true);
+    expect(clipListening(true).disableNextRoot).toBe(true);
+
+    const after = hearHold(photo);
+    expect(after.knowThisReady).toBe(true);
+    expect(clipListening(false).disableKnowThis).toBe(false);
+    expect(clipListening(false).disableNextRoot).toBe(false);
+  });
+
+  it('hides the Hear hold once Yes wins — Next stays the one tap', () => {
+    const won = hearHold(photo, { won: true });
+    expect(won.line).toBeNull();
+    expect(won.knowThisReady).toBe(false);
+    expect(won.blank).toBe(false);
+  });
+
+  it('I-know-this then continues Geo → Photo → Aqua — no Rush dump', () => {
+    const hops = [
+      [geo, photo, 'jee oh · earth', 'Yes — Geo means earth.'],
+      [photo, aqua, 'foe toh · light', 'Yes — Photo means light.'],
+    ] as const;
+
+    for (const [from, to, hold, yes] of hops) {
+      const fromId = rootId(from);
+      const toId = rootId(to);
+      const afterHear = hearHold(from);
+      expect(afterHear.line).toBe(hold);
+      expect(afterHear.knowThisReady).toBe(true);
+      expect(
+        afterHearNextTap({ nextPlay: true, hearFinished: true, entry: 'teach', won: false }),
+      ).toEqual({ showRush: false, showNextRoot: false });
+
+      const path = lessonAfterCorrect(fromId, false);
+      expect(path.afterClip.currentRootId).toBe(fromId);
+      expect(path.afterClip.winLine).toBe(yes);
+      expect(path.afterClip.nextReady).toBe(true);
+      expect(path.afterBeat).toEqual({
+        action: 'open',
+        currentRootId: toId,
+        entry: 'recall',
+        showExamples: false,
+      });
+    }
   });
 });
 

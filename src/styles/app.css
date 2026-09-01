@@ -1686,6 +1686,10 @@
   .ww-listen-beats {
     display: flex;
   }
+  /* After Hear, spoken-sound + meaning stay — not a second three-beat recap. */
+  .ww-listen-hold {
+    display: block;
+  }
   /* Yes win-line + Next stay after the clip — lead/eyebrow hide. */
   .ww-recall-win,
   .ww-recall-win.is-now {

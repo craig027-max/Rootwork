@@ -8,6 +8,7 @@
 
 import { ROOTS_BY_ID, neighborOpenable, type Root, type RootId } from '../data/roots';
 import type { HearBeatChip } from './hearBeats';
+import { speakablePronunciation } from './speak';
 
 /** Quiet pause so a kid can read the one-line win before the next card. */
 export const SUCCESS_BEAT_MS = 900;
@@ -356,6 +357,40 @@ export function allowWinNextTap(
 /** Kid-facing label for the one tap that leaves the Yes hold. */
 export function afterYesNextLabel(dest: AfterCorrectRecall): string {
   return dest.kind === 'next' ? 'Next →' : 'Done →';
+}
+
+/**
+ * After Hear ends, hold spoken sound + meaning — not the three-beat recap
+ * (name → sound → letters) and not the on-card say (FOH-toh).
+ */
+export function hearHoldLine(say: string, mean: string): string {
+  const sound = speakablePronunciation(say);
+  const spokenMean = mean.replace(/\s+/g, ' ').trim();
+  return `${sound} · ${spokenMean}`;
+}
+
+/**
+ * After the Hear clip ends, keep spoken-sound + meaning on this card until
+ * I-know-this or Next. A blank wait is the old drop: Listening… unmounted
+ * and the beat row went with it. Shared across the deck (Geo / Photo /
+ * Aqua), not a Photo-only special case. Yes still uses holdYesAfterClip.
+ */
+export function holdHearAfterClip(opts: {
+  hearFinished: boolean;
+  listening: boolean;
+  won: boolean;
+  say: string;
+  mean: string;
+}): { line: string | null; blank: boolean; beats: HearBeatChip[] | null; knowThisReady: boolean } {
+  const line = opts.hearFinished && !opts.won ? hearHoldLine(opts.say, opts.mean) : null;
+  return {
+    line,
+    // After Hear, a missing line is the Photo/Aqua blank CoS saw.
+    blank: opts.hearFinished && !opts.won && line === null,
+    // Never replay name → sound → letters after the clip.
+    beats: null,
+    knowThisReady: opts.hearFinished && !opts.listening && !opts.won,
+  };
 }
 
 /**

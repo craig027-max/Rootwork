@@ -38,6 +38,15 @@ describe('after Hear: one next tap, no Rush dump', () => {
     expect(nav).toContain('disabled={nextDisabled}');
   });
 
+  it('holds spoken-sound + meaning after Hear; I-know-this stays the one tap', () => {
+    expect(deck).toContain('holdHearAfterClip');
+    expect(deck).toContain('hearHold.line');
+    expect(deck).toContain('ww-listen-hold');
+    expect(deck).toContain('setHearFinished(true)');
+    expect(deck).toContain('I know this ✓');
+    expect(deck).not.toContain('hearHold.beats');
+  });
+
   it('holds the Yes win line; next tap opens with entry recall', () => {
     expect(deck).toContain('speakYes(card.root, card.mean)');
     expect(deck).toContain('onWinNext');
