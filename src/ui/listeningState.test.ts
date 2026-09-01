@@ -80,6 +80,8 @@ describe('listening state while Hear/Yes plays', () => {
     expect(phone).not.toMatch(/\.ww-listen\s*\{[^}]*display:\s*none/);
     expect(phone).toMatch(/\.ww-listen-beats\s*\{[^}]*display:\s*flex/);
     expect(phone).not.toMatch(/\.ww-listen-beats\s*\{[^}]*display:\s*none/);
+    expect(phone).toMatch(/\.ww-listen-hold\s*\{[^}]*display:\s*block/);
+    expect(phone).not.toMatch(/\.ww-listen-hold\s*\{[^}]*display:\s*none/);
     expect(phone).toMatch(/\.ww-recall-win,\s*\n\s*\.ww-recall-win\.is-now\s*\{[^}]*display:\s*block/);
     expect(phone).not.toMatch(/\.ww-recall-win(?:\.is-now)?\s*\{[^}]*display:\s*none/);
     expect(phone).toMatch(/\.ww-card-actions\s*\{[^}]*display:\s*flex/);
