@@ -3,10 +3,11 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ROOTS, isRootOpenable, rootId, rootsInTier } from '../../data/roots';
 import { dailySeed, dailyTilePreview, pickDailyRoots } from '../../core/daily';
-import { buildDetailVM } from '../Home';
+import { buildDetailVM } from './detailVM';
 import { buildMenu } from './menu';
 
 const home = readFileSync(join(process.cwd(), 'src/ui/Home.tsx'), 'utf8');
+const detail = readFileSync(join(process.cwd(), 'src/ui/home/detailVM.tsx'), 'utf8');
 const panel = readFileSync(join(process.cwd(), 'src/ui/home/DetailPanel.tsx'), 'utf8');
 const menu = readFileSync(join(process.cwd(), 'src/ui/home/TierMenu.tsx'), 'utf8');
 const css = readFileSync(join(process.cwd(), 'src/styles/app.css'), 'utf8');
@@ -89,8 +90,8 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
 
   it('renders name + meaning lines on the Daily tile before the Start CTA', () => {
     expect(home).toContain('dailyTilePreview(dailyRoots)');
-    expect(home).toContain('dailyTilePreview(extra.dailyRoots)');
-    expect(home).toContain('sampleLines: true');
+    expect(detail).toContain('dailyTilePreview(extra.dailyRoots)');
+    expect(detail).toContain('sampleLines: true');
     expect(panel).toContain('ww-samples${vm.sampleLines ? \' is-lines\' : \'\'}');
     expect(panel).toContain('<b>{s.root}</b>');
     expect(panel).toContain('{s.mean}');
