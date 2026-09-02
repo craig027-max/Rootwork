@@ -48,6 +48,8 @@ export interface ModeItem {
   disabled?: boolean;
   /** Best-result meta for the row (e.g. "A · 4★" for Root Rush), design's `best`. */
   best?: string;
+  /** Daily tile peek: today's three names + one-line meanings, before Start. */
+  preview?: { root: string; mean: string }[];
 }
 
 export interface TierItem {
@@ -216,6 +218,7 @@ export function buildMenu(
     rushBest?: string;
     dailyStreak?: number;
     dailyDone?: boolean;
+    dailyPreview?: { root: string; mean: string }[];
     nextPlay?: boolean;
     choseMode?: boolean;
   } = {},
@@ -243,6 +246,7 @@ export function buildMenu(
         : 'Five fresh roots · keep your streak',
       badge: opts.dailyDone ? 'DONE' : undefined,
       best: opts.dailyStreak && opts.dailyStreak > 0 ? `🔥 ${opts.dailyStreak}` : undefined,
+      preview: opts.dailyPreview,
     },
   ];
 

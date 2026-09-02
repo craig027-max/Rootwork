@@ -19,6 +19,8 @@ export interface DetailVM {
   pmA?: string;
   pmB?: ReactNode;
   samples: { root: string; mean: string }[];
+  /** Daily tile: stack name + one-line meaning so kids can read today's set. */
+  sampleLines?: boolean;
   moreCount: number;
   primary: { label: string; disabled?: boolean };
   secondary?: { label: string };
@@ -90,10 +92,10 @@ export function DetailPanel({
           </div>
         ) : null}
 
-        <div className="ww-samples">
+        <div className={`ww-samples${vm.sampleLines ? ' is-lines' : ''}`}>
           {vm.samples.map((s) => (
             <div className="ww-schip" key={s.root}>
-              {s.root}
+              <b>{s.root}</b>
               <span>{s.mean}</span>
             </div>
           ))}

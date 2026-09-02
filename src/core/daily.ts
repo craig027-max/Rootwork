@@ -11,6 +11,30 @@ import type { Root } from '../data/roots';
 
 export const DAILY_COUNT = 5;
 
+/** Home Daily tile peeks this many of today's deal — the challenge stays five. */
+export const DAILY_TILE_PREVIEW_COUNT = 3;
+
+/** Name + one-line meaning for the Home Daily tile (first N of today's pick). */
+export interface DailyTileLine {
+  root: string;
+  mean: string;
+}
+
+/**
+ * Preview today's Daily on Home: the first three of the real pick, in play
+ * order. Does not shrink the challenge — `pickDailyRoots` still deals five.
+ */
+export function dailyTilePreview(
+  deal: readonly { root: string; mean: string }[],
+  count: number = DAILY_TILE_PREVIEW_COUNT,
+): DailyTileLine[] {
+  if (deal.length === 0 || count <= 0) return [];
+  return deal.slice(0, Math.min(count, deal.length)).map((r) => ({
+    root: r.root,
+    mean: r.mean,
+  }));
+}
+
 /** Local calendar day as YYYY-MM-DD (the same key the streak logic uses). */
 export function localDayKey(d: Date = new Date()): string {
   const y = d.getFullYear();
