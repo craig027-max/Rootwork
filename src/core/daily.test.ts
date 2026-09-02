@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { ROOTS, rootId, isRootOpenable } from '../data/roots';
-import { DAILY_COUNT, dailySeed, localDayKey, pickDailyRoots } from './daily';
+import {
+  DAILY_COUNT,
+  DAILY_TILE_PREVIEW_COUNT,
+  dailySeed,
+  dailyTilePreview,
+  localDayKey,
+  pickDailyRoots,
+} from './daily';
 
 const T1 = ROOTS.filter((r) => isRootOpenable(rootId(r), false));
 const ALL = ROOTS.filter((r) => isRootOpenable(rootId(r), true));
@@ -59,5 +66,37 @@ describe('pickDailyRoots', () => {
 
   it('returns [] for an empty pool', () => {
     expect(pickDailyRoots([], dailySeed('2026-08-13', null))).toEqual([]);
+  });
+});
+
+describe('dailyTilePreview', () => {
+  const seed = dailySeed('2026-09-01', 'kid-a');
+  const today = pickDailyRoots(T1, seed);
+
+  it('keeps the challenge at five and peeks the first three of that pick', () => {
+    expect(DAILY_COUNT).toBe(5);
+    expect(DAILY_TILE_PREVIEW_COUNT).toBe(3);
+    expect(today).toHaveLength(DAILY_COUNT);
+    const lines = dailyTilePreview(today);
+    expect(lines).toHaveLength(3);
+    expect(lines.map((l) => l.root)).toEqual(today.slice(0, 3).map((r) => r.root));
+    expect(lines.map((l) => l.mean)).toEqual(today.slice(0, 3).map((r) => r.mean));
+  });
+
+  it('uses the real daily pick — not a hardcoded starter trio', () => {
+    const lines = dailyTilePreview(today);
+    for (const line of lines) {
+      const fromDeal = today.find((r) => r.root === line.root);
+      expect(fromDeal, line.root).toBeTruthy();
+      expect(line.mean).toBe(fromDeal!.mean);
+      expect(line.mean.length).toBeGreaterThan(0);
+      expect(line.mean).not.toMatch(/\n/);
+    }
+    const otherDay = pickDailyRoots(T1, dailySeed('2026-09-02', 'kid-a'));
+    expect(dailyTilePreview(otherDay).map((l) => l.root)).not.toEqual(lines.map((l) => l.root));
+  });
+
+  it('returns [] for an empty deal', () => {
+    expect(dailyTilePreview([])).toEqual([]);
   });
 });

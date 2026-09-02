@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { firstRoot, rootId, rootsInTier, type RootId } from '../../data/roots';
+import { ROOTS, firstRoot, isRootOpenable, rootId, rootsInTier, type RootId } from '../../data/roots';
+import { dailySeed, dailyTilePreview, pickDailyRoots } from '../../core/daily';
 import {
   buildMenu,
   defaultSelectedIndex,
@@ -220,6 +221,25 @@ describe('buildMenu — started next tier (returning dashboard)', () => {
     const chose = buildMenu(starterDone, false, { currentTier: 1, choseMode: true });
     expect(keysOf(chose.items)).toEqual(['rush', 'daily', 'tier-1']);
     expect(keysOf(chose.tucked)).toEqual(['tier-2', 'tier-3', 'tier-4', 'tier-5']);
+  });
+
+  it('attaches today\'s three Daily names + meanings on the Daily tile', () => {
+    const deal = pickDailyRoots(
+      ROOTS.filter((r) => isRootOpenable(rootId(r), false)),
+      dailySeed('2026-09-01', 'kid-a'),
+    );
+    const preview = dailyTilePreview(deal);
+    expect(preview).toHaveLength(3);
+    const { items } = buildMenu(startedBuilder, false, {
+      currentTier: 1,
+      dailyPreview: preview,
+    });
+    const daily = items.find((it) => it.kind === 'mode' && it.key === 'daily');
+    expect(daily?.kind).toBe('mode');
+    if (daily?.kind !== 'mode') throw new Error('expected Daily mode row');
+    expect(daily.preview).toEqual(preview);
+    expect(daily.preview?.map((p) => p.root)).toEqual(deal.slice(0, 3).map((r) => r.root));
+    expect(daily.preview?.map((p) => p.mean)).toEqual(deal.slice(0, 3).map((r) => r.mean));
   });
 });
 

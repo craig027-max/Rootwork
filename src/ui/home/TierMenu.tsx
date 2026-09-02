@@ -74,7 +74,9 @@ export function TierMenu({
         role="option"
         aria-selected={sel}
         tabIndex={sel ? 0 : -1}
-        className={`ww-menu-row${sel ? ' sel' : ''}${playNow ? ' play' : ''}`}
+        className={`ww-menu-row${sel ? ' sel' : ''}${playNow ? ' play' : ''}${
+          it.kind === 'mode' && it.preview && it.preview.length > 0 ? ' has-preview' : ''
+        }`}
         style={jewelVarsOf(it.jewel)}
         onClick={() => {
           if (sel) onActivate(it);
@@ -95,6 +97,16 @@ export function TierMenu({
             ) : null}
           </span>
           <span className="sub">{it.sub}</span>
+          {it.kind === 'mode' && it.preview && it.preview.length > 0 ? (
+            <span className="ww-daily-lines">
+              {it.preview.map((p) => (
+                <span className="ww-daily-line" key={p.root}>
+                  <b>{p.root}</b>
+                  <span>{p.mean}</span>
+                </span>
+              ))}
+            </span>
+          ) : null}
           {it.kind === 'tier' && !it.locked && !playNow ? (
             <span className="ww-menu-bar">
               <i style={{ width: `${it.pct}%` }} />

@@ -13,7 +13,7 @@ import {
 } from '../data/roots';
 import { DEFAULT_AVATAR } from '../data/avatars';
 import { gradeForPct } from '../core/stats';
-import { dailySeed, localDayKey, pickDailyRoots } from '../core/daily';
+import { dailySeed, dailyTilePreview, localDayKey, pickDailyRoots } from '../core/daily';
 import {
   buildMenu,
   defaultSelectedIndex,
@@ -64,11 +64,13 @@ export function Home() {
     ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
     dailySeed(day, activeStudentId),
   );
+  const dailyPreview = dailyTilePreview(dailyRoots);
   const { items, tucked } = buildMenu(completed, entitled, {
     currentTier,
     rushBest,
     dailyStreak: stats.streakCurrent,
     dailyDone,
+    dailyPreview,
     nextPlay,
   });
   const allItems = [...items, ...tucked];
@@ -165,7 +167,7 @@ export function Home() {
 }
 
 /** Derive the detail-panel view model from the selected menu row + live progress. */
-function buildDetailVM(
+export function buildDetailVM(
   item: MenuItem,
   extra: {
     dailyRoots: Root[];
@@ -192,7 +194,7 @@ function buildDetailVM(
         scene: sceneFrom(undefined, { key: 'heat', palKey: 'fire', caption: 'Root Rush' }),
       };
     }
-    const dailySamples = extra.dailyRoots.length > 0 ? extra.dailyRoots : starter;
+    const dailySamples = dailyTilePreview(extra.dailyRoots);
     const streakLine =
       extra.streak > 0
         ? extra.dailyDone
@@ -205,11 +207,12 @@ function buildDetailVM(
       eyebrow: 'Daily Challenge',
       big: 'Daily',
       lead: `Five fresh roots every day. See the animation, tap what it means, keep your streak.${streakLine}`,
-      samples: dailySamples.map((r) => ({ root: r.root, mean: r.mean })),
-      moreCount: 0,
+      samples: dailySamples,
+      sampleLines: true,
+      moreCount: Math.max(0, extra.dailyRoots.length - dailySamples.length),
       primary: { label: extra.dailyDone ? 'Play again 📅' : 'Start daily 📅' },
       secondary: { label: 'Browse roots' },
-      scene: sceneFrom(dailySamples[0], { key: 'stars', palKey: 'gold', caption: 'Daily' }),
+      scene: sceneFrom(extra.dailyRoots[0], { key: 'stars', palKey: 'gold', caption: 'Daily' }),
     };
   }
 
