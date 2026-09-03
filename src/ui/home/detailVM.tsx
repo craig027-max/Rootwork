@@ -1,11 +1,17 @@
 import type { ReactNode } from 'react';
-import { PALETTES, TIERS, rootsInTier, rootId, type Root } from '../../data/roots';
+import { PALETTES, TIERS, rootsInTier, type Root } from '../../data/roots';
 import { dailyTilePreview } from '../../core/daily';
 import { gradeForPct } from '../../core/stats';
-import { entryRootName, rushBestLabel, tierPrimaryLabel, type MenuItem } from './menu';
+import {
+  entryRootName,
+  rushBestLabel,
+  tierEntryRoot,
+  tierPrimaryLabel,
+  tierTilePreview,
+  TIER_TILE_PREVIEW_COUNT,
+  type MenuItem,
+} from './menu';
 import type { DetailVM } from './DetailPanel';
-
-const SAMPLE_COUNT = 4;
 
 function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: string; caption: string }) {
   const palKey = root?.pal ?? fallback.palKey;
@@ -94,10 +100,10 @@ export function buildDetailVM(
   }
 
   const roots = rootsInTier(item.t);
-  const samples = roots.slice(0, SAMPLE_COUNT);
+  const teaser = roots.slice(0, TIER_TILE_PREVIEW_COUNT);
   const name = TIERS[item.t - 1]?.n ?? 'Starter';
-  const preview = sceneFrom(samples[0], { key: 'dna', palKey: item.jewel, caption: name });
   const rootName = entryRootName(item.t, extra.completed, extra.entitled);
+  const entry = tierEntryRoot(item.t, extra.completed, extra.entitled);
 
   if (item.locked) {
     return {
@@ -106,42 +112,55 @@ export function buildDetailVM(
       eyebrow: item.title,
       big: name,
       locked: true,
-      lead: leadWithRoots(`${name} unlocks the full curriculum — roots like `, samples.slice(0, 3)),
-      samples: samples.map((r) => ({ root: r.root, mean: r.mean })),
-      moreCount: Math.max(0, item.total - samples.length),
+      lead: leadWithNames(`${name} unlocks the full curriculum — roots like `, teaser.slice(0, 3)),
+      samples: teaser.map((r) => ({ root: r.root, mean: r.mean })),
+      moreCount: Math.max(0, item.total - teaser.length),
       primary: { label: '🔓 Ask a grown-up to unlock' },
-      scene: preview,
+      scene: sceneFrom(teaser[0], { key: 'dna', palKey: item.jewel, caption: name }),
     };
   }
 
   const complete = item.pct === 100;
   const firstPlay = extra.nextPlay;
+  // First-run stays one Play {root} — no four-root dump. Returning dashboard
+  // peeks the next unlearned roots, or recaps owned ones once the tier is done.
+  const peek = firstPlay
+    ? []
+    : tierTilePreview(item.t, extra.completed, extra.entitled, { complete });
+  const sceneRoot = firstPlay
+    ? entry
+    : (roots.find((r) => r.root === peek[0]?.root) ?? entry ?? teaser[0]);
+  const remaining = complete ? item.total - peek.length : item.total - item.done - peek.length;
   return {
     jewel: item.jewel,
     animKey: item.key,
     eyebrow: item.title,
     big: name,
     lead: firstPlay
-      ? leadWithRoots('Play to meet ', samples.slice(0, 3))
-      : leadWithRoots(`${item.sub} — roots like `, samples.slice(0, 3)),
+      ? `Play to meet ${rootName}.`
+      : complete
+        ? `${item.sub} — every root owned.`
+        : leadWithNames(`${item.sub} — next up `, peek),
     ring: firstPlay ? undefined : { pct: item.pct, label: complete ? '✓' : `${item.pct}%` },
     pmA: firstPlay ? undefined : `${item.done} of ${item.total} roots owned`,
     pmB: firstPlay ? undefined : complete ? 'Tier complete' : `${item.total - item.done} roots to go`,
-    samples: samples.map((r) => ({ root: r.root, mean: r.mean })),
-    moreCount: Math.max(0, item.total - samples.length),
+    samples: peek,
+    sampleLines: !firstPlay && peek.length > 0,
+    samplesDone: complete && peek.length > 0,
+    moreCount: firstPlay ? 0 : Math.max(0, remaining),
     primary: { label: tierPrimaryLabel({ nextPlay: firstPlay, complete, rootName }) },
     secondary: firstPlay ? undefined : { label: 'See all roots' },
-    scene: preview,
+    scene: sceneFrom(sceneRoot, { key: 'dna', palKey: item.jewel, caption: name }),
     heroCta: firstPlay,
   };
 }
 
-function leadWithRoots(prefix: string, samples: Root[]): ReactNode {
+function leadWithNames(prefix: string, samples: { root: string }[]): ReactNode {
   return (
     <>
       {prefix}
       {samples.map((r, i) => (
-        <span key={rootId(r)}>
+        <span key={r.root.toLowerCase()}>
           <b>{r.root}</b>
           {i < samples.length - 1 ? ', ' : '.'}
         </span>

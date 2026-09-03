@@ -14,6 +14,7 @@ import {
   pickCurrentTier,
   rushBestLabel,
   tierPrimaryLabel,
+  tierTilePreview,
   tuckedSummary,
 } from './menu';
 
@@ -296,6 +297,31 @@ describe('pickCurrentTier / entry root', () => {
   it('points at Builder after Starter when the next root is openable', () => {
     expect(pickCurrentTier(starterDone, true)).toBe(2);
     expect(entryRootName(2, starterDone, true)).toBe(firstBuilder.root);
+  });
+});
+
+describe('tierTilePreview — returning dashboard peek', () => {
+  it('peeks the next unlearned Starter roots after Bio — not Bio first', () => {
+    const owned = new Set<RootId>([firstId]);
+    const peek = tierTilePreview(1, owned, false);
+    expect(peek[0]?.root).toBe(second.root);
+    expect(second.root).toBe('Geo');
+    expect(peek.map((p) => p.root)).not.toContain('Bio');
+    expect(peek.map((p) => p.root)[0]).not.toBe('Bio');
+    expect(peek[0]?.mean).toBe(second.mean);
+    expect(peek[0]?.mean.length).toBeGreaterThan(0);
+    expect(entryRootName(1, owned, false)).toBe('Geo');
+  });
+
+  it('recaps owned roots when the tier is complete', () => {
+    const recap = tierTilePreview(1, starterDone, false, { complete: true });
+    expect(recap.map((p) => p.root)).toEqual(starter.slice(0, 4).map((r) => r.root));
+    expect(recap[0]?.root).toBe('Bio');
+    expect(recap.map((p) => p.mean)).toEqual(starter.slice(0, 4).map((r) => r.mean));
+  });
+
+  it('does not invent a catalog teaser when asked for unlearned on a finished tier', () => {
+    expect(tierTilePreview(1, starterDone, false)).toEqual([]);
   });
 });
 
