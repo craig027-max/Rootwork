@@ -50,6 +50,8 @@ export interface ModeItem {
   best?: string;
   /** Daily tile peek: today's three names + one-line meanings, before Start. */
   preview?: { root: string; mean: string }[];
+  /** When Daily is banked, the preview lines are a done recap (✓ on each). */
+  previewDone?: boolean;
 }
 
 export interface TierItem {
@@ -247,6 +249,7 @@ export function buildMenu(
       badge: opts.dailyDone ? 'DONE' : undefined,
       best: opts.dailyStreak && opts.dailyStreak > 0 ? `🔥 ${opts.dailyStreak}` : undefined,
       preview: opts.dailyPreview,
+      previewDone: Boolean(opts.dailyDone && opts.dailyPreview && opts.dailyPreview.length > 0),
     },
   ];
 

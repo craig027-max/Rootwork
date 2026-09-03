@@ -59,6 +59,7 @@ export function buildDetailVM(
       lead: `Five fresh roots every day. See the animation, tap what it means, keep your streak.${streakLine}`,
       samples: dailySamples,
       sampleLines: true,
+      samplesDone: extra.dailyDone && dailySamples.length > 0,
       moreCount: Math.max(0, extra.dailyRoots.length - dailySamples.length),
       primary: { label: extra.dailyDone ? 'Play again 📅' : 'Start daily 📅' },
       secondary: { label: 'Browse roots' },

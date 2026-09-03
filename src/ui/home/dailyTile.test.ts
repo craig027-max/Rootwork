@@ -60,6 +60,7 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
 
     expect(vm.samples).toHaveLength(3);
     expect(vm.sampleLines).toBe(true);
+    expect(vm.samplesDone).toBeFalsy();
     expect(vm.samples.map((s) => s.root)).toEqual(today.slice(0, 3).map((r) => r.root));
     expect(vm.samples.map((s) => s.mean)).toEqual(today.slice(0, 3).map((r) => r.mean));
     for (const s of vm.samples) {
@@ -92,7 +93,7 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
     expect(home).toContain('dailyTilePreview(dailyRoots)');
     expect(detail).toContain('dailyTilePreview(extra.dailyRoots)');
     expect(detail).toContain('sampleLines: true');
-    expect(panel).toContain('ww-samples${vm.sampleLines ? \' is-lines\' : \'\'}');
+    expect(panel).toContain('ww-samples${vm.sampleLines ? \' is-lines\' : \'\'}${vm.samplesDone ? \' is-done\' : \'\'}');
     expect(panel).toContain('<b>{s.root}</b>');
     expect(panel).toContain('{s.mean}');
     expect(menu).toContain('ww-daily-lines');
@@ -110,11 +111,94 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
     const phone = mediaBlock(css, 'max-width: 860px');
     expect(phone).toMatch(/\.ww-daily-lines\s*\{[^}]*display:\s*flex/);
     expect(phone).toMatch(/\.ww-daily-line\s*\{[^}]*display:\s*flex/);
+    expect(phone).toMatch(/\.ww-daily-line\.is-done\s*\{[^}]*display:\s*flex/);
     expect(phone).toMatch(/\.ww-samples\.is-lines\s*\{[^}]*display:\s*flex/);
     expect(phone).not.toMatch(/\.ww-daily-lines\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.ww-daily-line\s*\{[^}]*display:\s*none/);
+    expect(phone).not.toMatch(/\.ww-daily-line\.is-done\s*\{[^}]*display:\s*none/);
+    expect(phone).not.toMatch(/\.ww-daily-mark\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.ww-samples\.is-lines\s*\{[^}]*display:\s*none/);
     expect(css).toMatch(/\.ww-samples\.is-lines\s*\{/);
     expect(css).toMatch(/\.ww-daily-line\s*\{/);
+    expect(css).toMatch(/\.ww-daily-mark\s*\{/);
+  });
+});
+
+describe('Home Daily tile: done-state recap after Daily is banked', () => {
+  const doneMenu = buildMenu(startedBuilder, false, {
+    currentTier: 1,
+    dailyPreview: preview,
+    dailyDone: true,
+    dailyStreak: 3,
+  });
+  const doneItem = doneMenu.items.find((it) => it.kind === 'mode' && it.key === 'daily');
+  if (!doneItem || doneItem.kind !== 'mode') throw new Error('fixture: Daily tile missing when done');
+
+  it('still lists today\'s three names + meanings — not a naked Play-again reset', () => {
+    expect(doneItem.preview).toEqual(preview);
+    expect(doneItem.preview?.map((p) => p.root)).toEqual(today.slice(0, 3).map((r) => r.root));
+    expect(doneItem.preview?.map((p) => p.mean)).toEqual(today.slice(0, 3).map((r) => r.mean));
+    expect(doneItem.preview?.map((p) => p.root)).not.toEqual(['Bio', 'Geo', 'Photo']);
+
+    const vm = buildDetailVM(doneItem, {
+      dailyRoots: today,
+      dailyDone: true,
+      streak: 3,
+      nextPlay: false,
+      completed: startedBuilder,
+      entitled: false,
+    });
+
+    expect(vm.samples).toHaveLength(3);
+    expect(vm.sampleLines).toBe(true);
+    expect(vm.samplesDone).toBe(true);
+    expect(vm.samples.map((s) => s.root)).toEqual(today.slice(0, 3).map((r) => r.root));
+    expect(vm.samples.map((s) => s.mean)).toEqual(today.slice(0, 3).map((r) => r.mean));
+    for (const s of vm.samples) {
+      expect(s.mean.length).toBeGreaterThan(0);
+      expect(s.mean).not.toMatch(/\n/);
+    }
+    expect(vm.primary.label).toMatch(/Play again/);
+    expect(vm.primary.label).not.toMatch(/Start daily/);
+  });
+
+  it('marks those three lines done with the existing Daily ✓ / DONE chrome', () => {
+    expect(doneItem.badge).toBe('DONE');
+    expect(doneItem.previewDone).toBe(true);
+    expect(doneItem.sub).toMatch(/Done for today/);
+
+    expect(menu).toContain('it.previewDone');
+    expect(menu).toContain('ww-daily-mark');
+    expect(menu).toContain('✓');
+    expect(panel).toContain('vm.samplesDone');
+    expect(panel).toContain('ww-daily-mark');
+    expect(css).toMatch(/\.ww-daily-mark\s*\{[^}]*var\(--success\)/);
+    expect(css).toMatch(/\.ww-daily-line\.is-done/);
+    expect(css).toMatch(/\.ww-schip\.is-done/);
+  });
+
+  it('does not drop the recap when Daily is done and the deal is empty', () => {
+    const empty = buildMenu(startedBuilder, false, {
+      currentTier: 1,
+      dailyPreview: [],
+      dailyDone: true,
+    }).items.find((it) => it.kind === 'mode' && it.key === 'daily');
+    expect(empty?.kind).toBe('mode');
+    if (empty?.kind !== 'mode') throw new Error('expected Daily mode row');
+    expect(empty.preview).toEqual([]);
+    expect(empty.previewDone).toBe(false);
+
+    const vm = buildDetailVM(empty, {
+      dailyRoots: [],
+      dailyDone: true,
+      streak: 1,
+      nextPlay: false,
+      completed: startedBuilder,
+      entitled: false,
+    });
+    expect(vm.samples).toEqual([]);
+    expect(vm.samplesDone).toBe(false);
+    expect(vm.samples.map((s) => s.root)).not.toEqual(['Bio', 'Geo', 'Photo']);
+    expect(vm.primary.label).toMatch(/Play again/);
   });
 });

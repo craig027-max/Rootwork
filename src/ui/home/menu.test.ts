@@ -238,6 +238,28 @@ describe('buildMenu — started next tier (returning dashboard)', () => {
     expect(daily?.kind).toBe('mode');
     if (daily?.kind !== 'mode') throw new Error('expected Daily mode row');
     expect(daily.preview).toEqual(preview);
+    expect(daily.previewDone).toBe(false);
+    expect(daily.preview?.map((p) => p.root)).toEqual(deal.slice(0, 3).map((r) => r.root));
+    expect(daily.preview?.map((p) => p.mean)).toEqual(deal.slice(0, 3).map((r) => r.mean));
+  });
+
+  it('keeps the three-line recap and marks it done after Daily is banked', () => {
+    const deal = pickDailyRoots(
+      ROOTS.filter((r) => isRootOpenable(rootId(r), false)),
+      dailySeed('2026-09-01', 'kid-a'),
+    );
+    const preview = dailyTilePreview(deal);
+    const { items } = buildMenu(startedBuilder, false, {
+      currentTier: 1,
+      dailyPreview: preview,
+      dailyDone: true,
+    });
+    const daily = items.find((it) => it.kind === 'mode' && it.key === 'daily');
+    expect(daily?.kind).toBe('mode');
+    if (daily?.kind !== 'mode') throw new Error('expected Daily mode row');
+    expect(daily.badge).toBe('DONE');
+    expect(daily.preview).toEqual(preview);
+    expect(daily.previewDone).toBe(true);
     expect(daily.preview?.map((p) => p.root)).toEqual(deal.slice(0, 3).map((r) => r.root));
     expect(daily.preview?.map((p) => p.mean)).toEqual(deal.slice(0, 3).map((r) => r.mean));
   });
