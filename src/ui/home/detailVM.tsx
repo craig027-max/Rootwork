@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
 import { PALETTES, TIERS, rootsInTier, rootId, type Root } from '../../data/roots';
 import { dailyTilePreview } from '../../core/daily';
-import { entryRootName, tierPrimaryLabel, type MenuItem } from './menu';
+import { gradeForPct } from '../../core/stats';
+import { entryRootName, rushBestLabel, tierPrimaryLabel, type MenuItem } from './menu';
 import type { DetailVM } from './DetailPanel';
 
 const SAMPLE_COUNT = 4;
@@ -26,20 +27,45 @@ export function buildDetailVM(
     nextPlay: boolean;
     completed: Set<string>;
     entitled: boolean;
+    rushRuns?: number;
+    rushBestPct?: number;
+    rushBestStars?: number;
+    rushBestScore?: number;
   },
 ): DetailVM {
   if (item.kind === 'mode') {
-    const starter = rootsInTier(1).slice(0, 3);
     if (item.key === 'rush') {
+      const played = (extra.rushRuns ?? 0) > 0;
+      const bestPct = extra.rushBestPct ?? 0;
+      const bestStars = extra.rushBestStars ?? 0;
+      const bestScore = extra.rushBestScore ?? 0;
+      const recap = rushBestLabel({
+        runs: extra.rushRuns ?? 0,
+        bestPct,
+        bestStars,
+        bestScore,
+      });
+      const recapLine = recap
+        ? ` Best so far — ${recap}${bestScore > 0 ? ' combo' : ''}.`
+        : '';
       return {
         jewel: item.jewel,
         animKey: item.key,
         eyebrow: 'Quiz Mode',
         big: 'Root Rush',
-        lead: 'Match roots to meanings and rack up combos — every right answer in a row multiplies your score. Ten questions a run; beat your best.',
-        samples: starter.map((r) => ({ root: r.root, mean: r.mean })),
+        lead: `Match roots to meanings and rack up combos — every right answer in a row multiplies your score. Ten questions a run; beat your best.${recapLine}`,
+        ring: played
+          ? { pct: bestPct, label: gradeForPct(bestPct) }
+          : undefined,
+        pmA: played ? `${bestStars}★ best` : undefined,
+        pmB: played
+          ? bestScore > 0
+            ? `${bestScore.toLocaleString('en-US')} combo`
+            : 'Ten questions a run'
+          : undefined,
+        samples: [],
         moreCount: 0,
-        primary: { label: 'Start the run 🎯' },
+        primary: { label: played ? 'Play again 🎯' : 'Start the run 🎯' },
         secondary: { label: 'Browse roots' },
         scene: sceneFrom(undefined, { key: 'heat', palKey: 'fire', caption: 'Root Rush' }),
       };

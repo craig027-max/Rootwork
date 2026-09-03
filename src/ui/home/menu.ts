@@ -26,7 +26,7 @@ import {
   type Root,
   type TierNum,
 } from '../../data/roots';
-import { starsForPct } from '../../core/stats';
+import { gradeForPct, starsForPct } from '../../core/stats';
 
 /** Per-tier presentation: emoji chip + the PALETTES jewel key that themes the row. */
 export const TIER_META: { icon: string; jewel: string }[] = [
@@ -183,6 +183,19 @@ export function defaultSelectedIndex(items: MenuItem[], currentTier: TierNum): n
 /** Kid-facing list heading: start/play on the next-Play board, resume on the dashboard. */
 export function listHeading(nextPlay: boolean): string {
   return nextPlay ? 'Start playing' : 'Jump back in';
+}
+
+/** Returning-dashboard Root Rush meta: letter + stars, plus combo once it exists. */
+export function rushBestLabel(stats: {
+  runs: number;
+  bestPct: number;
+  bestStars: number;
+  bestScore?: number;
+}): string | undefined {
+  if (stats.runs <= 0) return undefined;
+  const grade = `${gradeForPct(stats.bestPct)} · ${stats.bestStars}★`;
+  const score = stats.bestScore ?? 0;
+  return score > 0 ? `${grade} · ${score.toLocaleString('en-US')}` : grade;
 }
 
 /** Primary CTA on a playable tier. Next-Play board says Play, not Continue. */

@@ -384,6 +384,15 @@
   .ww-samples.is-lines .ww-schip.is-done {
     display: flex;
   }
+  .ww-prog {
+    display: flex;
+  }
+  .ww-pmeta .pm-a {
+    display: block;
+  }
+  .ww-pmeta .pm-b {
+    display: block;
+  }
 }
 .ww-panel-label {
   display: flex;

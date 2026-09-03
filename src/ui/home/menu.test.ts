@@ -12,6 +12,7 @@ import {
   listHeading,
   nextPlayRoot,
   pickCurrentTier,
+  rushBestLabel,
   tierPrimaryLabel,
   tuckedSummary,
 } from './menu';
@@ -217,6 +218,21 @@ describe('buildMenu — started next tier (returning dashboard)', () => {
     expect(entitled.tucked).toEqual([]);
   });
 
+  it('attaches the real Rush best on the returning-dashboard row — not a Starter teaser', () => {
+    const label = rushBestLabel({ runs: 1, bestPct: 80, bestStars: 4, bestScore: 2400 });
+    expect(label).toBe('A · 4★ · 2,400');
+    const { items } = buildMenu(startedBuilder, false, {
+      currentTier: 2,
+      rushBest: label,
+    });
+    const rush = items.find((it) => it.kind === 'mode' && it.key === 'rush');
+    expect(rush?.kind).toBe('mode');
+    if (rush?.kind !== 'mode') throw new Error('expected Rush mode row');
+    expect(rush.best).toBe('A · 4★ · 2,400');
+    expect(rush.preview).toBeUndefined();
+    expect(rush.previewDone).toBeFalsy();
+  });
+
   it('also reveals the dashboard if they chose a mode without starting Builder', () => {
     const chose = buildMenu(starterDone, false, { currentTier: 1, choseMode: true });
     expect(keysOf(chose.items)).toEqual(['rush', 'daily', 'tier-1']);
@@ -284,6 +300,14 @@ describe('pickCurrentTier / entry root', () => {
 });
 
 describe('copy', () => {
+  it('formats a Rush best as letter + stars, and combo only once it exists', () => {
+    expect(rushBestLabel({ runs: 0, bestPct: 0, bestStars: 0, bestScore: 0 })).toBeUndefined();
+    expect(rushBestLabel({ runs: 1, bestPct: 20, bestStars: 1 })).toBe('D · 1★');
+    expect(rushBestLabel({ runs: 2, bestPct: 100, bestStars: 5, bestScore: 4500 })).toBe(
+      'S · 5★ · 4,500',
+    );
+  });
+
   it('says start/play on the next-Play board and jump back in on the dashboard', () => {
     expect(listHeading(true)).toBe('Start playing');
     expect(listHeading(false)).toBe('Jump back in');
