@@ -20,11 +20,6 @@ const ROUND = 10;
 const MAX_MULT = 8;
 const AUTO_ADVANCE_MS = 900;
 
-/** Mirrors the store's private stats key scheme (src/app/store.ts `statsKey`).
- * store.ts is being edited concurrently, so best-score persistence writes the
- * freshly-recorded stats blob (plus bestScore) back to the same slot here. */
-const STATS_STORAGE_PREFIX = 'wondral:stats:v1:';
-
 // ── accent (jewel re-theming) ─────────────────────────────────
 
 interface Accent {
@@ -40,31 +35,6 @@ const FIRE_ACCENT: Accent = { qc: '255,194,77', qgrad: 'var(--gradient-fire)' };
 function accentStyle(a: Accent): CSSProperties {
   return { '--qc': a.qc, '--qgrad': a.qgrad } as CSSProperties;
 }
-
-// ── best score persistence ────────────────────────────────────
-
-/**
- * Bank a new best combo score onto the persisted stats blob. The store's
- * recordQuizRun doesn't carry the combo score (store.ts is off-limits in this
- * change), so after the run is recorded we merge bestScore into the store's
- * freshly-saved stats and re-persist to the same localStorage slot.
- * Returns true when `score` is a new best.
- */
-function persistBestScore(score: number): boolean {
-  const s = useWondralStore.getState();
-  const prev = s.stats.bestScore ?? 0;
-  if (score <= prev) return false;
-  const stats = { ...s.stats, bestScore: score };
-  useWondralStore.setState({ stats });
-  try {
-    localStorage.setItem(STATS_STORAGE_PREFIX + (s.activeStudentId ?? 'anon'), JSON.stringify(stats));
-  } catch {
-    // ignore quota / privacy errors — the in-memory best still applies
-  }
-  return true;
-}
-
-// ── component ─────────────────────────────────────────────────
 
 type Phase = 'start' | 'play' | 'result';
 
@@ -149,9 +119,9 @@ export function RootRush() {
     // final answer by the time the Next click / auto-advance timer fires).
     if (recordedRunRef.current !== runSeed) {
       recordedRunRef.current = runSeed;
-      const run = recordQuizRun(correctCount, questions.length);
+      const run = recordQuizRun(correctCount, questions.length, score);
       setResult(run);
-      setNewBestScore(persistBestScore(score));
+      setNewBestScore(Boolean(run.isNewBestScore));
     }
     setPhase('result');
   }

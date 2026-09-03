@@ -225,7 +225,7 @@ interface WondralStore {
   // Gamification — derived from learning + quiz activity, persisted per student.
   stats: GameStats;
   /** Record a finished Root Rush run; returns the run summary for the UI. */
-  recordQuizRun: (correct: number, total: number) => RunResult;
+  recordQuizRun: (correct: number, total: number, score?: number) => RunResult;
   /** Bank a finished Daily Challenge (XP + streak; no-op if already done today). */
   recordDailyComplete: () => void;
 }
@@ -365,9 +365,9 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   progress: INITIAL_PROGRESS,
   completedRoots: completedIdSet(INITIAL_PROGRESS),
   stats: INITIAL_STATS,
-  recordQuizRun: (correct, total) => {
+  recordQuizRun: (correct, total, score) => {
     const studentId = get().activeStudentId;
-    const { stats, run } = recordRun(get().stats, { correct, total, day: localDayKey() });
+    const { stats, run } = recordRun(get().stats, { correct, total, day: localDayKey(), score });
     saveStats(stats, studentId);
     set({ stats });
     return run;

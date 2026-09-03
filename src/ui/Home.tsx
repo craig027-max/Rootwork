@@ -3,7 +3,6 @@ import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
 import { ROOTS, rootId, isRootOpenable, type TierNum } from '../data/roots';
 import { DEFAULT_AVATAR } from '../data/avatars';
-import { gradeForPct } from '../core/stats';
 import { dailySeed, dailyTilePreview, localDayKey, pickDailyRoots } from '../core/daily';
 import {
   buildMenu,
@@ -12,6 +11,7 @@ import {
   isNextPlayHome,
   listHeading,
   pickCurrentTier,
+  rushBestLabel,
   tierEntryRoot,
   type MenuItem,
 } from './home/menu';
@@ -34,8 +34,7 @@ export function Home() {
   const choseMode = hasChosenMode(stats);
   const nextPlay = isNextPlayHome(completed, entitled, { choseMode });
   const currentTier = pickCurrentTier(completed, entitled);
-  const rushBest =
-    stats.runs > 0 ? `${gradeForPct(stats.bestPct)} · ${stats.bestStars}★` : undefined;
+  const rushBest = rushBestLabel(stats);
   const day = localDayKey();
   const dailyDone = stats.lastDailyDay === day;
   const dailyRoots = pickDailyRoots(
@@ -94,6 +93,10 @@ export function Home() {
     nextPlay,
     completed,
     entitled,
+    rushRuns: stats.runs,
+    rushBestPct: stats.bestPct,
+    rushBestStars: stats.bestStars,
+    rushBestScore: stats.bestScore ?? 0,
   });
 
   return (
