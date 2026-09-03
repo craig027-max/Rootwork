@@ -170,6 +170,30 @@ export function entryRootName(t: TierNum, completed: Set<string>, entitled: bool
   return tierEntryRoot(t, completed, entitled)?.root ?? 'Bio';
 }
 
+/** How many next-unlearned / owned-recap lines a returning tier tile peeks. */
+export const TIER_TILE_PREVIEW_COUNT = 4;
+
+/**
+ * Returning-dashboard tier peek: the next unlearned openable roots (name +
+ * one-line meaning), or — when the tier is complete — a recap of owned ones.
+ * Catalog file order is only the fallback for a locked teaser / empty set;
+ * it must not lead with a root the kid already finished.
+ */
+export function tierTilePreview(
+  t: TierNum,
+  completed: Set<string>,
+  entitled: boolean,
+  opts: { complete?: boolean; count?: number } = {},
+): { root: string; mean: string }[] {
+  const count = opts.count ?? TIER_TILE_PREVIEW_COUNT;
+  if (count <= 0) return [];
+  const roots = rootsInTier(t);
+  const picked = opts.complete
+    ? roots.filter((r) => completed.has(rootId(r)))
+    : roots.filter((r) => isRootOpenable(rootId(r), entitled) && !completed.has(rootId(r)));
+  return picked.slice(0, count).map((r) => ({ root: r.root, mean: r.mean }));
+}
+
 /**
  * Index into `items` (the main list, not tucked rows) for the current tier.
  * Next-Play board puts the play-now tier at 0; returning dashboard finds
