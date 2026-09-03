@@ -98,9 +98,17 @@ export function TierMenu({
           </span>
           <span className="sub">{it.sub}</span>
           {it.kind === 'mode' && it.preview && it.preview.length > 0 ? (
-            <span className="ww-daily-lines">
+            <span className={`ww-daily-lines${it.previewDone ? ' is-done' : ''}`}>
               {it.preview.map((p) => (
-                <span className="ww-daily-line" key={p.root}>
+                <span
+                  className={`ww-daily-line${it.previewDone ? ' is-done' : ''}`}
+                  key={p.root}
+                >
+                  {it.previewDone ? (
+                    <span className="ww-daily-mark" aria-hidden="true">
+                      ✓
+                    </span>
+                  ) : null}
                   <b>{p.root}</b>
                   <span>{p.mean}</span>
                 </span>

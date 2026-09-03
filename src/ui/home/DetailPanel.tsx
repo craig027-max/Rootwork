@@ -21,6 +21,8 @@ export interface DetailVM {
   samples: { root: string; mean: string }[];
   /** Daily tile: stack name + one-line meaning so kids can read today's set. */
   sampleLines?: boolean;
+  /** Daily done: mark the three preview lines as a recap, not a fresh teaser. */
+  samplesDone?: boolean;
   moreCount: number;
   primary: { label: string; disabled?: boolean };
   secondary?: { label: string };
@@ -92,9 +94,16 @@ export function DetailPanel({
           </div>
         ) : null}
 
-        <div className={`ww-samples${vm.sampleLines ? ' is-lines' : ''}`}>
+        <div
+          className={`ww-samples${vm.sampleLines ? ' is-lines' : ''}${vm.samplesDone ? ' is-done' : ''}`}
+        >
           {vm.samples.map((s) => (
-            <div className="ww-schip" key={s.root}>
+            <div className={`ww-schip${vm.samplesDone ? ' is-done' : ''}`} key={s.root}>
+              {vm.samplesDone ? (
+                <span className="ww-daily-mark" aria-hidden="true">
+                  ✓
+                </span>
+              ) : null}
               <b>{s.root}</b>
               <span>{s.mean}</span>
             </div>
