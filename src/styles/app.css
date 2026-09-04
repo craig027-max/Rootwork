@@ -304,6 +304,34 @@
   margin-top: 9px;
   overflow-wrap: anywhere;
 }
+.ww-profile-hint {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  margin-top: 8px;
+  overflow-wrap: anywhere;
+  white-space: normal;
+  color: var(--text-secondary);
+}
+.ww-profile-hint.is-risk {
+  color: var(--accent-coral, #ff8a6b);
+  font-weight: 700;
+}
+.ww-profile-hint.is-banked {
+  color: var(--success);
+  font-weight: 700;
+}
+.ww-profile-hint.is-none {
+  color: var(--text-muted);
+}
+.ww-profile.is-risk .ww-stat.streak .v {
+  color: var(--accent-coral, #ff8a6b);
+}
+.ww-profile.is-banked .ww-stat.streak .v {
+  color: var(--success);
+}
 .ww-stats {
   margin-left: auto;
   display: grid;
@@ -416,6 +444,16 @@
   }
   .ww-pmeta .pm-b {
     display: block;
+  }
+  .ww-profile-hint {
+    display: block;
+    white-space: normal;
+    overflow: visible;
+  }
+  .ww-profile.is-slim,
+  .ww-profile.is-first {
+    padding: 16px;
+    gap: 12px;
   }
 }
 .ww-panel-label {
@@ -891,6 +929,13 @@
     margin-left: 0;
     width: 100%;
     justify-content: space-between;
+  }
+  .ww-profile.is-slim .ww-stats,
+  .ww-profile.is-first .ww-stats {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(auto-fit, minmax(88px, 1fr));
+    justify-content: start;
+    gap: 10px 16px;
   }
   .ww-detail {
     min-height: 0;
