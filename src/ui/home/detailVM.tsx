@@ -121,9 +121,13 @@ export function buildDetailVM(
   }
 
   const complete = item.pct === 100;
+  const empty = item.done === 0;
   const firstPlay = extra.nextPlay;
+  const resumeNow = !firstPlay && !complete;
   // First-run stays one Play {root} — no four-root dump. Returning dashboard
   // peeks the next unlearned roots, or recaps owned ones once the tier is done.
+  // In-progress resume lifts Continue {root} to a hero tap so recap chrome
+  // does not bury the one-tap.
   const peek = firstPlay
     ? []
     : tierTilePreview(item.t, extra.completed, extra.entitled, { complete });
@@ -140,7 +144,9 @@ export function buildDetailVM(
       ? `Play to meet ${rootName}.`
       : complete
         ? `${item.sub} — every root owned.`
-        : leadWithNames(`${item.sub} — next up `, peek),
+        : empty
+          ? `Play to meet ${rootName}.`
+          : leadWithNames(`${item.sub} — next up `, peek),
     ring: firstPlay ? undefined : { pct: item.pct, label: complete ? '✓' : `${item.pct}%` },
     pmA: firstPlay ? undefined : `${item.done} of ${item.total} roots owned`,
     pmB: firstPlay ? undefined : complete ? 'Tier complete' : `${item.total - item.done} roots to go`,
@@ -148,10 +154,10 @@ export function buildDetailVM(
     sampleLines: !firstPlay && peek.length > 0,
     samplesDone: complete && peek.length > 0,
     moreCount: firstPlay ? 0 : Math.max(0, remaining),
-    primary: { label: tierPrimaryLabel({ nextPlay: firstPlay, complete, rootName }) },
-    secondary: firstPlay ? undefined : { label: 'See all roots' },
+    primary: { label: tierPrimaryLabel({ nextPlay: firstPlay, complete, rootName, empty }) },
+    secondary: complete ? { label: 'See all roots' } : undefined,
     scene: sceneFrom(sceneRoot, { key: 'dna', palKey: item.jewel, caption: name }),
-    heroCta: firstPlay,
+    heroCta: firstPlay || resumeNow,
   };
 }
 

@@ -9,6 +9,7 @@ import {
   hasStartedPostStarter,
   isFirstVisit,
   isNextPlayHome,
+  isResumeTier,
   listHeading,
   nextPlayRoot,
   pickCurrentTier,
@@ -203,6 +204,24 @@ describe('buildMenu — started next tier (returning dashboard)', () => {
     const entitled = buildMenu(startedBuilder, true, { currentTier: 2 });
     expect(defaultSelectedIndex(entitled.items, 2)).toBe(3);
     expect(entitled.items[3]).toMatchObject({ key: 'tier-2', current: true });
+    const builderRow = entitled.items[3];
+    expect(builderRow?.kind).toBe('tier');
+    if (builderRow?.kind !== 'tier') throw new Error('expected Builder tier');
+    expect(builderRow.resumeName).toBe(builder[1]?.root);
+    expect(builder[1]?.root).toBe('Astro');
+    expect(isResumeTier(builderRow)).toBe(true);
+    const starterRow = entitled.items.find((it) => it.kind === 'tier' && it.t === 1);
+    expect(starterRow?.kind).toBe('tier');
+    if (starterRow?.kind !== 'tier') throw new Error('expected Starter tier');
+    expect(starterRow.pct).toBe(100);
+    expect(starterRow.resumeName).toBeUndefined();
+    expect(isResumeTier(starterRow)).toBe(false);
+    const scholar = entitled.items.find((it) => it.kind === 'tier' && it.t === 3);
+    expect(scholar?.kind).toBe('tier');
+    if (scholar?.kind !== 'tier') throw new Error('expected Scholar tier');
+    expect(scholar.done).toBe(0);
+    expect(scholar.resumeName).toBeUndefined();
+    expect(isResumeTier(scholar)).toBe(false);
   });
 
   it('shows unlocked higher tiers in the main list once entitled', () => {
@@ -348,6 +367,9 @@ describe('copy', () => {
     );
     expect(tierPrimaryLabel({ nextPlay: false, complete: false, rootName: 'Auto' })).toBe(
       'Continue Auto ›',
+    );
+    expect(tierPrimaryLabel({ nextPlay: false, complete: false, rootName: 'Urb', empty: true })).toBe(
+      'Play Urb ›',
     );
     expect(tierPrimaryLabel({ nextPlay: false, complete: true, rootName: 'Bio' })).toBe(
       'Replay tier ›',

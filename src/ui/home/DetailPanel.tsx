@@ -28,7 +28,7 @@ export interface DetailVM {
   secondary?: { label: string };
   /** Live canvas teaser in the preview header. Decorative — no pointer events. */
   scene?: { key: string; pal: [string, string]; caption: string };
-  /** First-run: park the primary button directly under the scene so one tap starts. */
+  /** First-run Play / in-progress Continue: park the primary button under the scene. */
   heroCta?: boolean;
 }
 

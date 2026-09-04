@@ -9,6 +9,7 @@ import {
   defaultSelectedIndex,
   hasChosenMode,
   isNextPlayHome,
+  isResumeTier,
   listHeading,
   pickCurrentTier,
   rushBestLabel,
@@ -98,12 +99,13 @@ export function Home() {
     rushBestStars: stats.bestStars,
     rushBestScore: stats.bestScore ?? 0,
   });
+  const resumeNow = !nextPlay && isResumeTier(selected);
 
   return (
-    <div className={`ww-home${nextPlay ? ' is-first' : ''}`}>
+    <div className={`ww-home${nextPlay ? ' is-first' : ''}${resumeNow ? ' is-resume' : ''}`}>
       <ProfileBand name={name} avatar={avatar} rootsOwned={completed.size} stats={stats} />
 
-      <div className={`ww-home-grid${nextPlay ? ' is-first' : ''}`}>
+      <div className={`ww-home-grid${nextPlay ? ' is-first' : ''}${resumeNow ? ' is-resume' : ''}`}>
         <div className="ww-home-list">
           <div className="ww-panel-label">
             <span className="n">{listHeading(nextPlay)}</span>
@@ -133,7 +135,9 @@ export function Home() {
                   ? 'Locked tier'
                   : nextPlay
                     ? 'Tap play'
-                    : 'Your progress'}
+                    : resumeNow
+                      ? 'Tap continue'
+                      : 'Your progress'}
             </span>
           </div>
           <DetailPanel
