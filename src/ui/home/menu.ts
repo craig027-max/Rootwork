@@ -206,6 +206,19 @@ export function defaultSelectedIndex(items: MenuItem[], currentTier: TierNum): n
   return idx >= 0 ? idx : 0;
 }
 
+/**
+ * Land on the resume row until the kid picks something else this visit.
+ * A stale first-run index (0) must not stick after hydrate turns the board
+ * into Rush / Daily / tiers — that buried Continue behind the quiz tiles.
+ */
+export function homeSelectedIndex(
+  picked: number | null,
+  items: MenuItem[],
+  currentTier: TierNum,
+): number {
+  return picked ?? defaultSelectedIndex(items, currentTier);
+}
+
 /** Kid-facing list heading: start/play on the next-Play board, resume on the dashboard. */
 export function listHeading(nextPlay: boolean): string {
   return nextPlay ? 'Start playing' : 'Jump back in';

@@ -262,6 +262,7 @@ describe('Home tier tile: phone-width sample / recap lines stay readable', () =>
   it('puts Continue above the list on resume and wraps name + meaning instead of clipping', () => {
     const phone = mediaBlock(css, 'max-width: 860px');
     expect(home).toContain('isResumeTier');
+    expect(home).toContain('homeSelectedIndex');
     expect(home).toContain('is-resume');
     expect(home).toContain('Tap continue');
     expect(detail).toContain('heroCta: firstPlay || resumeNow');

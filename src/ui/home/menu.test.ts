@@ -4,6 +4,7 @@ import { dailySeed, dailyTilePreview, pickDailyRoots } from '../../core/daily';
 import {
   buildMenu,
   defaultSelectedIndex,
+  homeSelectedIndex,
   entryRootName,
   hasChosenMode,
   hasStartedPostStarter,
@@ -94,6 +95,7 @@ describe('buildMenu — 0 learned (Play Bio)', () => {
 
   it('defaults selection to Starter (index 0), not Root Rush', () => {
     expect(defaultSelectedIndex(items, 1)).toBe(0);
+    expect(homeSelectedIndex(null, items, 1)).toBe(0);
     expect(items[defaultSelectedIndex(items, 1)]).toMatchObject({ key: 'tier-1' });
   });
 
@@ -203,6 +205,8 @@ describe('buildMenu — started next tier (returning dashboard)', () => {
   it('defaults selection to Builder once entitled and they have started it', () => {
     const entitled = buildMenu(startedBuilder, true, { currentTier: 2 });
     expect(defaultSelectedIndex(entitled.items, 2)).toBe(3);
+    expect(homeSelectedIndex(null, entitled.items, 2)).toBe(3);
+    expect(homeSelectedIndex(0, entitled.items, 2)).toBe(0);
     expect(entitled.items[3]).toMatchObject({ key: 'tier-2', current: true });
     const builderRow = entitled.items[3];
     expect(builderRow?.kind).toBe('tier');

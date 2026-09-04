@@ -6,8 +6,8 @@ import { DEFAULT_AVATAR } from '../data/avatars';
 import { dailySeed, dailyTilePreview, localDayKey, pickDailyRoots } from '../core/daily';
 import {
   buildMenu,
-  defaultSelectedIndex,
   hasChosenMode,
+  homeSelectedIndex,
   isNextPlayHome,
   isResumeTier,
   listHeading,
@@ -52,7 +52,8 @@ export function Home() {
     nextPlay,
   });
   const allItems = [...items, ...tucked];
-  const [selectedIndex, setSelectedIndex] = useState(() => defaultSelectedIndex(items, currentTier));
+  const [picked, setPicked] = useState<number | null>(null);
+  const selectedIndex = homeSelectedIndex(picked, items, currentTier);
   const selected = allItems[Math.min(selectedIndex, allItems.length - 1)]!;
 
   const activeStudent = students.find((s) => s.id === activeStudentId) ?? null;
@@ -121,7 +122,7 @@ export function Home() {
             tucked={tucked}
             selectedIndex={selectedIndex}
             nextPlay={nextPlay}
-            onSelect={setSelectedIndex}
+            onSelect={setPicked}
             onActivate={onPrimary}
           />
         </div>
