@@ -4,11 +4,13 @@ import { dailySeed, dailyTilePreview, pickDailyRoots } from '../../core/daily';
 import {
   buildMenu,
   defaultSelectedIndex,
+  homeSelectedIndex,
   entryRootName,
   hasChosenMode,
   hasStartedPostStarter,
   isFirstVisit,
   isNextPlayHome,
+  isResumeTier,
   listHeading,
   nextPlayRoot,
   pickCurrentTier,
@@ -93,6 +95,7 @@ describe('buildMenu — 0 learned (Play Bio)', () => {
 
   it('defaults selection to Starter (index 0), not Root Rush', () => {
     expect(defaultSelectedIndex(items, 1)).toBe(0);
+    expect(homeSelectedIndex(null, items, 1)).toBe(0);
     expect(items[defaultSelectedIndex(items, 1)]).toMatchObject({ key: 'tier-1' });
   });
 
@@ -202,7 +205,27 @@ describe('buildMenu — started next tier (returning dashboard)', () => {
   it('defaults selection to Builder once entitled and they have started it', () => {
     const entitled = buildMenu(startedBuilder, true, { currentTier: 2 });
     expect(defaultSelectedIndex(entitled.items, 2)).toBe(3);
+    expect(homeSelectedIndex(null, entitled.items, 2)).toBe(3);
+    expect(homeSelectedIndex(0, entitled.items, 2)).toBe(0);
     expect(entitled.items[3]).toMatchObject({ key: 'tier-2', current: true });
+    const builderRow = entitled.items[3];
+    expect(builderRow?.kind).toBe('tier');
+    if (builderRow?.kind !== 'tier') throw new Error('expected Builder tier');
+    expect(builderRow.resumeName).toBe(builder[1]?.root);
+    expect(builder[1]?.root).toBe('Astro');
+    expect(isResumeTier(builderRow)).toBe(true);
+    const starterRow = entitled.items.find((it) => it.kind === 'tier' && it.t === 1);
+    expect(starterRow?.kind).toBe('tier');
+    if (starterRow?.kind !== 'tier') throw new Error('expected Starter tier');
+    expect(starterRow.pct).toBe(100);
+    expect(starterRow.resumeName).toBeUndefined();
+    expect(isResumeTier(starterRow)).toBe(false);
+    const scholar = entitled.items.find((it) => it.kind === 'tier' && it.t === 3);
+    expect(scholar?.kind).toBe('tier');
+    if (scholar?.kind !== 'tier') throw new Error('expected Scholar tier');
+    expect(scholar.done).toBe(0);
+    expect(scholar.resumeName).toBeUndefined();
+    expect(isResumeTier(scholar)).toBe(false);
   });
 
   it('shows unlocked higher tiers in the main list once entitled', () => {
@@ -348,6 +371,9 @@ describe('copy', () => {
     );
     expect(tierPrimaryLabel({ nextPlay: false, complete: false, rootName: 'Auto' })).toBe(
       'Continue Auto ›',
+    );
+    expect(tierPrimaryLabel({ nextPlay: false, complete: false, rootName: 'Urb', empty: true })).toBe(
+      'Play Urb ›',
     );
     expect(tierPrimaryLabel({ nextPlay: false, complete: true, rootName: 'Bio' })).toBe(
       'Replay tier ›',

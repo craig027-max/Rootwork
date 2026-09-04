@@ -96,7 +96,11 @@ export function TierMenu({
               <span className="ww-tag here">HERE</span>
             ) : null}
           </span>
-          <span className="sub">{it.sub}</span>
+          <span className="sub">
+            {it.kind === 'tier' && it.resumeName && !playNow
+              ? `Next · ${it.resumeName}`
+              : it.sub}
+          </span>
           {it.kind === 'mode' && it.preview && it.preview.length > 0 ? (
             <span className={`ww-daily-lines${it.previewDone ? ' is-done' : ''}`}>
               {it.preview.map((p) => (
@@ -126,6 +130,23 @@ export function TierMenu({
             it.locked ? (
               <span className="locklbl">🔒 Locked</span>
             ) : playNow ? (
+              <span className="pct">Play ›</span>
+            ) : it.pct === 100 ? (
+              <>
+                <span className="pct">✓</span>
+                <span className="stars" aria-label={`${it.stars} of 5 stars`}>
+                  {'★'.repeat(it.stars)}
+                  {'☆'.repeat(5 - it.stars)}
+                </span>
+              </>
+            ) : it.resumeName ? (
+              <>
+                <span className="pct">{it.resumeName} ›</span>
+                <span className="stars" aria-label={`${it.pct} percent owned`}>
+                  {it.pct}%
+                </span>
+              </>
+            ) : it.done === 0 ? (
               <span className="pct">Play ›</span>
             ) : (
               <>

@@ -354,13 +354,17 @@
   align-items: start;
 }
 
-/* First visit on a phone: preview + Play sit above the list so one tap starts. */
+/* First visit / in-progress resume on a phone: preview + Play/Continue sit
+   above the list so one tap starts. Name + meaning lines wrap instead of
+   clipping at ~860px. */
 @media (max-width: 860px) {
-  .ww-home-grid.is-first {
+  .ww-home-grid.is-first,
+  .ww-home-grid.is-resume {
     display: flex;
     flex-direction: column;
   }
-  .ww-home-grid.is-first .ww-home-preview {
+  .ww-home-grid.is-first .ww-home-preview,
+  .ww-home-grid.is-resume .ww-home-preview {
     order: -1;
   }
   .ww-daily-lines {
@@ -368,6 +372,8 @@
   }
   .ww-daily-line {
     display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
   }
   .ww-daily-line.is-done {
     display: flex;
@@ -375,14 +381,32 @@
   .ww-daily-mark {
     display: inline;
   }
+  .ww-daily-line > span:last-child {
+    margin-left: 0;
+    flex: 1 1 100%;
+    text-align: left;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
   .ww-samples.is-lines {
     display: flex;
   }
   .ww-samples.is-lines .ww-schip {
     display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
   }
   .ww-samples.is-lines .ww-schip.is-done {
     display: flex;
+  }
+  .ww-samples.is-lines .ww-schip > span:last-child {
+    margin-left: 0;
+    flex: 1 1 100%;
+    text-align: left;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
   }
   .ww-prog {
     display: flex;
@@ -2173,14 +2197,17 @@
   .ww-stat .v {
     font-size: 1.2rem;
   }
-  .ww-home.is-first .ww-detail-hero-cta {
+  .ww-home.is-first .ww-detail-hero-cta,
+  .ww-home.is-resume .ww-detail-hero-cta {
     padding: 12px 14px 0;
   }
-  .ww-home.is-first .ww-detail-hero-cta .btn {
+  .ww-home.is-first .ww-detail-hero-cta .btn,
+  .ww-home.is-resume .ww-detail-hero-cta .btn {
     min-height: 56px;
     font-size: 1.08rem;
   }
-  .ww-home.is-first .ww-detail.has-scene .ww-detail-anim {
+  .ww-home.is-first .ww-detail.has-scene .ww-detail-anim,
+  .ww-home.is-resume .ww-detail.has-scene .ww-detail-anim {
     padding-top: 16px;
   }
   .ww-decknav {

@@ -6,9 +6,10 @@ import { DEFAULT_AVATAR } from '../data/avatars';
 import { dailySeed, dailyTilePreview, localDayKey, pickDailyRoots } from '../core/daily';
 import {
   buildMenu,
-  defaultSelectedIndex,
   hasChosenMode,
+  homeSelectedIndex,
   isNextPlayHome,
+  isResumeTier,
   listHeading,
   pickCurrentTier,
   rushBestLabel,
@@ -51,7 +52,8 @@ export function Home() {
     nextPlay,
   });
   const allItems = [...items, ...tucked];
-  const [selectedIndex, setSelectedIndex] = useState(() => defaultSelectedIndex(items, currentTier));
+  const [picked, setPicked] = useState<number | null>(null);
+  const selectedIndex = homeSelectedIndex(picked, items, currentTier);
   const selected = allItems[Math.min(selectedIndex, allItems.length - 1)]!;
 
   const activeStudent = students.find((s) => s.id === activeStudentId) ?? null;
@@ -98,12 +100,13 @@ export function Home() {
     rushBestStars: stats.bestStars,
     rushBestScore: stats.bestScore ?? 0,
   });
+  const resumeNow = !nextPlay && isResumeTier(selected);
 
   return (
-    <div className={`ww-home${nextPlay ? ' is-first' : ''}`}>
+    <div className={`ww-home${nextPlay ? ' is-first' : ''}${resumeNow ? ' is-resume' : ''}`}>
       <ProfileBand name={name} avatar={avatar} rootsOwned={completed.size} stats={stats} />
 
-      <div className={`ww-home-grid${nextPlay ? ' is-first' : ''}`}>
+      <div className={`ww-home-grid${nextPlay ? ' is-first' : ''}${resumeNow ? ' is-resume' : ''}`}>
         <div className="ww-home-list">
           <div className="ww-panel-label">
             <span className="n">{listHeading(nextPlay)}</span>
@@ -119,7 +122,7 @@ export function Home() {
             tucked={tucked}
             selectedIndex={selectedIndex}
             nextPlay={nextPlay}
-            onSelect={setSelectedIndex}
+            onSelect={setPicked}
             onActivate={onPrimary}
           />
         </div>
@@ -133,7 +136,9 @@ export function Home() {
                   ? 'Locked tier'
                   : nextPlay
                     ? 'Tap play'
-                    : 'Your progress'}
+                    : resumeNow
+                      ? 'Tap continue'
+                      : 'Your progress'}
             </span>
           </div>
           <DetailPanel

@@ -70,6 +70,8 @@ export interface TierItem {
   stars: number;
   /** The tier the learner is currently working through — the HERE / PLAY pill. */
   current: boolean;
+  /** Returning-dashboard resume: the next unlearned root this row continues into. */
+  resumeName?: string;
 }
 
 export type MenuItem = ModeItem | TierItem;
@@ -204,6 +206,19 @@ export function defaultSelectedIndex(items: MenuItem[], currentTier: TierNum): n
   return idx >= 0 ? idx : 0;
 }
 
+/**
+ * Land on the resume row until the kid picks something else this visit.
+ * A stale first-run index (0) must not stick after hydrate turns the board
+ * into Rush / Daily / tiers — that buried Continue behind the quiz tiles.
+ */
+export function homeSelectedIndex(
+  picked: number | null,
+  items: MenuItem[],
+  currentTier: TierNum,
+): number {
+  return picked ?? defaultSelectedIndex(items, currentTier);
+}
+
 /** Kid-facing list heading: start/play on the next-Play board, resume on the dashboard. */
 export function listHeading(nextPlay: boolean): string {
   return nextPlay ? 'Start playing' : 'Jump back in';
@@ -222,15 +237,21 @@ export function rushBestLabel(stats: {
   return score > 0 ? `${grade} · ${score.toLocaleString('en-US')}` : grade;
 }
 
-/** Primary CTA on a playable tier. Next-Play board says Play, not Continue. */
+/** Primary CTA on a playable tier. Next-Play / empty tiers say Play, not Continue. */
 export function tierPrimaryLabel(opts: {
   nextPlay: boolean;
   complete: boolean;
   rootName: string;
+  empty?: boolean;
 }): string {
-  if (opts.nextPlay) return `Play ${opts.rootName} ›`;
+  if (opts.nextPlay || opts.empty) return `Play ${opts.rootName} ›`;
   if (opts.complete) return 'Replay tier ›';
   return `Continue ${opts.rootName} ›`;
+}
+
+/** Returning dashboard + this row is the in-progress resume tier. */
+export function isResumeTier(item: MenuItem): boolean {
+  return item.kind === 'tier' && item.current && !item.locked && item.pct < 100;
 }
 
 /** Collapsed-row label for tucked higher tiers. */
@@ -295,6 +316,7 @@ export function buildMenu(
     const meta = TIER_META[i]!;
     const { done, total, pct } = tierStats(t, completed);
     const locked = t !== 1 && !entitled;
+    const current = !locked && t === opts.currentTier;
     return {
       kind: 'tier',
       key: `tier-${t}`,
@@ -308,7 +330,9 @@ export function buildMenu(
       pct,
       locked,
       stars: starsForPct(pct),
-      current: !locked && t === opts.currentTier,
+      current,
+      resumeName:
+        current && pct < 100 ? entryRootName(t, completed, entitled) : undefined,
     };
   });
 

@@ -3,11 +3,12 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { firstRoot, rootId, rootsInTier, type RootId } from '../../data/roots';
 import { buildDetailVM } from './detailVM';
-import { buildMenu, entryRootName, tierPrimaryLabel, tierTilePreview } from './menu';
+import { buildMenu, entryRootName, isResumeTier, tierPrimaryLabel, tierTilePreview } from './menu';
 
 const home = readFileSync(join(process.cwd(), 'src/ui/Home.tsx'), 'utf8');
 const detail = readFileSync(join(process.cwd(), 'src/ui/home/detailVM.tsx'), 'utf8');
 const panel = readFileSync(join(process.cwd(), 'src/ui/home/DetailPanel.tsx'), 'utf8');
+const menuSrc = readFileSync(join(process.cwd(), 'src/ui/home/TierMenu.tsx'), 'utf8');
 const css = readFileSync(join(process.cwd(), 'src/styles/app.css'), 'utf8');
 
 function mediaBlock(source: string, query: string): string {
@@ -83,11 +84,13 @@ describe('Home tier tile: mid-Starter peek (Bio owned)', () => {
     expect(vm.scene?.caption).not.toMatch(/^Bio/);
   });
 
-  it('keeps Continue named after that next root', () => {
+  it('lifts Continue {next root} to a hero tap — recap chrome does not bury it', () => {
     expect(entryRootName(1, bioOwned, false)).toBe('Geo');
     expect(tierPrimaryLabel({ nextPlay: false, complete: false, rootName: 'Geo' })).toBe(
       'Continue Geo ›',
     );
+    expect(isResumeTier(row)).toBe(true);
+    expect(row.resumeName).toBe('Geo');
 
     const vm = buildDetailVM(row, {
       ...extraBase,
@@ -96,7 +99,12 @@ describe('Home tier tile: mid-Starter peek (Bio owned)', () => {
     });
     expect(vm.primary.label).toBe('Continue Geo ›');
     expect(vm.primary.label).not.toMatch(/Bio/);
-    expect(vm.heroCta).toBeFalsy();
+    expect(vm.heroCta).toBe(true);
+    expect(vm.secondary).toBeUndefined();
+    expect(vm.samples[0]?.root).toBe('Geo');
+    expect(vm.sampleLines).toBe(true);
+    expect(vm.ring).toEqual({ pct: row.pct, label: `${row.pct}%` });
+    expect(vm.pmA).toMatch(/roots owned/);
   });
 });
 
@@ -123,8 +131,12 @@ describe('Home tier tile: complete Starter recap', () => {
     expect(String(vm.lead)).not.toMatch(/Play to meet/);
     expect(String(vm.lead)).not.toMatch(/roots like/);
     expect(vm.primary.label).toBe('Replay tier ›');
+    expect(vm.heroCta).toBeFalsy();
+    expect(vm.secondary?.label).toBe('See all roots');
     expect(vm.ring?.label).toBe('✓');
     expect(vm.pmB).toBe('Tier complete');
+    expect(isResumeTier(row)).toBe(false);
+    expect(row.resumeName).toBeUndefined();
   });
 
   it('marks the recap lines with the same Daily ✓ chrome', () => {
@@ -177,6 +189,36 @@ describe('Home tier tile: first-run one-Play board stays one Play', () => {
   });
 });
 
+describe('Home tier tile: empty unlocked tier invites Play', () => {
+  it('says Play {first root} as a hero tap — not Continue on a 0-owned tier', () => {
+    const scholarRoots = rootsInTier(3);
+    const firstScholar = scholarRoots[0];
+    if (!firstScholar) throw new Error('fixture: expected Scholar roots');
+
+    const entitled = buildMenu(startedBuilder, true, { currentTier: 2, nextPlay: false });
+    const row = entitled.items.find((it) => it.kind === 'tier' && it.t === 3);
+    if (!row || row.kind !== 'tier') throw new Error('fixture: Scholar tile missing');
+    expect(row.done).toBe(0);
+    expect(row.locked).toBe(false);
+    expect(isResumeTier(row)).toBe(false);
+
+    const vm = buildDetailVM(row, {
+      ...extraBase,
+      nextPlay: false,
+      completed: startedBuilder,
+      entitled: true,
+    });
+    expect(vm.primary.label).toBe(`Play ${firstScholar.root} ›`);
+    expect(vm.primary.label).not.toMatch(/Continue/);
+    expect(String(vm.lead)).toBe(`Play to meet ${firstScholar.root}.`);
+    expect(vm.heroCta).toBe(true);
+    expect(vm.secondary).toBeUndefined();
+    expect(vm.samples[0]?.root).toBe(firstScholar.root);
+    expect(vm.sampleLines).toBe(true);
+    expect(vm.pmA).toBe(`0 of ${row.total} roots owned`);
+  });
+});
+
 describe('Home tier tile: locked paid teaser stays a teaser', () => {
   it('keeps the catalog unlock peek and the grown-up CTA', () => {
     const { tucked } = buildMenu(startedBuilder, false, { currentTier: 2, nextPlay: false });
@@ -215,5 +257,29 @@ describe('Home tier tile: phone-width sample / recap lines stay readable', () =>
     expect(detail).toContain('tierTilePreview');
     expect(detail).not.toMatch(/rootsInTier\(item\.t\)\.slice\(0,\s*4\)/);
     expect(panel).toContain("ww-samples${vm.sampleLines ? ' is-lines' : ''}${vm.samplesDone ? ' is-done' : ''}");
+  });
+
+  it('puts Continue above the list on resume and wraps name + meaning instead of clipping', () => {
+    const phone = mediaBlock(css, 'max-width: 860px');
+    expect(home).toContain('isResumeTier');
+    expect(home).toContain('homeSelectedIndex');
+    expect(home).toContain('is-resume');
+    expect(home).toContain('Tap continue');
+    expect(detail).toContain('heroCta: firstPlay || resumeNow');
+    expect(menuSrc).toContain('it.resumeName');
+    expect(menuSrc).toContain('Next · ${it.resumeName}');
+    expect(menuSrc).toContain("it.pct === 100");
+    expect(menuSrc).toContain('Play ›');
+    expect(phone).toMatch(/\.ww-home-grid\.is-resume/);
+    expect(phone).toMatch(/\.ww-home-grid\.is-resume \.ww-home-preview/);
+    expect(phone).toMatch(/white-space:\s*normal/);
+    expect(phone).toMatch(/\.ww-daily-line > span:last-child\s*\{[^}]*white-space:\s*normal/);
+    expect(phone).toMatch(
+      /\.ww-samples\.is-lines \.ww-schip > span:last-child\s*\{[^}]*white-space:\s*normal/,
+    );
+    expect(phone).not.toMatch(/\.ww-daily-line > span:last-child\s*\{[^}]*white-space:\s*nowrap/);
+    expect(phone).not.toMatch(
+      /\.ww-samples\.is-lines \.ww-schip > span:last-child\s*\{[^}]*white-space:\s*nowrap/,
+    );
   });
 });
