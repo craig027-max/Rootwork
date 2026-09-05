@@ -156,7 +156,25 @@
   color: var(--text-primary);
   display: inline-flex;
   align-items: baseline;
+  flex-wrap: wrap;
   gap: 8px;
+}
+.q-daily-chip.is-done {
+  border-color: rgba(47, 217, 154, 0.45);
+}
+.q-done-mark {
+  color: var(--success);
+  font-weight: 800;
+}
+.q-done-title {
+  font-family: var(--font-game);
+  font-weight: 800;
+  font-size: clamp(1.35rem, 4vw, 1.8rem);
+  margin: 8px 0 0;
+  color: var(--text-primary);
+}
+.q-next-learn {
+  min-width: min(100%, 16rem);
 }
 .q-daily-chip em {
   font-family: var(--font-display);
@@ -204,6 +222,24 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
     max-height: min(150px, 22svh);
   }
   .q-key { display: none; }
+  .q-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .q-actions .q-go,
+  .q-actions .q-ghost {
+    width: 100%;
+  }
+  .q-daily-chips {
+    justify-content: center;
+  }
+  .q-daily-chip {
+    flex-wrap: wrap;
+    max-width: 100%;
+  }
+  .q-done-title {
+    font-size: 1.25rem;
+  }
 }
 
 /* Short laptop / phone: question + scene + answers on one screen, no scroll. */

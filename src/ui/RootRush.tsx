@@ -6,6 +6,7 @@ import { shuffleWith } from '../core/daily';
 import { buildRushQuestion, type RushQuestion } from '../core/rush';
 import type { RunResult } from '../core/stats';
 import { Scene } from './Scene';
+import { buildModeEmpty, buildRushResultNext, buildRushStart } from './modes/modeHandoff';
 
 /**
  * Root Rush — the full-screen jewel-themed quiz overlay, ported from the design
@@ -41,8 +42,10 @@ type Phase = 'start' | 'play' | 'result';
 export function RootRush() {
   const entitled = useEntitledForDisplay();
   const setView = useWondralStore((s) => s.setView);
+  const openRoot = useWondralStore((s) => s.openRoot);
   const recordQuizRun = useWondralStore((s) => s.recordQuizRun);
-  const bestScore = useWondralStore((s) => s.stats.bestScore ?? 0);
+  const stats = useWondralStore((s) => s.stats);
+  const completed = useWondralStore((s) => s.completedRoots);
 
   const [phase, setPhase] = useState<Phase>('start');
   const [tier, setTier] = useState(0); // 0 = all (accessible) tiers
@@ -78,6 +81,11 @@ export function RootRush() {
 
   function closeQuiz() {
     setView('home');
+  }
+
+  function goLearn(id?: string) {
+    if (id) openRoot(id);
+    else closeQuiz();
   }
 
   function startRun() {
@@ -181,14 +189,17 @@ export function RootRush() {
 
   // Not enough accessible roots to quiz — graceful fallback.
   if (pool.length < 4) {
+    const empty = buildModeEmpty('rush', completed, entitled);
     return (
       <div className="q-rush" style={accentStyle(HERO_ACCENT)} role="dialog" aria-modal="true" aria-label="Root Rush">
         <button className="q-x" onClick={closeQuiz} aria-label="Close quiz">✕</button>
         <div className="q-stage">
           <div className="q-card q-empty">
             <div className="q-eyebrow"><span className="dot" /> Root Rush</div>
-            <p>Learn a few roots first, then come back for Root Rush.</p>
-            <button className="q-go" onClick={closeQuiz}>Back to learning</button>
+            <p>{empty.lead}</p>
+            <button className="q-go q-next-learn" onClick={() => goLearn(empty.primary.rootId)}>
+              {empty.primary.label}
+            </button>
           </div>
         </div>
       </div>
@@ -204,6 +215,8 @@ export function RootRush() {
       locked: (i + 1) !== 1 && !entitled,
     })),
   ];
+  const rushStart = buildRushStart(stats);
+  const rushNext = buildRushResultNext(completed, entitled);
 
   return (
     <div className="q-rush" style={accentStyle(accent)} role="dialog" aria-modal="true" aria-label="Root Rush">
@@ -237,10 +250,12 @@ export function RootRush() {
                 ),
               )}
             </div>
-            <button className="q-go" onClick={startRun}>Start round ›</button>
-            {bestScore > 0 ? (
-              <div className="q-best">
-                Best score · <b>{bestScore.toLocaleString()}</b>
+            <button className="q-go" onClick={startRun}>
+              {rushStart.goLabel}
+            </button>
+            {rushStart.recap ? (
+              <div className="q-best" role="status">
+                {rushStart.recap}
               </div>
             ) : null}
           </div>
@@ -342,9 +357,15 @@ export function RootRush() {
               </div>
             </div>
             <div className="q-actions">
-              <button className="q-go" onClick={startRun}>Play again ›</button>
-              <button className="q-ghost" onClick={() => setPhase('start')}>Change level</button>
-              <button className="q-ghost" onClick={closeQuiz}>Done</button>
+              <button className="q-go" onClick={startRun}>
+                {rushNext.replayLabel}
+              </button>
+              <button className="q-go q-next-learn" onClick={() => goLearn(rushNext.primary.rootId)}>
+                {rushNext.primary.label}
+              </button>
+              <button className="q-ghost" onClick={() => setPhase('start')}>
+                {rushNext.changeLabel}
+              </button>
             </div>
           </div>
         ) : null}

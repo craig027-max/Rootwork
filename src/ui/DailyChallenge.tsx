@@ -5,6 +5,7 @@ import { PALETTES, ROOTS, rootId, isRootOpenable, type Root } from '../data/root
 import { DAILY_COUNT, dailySeed, localDayKey, pickDailyRoots } from '../core/daily';
 import { buildRecall, type RecallBeat } from '../core/recall';
 import { Scene } from './Scene';
+import { buildDailyDone, buildModeEmpty } from './modes/modeHandoff';
 
 const AUTO_ADVANCE_MS = 800;
 
@@ -25,6 +26,7 @@ export function DailyChallenge() {
   const openRoot = useWondralStore((s) => s.openRoot);
   const recordDailyComplete = useWondralStore((s) => s.recordDailyComplete);
   const stats = useWondralStore((s) => s.stats);
+  const completed = useWondralStore((s) => s.completedRoots);
   const studentId = useWondralStore((s) => s.activeStudentId);
 
   const day = localDayKey();
@@ -43,7 +45,6 @@ export function DailyChallenge() {
   const [qi, setQi] = useState(0);
   const [beat, setBeat] = useState<RecallBeat | null>(null);
   const [picked, setPicked] = useState<number | null>(null);
-  const [banked, setBanked] = useState(false);
   const bankedRef = useRef(false);
 
   const root = deal[qi];
@@ -55,6 +56,11 @@ export function DailyChallenge() {
     setView('home');
   }
 
+  function goLearn(id?: string) {
+    if (id) openRoot(id);
+    else close();
+  }
+
   function dealBeat(r: Root) {
     setBeat(buildRecall({ root: r, pool, choices: 3 }));
     setPicked(null);
@@ -63,7 +69,6 @@ export function DailyChallenge() {
   function startRun() {
     if (!deal[0]) return;
     bankedRef.current = false;
-    setBanked(false);
     setQi(0);
     dealBeat(deal[0]);
     setPhase('play');
@@ -73,7 +78,6 @@ export function DailyChallenge() {
     if (!bankedRef.current) {
       bankedRef.current = true;
       recordDailyComplete();
-      setBanked(true);
     }
     setPhase('result');
   }
@@ -139,6 +143,7 @@ export function DailyChallenge() {
   }, [phase, picked, qi, answeredCorrect]);
 
   if (deal.length === 0) {
+    const empty = buildModeEmpty('daily', completed, entitled);
     return (
       <div className="q-rush q-daily" role="dialog" aria-modal="true" aria-label="Daily Challenge">
         <button className="q-x" onClick={close} aria-label="Close daily">
@@ -149,9 +154,9 @@ export function DailyChallenge() {
             <div className="q-eyebrow">
               <span className="dot" /> Daily Challenge
             </div>
-            <p>Learn a few roots first, then come back for the daily.</p>
-            <button className="q-go" onClick={close}>
-              Back to learning
+            <p>{empty.lead}</p>
+            <button className="q-go" onClick={() => goLearn(empty.primary.rootId)}>
+              {empty.primary.label}
             </button>
           </div>
         </div>
@@ -161,6 +166,14 @@ export function DailyChallenge() {
 
   const streakNow = stats.streakCurrent;
   const p = root ? palOf(root) : palOf(deal[0]!);
+  const showDoneLanding = (phase === 'start' && doneToday) || phase === 'result';
+  const done = buildDailyDone({
+    deal,
+    streak: stats.streakCurrent,
+    justFinished: phase === 'result',
+    completed,
+    entitled,
+  });
 
   return (
     <div
@@ -174,7 +187,7 @@ export function DailyChallenge() {
         ✕
       </button>
       <div className="q-stage">
-        {phase === 'start' ? (
+        {phase === 'start' && !doneToday ? (
           <div className="q-card q-start">
             <div className="q-eyebrow">
               <span className="dot" /> Daily Challenge
@@ -190,13 +203,13 @@ export function DailyChallenge() {
               {deal.map((r) => (
                 <span className="q-daily-chip" key={r.root}>
                   {r.root}
+                  <em>{r.mean}</em>
                 </span>
               ))}
             </div>
             <button className="q-go" onClick={startRun}>
-              {doneToday ? 'Play again ›' : `Start daily · ${Math.min(DAILY_COUNT, deal.length)} roots ›`}
+              {`Start daily · ${Math.min(DAILY_COUNT, deal.length)} roots ›`}
             </button>
-            {doneToday ? <div className="q-best">Already banked for today — replay is just for fun.</div> : null}
           </div>
         ) : null}
 
@@ -253,7 +266,7 @@ export function DailyChallenge() {
           </div>
         ) : null}
 
-        {phase === 'result' ? (
+        {showDoneLanding ? (
           <div className="q-card q-result">
             <div className="q-eyebrow">
               <span className="dot" /> Daily Challenge
@@ -261,33 +274,40 @@ export function DailyChallenge() {
             <div className="q-grade" aria-label="Daily complete">
               ✓
             </div>
-            <div className="q-stars" aria-label={`${stats.streakCurrent} day streak`}>
-              🔥 {stats.streakCurrent} day streak
+            {done.title ? <h2 className="q-done-title">{done.title}</h2> : null}
+            <div className="q-stars" aria-label={done.streakLine}>
+              {done.streakLine}
             </div>
-            <p className="q-sub" style={{ margin: '18px auto 0', textAlign: 'center' }}>
-              {banked || doneToday
-                ? 'Streak banked. Same five roots until tomorrow.'
-                : 'Five roots down. Come back tomorrow for a new set.'}
+            <p className="q-sub" role="status" style={{ margin: '18px auto 0', textAlign: 'center' }}>
+              {done.sub}
             </p>
             <div className="q-daily-chips" style={{ marginTop: 22 }}>
               {deal.map((r) => (
                 <button
                   type="button"
-                  className="q-daily-chip"
+                  className={`q-daily-chip${done.recapDone ? ' is-done' : ''}`}
                   key={r.root}
                   onClick={() => openRoot(rootId(r))}
                 >
+                  {done.recapDone ? (
+                    <span className="q-done-mark" aria-hidden="true">
+                      ✓
+                    </span>
+                  ) : null}
                   {r.root}
                   <em>{r.mean}</em>
                 </button>
               ))}
             </div>
             <div className="q-actions">
-              <button className="q-go" onClick={startRun}>
-                Play again ›
+              <button className="q-go q-next-learn" onClick={() => goLearn(done.primary.rootId)}>
+                {done.primary.label}
+              </button>
+              <button className="q-ghost" onClick={startRun}>
+                {done.replayLabel}
               </button>
               <button className="q-ghost" onClick={close}>
-                Done
+                {done.homeLabel}
               </button>
             </div>
           </div>
