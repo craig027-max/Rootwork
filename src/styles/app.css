@@ -374,6 +374,74 @@
   color: var(--jewel-cyan);
 }
 
+/* Returning-dashboard "Today" checklist — Daily + Continue {root}. */
+.ww-today {
+  flex: 1 1 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  min-width: 0;
+  margin-top: 4px;
+}
+.ww-today-h {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.ww-today-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ww-today-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 13px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(52, 224, 166, 0.28);
+  background: rgba(52, 224, 166, 0.06);
+  color: var(--text-primary);
+  font-family: var(--font-game);
+  font-weight: 600;
+  font-size: 0.86rem;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.ww-today-item:focus-visible {
+  outline: none;
+  box-shadow: var(--ring-focus);
+}
+.ww-today-item.is-done {
+  border-color: rgba(52, 224, 166, 0.45);
+  color: var(--text-secondary);
+}
+.ww-today-mark {
+  flex: none;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--jewel-cyan);
+}
+.ww-today-item.is-done .ww-today-mark {
+  color: var(--success);
+}
+.ww-today-cta {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+}
+.ww-today-cta .btn {
+  width: 100%;
+}
+
 /* Main grid: list + detail */
 .ww-home-grid {
   display: grid;
@@ -449,6 +517,19 @@
     display: block;
     white-space: normal;
     overflow: visible;
+  }
+  .ww-today {
+    display: flex;
+    flex: 1 1 100%;
+  }
+  .ww-today-item {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+  .ww-today-cta {
+    display: block;
+    max-width: none;
   }
   .ww-profile.is-slim,
   .ww-profile.is-first {
@@ -924,6 +1005,9 @@
   }
   .ww-profile {
     flex-wrap: wrap;
+  }
+  .ww-today {
+    flex: 1 1 100%;
   }
   .ww-stats {
     margin-left: 0;

@@ -1,0 +1,239 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { describe, expect, it } from 'vitest';
+import { EMPTY_STATS, recordRootLearned, recordRun, type GameStats } from '../../core/stats';
+import { ROOTS, firstRoot, rootId, rootsInTier, type RootId } from '../../data/roots';
+import { buildProfileProgress } from './profileProgress';
+import { buildTodayProgress } from './todayProgress';
+import { learnNextAction } from '../modes/modeHandoff';
+import { isNextPlayHome, nextPlayRoot } from './menu';
+
+const band = readFileSync(join(process.cwd(), 'src/ui/home/ProfileBand.tsx'), 'utf8');
+const home = readFileSync(join(process.cwd(), 'src/ui/Home.tsx'), 'utf8');
+const menu = readFileSync(join(process.cwd(), 'src/ui/home/menu.ts'), 'utf8');
+const detail = readFileSync(join(process.cwd(), 'src/ui/home/detailVM.tsx'), 'utf8');
+const overlay = readFileSync(join(process.cwd(), 'src/ui/modes/modeHandoff.ts'), 'utf8');
+const css = readFileSync(join(process.cwd(), 'src/styles/app.css'), 'utf8');
+
+function mediaBlock(source: string, query: string): string {
+  const start = source.indexOf(`@media (${query})`);
+  if (start < 0) throw new Error(`missing @media (${query})`);
+  const open = source.indexOf('{', start);
+  let depth = 0;
+  for (let i = open; i < source.length; i++) {
+    if (source[i] === '{') depth++;
+    else if (source[i] === '}') {
+      depth--;
+      if (depth === 0) return source.slice(start, i + 1);
+    }
+  }
+  throw new Error(`unclosed @media (${query})`);
+}
+
+const TODAY = '2026-09-06';
+const first = firstRoot();
+if (!first) throw new Error('fixture: expected a first root');
+const starter = rootsInTier(1);
+const second = starter[1];
+if (!second) throw new Error('fixture: expected Geo after Bio');
+const starterDone = new Set<RootId>(starter.map((r) => rootId(r)));
+const builder = rootsInTier(2);
+const firstBuilder = builder[0];
+const secondBuilder = builder[1];
+if (!firstBuilder || !secondBuilder) throw new Error('fixture: expected Builder roots');
+const startedBuilder = new Set<RootId>([...starterDone, rootId(firstBuilder)]);
+const midStarter = new Set<RootId>([rootId(first)]);
+const NONE = new Set<string>();
+
+function returningStats(extra: Partial<GameStats> = {}): GameStats {
+  return {
+    ...EMPTY_STATS,
+    xp: 40,
+    streakCurrent: 7,
+    streakLongest: 7,
+    lastActiveDay: TODAY,
+    ...extra,
+  };
+}
+
+describe('buildTodayProgress — hidden on first-run / next-Play', () => {
+  it('does not dump Daily onto Grow-your-first-root / Play Bio', () => {
+    const vm = buildTodayProgress({
+      firstRun: true,
+      nextPlay: true,
+      dailyDone: false,
+      completed: NONE,
+      entitled: false,
+    });
+    expect(vm.show).toBe(false);
+    expect(vm.items).toEqual([]);
+    expect(vm.cta).toBeNull();
+    expect(isNextPlayHome(NONE)).toBe(true);
+    expect(nextPlayRoot(NONE, false)?.root).toBe(first.root);
+  });
+
+  it('stays off the one-Play board after Bio — Play Geo is still the only next tap', () => {
+    const vm = buildTodayProgress({
+      firstRun: false,
+      nextPlay: true,
+      dailyDone: false,
+      completed: midStarter,
+      entitled: false,
+    });
+    expect(vm.show).toBe(false);
+    expect(vm.cta).toBeNull();
+    expect(vm.items.some((i) => i.key === 'daily')).toBe(false);
+    expect(isNextPlayHome(midStarter)).toBe(true);
+  });
+});
+
+describe('buildTodayProgress — returning dashboard', () => {
+  it('lists Daily + Continue {next root} and makes Continue the fat tap', () => {
+    const next = learnNextAction(startedBuilder, true);
+    expect(next.label).toBe(`Continue ${secondBuilder.root} ›`);
+
+    const vm = buildTodayProgress({
+      firstRun: false,
+      nextPlay: false,
+      dailyDone: false,
+      completed: startedBuilder,
+      entitled: true,
+    });
+
+    expect(vm.show).toBe(true);
+    expect(vm.heading).toBe('Today');
+    expect(vm.items).toEqual([
+      {
+        key: 'daily',
+        done: false,
+        label: 'Daily · five fresh roots',
+        action: 'daily',
+      },
+      {
+        key: 'learn',
+        done: false,
+        label: `Continue ${secondBuilder.root}`,
+        action: 'learn',
+        rootId: next.rootId,
+      },
+    ]);
+    expect(vm.cta).toEqual({
+      kind: 'learn',
+      label: `Continue ${secondBuilder.root} ›`,
+      rootId: next.rootId,
+    });
+    expect(vm.cta?.label).toBe(next.label);
+    expect(vm.cta?.rootId).toBe(rootId(secondBuilder));
+  });
+
+  it('marks Daily done and keeps Continue {root} as the hero — not Play again', () => {
+    const vm = buildTodayProgress({
+      firstRun: false,
+      nextPlay: false,
+      dailyDone: true,
+      completed: startedBuilder,
+      entitled: true,
+    });
+
+    expect(vm.items[0]).toMatchObject({
+      key: 'daily',
+      done: true,
+      label: 'Daily · done for today',
+    });
+    expect(vm.cta?.kind).toBe('learn');
+    expect(vm.cta?.label).toBe(`Continue ${secondBuilder.root} ›`);
+    expect(vm.cta?.label).not.toMatch(/Play again|Start daily/);
+  });
+
+  it('uses Play {root} when the next tier is still empty — same as Home', () => {
+    const vm = buildTodayProgress({
+      firstRun: false,
+      nextPlay: false,
+      dailyDone: false,
+      completed: starterDone,
+      entitled: false,
+    });
+    expect(learnNextAction(starterDone, false).label).toBe(`Play ${firstBuilder.root} ›`);
+    expect(vm.items.find((i) => i.key === 'learn')?.label).toBe(`Play ${firstBuilder.root}`);
+    expect(vm.cta?.label).toBe(`Play ${firstBuilder.root} ›`);
+  });
+
+  it('falls back to Start daily when every openable root is owned', () => {
+    const allOpen = new Set(ROOTS.filter((r) => r.t === 1 || r.t === 2).map((r) => rootId(r)));
+    const pending = buildTodayProgress({
+      firstRun: false,
+      nextPlay: false,
+      dailyDone: false,
+      completed: allOpen,
+      entitled: false,
+    });
+    expect(pending.items.map((i) => i.key)).toEqual(['daily']);
+    expect(pending.cta).toEqual({ kind: 'daily', label: 'Start daily ›' });
+
+    const caughtUp = buildTodayProgress({
+      firstRun: false,
+      nextPlay: false,
+      dailyDone: true,
+      completed: allOpen,
+      entitled: false,
+    });
+    expect(caughtUp.items[0]?.done).toBe(true);
+    expect(caughtUp.cta).toBeNull();
+  });
+});
+
+describe('Today checklist wiring + phone layout', () => {
+  it('renders the checklist from the model on returning Home only', () => {
+    expect(home).toContain('<ProfileBand');
+    expect(home).toContain('nextPlay={nextPlay}');
+    expect(home).toContain('dailyDone={dailyDone}');
+    expect(home).toContain('onContinue');
+    expect(home).toContain('onDaily');
+    expect(band).toContain('buildTodayProgress');
+    expect(band).toContain('ww-today');
+    expect(band).toContain('ww-today-item');
+    expect(band).toContain('ww-today-cta');
+    expect(band).toContain('role="list"');
+    expect(band).toContain('Continue');
+  });
+
+  it('keeps first-run Play, resume Continue, streak band, and overlay handoff', () => {
+    expect(menu).toContain("return nextPlay ? 'Start playing' : 'Jump back in'");
+    expect(menu).toContain('Continue ${opts.rootName}');
+    expect(detail).toContain('heroCta: firstPlay || resumeNow');
+    expect(home).toContain('is-resume');
+    expect(home).toContain('Tap continue');
+    expect(band).toContain('buildProfileProgress');
+    expect(band).toContain('ww-profile-hint');
+    expect(overlay).toContain('learnNextAction');
+    expect(overlay).toContain('buildDailyDone');
+    expect(overlay).toContain('buildRushResultNext');
+  });
+
+  it('does not expand the catalog', () => {
+    expect(ROOTS.length).toBe(183);
+  });
+
+  it('keeps the checklist and Continue tap readable at phone width', () => {
+    const phone = mediaBlock(css, 'max-width: 860px');
+    expect(phone).toMatch(/\.ww-today\s*\{[^}]*display:\s*flex/);
+    expect(phone).toMatch(/\.ww-today-item\s*\{[^}]*display:\s*inline-flex|\.ww-today-item\s*\{[^}]*display:\s*flex/);
+    expect(phone).toMatch(/\.ww-today-cta\s*\{[^}]*display:\s*block|\.ww-today-cta\s*\{[^}]*display:\s*flex/);
+    expect(phone).not.toMatch(/\.ww-today\s*\{[^}]*display:\s*none/);
+    expect(phone).not.toMatch(/\.ww-today-item\s*\{[^}]*display:\s*none/);
+    expect(phone).not.toMatch(/\.ww-today-cta\s*\{[^}]*display:\s*none/);
+    expect(css).toMatch(/\.ww-today-item\.is-done/);
+    expect(css).toMatch(/\.ww-today-mark/);
+  });
+
+  it('does not replace the #44 streak hint with the checklist', () => {
+    const risk = buildProfileProgress(returningStats({ lastActiveDay: '2026-09-05' }), 12, TODAY);
+    expect(risk.hint).toBe('Play today to keep your 7-day streak');
+    const banked = buildProfileProgress(recordRootLearned(EMPTY_STATS, { day: TODAY }), 1, TODAY);
+    expect(banked.hint).toBe('Streak banked for today ✓');
+    const afterRush = recordRun(returningStats(), { correct: 8, total: 10, day: TODAY, score: 2400 });
+    expect(buildProfileProgress(afterRush.stats, 12, TODAY).stats.some((s) => s.key === 'stars')).toBe(
+      true,
+    );
+  });
+});
