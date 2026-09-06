@@ -104,7 +104,18 @@ export function Home() {
 
   return (
     <div className={`ww-home${nextPlay ? ' is-first' : ''}${resumeNow ? ' is-resume' : ''}`}>
-      <ProfileBand name={name} avatar={avatar} rootsOwned={completed.size} stats={stats} />
+      <ProfileBand
+        name={name}
+        avatar={avatar}
+        rootsOwned={completed.size}
+        stats={stats}
+        nextPlay={nextPlay}
+        completed={completed}
+        entitled={entitled}
+        dailyDone={dailyDone}
+        onContinue={(id) => openRoot(id)}
+        onDaily={() => setView('daily')}
+      />
 
       <div className={`ww-home-grid${nextPlay ? ' is-first' : ''}${resumeNow ? ' is-resume' : ''}`}>
         <div className="ww-home-list">
