@@ -392,6 +392,10 @@
   text-transform: uppercase;
   color: var(--text-muted);
 }
+.ww-today.is-done .ww-today-h,
+.ww-profile.is-today-done .ww-today-h {
+  color: var(--success);
+}
 .ww-today-list {
   display: flex;
   flex-wrap: wrap;
@@ -521,6 +525,12 @@
   .ww-today {
     display: flex;
     flex: 1 1 100%;
+  }
+  .ww-today.is-done {
+    display: flex;
+  }
+  .ww-today-h {
+    display: block;
   }
   .ww-today-item {
     display: inline-flex;

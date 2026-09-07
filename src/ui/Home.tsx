@@ -24,6 +24,7 @@ import { buildDetailVM } from './home/detailVM';
 export function Home() {
   const entitled = useEntitledForDisplay();
   const completed = useWondralStore((s) => s.completedRoots);
+  const progress = useWondralStore((s) => s.progress);
   const stats = useWondralStore((s) => s.stats);
   const students = useWondralStore((s) => s.students);
   const activeStudentId = useWondralStore((s) => s.activeStudentId);
@@ -113,8 +114,10 @@ export function Home() {
         completed={completed}
         entitled={entitled}
         dailyDone={dailyDone}
+        progress={progress}
         onContinue={(id) => openRoot(id)}
         onDaily={() => setView('daily')}
+        onRush={() => setView('quiz')}
       />
 
       <div className={`ww-home-grid${nextPlay ? ' is-first' : ''}${resumeNow ? ' is-resume' : ''}`}>
