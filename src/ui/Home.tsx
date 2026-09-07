@@ -20,8 +20,15 @@ import { ProfileBand } from './home/ProfileBand';
 import { TierMenu } from './home/TierMenu';
 import { DetailPanel } from './home/DetailPanel';
 import { buildDetailVM } from './home/detailVM';
+import { learnNextAction } from './modes/modeHandoff';
 import { buildProfileProgress } from './home/profileProgress';
-import { buildTodayProgress, learnedRootName, learnedRootToday } from './home/todayProgress';
+import {
+  buildTodayProgress,
+  learnedRootToday,
+  pickRememberRoot,
+  rememberRootToday,
+  rootLabel,
+} from './home/todayProgress';
 
 export function Home() {
   const entitled = useEntitledForDisplay();
@@ -43,6 +50,13 @@ export function Home() {
   const dailyDone = stats.lastDailyDay === day;
   const profile = buildProfileProgress(stats, completed.size, day);
   const learnedId = learnedRootToday(progress, day);
+  const rememberedId = rememberRootToday(progress, day);
+  const nextLearn = learnNextAction(completed, entitled);
+  const rememberId =
+    rememberedId ??
+    pickRememberRoot(progress, day, { exclude: [learnedId, nextLearn.rootId] });
+  const learn = rootLabel(nextLearn.rootId);
+  const remember = rootLabel(rememberId);
   const today = buildTodayProgress({
     firstRun: profile.firstRun,
     nextPlay,
@@ -50,8 +64,13 @@ export function Home() {
     completed,
     entitled,
     learnedToday: learnedId !== null,
-    learnedRoot: learnedRootName(learnedId),
+    learnedRoot: rootLabel(learnedId).name,
     learnedRootId: learnedId ?? undefined,
+    learnMean: learn.mean,
+    rememberedToday: rememberedId !== null,
+    rememberRoot: remember.name,
+    rememberMean: remember.mean,
+    rememberRootId: rememberId ?? undefined,
   });
   const dailyRoots = pickDailyRoots(
     ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
@@ -127,6 +146,7 @@ export function Home() {
         stats={stats}
         today={today}
         onContinue={(id) => openRoot(id)}
+        onRemember={(id) => openRoot(id, { entry: 'recall' })}
         onDaily={() => setView('daily')}
         onRush={() => setView('quiz')}
       />

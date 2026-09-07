@@ -11,8 +11,9 @@ import type { TodayProgress } from './todayProgress';
  * After they learn a root, that row checks off (Learned {root}) and
  * reviews that root — not the next one. When Daily is banked too the
  * heading is Today ✓ and the fat tap is Keep going · {root} (or Rush).
- * Streak risk stays a visible status line. First-run still drops the
- * extra chrome so Play Bio wins.
+ * Remember {stale root} is the retention beat — one-tap recall, does not
+ * block Today ✓. Streak risk stays a visible status line. First-run
+ * still drops the extra chrome so Play Bio wins.
  */
 export function ProfileBand({
   name,
@@ -21,6 +22,7 @@ export function ProfileBand({
   stats,
   today,
   onContinue,
+  onRemember,
   onDaily,
   onRush,
 }: {
@@ -30,6 +32,7 @@ export function ProfileBand({
   stats: GameStats;
   today: TodayProgress;
   onContinue: (rootId: string) => void;
+  onRemember: (rootId: string) => void;
   onDaily: () => void;
   onRush: () => void;
 }) {
@@ -40,9 +43,13 @@ export function ProfileBand({
   const xpToNext = XP_PER_LEVEL - intoLevel;
   const slim = vm.stats.length <= 2;
 
-  function runAction(action: 'daily' | 'learn' | 'rush' | 'review' | 'none', rootId?: string) {
+  function runAction(
+    action: 'daily' | 'learn' | 'rush' | 'review' | 'remember' | 'none',
+    rootId?: string,
+  ) {
     if (action === 'daily') onDaily();
     else if ((action === 'learn' || action === 'review') && rootId) onContinue(rootId);
+    else if (action === 'remember' && rootId) onRemember(rootId);
     else if (action === 'rush') onRush();
   }
 
@@ -102,7 +109,9 @@ export function ProfileBand({
               <button
                 type="button"
                 key={item.key}
-                className={`ww-today-item${item.done ? ' is-done' : ''}`}
+                className={`ww-today-item${item.done ? ' is-done' : ''}${
+                  item.key === 'remember' ? ' is-remember' : ''
+                }`}
                 disabled={item.action === 'none'}
                 onClick={() => runAction(item.action, item.rootId)}
               >
