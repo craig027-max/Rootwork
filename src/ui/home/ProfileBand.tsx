@@ -3,13 +3,21 @@ import { levelForXp, XP_PER_LEVEL, type GameStats } from '../../core/stats';
 import { localDayKey } from '../../core/daily';
 import { Button } from '../components/Button';
 import { buildProfileProgress } from './profileProgress';
-import { buildTodayProgress } from './todayProgress';
+import {
+  buildTodayProgress,
+  learnedRootName,
+  learnedRootToday,
+  type ProgressStamp,
+} from './todayProgress';
 
 /**
  * Profile band — avatar + level badge, identity, the stats a kid has
- * actually earned, and (on the returning dashboard) today's checklist
- * with Continue {root} as the fat tap. Streak risk stays a visible
- * status line. First-run still drops the extra chrome so Play Bio wins.
+ * actually earned, and (on the returning dashboard) today's checklist.
+ * After they learn a root, that row checks off (Learned {root}); when
+ * Daily is banked too the heading is Today ✓. Continue {root} stays the
+ * fat tap whenever a next root exists; a caught-up kid gets Root Rush.
+ * Streak risk stays a visible status line. First-run still drops the
+ * extra chrome so Play Bio wins.
  */
 export function ProfileBand({
   name,
@@ -20,8 +28,10 @@ export function ProfileBand({
   completed,
   entitled,
   dailyDone,
+  progress,
   onContinue,
   onDaily,
+  onRush,
 }: {
   name: string;
   avatar: string;
@@ -31,26 +41,32 @@ export function ProfileBand({
   completed: Set<string>;
   entitled: boolean;
   dailyDone: boolean;
+  progress: Record<string, ProgressStamp>;
   onContinue: (rootId: string) => void;
   onDaily: () => void;
+  onRush: () => void;
 }) {
   const day = localDayKey();
   const vm = buildProfileProgress(stats, rootsOwned, day, ROOTS.length);
+  const learnedId = learnedRootToday(progress, day);
   const today = buildTodayProgress({
     firstRun: vm.firstRun,
     nextPlay,
     dailyDone,
     completed,
     entitled,
+    learnedToday: learnedId !== null,
+    learnedRoot: learnedRootName(learnedId),
   });
   const level = levelForXp(stats.xp);
   const intoLevel = stats.xp % XP_PER_LEVEL;
   const xpToNext = XP_PER_LEVEL - intoLevel;
   const slim = vm.stats.length <= 2;
 
-  function runAction(action: 'daily' | 'learn' | 'none', rootId?: string) {
+  function runAction(action: 'daily' | 'learn' | 'rush' | 'none', rootId?: string) {
     if (action === 'daily') onDaily();
     else if (action === 'learn' && rootId) onContinue(rootId);
+    else if (action === 'rush') onRush();
   }
 
   const todayCta = today.cta;
@@ -59,7 +75,9 @@ export function ProfileBand({
     <section
       className={`ww-profile${vm.firstRun ? ' is-first' : ''}${slim ? ' is-slim' : ''}${
         vm.streakKind === 'risk' ? ' is-risk' : ''
-      }${vm.streakKind === 'banked' ? ' is-banked' : ''}${today.show ? ' is-today' : ''}`}
+      }${vm.streakKind === 'banked' ? ' is-banked' : ''}${today.show ? ' is-today' : ''}${
+        today.pathDone ? ' is-today-done' : ''
+      }`}
       aria-label="Your progress"
     >
       <div className="ww-avatar" aria-hidden="true">
@@ -97,8 +115,10 @@ export function ProfileBand({
         ))}
       </div>
       {today.show ? (
-        <div className="ww-today">
-          <div className="ww-today-h">{today.heading}</div>
+        <div className={`ww-today${today.pathDone ? ' is-done' : ''}`}>
+          <div className="ww-today-h" role={today.pathDone ? 'status' : undefined}>
+            {today.heading}
+          </div>
           <div className="ww-today-list" role="list" aria-label="Today">
             {today.items.map((item) => (
               <button
