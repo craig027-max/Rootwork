@@ -4,12 +4,22 @@ import { describe, expect, it } from 'vitest';
 import { EMPTY_STATS, recordRootLearned, recordRun, type GameStats } from '../../core/stats';
 import { ROOTS, firstRoot, rootId, rootsInTier, type RootId } from '../../data/roots';
 import { buildProfileProgress } from './profileProgress';
-import { buildTodayProgress, keepGoingLabel, learnedRootName, learnedRootToday } from './todayProgress';
+import {
+  buildTodayProgress,
+  keepGoingLabel,
+  learnedRootName,
+  learnedRootToday,
+  pickRememberRoot,
+  rememberRootToday,
+  rootLabel,
+  stampReviewedAt,
+} from './todayProgress';
 import { learnNextAction } from '../modes/modeHandoff';
 import { isNextPlayHome, nextPlayRoot } from './menu';
 
 const band = readFileSync(join(process.cwd(), 'src/ui/home/ProfileBand.tsx'), 'utf8');
 const home = readFileSync(join(process.cwd(), 'src/ui/Home.tsx'), 'utf8');
+const store = readFileSync(join(process.cwd(), 'src/app/store.ts'), 'utf8');
 const menu = readFileSync(join(process.cwd(), 'src/ui/home/menu.ts'), 'utf8');
 const detail = readFileSync(join(process.cwd(), 'src/ui/home/detailVM.tsx'), 'utf8');
 const overlay = readFileSync(join(process.cwd(), 'src/ui/modes/modeHandoff.ts'), 'utf8');
@@ -221,6 +231,62 @@ describe('learnedRootToday — local-day stamps', () => {
   });
 });
 
+describe('pickRememberRoot — oldest stale owned root', () => {
+  function atDay(day: string, hour = 15): number {
+    const [y, m, d] = day.split('-').map(Number);
+    return new Date(y!, m! - 1, d, hour).getTime();
+  }
+
+  it('picks the oldest owned root that was not learned today', () => {
+    const progress = {
+      [rootId(first)]: { completedAt: atDay('2026-09-01', 9) },
+      [rootId(second)]: { completedAt: atDay('2026-09-04', 12) },
+      [rootId(firstBuilder)]: { completedAt: atDay(TODAY, 16) },
+    };
+    expect(pickRememberRoot(progress, TODAY)).toBe(rootId(first));
+    expect(rootLabel(rootId(first))).toEqual({ name: first.root, mean: first.mean });
+  });
+
+  it('skips a root already reviewed today and honors exclude', () => {
+    const progress = {
+      [rootId(first)]: { completedAt: atDay('2026-09-01'), reviewedAt: atDay(TODAY, 8) },
+      [rootId(second)]: { completedAt: atDay('2026-09-02') },
+    };
+    expect(pickRememberRoot(progress, TODAY)).toBe(rootId(second));
+    expect(pickRememberRoot(progress, TODAY, { exclude: [rootId(second)] })).toBeNull();
+  });
+
+  it('ignores a blob without completedAt', () => {
+    expect(pickRememberRoot({ [rootId(first)]: {} }, TODAY)).toBeNull();
+  });
+});
+
+describe('rememberRootToday + stampReviewedAt', () => {
+  function atDay(day: string, hour = 15): number {
+    const [y, m, d] = day.split('-').map(Number);
+    return new Date(y!, m! - 1, d, hour).getTime();
+  }
+
+  it('names the most recent review today and ignores a root learned today', () => {
+    const progress = {
+      [rootId(first)]: { completedAt: atDay('2026-09-01'), reviewedAt: atDay(TODAY, 9) },
+      [rootId(second)]: { completedAt: atDay(TODAY, 11), reviewedAt: atDay(TODAY, 12) },
+    };
+    expect(rememberRootToday(progress, TODAY)).toBe(rootId(first));
+  });
+
+  it('stamps once per day and no-ops a same-day repeat', () => {
+    const firstStamp = stampReviewedAt(
+      { [rootId(first)]: { completedAt: Date.parse('2026-09-01T12:00:00') } },
+      rootId(first),
+      atDay(TODAY, 10),
+    );
+    expect(firstStamp?.[rootId(first)]?.reviewedAt).toBe(atDay(TODAY, 10));
+    expect(stampReviewedAt(firstStamp!, rootId(first), atDay(TODAY, 18))).toBeNull();
+    expect(stampReviewedAt({}, rootId(first), atDay(TODAY))).toBeNull();
+  });
+});
+
 describe('buildTodayProgress — learn row can finish', () => {
   it('checks off Learned {root} and reviews that root — Continue stays the fat tap', () => {
     const next = learnNextAction(startedBuilder, true);
@@ -331,6 +397,96 @@ describe('buildTodayProgress — learn row can finish', () => {
   });
 });
 
+describe('buildTodayProgress — next-root meaning + Remember', () => {
+  it('peeks the next root meaning on Continue without changing the fat tap', () => {
+    const next = learnNextAction(startedBuilder, true);
+    const vm = buildTodayProgress({
+      firstRun: false,
+      nextPlay: false,
+      dailyDone: false,
+      completed: startedBuilder,
+      entitled: true,
+      learnMean: secondBuilder.mean,
+    });
+    expect(vm.items.find((i) => i.key === 'learn')?.label).toBe(
+      `Continue ${secondBuilder.root} · ${secondBuilder.mean}`,
+    );
+    expect(vm.cta).toEqual({
+      kind: 'learn',
+      label: `Continue ${secondBuilder.root} ›`,
+      rootId: next.rootId,
+    });
+  });
+
+  it('adds Remember {stale root} · meaning and keeps Continue as the hero', () => {
+    const next = learnNextAction(startedBuilder, true);
+    const vm = buildTodayProgress({
+      firstRun: false,
+      nextPlay: false,
+      dailyDone: false,
+      completed: startedBuilder,
+      entitled: true,
+      rememberRoot: first.root,
+      rememberMean: first.mean,
+      rememberRootId: rootId(first),
+    });
+    expect(vm.pathDone).toBe(false);
+    expect(vm.items.find((i) => i.key === 'remember')).toEqual({
+      key: 'remember',
+      done: false,
+      label: `Remember ${first.root} · ${first.mean}`,
+      action: 'remember',
+      rootId: rootId(first),
+    });
+    expect(vm.cta?.label).toBe(next.label);
+    expect(vm.items.some((i) => i.key === 'daily')).toBe(true);
+  });
+
+  it('checks off Remembered {root} without blocking Today ✓ or swapping the CTA', () => {
+    const vm = buildTodayProgress({
+      firstRun: false,
+      nextPlay: false,
+      dailyDone: true,
+      completed: startedBuilder,
+      entitled: true,
+      learnedToday: true,
+      learnedRoot: firstBuilder.root,
+      rememberedToday: true,
+      rememberRoot: first.root,
+      rememberMean: first.mean,
+      rememberRootId: rootId(first),
+    });
+    expect(vm.pathDone).toBe(true);
+    expect(vm.heading).toBe('Today ✓');
+    expect(vm.items.find((i) => i.key === 'remember')).toEqual({
+      key: 'remember',
+      done: true,
+      label: `Remembered ${first.root}`,
+      action: 'remember',
+      rootId: rootId(first),
+    });
+    expect(vm.cta?.kind).toBe('learn');
+    expect(vm.cta?.label).toBe(keepGoingLabel(secondBuilder.root));
+    expect(vm.cta?.label).toBe(`Keep going · ${secondBuilder.root} ›`);
+    expect(vm.cta?.label).not.toMatch(/Continue |Play again|Start daily/);
+  });
+
+  it('does not dump Remember onto Grow-your-first-root / Play Bio', () => {
+    const vm = buildTodayProgress({
+      firstRun: true,
+      nextPlay: true,
+      dailyDone: false,
+      completed: NONE,
+      entitled: false,
+      rememberRoot: first.root,
+      rememberMean: first.mean,
+      rememberRootId: rootId(first),
+    });
+    expect(vm.show).toBe(false);
+    expect(vm.items.some((i) => i.key === 'remember')).toBe(false);
+  });
+});
+
 describe('Today checklist wiring + phone layout', () => {
   it('renders the checklist from the model on returning Home only', () => {
     expect(home).toContain('<ProfileBand');
@@ -338,10 +494,15 @@ describe('Today checklist wiring + phone layout', () => {
     expect(home).toContain('buildTodayProgress');
     expect(home).toContain('learnedRootToday');
     expect(home).toContain('onContinue');
+    expect(home).toContain('onRemember');
+    expect(home).toContain("entry: 'recall'");
     expect(home).toContain('onDaily');
     expect(home).toContain('onRush');
+    expect(home).toContain('pickRememberRoot');
+    expect(home).toContain('rememberRootToday');
     expect(band).toContain('ww-today');
     expect(band).toContain('ww-today-item');
+    expect(band).toContain('is-remember');
     expect(band).toContain('ww-today-cta');
     expect(band).toContain('ww-today-recap');
     expect(band).toContain('role="list"');
@@ -349,7 +510,11 @@ describe('Today checklist wiring + phone layout', () => {
     expect(band).toContain('is-today-done');
     expect(band).toContain("action === 'review'");
     expect(band).toContain("action === 'rush'");
+    expect(band).toContain("action === 'remember'");
     expect(band).toContain('Nice work');
+    expect(store).toContain('stampReviewedAt');
+    expect(store).toContain('reviewedAt');
+    expect(store).toContain('bumpStreak');
   });
 
   it('keeps first-run Play, resume Continue, streak band, and overlay handoff', () => {
@@ -383,14 +548,17 @@ describe('Today checklist wiring + phone layout', () => {
     expect(phone).not.toMatch(/\.ww-today-item\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.ww-today-cta\s*\{[^}]*display:\s*none/);
     expect(css).toMatch(/\.ww-today-item\.is-done/);
+    expect(css).toMatch(/\.ww-today-item\.is-remember/);
     expect(css).toMatch(/\.ww-today-mark/);
     expect(css).toMatch(/\.ww-today\.is-done/);
     expect(css).toMatch(/\.ww-today-recap/);
     expect(phone).toMatch(/\.ww-today\.is-done\s*\{[^}]*display:\s*flex/);
     expect(phone).toMatch(/\.ww-today-recap\s*\{[^}]*display:\s*block/);
+    expect(phone).toMatch(/\.ww-today-item\.is-remember\s*\{[^}]*display:\s*inline-flex|\.ww-today-item\.is-remember\s*\{[^}]*display:\s*flex/);
     expect(phone).not.toMatch(/\.ww-today\.is-done\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.ww-today-h\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.ww-today-recap\s*\{[^}]*display:\s*none/);
+    expect(phone).not.toMatch(/\.ww-today-item\.is-remember\s*\{[^}]*display:\s*none/);
   });
 
   it('does not replace the #44 streak hint with the checklist', () => {

@@ -16,12 +16,14 @@ import { addStudentProfile, deleteStudentProfile, renameStudentProfile } from '.
 import { localDayKey } from '../core/daily';
 import {
   EMPTY_STATS,
+  bumpStreak,
   recordDailyComplete as applyDailyComplete,
   recordRootLearned,
   recordRun,
   type GameStats,
   type RunResult,
 } from '../core/stats';
+import { stampReviewedAt } from '../ui/home/progressStamp';
 import type { Entitlement, LessonProgressRow, Profile, StudentProfile } from '../core/supabase';
 import {
   deckEntryForOpen,
@@ -84,6 +86,8 @@ function saveActiveStudentId(id: string | null): void {
 export interface RootProgressRecord {
   completed: true;
   completedAt: number;
+  /** Successful recall on an already-owned root (Remember). Local-only. */
+  reviewedAt?: number;
 }
 
 export type RootProgress = Record<string, RootProgressRecord>;
@@ -380,8 +384,18 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   },
   completeRoot: (id, opts) => {
     const cur = get().progress;
-    if (cur[id]) return;
     const studentId = get().activeStudentId;
+    if (cur[id]) {
+      // Already owned — Remember / catalog recall. Stamp review, bank the
+      // streak, no second XP. Same-day repeat is a no-op.
+      const stamped = stampReviewedAt(cur, id, Date.now());
+      if (!stamped) return;
+      saveProgress(stamped, studentId);
+      const nextStats = { ...get().stats, ...bumpStreak(get().stats, localDayKey()) };
+      saveStats(nextStats, studentId);
+      set({ progress: stamped, stats: nextStats });
+      return;
+    }
     const completedAt = Date.now();
     const next: RootProgress = { ...cur, [id]: { completed: true, completedAt } };
     saveProgress(next, studentId);
@@ -428,7 +442,16 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       if (!row.completed) continue;
       const sourceIso = row.completed_at ?? row.created_at;
       const ts = sourceIso ? new Date(sourceIso).getTime() : Date.now();
-      merged[row.lesson_id] = { completed: true, completedAt: ts };
+      const existing = merged[row.lesson_id];
+      const reviewedAt =
+        typeof existing?.reviewedAt === 'number' && Number.isFinite(existing.reviewedAt)
+          ? existing.reviewedAt
+          : undefined;
+      merged[row.lesson_id] = {
+        completed: true,
+        completedAt: ts,
+        ...(reviewedAt != null ? { reviewedAt } : {}),
+      };
     }
     saveProgress(merged, studentId);
     set({ progress: merged, completedRoots: completedIdSet(merged) });
