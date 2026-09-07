@@ -114,15 +114,12 @@ export function buildTodayProgress(opts: {
   }
 
   const pathDone = opts.dailyDone && (learnedToday || next.kind !== 'learn');
-
-  let cta: TodayCta | null = null;
-  if (next.kind === 'learn' && next.rootId) {
-    cta = { kind: 'learn', label: next.label, rootId: next.rootId };
-  } else if (!opts.dailyDone) {
-    cta = { kind: 'daily', label: 'Start daily ›' };
-  } else {
-    cta = { kind: 'rush', label: 'Play Root Rush ›' };
-  }
+  const cta: TodayCta =
+    next.kind === 'learn' && next.rootId
+      ? { kind: 'learn', label: next.label, rootId: next.rootId }
+      : !opts.dailyDone
+        ? { kind: 'daily', label: 'Start daily ›' }
+        : { kind: 'rush', label: 'Play Root Rush ›' };
 
   return {
     show: true,
