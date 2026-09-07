@@ -219,9 +219,11 @@ export function homeSelectedIndex(
   return picked ?? defaultSelectedIndex(items, currentTier);
 }
 
-/** Kid-facing list heading: start/play on the next-Play board, resume on the dashboard. */
-export function listHeading(nextPlay: boolean): string {
-  return nextPlay ? 'Start playing' : 'Jump back in';
+/** Kid-facing list heading: start/play, resume, or keep-going after Today ✓. */
+export function listHeading(nextPlay: boolean, opts: { pathDone?: boolean } = {}): string {
+  if (nextPlay) return 'Start playing';
+  if (opts.pathDone) return 'Keep going';
+  return 'Jump back in';
 }
 
 /** Returning-dashboard Root Rush meta: letter + stars, plus combo once it exists. */
@@ -243,7 +245,10 @@ export function tierPrimaryLabel(opts: {
   complete: boolean;
   rootName: string;
   empty?: boolean;
+  /** Today ✓ — extra play, not an unfinished Continue. */
+  keepGoing?: boolean;
 }): string {
+  if (opts.keepGoing) return `Keep going · ${opts.rootName} ›`;
   if (opts.nextPlay || opts.empty) return `Play ${opts.rootName} ›`;
   if (opts.complete) return 'Replay tier ›';
   return `Continue ${opts.rootName} ›`;

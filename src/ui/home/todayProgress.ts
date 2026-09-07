@@ -1,11 +1,11 @@
 /**
  * Home progress-band "Today" checklist — returning-dashboard honesty.
  *
- * #46 named Daily + Continue {root}. The learn row could never check off,
- * so a kid who already learned Photo still saw an empty circle, and a
- * caught-up board (every openable root owned, Daily banked) had no next
- * tap. This marks Learned {root} from today's progress stamps, says
- * Today ✓ when the path is done, and hands a caught-up kid Root Rush.
+ * #46 named Daily + Continue {root}. #47 checks off Learned {root} and
+ * says Today ✓ when Daily + a learn are both done. After that, Continue
+ * {next} still *looked* like unfinished work, and tapping Learned Photo
+ * opened Geo. This splits done from next: a finished row reviews that
+ * root, and the fat tap becomes Keep going · {root} (or Root Rush).
  *
  * First-run / next-Play stays a single Play {root} — no Daily dump.
  * Pure so tests lock the copy without I/O.
@@ -15,7 +15,7 @@ import { ROOTS_BY_ID } from '../../data/roots';
 import { learnNextAction } from '../modes/modeHandoff';
 
 export type TodayItemKey = 'daily' | 'learn';
-export type TodayAction = 'daily' | 'learn' | 'rush' | 'none';
+export type TodayAction = 'daily' | 'learn' | 'rush' | 'review' | 'none';
 
 export interface TodayItem {
   key: TodayItemKey;
@@ -36,8 +36,15 @@ export interface TodayProgress {
   heading: string;
   /** Daily banked and today's learn is done (or there is no next root). */
   pathDone: boolean;
+  /** Kid-facing recap once the path is done — not a second checklist. */
+  recap: string | null;
   items: TodayItem[];
   cta: TodayCta | null;
+}
+
+/** Extra-play label after Today ✓ — not another Continue (that's unfinished). */
+export function keepGoingLabel(rootName: string): string {
+  return `Keep going · ${rootName} ›`;
 }
 
 /** Minimal stamp so this stays free of the zustand store. */
@@ -82,14 +89,24 @@ export function buildTodayProgress(opts: {
   entitled: boolean;
   learnedToday?: boolean;
   learnedRoot?: string;
+  /** Catalog id of the root they learned today — review tap, not the next one. */
+  learnedRootId?: string;
 }): TodayProgress {
   if (opts.firstRun || opts.nextPlay) {
-    return { show: false, heading: 'Today', pathDone: false, items: [], cta: null };
+    return {
+      show: false,
+      heading: 'Today',
+      pathDone: false,
+      recap: null,
+      items: [],
+      cta: null,
+    };
   }
 
   const next = learnNextAction(opts.completed, opts.entitled);
   const learnedToday = Boolean(opts.learnedToday);
   const learnedName = opts.learnedRoot?.trim() || undefined;
+  const learnedId = opts.learnedRootId?.trim() || undefined;
   const items: TodayItem[] = [
     {
       key: 'daily',
@@ -100,6 +117,7 @@ export function buildTodayProgress(opts: {
   ];
 
   if (next.kind === 'learn' || learnedToday) {
+    const reviewId = learnedToday ? learnedId : undefined;
     items.push({
       key: 'learn',
       done: learnedToday,
@@ -108,15 +126,26 @@ export function buildTodayProgress(opts: {
           ? `Learned ${learnedName}`
           : 'Learned a root today'
         : next.label.replace(/\s*›\s*$/, ''),
-      action: next.kind === 'learn' ? 'learn' : 'none',
-      ...(next.rootId ? { rootId: next.rootId } : {}),
+      action: learnedToday ? (reviewId ? 'review' : 'none') : next.kind === 'learn' ? 'learn' : 'none',
+      ...(learnedToday
+        ? reviewId
+          ? { rootId: reviewId }
+          : {}
+        : next.rootId
+          ? { rootId: next.rootId }
+          : {}),
     });
   }
 
   const pathDone = opts.dailyDone && (learnedToday || next.kind !== 'learn');
+  const nextName = next.rootName?.trim() || undefined;
   const cta: TodayCta =
     next.kind === 'learn' && next.rootId
-      ? { kind: 'learn', label: next.label, rootId: next.rootId }
+      ? {
+          kind: 'learn',
+          label: pathDone && nextName ? keepGoingLabel(nextName) : next.label,
+          rootId: next.rootId,
+        }
       : !opts.dailyDone
         ? { kind: 'daily', label: 'Start daily ›' }
         : { kind: 'rush', label: 'Play Root Rush ›' };
@@ -125,6 +154,11 @@ export function buildTodayProgress(opts: {
     show: true,
     heading: pathDone ? 'Today ✓' : 'Today',
     pathDone,
+    recap: pathDone
+      ? learnedName
+        ? `Daily and ${learnedName} are done`
+        : "Today's path is done"
+      : null,
     items,
     cta,
   };

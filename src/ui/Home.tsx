@@ -20,6 +20,8 @@ import { ProfileBand } from './home/ProfileBand';
 import { TierMenu } from './home/TierMenu';
 import { DetailPanel } from './home/DetailPanel';
 import { buildDetailVM } from './home/detailVM';
+import { buildProfileProgress } from './home/profileProgress';
+import { buildTodayProgress, learnedRootName, learnedRootToday } from './home/todayProgress';
 
 export function Home() {
   const entitled = useEntitledForDisplay();
@@ -39,6 +41,18 @@ export function Home() {
   const rushBest = rushBestLabel(stats);
   const day = localDayKey();
   const dailyDone = stats.lastDailyDay === day;
+  const profile = buildProfileProgress(stats, completed.size, day);
+  const learnedId = learnedRootToday(progress, day);
+  const today = buildTodayProgress({
+    firstRun: profile.firstRun,
+    nextPlay,
+    dailyDone,
+    completed,
+    entitled,
+    learnedToday: learnedId !== null,
+    learnedRoot: learnedRootName(learnedId),
+    learnedRootId: learnedId ?? undefined,
+  });
   const dailyRoots = pickDailyRoots(
     ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
     dailySeed(day, activeStudentId),
@@ -96,6 +110,7 @@ export function Home() {
     nextPlay,
     completed,
     entitled,
+    pathDone: today.pathDone,
     rushRuns: stats.runs,
     rushBestPct: stats.bestPct,
     rushBestStars: stats.bestStars,
@@ -110,11 +125,7 @@ export function Home() {
         avatar={avatar}
         rootsOwned={completed.size}
         stats={stats}
-        nextPlay={nextPlay}
-        completed={completed}
-        entitled={entitled}
-        dailyDone={dailyDone}
-        progress={progress}
+        today={today}
         onContinue={(id) => openRoot(id)}
         onDaily={() => setView('daily')}
         onRush={() => setView('quiz')}
@@ -123,7 +134,7 @@ export function Home() {
       <div className={`ww-home-grid${nextPlay ? ' is-first' : ''}${resumeNow ? ' is-resume' : ''}`}>
         <div className="ww-home-list">
           <div className="ww-panel-label">
-            <span className="n">{listHeading(nextPlay)}</span>
+            <span className="n">{listHeading(nextPlay, { pathDone: today.pathDone })}</span>
             {nextPlay ? null : (
               <>
                 <span className="s kb-hint">↑ ↓ to browse · Enter to start</span>
@@ -151,7 +162,9 @@ export function Home() {
                   : nextPlay
                     ? 'Tap play'
                     : resumeNow
-                      ? 'Tap continue'
+                      ? today.pathDone
+                        ? 'Keep going'
+                        : 'Tap continue'
                       : 'Your progress'}
             </span>
           </div>

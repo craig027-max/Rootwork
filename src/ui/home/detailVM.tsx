@@ -33,6 +33,8 @@ export function buildDetailVM(
     nextPlay: boolean;
     completed: Set<string>;
     entitled: boolean;
+    /** Today ✓ — resume CTA is Keep going, not another Continue. */
+    pathDone?: boolean;
     rushRuns?: number;
     rushBestPct?: number;
     rushBestStars?: number;
@@ -154,7 +156,15 @@ export function buildDetailVM(
     sampleLines: !firstPlay && peek.length > 0,
     samplesDone: complete && peek.length > 0,
     moreCount: firstPlay ? 0 : Math.max(0, remaining),
-    primary: { label: tierPrimaryLabel({ nextPlay: firstPlay, complete, rootName, empty }) },
+    primary: {
+      label: tierPrimaryLabel({
+        nextPlay: firstPlay,
+        complete,
+        rootName,
+        empty,
+        keepGoing: Boolean(extra.pathDone && resumeNow),
+      }),
+    },
     secondary: complete ? { label: 'See all roots' } : undefined,
     scene: sceneFrom(sceneRoot, { key: 'dna', palKey: item.jewel, caption: name }),
     heroCta: firstPlay || resumeNow,

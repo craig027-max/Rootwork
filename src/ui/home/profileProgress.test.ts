@@ -132,7 +132,8 @@ describe('Profile band wiring + phone layout', () => {
   });
 
   it('keeps the first-run / resume Continue board untouched', () => {
-    expect(menu).toContain("return nextPlay ? 'Start playing' : 'Jump back in'");
+    expect(menu).toContain("return 'Start playing'");
+    expect(menu).toContain("return 'Jump back in'");
     expect(menu).toContain('Continue ${opts.rootName}');
     expect(detail).toContain('heroCta: firstPlay || resumeNow');
     expect(home).toContain('is-resume');

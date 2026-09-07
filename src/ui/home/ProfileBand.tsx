@@ -3,19 +3,14 @@ import { levelForXp, XP_PER_LEVEL, type GameStats } from '../../core/stats';
 import { localDayKey } from '../../core/daily';
 import { Button } from '../components/Button';
 import { buildProfileProgress } from './profileProgress';
-import {
-  buildTodayProgress,
-  learnedRootName,
-  learnedRootToday,
-  type ProgressStamp,
-} from './todayProgress';
+import type { TodayProgress } from './todayProgress';
 
 /**
  * Profile band — avatar + level badge, identity, the stats a kid has
  * actually earned, and (on the returning dashboard) today's checklist.
- * After they learn a root, that row checks off (Learned {root}); when
- * Daily is banked too the heading is Today ✓. Continue {root} stays the
- * fat tap whenever a next root exists; a caught-up kid gets Root Rush.
+ * After they learn a root, that row checks off (Learned {root}) and
+ * reviews that root — not the next one. When Daily is banked too the
+ * heading is Today ✓ and the fat tap is Keep going · {root} (or Rush).
  * Streak risk stays a visible status line. First-run still drops the
  * extra chrome so Play Bio wins.
  */
@@ -24,11 +19,7 @@ export function ProfileBand({
   avatar,
   rootsOwned,
   stats,
-  nextPlay,
-  completed,
-  entitled,
-  dailyDone,
-  progress,
+  today,
   onContinue,
   onDaily,
   onRush,
@@ -37,35 +28,21 @@ export function ProfileBand({
   avatar: string;
   rootsOwned: number;
   stats: GameStats;
-  nextPlay: boolean;
-  completed: Set<string>;
-  entitled: boolean;
-  dailyDone: boolean;
-  progress: Record<string, ProgressStamp>;
+  today: TodayProgress;
   onContinue: (rootId: string) => void;
   onDaily: () => void;
   onRush: () => void;
 }) {
   const day = localDayKey();
   const vm = buildProfileProgress(stats, rootsOwned, day, ROOTS.length);
-  const learnedId = learnedRootToday(progress, day);
-  const today = buildTodayProgress({
-    firstRun: vm.firstRun,
-    nextPlay,
-    dailyDone,
-    completed,
-    entitled,
-    learnedToday: learnedId !== null,
-    learnedRoot: learnedRootName(learnedId),
-  });
   const level = levelForXp(stats.xp);
   const intoLevel = stats.xp % XP_PER_LEVEL;
   const xpToNext = XP_PER_LEVEL - intoLevel;
   const slim = vm.stats.length <= 2;
 
-  function runAction(action: 'daily' | 'learn' | 'rush' | 'none', rootId?: string) {
+  function runAction(action: 'daily' | 'learn' | 'rush' | 'review' | 'none', rootId?: string) {
     if (action === 'daily') onDaily();
-    else if (action === 'learn' && rootId) onContinue(rootId);
+    else if ((action === 'learn' || action === 'review') && rootId) onContinue(rootId);
     else if (action === 'rush') onRush();
   }
 
@@ -85,7 +62,7 @@ export function ProfileBand({
         <span className="lvl">LV {level}</span>
       </div>
       <div className="ww-pinfo">
-        <div className="ww-hello">{vm.hello}</div>
+        <div className="ww-hello">{today.pathDone ? 'Nice work' : vm.hello}</div>
         <h1>{name}</h1>
         {vm.hint ? (
           <div className={`ww-profile-hint is-${vm.streakKind}`} role="status">
@@ -119,12 +96,14 @@ export function ProfileBand({
           <div className="ww-today-h" role={today.pathDone ? 'status' : undefined}>
             {today.heading}
           </div>
+          {today.recap ? <div className="ww-today-recap">{today.recap}</div> : null}
           <div className="ww-today-list" role="list" aria-label="Today">
             {today.items.map((item) => (
               <button
                 type="button"
                 key={item.key}
                 className={`ww-today-item${item.done ? ' is-done' : ''}`}
+                disabled={item.action === 'none'}
                 onClick={() => runAction(item.action, item.rootId)}
               >
                 <span className="ww-today-mark" aria-hidden="true">
