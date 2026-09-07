@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { EMPTY_STATS, recordRootLearned, recordRun, type GameStats } from '../../core/stats';
 import { ROOTS, firstRoot, rootId, rootsInTier, type RootId } from '../../data/roots';
 import { buildProfileProgress } from './profileProgress';
-import { buildTodayProgress, learnedRootName, learnedRootToday } from './todayProgress';
+import { buildTodayProgress, keepGoingLabel, learnedRootName, learnedRootToday } from './todayProgress';
 import { learnNextAction } from '../modes/modeHandoff';
 import { isNextPlayHome, nextPlayRoot } from './menu';
 
@@ -67,6 +67,7 @@ describe('buildTodayProgress — hidden on first-run / next-Play', () => {
     });
     expect(vm.show).toBe(false);
     expect(vm.pathDone).toBe(false);
+    expect(vm.recap).toBeNull();
     expect(vm.items).toEqual([]);
     expect(vm.cta).toBeNull();
     expect(isNextPlayHome(NONE)).toBe(true);
@@ -83,6 +84,7 @@ describe('buildTodayProgress — hidden on first-run / next-Play', () => {
     });
     expect(vm.show).toBe(false);
     expect(vm.cta).toBeNull();
+    expect(vm.recap).toBeNull();
     expect(vm.items.some((i) => i.key === 'daily')).toBe(false);
     expect(isNextPlayHome(midStarter)).toBe(true);
   });
@@ -172,6 +174,7 @@ describe('buildTodayProgress — returning dashboard', () => {
     expect(pending.items.map((i) => i.key)).toEqual(['daily']);
     expect(pending.cta).toEqual({ kind: 'daily', label: 'Start daily ›' });
     expect(pending.pathDone).toBe(false);
+    expect(pending.recap).toBeNull();
   });
 
   it('hands a caught-up kid Root Rush — not a dead empty tap', () => {
@@ -187,6 +190,7 @@ describe('buildTodayProgress — returning dashboard', () => {
     expect(caughtUp.items.map((i) => i.key)).toEqual(['daily']);
     expect(caughtUp.pathDone).toBe(true);
     expect(caughtUp.heading).toBe('Today ✓');
+    expect(caughtUp.recap).toBe("Today's path is done");
     expect(caughtUp.cta).toEqual({ kind: 'rush', label: 'Play Root Rush ›' });
   });
 });
@@ -218,7 +222,7 @@ describe('learnedRootToday — local-day stamps', () => {
 });
 
 describe('buildTodayProgress — learn row can finish', () => {
-  it('checks off Learned {root} after they learn today — Continue stays the fat tap', () => {
+  it('checks off Learned {root} and reviews that root — Continue stays the fat tap', () => {
     const next = learnNextAction(startedBuilder, true);
     const vm = buildTodayProgress({
       firstRun: false,
@@ -228,17 +232,20 @@ describe('buildTodayProgress — learn row can finish', () => {
       entitled: true,
       learnedToday: true,
       learnedRoot: firstBuilder.root,
+      learnedRootId: rootId(firstBuilder),
     });
 
     expect(vm.pathDone).toBe(false);
     expect(vm.heading).toBe('Today');
+    expect(vm.recap).toBeNull();
     expect(vm.items.find((i) => i.key === 'learn')).toEqual({
       key: 'learn',
       done: true,
       label: `Learned ${firstBuilder.root}`,
-      action: 'learn',
-      rootId: next.rootId,
+      action: 'review',
+      rootId: rootId(firstBuilder),
     });
+    expect(vm.items.find((i) => i.key === 'learn')?.rootId).not.toBe(next.rootId);
     expect(vm.cta).toEqual({
       kind: 'learn',
       label: `Continue ${secondBuilder.root} ›`,
@@ -246,7 +253,7 @@ describe('buildTodayProgress — learn row can finish', () => {
     });
   });
 
-  it('says Today ✓ when Daily and a learned root are both done — still Continue, not Play again', () => {
+  it('says Today ✓ and Keep going · {next} — not another Continue, not Play again', () => {
     const vm = buildTodayProgress({
       firstRun: false,
       nextPlay: false,
@@ -255,22 +262,29 @@ describe('buildTodayProgress — learn row can finish', () => {
       entitled: true,
       learnedToday: true,
       learnedRoot: firstBuilder.root,
+      learnedRootId: rootId(firstBuilder),
     });
 
     expect(vm.pathDone).toBe(true);
     expect(vm.heading).toBe('Today ✓');
+    expect(vm.recap).toBe(`Daily and ${firstBuilder.root} are done`);
     expect(vm.items[0]).toMatchObject({ key: 'daily', done: true });
     expect(vm.items[1]).toMatchObject({
       key: 'learn',
       done: true,
       label: `Learned ${firstBuilder.root}`,
+      action: 'review',
+      rootId: rootId(firstBuilder),
     });
     expect(vm.cta?.kind).toBe('learn');
-    expect(vm.cta?.label).toBe(`Continue ${secondBuilder.root} ›`);
-    expect(vm.cta?.label).not.toMatch(/Play again|Start daily/);
+    expect(vm.cta?.label).toBe(keepGoingLabel(secondBuilder.root));
+    expect(vm.cta?.label).toBe(`Keep going · ${secondBuilder.root} ›`);
+    expect(vm.cta?.label).not.toMatch(/Continue |Play again|Start daily/);
   });
 
   it('keeps a Learned row when they are caught up after learning today', () => {
+    const aqua = ROOTS.find((r) => r.root === 'Aqua');
+    if (!aqua) throw new Error('fixture: Aqua');
     const allOpen = new Set(ROOTS.filter((r) => r.t === 1 || r.t === 2).map((r) => rootId(r)));
     const vm = buildTodayProgress({
       firstRun: false,
@@ -280,6 +294,7 @@ describe('buildTodayProgress — learn row can finish', () => {
       entitled: false,
       learnedToday: true,
       learnedRoot: 'Aqua',
+      learnedRootId: rootId(aqua),
     });
     expect(vm.items).toEqual([
       {
@@ -292,11 +307,13 @@ describe('buildTodayProgress — learn row can finish', () => {
         key: 'learn',
         done: true,
         label: 'Learned Aqua',
-        action: 'none',
+        action: 'review',
+        rootId: rootId(aqua),
       },
     ]);
     expect(vm.cta).toEqual({ kind: 'rush', label: 'Play Root Rush ›' });
     expect(vm.pathDone).toBe(true);
+    expect(vm.recap).toBe('Daily and Aqua are done');
   });
 
   it('does not dump Learned onto the one-Play board', () => {
@@ -317,30 +334,35 @@ describe('buildTodayProgress — learn row can finish', () => {
 describe('Today checklist wiring + phone layout', () => {
   it('renders the checklist from the model on returning Home only', () => {
     expect(home).toContain('<ProfileBand');
-    expect(home).toContain('nextPlay={nextPlay}');
-    expect(home).toContain('dailyDone={dailyDone}');
-    expect(home).toContain('progress={progress}');
+    expect(home).toContain('today={today}');
+    expect(home).toContain('buildTodayProgress');
+    expect(home).toContain('learnedRootToday');
     expect(home).toContain('onContinue');
     expect(home).toContain('onDaily');
     expect(home).toContain('onRush');
-    expect(band).toContain('buildTodayProgress');
-    expect(band).toContain('learnedRootToday');
     expect(band).toContain('ww-today');
     expect(band).toContain('ww-today-item');
     expect(band).toContain('ww-today-cta');
+    expect(band).toContain('ww-today-recap');
     expect(band).toContain('role="list"');
-    expect(band).toContain('Continue');
     expect(band).toContain('pathDone');
     expect(band).toContain('is-today-done');
+    expect(band).toContain("action === 'review'");
     expect(band).toContain("action === 'rush'");
+    expect(band).toContain('Nice work');
   });
 
   it('keeps first-run Play, resume Continue, streak band, and overlay handoff', () => {
-    expect(menu).toContain("return nextPlay ? 'Start playing' : 'Jump back in'");
+    expect(menu).toContain("return 'Start playing'");
+    expect(menu).toContain("return 'Keep going'");
+    expect(menu).toContain("return 'Jump back in'");
     expect(menu).toContain('Continue ${opts.rootName}');
+    expect(menu).toContain('Keep going · ${opts.rootName}');
     expect(detail).toContain('heroCta: firstPlay || resumeNow');
+    expect(detail).toContain('keepGoing: Boolean(extra.pathDone && resumeNow)');
     expect(home).toContain('is-resume');
     expect(home).toContain('Tap continue');
+    expect(home).toContain('Keep going');
     expect(band).toContain('buildProfileProgress');
     expect(band).toContain('ww-profile-hint');
     expect(overlay).toContain('learnNextAction');
@@ -363,9 +385,12 @@ describe('Today checklist wiring + phone layout', () => {
     expect(css).toMatch(/\.ww-today-item\.is-done/);
     expect(css).toMatch(/\.ww-today-mark/);
     expect(css).toMatch(/\.ww-today\.is-done/);
+    expect(css).toMatch(/\.ww-today-recap/);
     expect(phone).toMatch(/\.ww-today\.is-done\s*\{[^}]*display:\s*flex/);
+    expect(phone).toMatch(/\.ww-today-recap\s*\{[^}]*display:\s*block/);
     expect(phone).not.toMatch(/\.ww-today\.is-done\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.ww-today-h\s*\{[^}]*display:\s*none/);
+    expect(phone).not.toMatch(/\.ww-today-recap\s*\{[^}]*display:\s*none/);
   });
 
   it('does not replace the #44 streak hint with the checklist', () => {

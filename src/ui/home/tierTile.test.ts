@@ -106,6 +106,18 @@ describe('Home tier tile: mid-Starter peek (Bio owned)', () => {
     expect(vm.ring).toEqual({ pct: row.pct, label: `${row.pct}%` });
     expect(vm.pmA).toMatch(/roots owned/);
   });
+
+  it('says Keep going · {root} after Today ✓ — extra play, not unfinished Continue', () => {
+    const vm = buildDetailVM(row, {
+      ...extraBase,
+      nextPlay: false,
+      completed: bioOwned,
+      pathDone: true,
+    });
+    expect(vm.primary.label).toBe('Keep going · Geo ›');
+    expect(vm.primary.label).not.toMatch(/Continue /);
+    expect(vm.heroCta).toBe(true);
+  });
 });
 
 describe('Home tier tile: complete Starter recap', () => {

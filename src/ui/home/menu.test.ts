@@ -360,6 +360,8 @@ describe('copy', () => {
   it('says start/play on the next-Play board and jump back in on the dashboard', () => {
     expect(listHeading(true)).toBe('Start playing');
     expect(listHeading(false)).toBe('Jump back in');
+    expect(listHeading(false, { pathDone: true })).toBe('Keep going');
+    expect(listHeading(true, { pathDone: true })).toBe('Start playing');
   });
 
   it('names the next root on the primary button — Play, not Continue, while Starter is open', () => {
@@ -372,6 +374,9 @@ describe('copy', () => {
     expect(tierPrimaryLabel({ nextPlay: false, complete: false, rootName: 'Auto' })).toBe(
       'Continue Auto ›',
     );
+    expect(
+      tierPrimaryLabel({ nextPlay: false, complete: false, rootName: 'Geo', keepGoing: true }),
+    ).toBe('Keep going · Geo ›');
     expect(tierPrimaryLabel({ nextPlay: false, complete: false, rootName: 'Urb', empty: true })).toBe(
       'Play Urb ›',
     );
