@@ -13,7 +13,7 @@ import {
   saveProgress as saveRemoteProgress,
 } from '../core/progress';
 import { addStudentProfile, deleteStudentProfile, renameStudentProfile } from '../core/profile';
-import { localDayKey } from '../core/daily';
+import { localDayKey, parseDailyRun, type DailyRun } from '../core/daily';
 import {
   EMPTY_STATS,
   bumpStreak,
@@ -158,6 +158,35 @@ function saveStats(stats: GameStats, studentId: string | null): void {
   }
 }
 
+// Mid-run Daily is namespaced per student, same scheme as stats. A kid who
+// banks two of five and taps Home must resume on question 3 after a reload.
+const DAILY_RUN_KEY_PREFIX = 'wondral:dailyRun:v1:';
+
+function dailyRunKey(studentId: string | null): string {
+  return DAILY_RUN_KEY_PREFIX + (studentId ?? 'anon');
+}
+
+function loadDailyRun(studentId: string | null): DailyRun | null {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(dailyRunKey(studentId));
+    if (!raw) return null;
+    return parseDailyRun(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+function persistDailyRun(run: DailyRun | null, studentId: string | null): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    if (run) localStorage.setItem(dailyRunKey(studentId), JSON.stringify(run));
+    else localStorage.removeItem(dailyRunKey(studentId));
+  } catch {
+    // ignore quota / privacy errors
+  }
+}
+
 interface WondralStore {
   // Top-level view.
   view: AppView;
@@ -232,11 +261,16 @@ interface WondralStore {
   recordQuizRun: (correct: number, total: number, score?: number) => RunResult;
   /** Bank a finished Daily Challenge (XP + streak; no-op if already done today). */
   recordDailyComplete: () => void;
+  /** In-progress Daily — next unanswered index. Cleared when Daily is banked. */
+  dailyRun: DailyRun | null;
+  saveDailyRun: (qi: number) => void;
+  clearDailyRun: () => void;
 }
 
 const INITIAL_ACTIVE_STUDENT = loadActiveStudentId();
 const INITIAL_PROGRESS = loadProgress(INITIAL_ACTIVE_STUDENT);
 const INITIAL_STATS = loadStats(INITIAL_ACTIVE_STUDENT);
+const INITIAL_DAILY_RUN = loadDailyRun(INITIAL_ACTIVE_STUDENT);
 
 export const useWondralStore = create<WondralStore>((set, get) => ({
   // Boot on /privacy or /terms when deep-linked; App.tsx keeps the URL in sync
@@ -302,6 +336,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       progress: freePlay,
       completedRoots: completedIdSet(freePlay),
       stats: loadStats(null),
+      dailyRun: loadDailyRun(null),
       view: 'home',
       currentRootId: null,
       deckEntry: 'teach',
@@ -320,6 +355,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       progress: next,
       completedRoots: completedIdSet(next),
       stats: loadStats(id),
+      dailyRun: loadDailyRun(id),
     });
   },
   addStudent: async (nickname, avatar) => {
@@ -369,6 +405,20 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   progress: INITIAL_PROGRESS,
   completedRoots: completedIdSet(INITIAL_PROGRESS),
   stats: INITIAL_STATS,
+  dailyRun: INITIAL_DAILY_RUN,
+  saveDailyRun: (qi) => {
+    const studentId = get().activeStudentId;
+    const day = localDayKey();
+    if (get().stats.lastDailyDay === day) return;
+    const run: DailyRun = { day, studentId, qi };
+    persistDailyRun(run, studentId);
+    set({ dailyRun: run });
+  },
+  clearDailyRun: () => {
+    const studentId = get().activeStudentId;
+    persistDailyRun(null, studentId);
+    set({ dailyRun: null });
+  },
   recordQuizRun: (correct, total, score) => {
     const studentId = get().activeStudentId;
     const { stats, run } = recordRun(get().stats, { correct, total, day: localDayKey(), score });
@@ -380,7 +430,8 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
     const studentId = get().activeStudentId;
     const stats = applyDailyComplete(get().stats, { day: localDayKey() });
     saveStats(stats, studentId);
-    set({ stats });
+    persistDailyRun(null, studentId);
+    set({ stats, dailyRun: null });
   },
   completeRoot: (id, opts) => {
     const cur = get().progress;
@@ -426,7 +477,8 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   resetProgress: () => {
     const studentId = get().activeStudentId;
     saveProgress({}, studentId);
-    set({ progress: {}, completedRoots: new Set() });
+    persistDailyRun(null, studentId);
+    set({ progress: {}, completedRoots: new Set(), dailyRun: null });
     void clearRemoteProgress(studentId).catch((err) => {
        
       console.warn('[progress] remote clear failed', err);

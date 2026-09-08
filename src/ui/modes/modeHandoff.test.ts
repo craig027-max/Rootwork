@@ -188,6 +188,17 @@ describe('Daily / Rush overlay wiring + phone layout', () => {
     expect(dailySrc).not.toContain('Already banked for today — replay is just for fun.');
   });
 
+  it('holds the Daily meaning until Next and resumes a mid-run', () => {
+    expect(dailySrc).toContain('dailyHoldLine');
+    expect(dailySrc).toContain('afterDailyNextLabel');
+    expect(dailySrc).toContain('resumeDailyQi');
+    expect(dailySrc).toContain('saveDailyRun');
+    expect(dailySrc).toContain('clearDailyRun');
+    expect(dailySrc).not.toContain('AUTO_ADVANCE_MS');
+    expect(dailySrc).not.toContain('Nice — ${root.root} is yours.');
+    expect(dailySrc).not.toContain('setTimeout');
+  });
+
   it('Rush start / empty / result use the shared handoff', () => {
     expect(rushSrc).toContain('buildRushStart');
     expect(rushSrc).toContain('buildRushResultNext');
@@ -211,6 +222,8 @@ describe('Daily / Rush overlay wiring + phone layout', () => {
   it('keeps done recap + next-action taps readable at phone width', () => {
     const phone = mediaBlock(css, 'max-width: 560px');
     expect(phone).toMatch(/\.q-actions\s*\{[^}]*flex-direction:\s*column/);
+    expect(phone).toMatch(/\.q-daily\s+\.q-foot\s*\{[^}]*flex-direction:\s*column/);
+    expect(phone).toMatch(/\.q-daily\s+\.q-next\s*\{[^}]*width:\s*100%/);
     expect(phone).toMatch(/\.q-daily-chip\s*\{[^}]*flex-wrap:\s*wrap|\.q-daily-chips/);
     expect(css).toMatch(/\.q-daily-chip\.is-done/);
     expect(css).toMatch(/\.q-done-mark/);

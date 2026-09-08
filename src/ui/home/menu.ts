@@ -283,6 +283,9 @@ export function buildMenu(
     rushBest?: string;
     dailyStreak?: number;
     dailyDone?: boolean;
+    /** Next unanswered Daily index when a mid-run is live. */
+    dailyResumeQi?: number | null;
+    dailyTotal?: number;
     dailyPreview?: { root: string; mean: string }[];
     nextPlay?: boolean;
     choseMode?: boolean;
@@ -308,8 +311,14 @@ export function buildMenu(
       title: 'Daily Challenge',
       sub: opts.dailyDone
         ? 'Done for today · same five until tomorrow'
-        : 'Five fresh roots · keep your streak',
-      badge: opts.dailyDone ? 'DONE' : undefined,
+        : opts.dailyResumeQi != null && opts.dailyResumeQi >= 1
+          ? `Continue · ${(opts.dailyResumeQi ?? 0) + 1} of ${opts.dailyTotal ?? 5}`
+          : 'Five fresh roots · keep your streak',
+      badge: opts.dailyDone
+        ? 'DONE'
+        : opts.dailyResumeQi != null && opts.dailyResumeQi >= 1
+          ? `${opts.dailyResumeQi}/${opts.dailyTotal ?? 5}`
+          : undefined,
       best: opts.dailyStreak && opts.dailyStreak > 0 ? `🔥 ${opts.dailyStreak}` : undefined,
       preview: opts.dailyPreview,
       previewDone: Boolean(opts.dailyDone && opts.dailyPreview && opts.dailyPreview.length > 0),

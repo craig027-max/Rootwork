@@ -71,6 +71,34 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
     expect(vm.primary.label).toMatch(/Start daily/);
   });
 
+  it('says Continue daily when a mid-run is live — not a Start-daily dump', () => {
+    const midMenu = buildMenu(startedBuilder, false, {
+      currentTier: 1,
+      dailyPreview: preview,
+      dailyResumeQi: 2,
+      dailyTotal: 5,
+    });
+    const midItem = midMenu.items.find((it) => it.kind === 'mode' && it.key === 'daily');
+    expect(midItem?.kind).toBe('mode');
+    if (midItem?.kind !== 'mode') throw new Error('fixture: Daily tile missing mid-run');
+    expect(midItem.sub).toBe('Continue · 3 of 5');
+    expect(midItem.badge).toBe('2/5');
+    expect(midItem.previewDone).toBe(false);
+
+    const vm = buildDetailVM(midItem, {
+      dailyRoots: today,
+      dailyDone: false,
+      dailyResumeQi: 2,
+      dailyTotal: 5,
+      streak: 0,
+      nextPlay: false,
+      completed: startedBuilder,
+      entitled: false,
+    });
+    expect(vm.primary.label).toMatch(/Continue daily/);
+    expect(vm.primary.label).not.toMatch(/Start daily|Play again/);
+  });
+
   it('does not invent a fake starter list when today\'s pick is empty', () => {
     const vm = buildDetailVM(dailyItem, {
       dailyRoots: [],

@@ -3,7 +3,13 @@ import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
 import { ROOTS, rootId, isRootOpenable, type TierNum } from '../data/roots';
 import { DEFAULT_AVATAR } from '../data/avatars';
-import { dailySeed, dailyTilePreview, localDayKey, pickDailyRoots } from '../core/daily';
+import {
+  dailySeed,
+  dailyTilePreview,
+  localDayKey,
+  pickDailyRoots,
+  resumeDailyQi,
+} from '../core/daily';
 import {
   buildMenu,
   hasChosenMode,
@@ -35,6 +41,7 @@ export function Home() {
   const completed = useWondralStore((s) => s.completedRoots);
   const progress = useWondralStore((s) => s.progress);
   const stats = useWondralStore((s) => s.stats);
+  const dailyRun = useWondralStore((s) => s.dailyRun);
   const students = useWondralStore((s) => s.students);
   const activeStudentId = useWondralStore((s) => s.activeStudentId);
   const openRoot = useWondralStore((s) => s.openRoot);
@@ -48,6 +55,13 @@ export function Home() {
   const rushBest = rushBestLabel(stats);
   const day = localDayKey();
   const dailyDone = stats.lastDailyDay === day;
+  const dailyRoots = pickDailyRoots(
+    ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
+    dailySeed(day, activeStudentId),
+  );
+  const dailyResumeQi = dailyDone
+    ? null
+    : resumeDailyQi(dailyRun, day, activeStudentId, dailyRoots.length);
   const profile = buildProfileProgress(stats, completed.size, day);
   const learnedId = learnedRootToday(progress, day);
   const rememberedId = rememberRootToday(progress, day);
@@ -61,6 +75,8 @@ export function Home() {
     firstRun: profile.firstRun,
     nextPlay,
     dailyDone,
+    dailyResumeQi,
+    dailyTotal: dailyRoots.length,
     completed,
     entitled,
     learnedToday: learnedId !== null,
@@ -72,16 +88,14 @@ export function Home() {
     rememberMean: remember.mean,
     rememberRootId: rememberId ?? undefined,
   });
-  const dailyRoots = pickDailyRoots(
-    ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
-    dailySeed(day, activeStudentId),
-  );
   const dailyPreview = dailyTilePreview(dailyRoots);
   const { items, tucked } = buildMenu(completed, entitled, {
     currentTier,
     rushBest,
     dailyStreak: stats.streakCurrent,
     dailyDone,
+    dailyResumeQi,
+    dailyTotal: dailyRoots.length,
     dailyPreview,
     nextPlay,
   });
@@ -125,6 +139,8 @@ export function Home() {
   const vm = buildDetailVM(selected, {
     dailyRoots,
     dailyDone,
+    dailyResumeQi,
+    dailyTotal: dailyRoots.length,
     streak: stats.streakCurrent,
     nextPlay,
     completed,

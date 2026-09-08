@@ -132,7 +132,7 @@
 .q-opt.wrong, .q-opt.wrong:hover { border-color: rgba(239,68,68,0.6); background: rgba(239,68,68,0.12); }
 .q-opt.wrong .q-key { border-color: rgba(239,68,68,0.6); color: var(--accent-red); }
 .q-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; margin-top: 10px; }
-.q-fb { font-family: var(--font-game); font-weight: 700; font-size: 1rem; }
+.q-fb { font-family: var(--font-game); font-weight: 700; font-size: 1rem; flex: 1; min-width: 0; }
 .q-fb.good { color: var(--accent-green); }
 .q-fb.bad { color: var(--accent-red); }
 .q-fb b { color: var(--text-primary); }
@@ -217,6 +217,8 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-ask { margin-top: 8px; }
   .q-hud { flex-wrap: wrap; gap: 6px 10px; }
   .q-foot { flex-wrap: wrap; min-height: 44px; }
+  .q-daily .q-foot { flex-direction: column; align-items: stretch; }
+  .q-daily .q-next { margin-left: 0; width: 100%; }
   .q-scene {
     min-height: 120px;
     max-height: min(150px, 22svh);

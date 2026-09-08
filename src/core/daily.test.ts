@@ -3,10 +3,16 @@ import { ROOTS, rootId, isRootOpenable } from '../data/roots';
 import {
   DAILY_COUNT,
   DAILY_TILE_PREVIEW_COUNT,
+  afterDailyNextLabel,
+  continueDailyLabel,
+  dailyHoldLine,
+  dailyProgressLabel,
   dailySeed,
   dailyTilePreview,
   localDayKey,
+  parseDailyRun,
   pickDailyRoots,
+  resumeDailyQi,
 } from './daily';
 
 const T1 = ROOTS.filter((r) => isRootOpenable(rootId(r), false));
@@ -98,5 +104,46 @@ describe('dailyTilePreview', () => {
 
   it('returns [] for an empty deal', () => {
     expect(dailyTilePreview([])).toEqual([]);
+  });
+});
+
+describe('Daily mid-run resume + hold meaning', () => {
+  const today = '2026-09-08';
+  const run = { day: today, studentId: 'kid-a', qi: 2 };
+
+  it('resumes at the next unanswered root for the same kid + day', () => {
+    expect(resumeDailyQi(run, today, 'kid-a', 5)).toBe(2);
+    expect(dailyProgressLabel(2, 5)).toBe('Daily · 2 of 5');
+    expect(continueDailyLabel(2, 5)).toBe('Continue Daily · 3 of 5 ›');
+  });
+
+  it('drops yesterday, another kid, a fresh start, or a finished index', () => {
+    expect(resumeDailyQi(run, '2026-09-09', 'kid-a', 5)).toBeNull();
+    expect(resumeDailyQi(run, today, 'kid-b', 5)).toBeNull();
+    expect(resumeDailyQi(run, today, null, 5)).toBeNull();
+    expect(resumeDailyQi({ ...run, qi: 0 }, today, 'kid-a', 5)).toBeNull();
+    expect(resumeDailyQi({ ...run, qi: 5 }, today, 'kid-a', 5)).toBeNull();
+    expect(resumeDailyQi(null, today, 'kid-a', 5)).toBeNull();
+    expect(resumeDailyQi(run, today, 'kid-a', 0)).toBeNull();
+  });
+
+  it('parses a stored blob and drops junk', () => {
+    expect(parseDailyRun(run)).toEqual(run);
+    expect(parseDailyRun({ day: today, studentId: null, qi: 1 })).toEqual({
+      day: today,
+      studentId: null,
+      qi: 1,
+    });
+    expect(parseDailyRun({ day: 'nope', studentId: 'kid-a', qi: 1 })).toBeNull();
+    expect(parseDailyRun({ day: today, qi: 1.5 })).toBeNull();
+    expect(parseDailyRun(null)).toBeNull();
+    expect(parseDailyRun('{"qi":2}')).toBeNull();
+  });
+
+  it('holds the meaning until Next — not "is yours" and not an auto-dump', () => {
+    expect(dailyHoldLine('Photo', 'light')).toBe('Yes — Photo means light.');
+    expect(dailyHoldLine('  Bio  ', '  life ')).toBe('Yes — Bio means life.');
+    expect(afterDailyNextLabel(false)).toBe('Next →');
+    expect(afterDailyNextLabel(true)).toBe('Done →');
   });
 });

@@ -5,6 +5,11 @@
  * persists completion via `lastDailyDay` on GameStats (local-first, like
  * progress); entitlement filtering happens at the call site with
  * `isRootOpenable`, so free learners only ever see Tier 1.
+ *
+ * Mid-run resume (`DailyRun`) is also local-first. A kid who banks two of
+ * five, then taps Home, must land back on question 3 — not a Start-daily
+ * dump. A correct tap holds the meaning until Next (same spirit as Hear /
+ * Yes), so Photo cannot slam over Bio.
  */
 
 import type { Root } from '../data/roots';
@@ -94,4 +99,62 @@ export function pickDailyRoots(
   if (pool.length === 0 || count <= 0) return [];
   const rng = mulberry32(hashSeed(seed));
   return shuffleWith(pool, rng).slice(0, Math.min(count, pool.length));
+}
+
+/** In-progress Daily — next unanswered index, namespaced per learner + day. */
+export interface DailyRun {
+  day: string;
+  studentId: string | null;
+  /** Next unanswered root (0-based). 0 is a fresh start, not a resume. */
+  qi: number;
+}
+
+/** Coerce a stored blob into a DailyRun, or drop junk. */
+export function parseDailyRun(raw: unknown): DailyRun | null {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const o = raw as Record<string, unknown>;
+  if (typeof o.day !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(o.day)) return null;
+  if (o.studentId != null && typeof o.studentId !== 'string') return null;
+  if (typeof o.qi !== 'number' || !Number.isInteger(o.qi) || o.qi < 0) return null;
+  return { day: o.day, studentId: o.studentId ?? null, qi: o.qi };
+}
+
+/**
+ * Next unanswered index if this saved run is still today's and they have
+ * already banked at least one root. Yesterday, another kid, qi 0, or a
+ * finished index must not pretend to be a resume.
+ */
+export function resumeDailyQi(
+  run: DailyRun | null | undefined,
+  day: string,
+  studentId: string | null,
+  total: number,
+): number | null {
+  if (!run || total <= 0) return null;
+  if (run.day !== day) return null;
+  if ((run.studentId ?? null) !== (studentId ?? null)) return null;
+  if (!Number.isInteger(run.qi) || run.qi < 1 || run.qi >= total) return null;
+  return run.qi;
+}
+
+/** Checklist / tile copy: how many they have already got right. */
+export function dailyProgressLabel(answered: number, total: number): string {
+  return `Daily · ${answered} of ${total}`;
+}
+
+/** Fat tap / overlay CTA after a real mid-run (next question is 1-based). */
+export function continueDailyLabel(nextIndex: number, total: number): string {
+  return `Continue Daily · ${nextIndex + 1} of ${total} ›`;
+}
+
+/** After a correct Daily tap — the meaning, not "is yours." */
+export function dailyHoldLine(rootName: string, mean: string): string {
+  const name = rootName.replace(/\s+/g, ' ').trim();
+  const spokenMean = mean.replace(/\s+/g, ' ').trim();
+  return `Yes — ${name} means ${spokenMean}.`;
+}
+
+/** Kid-facing label for the one tap that leaves the Daily hold. */
+export function afterDailyNextLabel(isLast: boolean): string {
+  return isLast ? 'Done →' : 'Next →';
 }
