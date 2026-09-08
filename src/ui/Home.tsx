@@ -4,6 +4,8 @@ import { useEntitledForDisplay } from '../app/hooks';
 import { ROOTS, rootId, isRootOpenable, type TierNum } from '../data/roots';
 import { DEFAULT_AVATAR } from '../data/avatars';
 import {
+  dailyNextRoot,
+  dailyResumePreview,
   dailySeed,
   dailyTilePreview,
   localDayKey,
@@ -62,6 +64,7 @@ export function Home() {
   const dailyResumeQi = dailyDone
     ? null
     : resumeDailyQi(dailyRun, day, activeStudentId, dailyRoots.length);
+  const dailyNext = dailyNextRoot(dailyRoots, dailyResumeQi);
   const profile = buildProfileProgress(stats, completed.size, day);
   const learnedId = learnedRootToday(progress, day);
   const rememberedId = rememberRootToday(progress, day);
@@ -77,6 +80,8 @@ export function Home() {
     dailyDone,
     dailyResumeQi,
     dailyTotal: dailyRoots.length,
+    dailyNextName: dailyNext?.root,
+    dailyNextMean: dailyNext?.mean,
     completed,
     entitled,
     learnedToday: learnedId !== null,
@@ -88,7 +93,10 @@ export function Home() {
     rememberMean: remember.mean,
     rememberRootId: rememberId ?? undefined,
   });
-  const dailyPreview = dailyTilePreview(dailyRoots);
+  const dailyPreview =
+    dailyResumeQi != null
+      ? dailyResumePreview(dailyRoots, dailyResumeQi)
+      : dailyTilePreview(dailyRoots);
   const { items, tucked } = buildMenu(completed, entitled, {
     currentTier,
     rushBest,
@@ -97,6 +105,7 @@ export function Home() {
     dailyResumeQi,
     dailyTotal: dailyRoots.length,
     dailyPreview,
+    dailyNextName: dailyNext?.root,
     nextPlay,
   });
   const allItems = [...items, ...tucked];

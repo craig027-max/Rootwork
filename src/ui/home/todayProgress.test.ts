@@ -187,7 +187,7 @@ describe('buildTodayProgress — returning dashboard', () => {
     expect(pending.recap).toBeNull();
   });
 
-  it('names a mid-run Daily · 2 of 5 and keeps Continue {root} as the fat tap', () => {
+  it('names a mid-run Daily next root and keeps Continue {root} as the fat tap', () => {
     const next = learnNextAction(startedBuilder, true);
     const vm = buildTodayProgress({
       firstRun: false,
@@ -195,21 +195,24 @@ describe('buildTodayProgress — returning dashboard', () => {
       dailyDone: false,
       dailyResumeQi: 2,
       dailyTotal: 5,
+      dailyNextName: 'Chron',
+      dailyNextMean: 'time',
       completed: startedBuilder,
       entitled: true,
     });
     expect(vm.items[0]).toMatchObject({
       key: 'daily',
       done: false,
-      label: 'Daily · 2 of 5',
+      label: 'Daily · 2 of 5 · Chron · time',
       action: 'daily',
     });
+    expect(vm.items[0]?.label).not.toBe('Daily · 2 of 5');
     expect(vm.cta).toEqual({
       kind: 'learn',
       label: `Continue ${secondBuilder.root} ›`,
       rootId: next.rootId,
     });
-    expect(vm.cta?.label).not.toMatch(/Start daily|Play again/);
+    expect(vm.cta?.label).not.toMatch(/Start daily|Play again|Continue Daily/);
   });
 
   it('makes Continue Daily the fat tap when that is the only open path', () => {
@@ -220,10 +223,12 @@ describe('buildTodayProgress — returning dashboard', () => {
       dailyDone: false,
       dailyResumeQi: 2,
       dailyTotal: 5,
+      dailyNextName: 'Chron',
+      dailyNextMean: 'time',
       completed: allOpen,
       entitled: false,
     });
-    expect(vm.items[0]?.label).toBe('Daily · 2 of 5');
+    expect(vm.items[0]?.label).toBe('Daily · 2 of 5 · Chron · time');
     expect(vm.cta).toEqual({ kind: 'daily', label: 'Continue Daily · 3 of 5 ›' });
     expect(vm.pathDone).toBe(false);
   });
@@ -543,6 +548,8 @@ describe('Today checklist wiring + phone layout', () => {
     expect(home).toContain('rememberRootToday');
     expect(home).toContain('resumeDailyQi');
     expect(home).toContain('dailyResumeQi');
+    expect(home).toContain('dailyNextName');
+    expect(home).toContain('dailyResumePreview');
     expect(store).toContain('saveDailyRun');
     expect(store).toContain('clearDailyRun');
     expect(store).toContain('wondral:dailyRun:v1:');

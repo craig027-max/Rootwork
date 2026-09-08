@@ -8,8 +8,9 @@
  *
  * Mid-run resume (`DailyRun`) is also local-first. A kid who banks two of
  * five, then taps Home, must land back on question 3 — not a Start-daily
- * dump. A correct tap holds the meaning until Next (same spirit as Hear /
- * Yes), so Photo cannot slam over Bio.
+ * dump — and Home names that next root (Chron · time), not the already-got
+ * first three. A correct tap holds the meaning until Next (same spirit as
+ * Hear / Yes), so Photo cannot slam over Bio.
  */
 
 import type { Root } from '../data/roots';
@@ -28,6 +29,8 @@ export interface DailyTileLine {
 /**
  * Preview today's Daily on Home: the first three of the real pick, in play
  * order. Does not shrink the challenge — `pickDailyRoots` still deals five.
+ * Mid-run Home uses `dailyResumePreview` so already-got roots are not
+ * teased as if they are still coming.
  */
 export function dailyTilePreview(
   deal: readonly { root: string; mean: string }[],
@@ -38,6 +41,32 @@ export function dailyTilePreview(
     root: r.root,
     mean: r.mean,
   }));
+}
+
+/**
+ * Mid-run Daily peek: remaining roots starting at the next unanswered
+ * index — same honesty as a tier tile peeking Geo after Bio is owned.
+ * Fresh start (`from` 0) and junk indexes fall back to the first-three
+ * teaser. A finished index peeks nothing.
+ */
+export function dailyResumePreview(
+  deal: readonly { root: string; mean: string }[],
+  from: number,
+  count: number = DAILY_TILE_PREVIEW_COUNT,
+): DailyTileLine[] {
+  if (!Number.isInteger(from) || from < 1) return dailyTilePreview(deal, count);
+  if (from >= deal.length) return [];
+  return dailyTilePreview(deal.slice(from), count);
+}
+
+/** Next unanswered Daily root when a mid-run is live. */
+export function dailyNextRoot<T>(
+  deal: readonly T[],
+  resumeQi: number | null | undefined,
+): T | undefined {
+  if (resumeQi == null || !Number.isInteger(resumeQi) || resumeQi < 1) return undefined;
+  if (resumeQi >= deal.length) return undefined;
+  return deal[resumeQi];
 }
 
 /** Local calendar day as YYYY-MM-DD (the same key the streak logic uses). */
@@ -140,6 +169,28 @@ export function resumeDailyQi(
 /** Checklist / tile copy: how many they have already got right. */
 export function dailyProgressLabel(answered: number, total: number): string {
   return `Daily · ${answered} of ${total}`;
+}
+
+/**
+ * Today-row mid-run: keep the count, then name the next root + meaning.
+ * Fat Continue / Keep going taps stay elsewhere — this is the Daily path.
+ */
+export function dailyNextRowLabel(opts: {
+  answered: number;
+  total: number;
+  nextName?: string;
+  nextMean?: string;
+}): string {
+  const count = dailyProgressLabel(opts.answered, opts.total);
+  const name = opts.nextName?.replace(/\s+/g, ' ').trim();
+  if (!name) return count;
+  const mean = opts.nextMean?.replace(/\s+/g, ' ').trim();
+  return mean ? `${count} · ${name} · ${mean}` : `${count} · ${name}`;
+}
+
+/** Menu-row mid-run: same "Next · {root}" language as an in-progress tier. */
+export function dailyNextSub(nextName: string): string {
+  return `Next · ${nextName.replace(/\s+/g, ' ').trim()}`;
 }
 
 /** Fat tap / overlay CTA after a real mid-run (next question is 1-based). */

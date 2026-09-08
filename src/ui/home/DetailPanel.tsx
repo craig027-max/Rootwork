@@ -23,6 +23,8 @@ export interface DetailVM {
   sampleLines?: boolean;
   /** Daily done: mark the three preview lines as a recap, not a fresh teaser. */
   samplesDone?: boolean;
+  /** Mid-run Daily: first remaining line is the next unanswered root. */
+  samplesNext?: boolean;
   moreCount: number;
   primary: { label: string; disabled?: boolean };
   secondary?: { label: string };
@@ -97,8 +99,13 @@ export function DetailPanel({
         <div
           className={`ww-samples${vm.sampleLines ? ' is-lines' : ''}${vm.samplesDone ? ' is-done' : ''}`}
         >
-          {vm.samples.map((s) => (
-            <div className={`ww-schip${vm.samplesDone ? ' is-done' : ''}`} key={s.root}>
+          {vm.samples.map((s, i) => (
+            <div
+              className={`ww-schip${vm.samplesDone ? ' is-done' : ''}${
+                vm.samplesNext && i === 0 && !vm.samplesDone ? ' is-next' : ''
+              }`}
+              key={s.root}
+            >
               {vm.samplesDone ? (
                 <span className="ww-daily-mark" aria-hidden="true">
                   ✓

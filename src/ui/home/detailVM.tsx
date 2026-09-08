@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { PALETTES, TIERS, rootsInTier, type Root } from '../../data/roots';
-import { dailyTilePreview } from '../../core/daily';
+import { dailyNextRoot, dailyResumePreview, dailyTilePreview } from '../../core/daily';
 import { gradeForPct } from '../../core/stats';
 import {
   entryRootName,
@@ -81,32 +81,53 @@ export function buildDetailVM(
         scene: sceneFrom(undefined, { key: 'heat', palKey: 'fire', caption: 'Root Rush' }),
       };
     }
-    const dailySamples = dailyTilePreview(extra.dailyRoots);
+    const dailyResume =
+      extra.dailyResumeQi != null && extra.dailyResumeQi >= 1 ? extra.dailyResumeQi : null;
+    const nextDaily = dailyNextRoot(extra.dailyRoots, dailyResume);
+    const dailySamples = extra.dailyDone
+      ? dailyTilePreview(extra.dailyRoots)
+      : dailyResume != null
+        ? dailyResumePreview(extra.dailyRoots, dailyResume)
+        : dailyTilePreview(extra.dailyRoots);
+    const remainingAfterPeek =
+      extra.dailyDone || dailyResume == null
+        ? extra.dailyRoots.length - dailySamples.length
+        : extra.dailyRoots.length - dailyResume - dailySamples.length;
     const streakLine =
       extra.streak > 0
         ? extra.dailyDone
           ? ` Streak banked — 🔥 ${extra.streak} day${extra.streak === 1 ? '' : 's'}.`
           : ` You're on a 🔥 ${extra.streak}-day streak.`
         : '';
+    const midLead = nextDaily
+      ? `Next is ${nextDaily.root} — ${nextDaily.mean}. ${dailyResume} of ${extra.dailyRoots.length} already yours.`
+      : `Five fresh roots every day. See the animation, tap what it means, keep your streak.`;
     return {
       jewel: item.jewel,
       animKey: item.key,
       eyebrow: 'Daily Challenge',
       big: 'Daily',
-      lead: `Five fresh roots every day. See the animation, tap what it means, keep your streak.${streakLine}`,
+      lead: extra.dailyDone || dailyResume == null
+        ? `Five fresh roots every day. See the animation, tap what it means, keep your streak.${streakLine}`
+        : `${midLead}${streakLine}`,
       samples: dailySamples,
       sampleLines: true,
       samplesDone: extra.dailyDone && dailySamples.length > 0,
-      moreCount: Math.max(0, extra.dailyRoots.length - dailySamples.length),
+      samplesNext: Boolean(dailyResume != null && !extra.dailyDone && dailySamples.length > 0),
+      moreCount: Math.max(0, remainingAfterPeek),
       primary: {
         label: extra.dailyDone
           ? 'Play again 📅'
-          : extra.dailyResumeQi != null && extra.dailyResumeQi >= 1
+          : dailyResume != null
             ? 'Continue daily 📅'
             : 'Start daily 📅',
       },
       secondary: { label: 'Browse roots' },
-      scene: sceneFrom(extra.dailyRoots[0], { key: 'stars', palKey: 'gold', caption: 'Daily' }),
+      scene: sceneFrom(nextDaily ?? extra.dailyRoots[0], {
+        key: 'stars',
+        palKey: 'gold',
+        caption: 'Daily',
+      }),
     };
   }
 

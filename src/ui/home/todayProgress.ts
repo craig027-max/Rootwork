@@ -8,13 +8,14 @@
  * reviews that root. Remember {stale root} · meaning is the retention
  * beat for an older owned root — it does not block Today ✓. Tapping it
  * is a one-beat visit (hold meaning, then Home) — Geo must not open.
- * A mid-run Daily says Daily · 2 of 5 (and Continue Daily when that is
- * the fat tap) instead of pretending they never started. First-run /
- * next-Play stays a single Play {root} — no Daily / Remember dump.
+ * A mid-run Daily says Daily · 2 of 5 · Chron · time (and Continue Daily
+ * when that is the fat tap) so the next root is named — not a count-only
+ * dump. First-run / next-Play stays a single Play {root} — no Daily /
+ * Remember dump.
  *
  * Pure so tests lock the copy without I/O.
  */
-import { continueDailyLabel, dailyProgressLabel, localDayKey } from '../../core/daily';
+import { continueDailyLabel, dailyNextRowLabel, localDayKey } from '../../core/daily';
 import { ROOTS_BY_ID } from '../../data/roots';
 import { learnNextAction } from '../modes/modeHandoff';
 import { type ProgressStamp, stampReviewedAt } from './progressStamp';
@@ -188,6 +189,9 @@ export function buildTodayProgress(opts: {
   /** Next unanswered Daily index when a mid-run is live (Home resume honesty). */
   dailyResumeQi?: number | null;
   dailyTotal?: number;
+  /** Next unanswered Daily root — named on the Today row, not a count-only dump. */
+  dailyNextName?: string;
+  dailyNextMean?: string;
   completed: Set<string>;
   entitled: boolean;
   learnedToday?: boolean;
@@ -234,7 +238,12 @@ export function buildTodayProgress(opts: {
       label: opts.dailyDone
         ? 'Daily · done for today'
         : dailyResume != null
-          ? dailyProgressLabel(dailyResume, dailyTotal)
+          ? dailyNextRowLabel({
+              answered: dailyResume,
+              total: dailyTotal,
+              nextName: opts.dailyNextName,
+              nextMean: opts.dailyNextMean,
+            })
           : 'Daily · five fresh roots',
       action: 'daily',
     },

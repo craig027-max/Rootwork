@@ -26,6 +26,7 @@ import {
   type Root,
   type TierNum,
 } from '../../data/roots';
+import { dailyNextSub } from '../../core/daily';
 import { gradeForPct, starsForPct } from '../../core/stats';
 
 /** Per-tier presentation: emoji chip + the PALETTES jewel key that themes the row. */
@@ -52,6 +53,10 @@ export interface ModeItem {
   preview?: { root: string; mean: string }[];
   /** When Daily is banked, the preview lines are a done recap (✓ on each). */
   previewDone?: boolean;
+  /** Mid-run Daily: remaining-root peek — first line is the next unanswered. */
+  previewResume?: boolean;
+  /** Mid-run Daily: the next unanswered root (same "Next ·" language as tiers). */
+  resumeName?: string;
 }
 
 export interface TierItem {
@@ -287,6 +292,8 @@ export function buildMenu(
     dailyResumeQi?: number | null;
     dailyTotal?: number;
     dailyPreview?: { root: string; mean: string }[];
+    /** Next unanswered Daily root name when a mid-run is live. */
+    dailyNextName?: string;
     nextPlay?: boolean;
     choseMode?: boolean;
   } = {},
@@ -311,9 +318,11 @@ export function buildMenu(
       title: 'Daily Challenge',
       sub: opts.dailyDone
         ? 'Done for today · same five until tomorrow'
-        : opts.dailyResumeQi != null && opts.dailyResumeQi >= 1
-          ? `Continue · ${(opts.dailyResumeQi ?? 0) + 1} of ${opts.dailyTotal ?? 5}`
-          : 'Five fresh roots · keep your streak',
+        : opts.dailyNextName
+          ? dailyNextSub(opts.dailyNextName)
+          : opts.dailyResumeQi != null && opts.dailyResumeQi >= 1
+            ? `Continue · ${(opts.dailyResumeQi ?? 0) + 1} of ${opts.dailyTotal ?? 5}`
+            : 'Five fresh roots · keep your streak',
       badge: opts.dailyDone
         ? 'DONE'
         : opts.dailyResumeQi != null && opts.dailyResumeQi >= 1
@@ -322,6 +331,14 @@ export function buildMenu(
       best: opts.dailyStreak && opts.dailyStreak > 0 ? `🔥 ${opts.dailyStreak}` : undefined,
       preview: opts.dailyPreview,
       previewDone: Boolean(opts.dailyDone && opts.dailyPreview && opts.dailyPreview.length > 0),
+      previewResume: Boolean(
+        !opts.dailyDone &&
+          opts.dailyResumeQi != null &&
+          opts.dailyResumeQi >= 1 &&
+          opts.dailyPreview &&
+          opts.dailyPreview.length > 0,
+      ),
+      resumeName: opts.dailyNextName || undefined,
     },
   ];
 

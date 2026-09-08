@@ -103,9 +103,11 @@ export function TierMenu({
           </span>
           {it.kind === 'mode' && it.preview && it.preview.length > 0 ? (
             <span className={`ww-daily-lines${it.previewDone ? ' is-done' : ''}`}>
-              {it.preview.map((p) => (
+              {it.preview.map((p, idx) => (
                 <span
-                  className={`ww-daily-line${it.previewDone ? ' is-done' : ''}`}
+                  className={`ww-daily-line${it.previewDone ? ' is-done' : ''}${
+                    it.previewResume && idx === 0 && !it.previewDone ? ' is-next' : ''
+                  }`}
                   key={p.root}
                 >
                   {it.previewDone ? (
@@ -157,6 +159,11 @@ export function TierMenu({
                 </span>
               </>
             )
+          ) : it.kind === 'mode' && it.resumeName ? (
+            <>
+              <span className="pct">{it.resumeName} ›</span>
+              {it.best ? <span className="stars">{it.best}</span> : null}
+            </>
           ) : it.disabled ? (
             <span className="locklbl">Soon</span>
           ) : it.best ? (
