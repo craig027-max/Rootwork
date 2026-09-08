@@ -29,6 +29,9 @@ export function buildDetailVM(
   extra: {
     dailyRoots: Root[];
     dailyDone: boolean;
+    /** Next unanswered Daily index when a mid-run is live. */
+    dailyResumeQi?: number | null;
+    dailyTotal?: number;
     streak: number;
     nextPlay: boolean;
     completed: Set<string>;
@@ -95,7 +98,13 @@ export function buildDetailVM(
       sampleLines: true,
       samplesDone: extra.dailyDone && dailySamples.length > 0,
       moreCount: Math.max(0, extra.dailyRoots.length - dailySamples.length),
-      primary: { label: extra.dailyDone ? 'Play again 📅' : 'Start daily 📅' },
+      primary: {
+        label: extra.dailyDone
+          ? 'Play again 📅'
+          : extra.dailyResumeQi != null && extra.dailyResumeQi >= 1
+            ? 'Continue daily 📅'
+            : 'Start daily 📅',
+      },
       secondary: { label: 'Browse roots' },
       scene: sceneFrom(extra.dailyRoots[0], { key: 'stars', palKey: 'gold', caption: 'Daily' }),
     };

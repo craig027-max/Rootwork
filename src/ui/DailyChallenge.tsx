@@ -2,12 +2,18 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
 import { PALETTES, ROOTS, rootId, isRootOpenable, type Root } from '../data/roots';
-import { DAILY_COUNT, dailySeed, localDayKey, pickDailyRoots } from '../core/daily';
+import {
+  DAILY_COUNT,
+  afterDailyNextLabel,
+  dailyHoldLine,
+  dailySeed,
+  localDayKey,
+  pickDailyRoots,
+  resumeDailyQi,
+} from '../core/daily';
 import { buildRecall, type RecallBeat } from '../core/recall';
 import { Scene } from './Scene';
 import { buildDailyDone, buildModeEmpty } from './modes/modeHandoff';
-
-const AUTO_ADVANCE_MS = 800;
 
 type Phase = 'start' | 'play' | 'result';
 
@@ -18,13 +24,18 @@ function palOf(root: Root) {
 /**
  * Daily Challenge — five openable roots for today's local date. Kid-fast:
  * scene on screen, one-beat recall, retry on a miss (teach, don't shame).
- * Finishing banks streak/XP via the store; replays the same day are free.
+ * A correct tap holds the meaning until Next — no 800ms dump onto Photo.
+ * Leaving mid-run persists the next unanswered root so Home can say
+ * Continue Daily · 3 of 5. Finishing banks streak/XP; replays are free.
  */
 export function DailyChallenge() {
   const entitled = useEntitledForDisplay();
   const setView = useWondralStore((s) => s.setView);
   const openRoot = useWondralStore((s) => s.openRoot);
   const recordDailyComplete = useWondralStore((s) => s.recordDailyComplete);
+  const saveDailyRun = useWondralStore((s) => s.saveDailyRun);
+  const clearDailyRun = useWondralStore((s) => s.clearDailyRun);
+  const dailyRun = useWondralStore((s) => s.dailyRun);
   const stats = useWondralStore((s) => s.stats);
   const completed = useWondralStore((s) => s.completedRoots);
   const studentId = useWondralStore((s) => s.activeStudentId);
@@ -40,10 +51,15 @@ export function DailyChallenge() {
     () => pickDailyRoots(pool, dailySeed(day, studentId)),
     [pool, day, studentId],
   );
+  const resumeQi = doneToday ? null : resumeDailyQi(dailyRun, day, studentId, deal.length);
 
-  const [phase, setPhase] = useState<Phase>('start');
-  const [qi, setQi] = useState(0);
-  const [beat, setBeat] = useState<RecallBeat | null>(null);
+  const [phase, setPhase] = useState<Phase>(() => (resumeQi != null ? 'play' : 'start'));
+  const [qi, setQi] = useState(() => resumeQi ?? 0);
+  const [beat, setBeat] = useState<RecallBeat | null>(() => {
+    if (resumeQi == null) return null;
+    const r = deal[resumeQi];
+    return r ? buildRecall({ root: r, pool, choices: 3 }) : null;
+  });
   const [picked, setPicked] = useState<number | null>(null);
   const bankedRef = useRef(false);
 
@@ -74,17 +90,25 @@ export function DailyChallenge() {
     setPhase('play');
   }
 
+  function bankIfNeeded() {
+    if (bankedRef.current || doneToday) return;
+    bankedRef.current = true;
+    recordDailyComplete();
+    clearDailyRun();
+  }
+
   function finish() {
-    if (!bankedRef.current) {
-      bankedRef.current = true;
-      recordDailyComplete();
-    }
+    bankIfNeeded();
     setPhase('result');
   }
 
   function answer(idx: number) {
     if (picked !== null || phase !== 'play' || !beat) return;
     setPicked(idx);
+    const ok = beat.opts[idx]?.ok ?? false;
+    if (!ok || doneToday) return;
+    if (qi + 1 >= deal.length) bankIfNeeded();
+    else saveDailyRun(qi + 1);
   }
 
   function retry() {
@@ -104,7 +128,6 @@ export function DailyChallenge() {
     finish();
   }
 
-  const advanceRef = useRef(advance);
   const keyRef = useRef<(e: KeyboardEvent) => void>(() => undefined);
 
   function handleKey(e: KeyboardEvent) {
@@ -119,14 +142,14 @@ export function DailyChallenge() {
         e.preventDefault();
         answer(idx);
       }
-    } else if (picked !== null && !answeredCorrect && (e.key === 'Enter' || e.key === ' ')) {
+    } else if (picked !== null && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
-      retry();
+      if (answeredCorrect) advance();
+      else retry();
     }
   }
 
   useEffect(() => {
-    advanceRef.current = advance;
     keyRef.current = handleKey;
   });
 
@@ -135,12 +158,6 @@ export function DailyChallenge() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
-
-  useEffect(() => {
-    if (phase !== 'play' || picked === null || !answeredCorrect) return;
-    const t = window.setTimeout(() => advanceRef.current(), AUTO_ADVANCE_MS);
-    return () => window.clearTimeout(t);
-  }, [phase, picked, qi, answeredCorrect]);
 
   if (deal.length === 0) {
     const empty = buildModeEmpty('daily', completed, entitled);
@@ -252,7 +269,12 @@ export function DailyChallenge() {
             </div>
             <div className="q-foot">
               {answered && answeredCorrect ? (
-                <span className="q-fb good">Nice — {root.root} is yours.</span>
+                <>
+                  <span className="q-fb good">{dailyHoldLine(root.root, root.mean)}</span>
+                  <button className="q-next" onClick={advance}>
+                    {afterDailyNextLabel(isLast)}
+                  </button>
+                </>
               ) : null}
               {answered && !answeredCorrect ? (
                 <>

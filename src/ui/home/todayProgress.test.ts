@@ -187,6 +187,47 @@ describe('buildTodayProgress — returning dashboard', () => {
     expect(pending.recap).toBeNull();
   });
 
+  it('names a mid-run Daily · 2 of 5 and keeps Continue {root} as the fat tap', () => {
+    const next = learnNextAction(startedBuilder, true);
+    const vm = buildTodayProgress({
+      firstRun: false,
+      nextPlay: false,
+      dailyDone: false,
+      dailyResumeQi: 2,
+      dailyTotal: 5,
+      completed: startedBuilder,
+      entitled: true,
+    });
+    expect(vm.items[0]).toMatchObject({
+      key: 'daily',
+      done: false,
+      label: 'Daily · 2 of 5',
+      action: 'daily',
+    });
+    expect(vm.cta).toEqual({
+      kind: 'learn',
+      label: `Continue ${secondBuilder.root} ›`,
+      rootId: next.rootId,
+    });
+    expect(vm.cta?.label).not.toMatch(/Start daily|Play again/);
+  });
+
+  it('makes Continue Daily the fat tap when that is the only open path', () => {
+    const allOpen = new Set(ROOTS.filter((r) => r.t === 1 || r.t === 2).map((r) => rootId(r)));
+    const vm = buildTodayProgress({
+      firstRun: false,
+      nextPlay: false,
+      dailyDone: false,
+      dailyResumeQi: 2,
+      dailyTotal: 5,
+      completed: allOpen,
+      entitled: false,
+    });
+    expect(vm.items[0]?.label).toBe('Daily · 2 of 5');
+    expect(vm.cta).toEqual({ kind: 'daily', label: 'Continue Daily · 3 of 5 ›' });
+    expect(vm.pathDone).toBe(false);
+  });
+
   it('hands a caught-up kid Root Rush — not a dead empty tap', () => {
     const allOpen = new Set(ROOTS.filter((r) => r.t === 1 || r.t === 2).map((r) => rootId(r)));
     const caughtUp = buildTodayProgress({
@@ -500,6 +541,11 @@ describe('Today checklist wiring + phone layout', () => {
     expect(home).toContain('onRush');
     expect(home).toContain('pickRememberRoot');
     expect(home).toContain('rememberRootToday');
+    expect(home).toContain('resumeDailyQi');
+    expect(home).toContain('dailyResumeQi');
+    expect(store).toContain('saveDailyRun');
+    expect(store).toContain('clearDailyRun');
+    expect(store).toContain('wondral:dailyRun:v1:');
     expect(band).toContain('ww-today');
     expect(band).toContain('ww-today-item');
     expect(band).toContain('is-remember');

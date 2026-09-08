@@ -6,12 +6,14 @@
  * {next} still *looked* like unfinished work, and tapping Learned Photo
  * opened Geo. Keep going · {root} splits done from next: a finished row
  * reviews that root. Remember {stale root} · meaning is the retention
- * beat for an older owned root — it does not block Today ✓. First-run /
- * next-Play stays a single Play {root} — no Daily / Remember dump.
+ * beat for an older owned root — it does not block Today ✓. A mid-run
+ * Daily says Daily · 2 of 5 (and Continue Daily when that is the fat tap)
+ * instead of pretending they never started. First-run / next-Play stays a
+ * single Play {root} — no Daily / Remember dump.
  *
  * Pure so tests lock the copy without I/O.
  */
-import { localDayKey } from '../../core/daily';
+import { continueDailyLabel, dailyProgressLabel, localDayKey } from '../../core/daily';
 import { ROOTS_BY_ID } from '../../data/roots';
 import { learnNextAction } from '../modes/modeHandoff';
 import { type ProgressStamp, stampReviewedAt } from './progressStamp';
@@ -182,6 +184,9 @@ export function buildTodayProgress(opts: {
   firstRun: boolean;
   nextPlay: boolean;
   dailyDone: boolean;
+  /** Next unanswered Daily index when a mid-run is live (Home resume honesty). */
+  dailyResumeQi?: number | null;
+  dailyTotal?: number;
   completed: Set<string>;
   entitled: boolean;
   learnedToday?: boolean;
@@ -213,11 +218,23 @@ export function buildTodayProgress(opts: {
   const rememberName = opts.rememberRoot?.trim() || undefined;
   const rememberMean = opts.rememberMean?.trim() || undefined;
   const rememberId = opts.rememberRootId?.trim() || undefined;
+  const dailyTotal = opts.dailyTotal && opts.dailyTotal > 0 ? opts.dailyTotal : 5;
+  const dailyResume =
+    !opts.dailyDone &&
+    typeof opts.dailyResumeQi === 'number' &&
+    opts.dailyResumeQi >= 1 &&
+    opts.dailyResumeQi < dailyTotal
+      ? opts.dailyResumeQi
+      : null;
   const items: TodayItem[] = [
     {
       key: 'daily',
       done: opts.dailyDone,
-      label: opts.dailyDone ? 'Daily · done for today' : 'Daily · five fresh roots',
+      label: opts.dailyDone
+        ? 'Daily · done for today'
+        : dailyResume != null
+          ? dailyProgressLabel(dailyResume, dailyTotal)
+          : 'Daily · five fresh roots',
       action: 'daily',
     },
   ];
@@ -274,7 +291,11 @@ export function buildTodayProgress(opts: {
           rootId: next.rootId,
         }
       : !opts.dailyDone
-        ? { kind: 'daily', label: 'Start daily ›' }
+        ? {
+            kind: 'daily',
+            label:
+              dailyResume != null ? continueDailyLabel(dailyResume, dailyTotal) : 'Start daily ›',
+          }
         : { kind: 'rush', label: 'Play Root Rush ›' };
 
   return {
