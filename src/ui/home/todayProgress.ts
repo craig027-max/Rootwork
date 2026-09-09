@@ -6,10 +6,11 @@
  * {next} still *looked* like unfinished work, and tapping Learned Photo
  * opened Geo. Keep going · {root} splits done from next: a finished row
  * reviews that root. Remember {stale root} · meaning is the retention
- * beat for an older owned root — it does not block Today ✓. A mid-run
- * Daily says Daily · 2 of 5 (and Continue Daily when that is the fat tap)
- * instead of pretending they never started. First-run / next-Play stays a
- * single Play {root} — no Daily / Remember dump.
+ * beat for an older owned root — it does not block Today ✓. Tapping it
+ * is a one-beat visit (hold meaning, then Home) — Geo must not open.
+ * A mid-run Daily says Daily · 2 of 5 (and Continue Daily when that is
+ * the fat tap) instead of pretending they never started. First-run /
+ * next-Play stays a single Play {root} — no Daily / Remember dump.
  *
  * Pure so tests lock the copy without I/O.
  */

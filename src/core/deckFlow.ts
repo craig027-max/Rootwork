@@ -142,8 +142,14 @@ export type AfterCorrectRecall =
 /**
  * How a card opens. `teach` is Play / Next / index (examples + I know this).
  * `recall` is the post-Yes next-tap — skip examples, stay in the quiz loop.
+ * `remember` is Home's one-beat retention: named root, then Home — never Geo.
  */
-export type DeckEntry = 'teach' | 'recall';
+export type DeckEntry = 'teach' | 'recall' | 'remember';
+
+/** Quiz-loop entries skip examples. Remember is one beat; recall continues. */
+export function isRecallEntry(entry: DeckEntry): boolean {
+  return entry === 'recall' || entry === 'remember';
+}
 
 /** In-flight Yes beat. Lives in the store so a remount cannot wipe it into examples. */
 export interface CorrectAdvance {
@@ -179,13 +185,22 @@ export function allDoneLine(): string {
 /**
  * Where to go after a correct "I know this" tap, and the one line to show
  * during the success beat. Wrong answers never call this — they stay on
- * teach + try again.
+ * teach + try again. Remember is a one-beat visit: hold the meaning, then
+ * Home — Geo must not open after Remember Bio.
  */
-export function afterCorrectRecall(fromId: RootId, entitled: boolean): AfterCorrectRecall {
-  const next = neighborOpenable(fromId, 1, entitled);
+export function afterCorrectRecall(
+  fromId: RootId,
+  entitled: boolean,
+  opts?: { entry?: DeckEntry },
+): AfterCorrectRecall {
   const root = ROOTS_BY_ID[fromId];
+  const line = root ? successLine(root) : 'Yes — you got it.';
+  if (opts?.entry === 'remember') {
+    return { kind: 'home', line };
+  }
+  const next = neighborOpenable(fromId, 1, entitled);
   if (next) {
-    return { kind: 'next', id: next, line: root ? successLine(root) : 'Yes — you got it.' };
+    return { kind: 'next', id: next, line };
   }
   return { kind: 'home', line: entitled ? allDoneLine() : starterDoneLine() };
 }
@@ -233,7 +248,7 @@ export function isLessonStudying(view: LessonView): boolean {
   const { recall, currentRootId, entry, correctAdvance } = view;
   if (recall !== null && recallBelongsToCard(recall, currentRootId)) return true;
   if (correctAdvance && correctAdvance.fromId === currentRootId) return true;
-  return entry === 'recall';
+  return isRecallEntry(entry);
 }
 
 export function showExampleWords(view: LessonView): boolean {
@@ -263,7 +278,8 @@ export interface AfterHearNextTap {
  *
  * `hearFinished` is this card's Hear clip ending. `entry: 'recall'` is the
  * #19 path after the Yes hold: previous Yes finished, kid tapped next,
- * then this root opened.
+ * then this root opened. `entry: 'remember'` is Home's one-beat visit —
+ * hide Next / Rush so Geo cannot dump over Remember Bio.
  */
 export function afterHearNextTap(opts: {
   nextPlay: boolean;
@@ -271,10 +287,11 @@ export function afterHearNextTap(opts: {
   entry: DeckEntry;
   won: boolean;
 }): AfterHearNextTap {
-  const afterHear = opts.hearFinished || opts.entry === 'recall';
+  const remember = opts.entry === 'remember';
+  const afterHear = opts.hearFinished || isRecallEntry(opts.entry);
   return {
-    showRush: !opts.nextPlay,
-    showNextRoot: !opts.won && !(opts.nextPlay && afterHear),
+    showRush: !opts.nextPlay && !remember,
+    showNextRoot: !opts.won && !remember && !(opts.nextPlay && afterHear),
   };
 }
 
@@ -355,7 +372,8 @@ export function allowWinNextTap(
 }
 
 /** Kid-facing label for the one tap that leaves the Yes hold. */
-export function afterYesNextLabel(dest: AfterCorrectRecall): string {
+export function afterYesNextLabel(dest: AfterCorrectRecall, entry?: DeckEntry): string {
+  if (entry === 'remember') return 'Home →';
   return dest.kind === 'next' ? 'Next →' : 'Done →';
 }
 
@@ -432,8 +450,12 @@ export interface LessonAfterCorrect {
  * tap Next → Geo in recall. Examples never come back. A remount mid-Yes
  * still shows the line, not chips. Clip end does not open the next root.
  */
-export function lessonAfterCorrect(fromId: RootId, entitled: boolean): LessonAfterCorrect {
-  const dest = afterCorrectRecall(fromId, entitled);
+export function lessonAfterCorrect(
+  fromId: RootId,
+  entitled: boolean,
+  entry: DeckEntry = 'teach',
+): LessonAfterCorrect {
+  const dest = afterCorrectRecall(fromId, entitled, { entry });
   const duringYesView: LessonView = {
     recall: { win: dest.line, rootId: fromId },
     currentRootId: fromId,
@@ -449,7 +471,7 @@ export function lessonAfterCorrect(fromId: RootId, entitled: boolean): LessonAft
     winLine: duringYes.winLine,
     showExamples: showExampleWords(duringYesView),
     nextReady: allowWinNextTap(duringYesView.correctAdvance, false),
-    nextLabel: afterYesNextLabel(dest),
+    nextLabel: afterYesNextLabel(dest, entry),
   };
   if (dest.kind === 'next') {
     const after: LessonView = {

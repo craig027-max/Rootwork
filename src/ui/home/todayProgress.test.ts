@@ -536,7 +536,7 @@ describe('Today checklist wiring + phone layout', () => {
     expect(home).toContain('learnedRootToday');
     expect(home).toContain('onContinue');
     expect(home).toContain('onRemember');
-    expect(home).toContain("entry: 'recall'");
+    expect(home).toContain("entry: 'remember'");
     expect(home).toContain('onDaily');
     expect(home).toContain('onRush');
     expect(home).toContain('pickRememberRoot');

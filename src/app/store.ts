@@ -239,7 +239,7 @@ interface WondralStore {
 
   // Root (flashcard) tracking.
   currentRootId: string | null;
-  /** How the current card opened. `recall` skips examples after the Yes next tap. */
+  /** How the current card opened. `recall` skips examples after Yes; `remember` is Home's one-beat visit. */
   deckEntry: DeckEntry;
   /** In-flight Yes beat — survives a Deck remount so examples cannot flash back. */
   correctAdvance: CorrectAdvance | null;

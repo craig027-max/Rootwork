@@ -19,6 +19,7 @@ import {
   hearHoldLine,
   holdHearAfterClip,
   holdYesAfterClip,
+  isRecallEntry,
   lessonAfterCorrect,
   showExampleWords,
   starterDoneLine,
@@ -92,6 +93,82 @@ describe('afterCorrectRecall', () => {
     expect(successLine(bio)).toBe('Yes — Bio means life.');
     expect(successLine(bio).toLowerCase()).not.toMatch(/wrong|fail|shame|stupid|nope|loser/);
     expect(starterDoneLine().toLowerCase()).toContain('starter done');
+  });
+
+  it('Remember Bio holds the meaning then Home — Geo does not open', () => {
+    expect(afterCorrectRecall(bioId, false, { entry: 'remember' })).toEqual({
+      kind: 'home',
+      line: 'Yes — Bio means life.',
+    });
+    expect(afterCorrectRecall(bioId, true, { entry: 'remember' })).toEqual({
+      kind: 'home',
+      line: 'Yes — Bio means life.',
+    });
+    expect(commitCorrectAdvance(afterCorrectRecall(bioId, false, { entry: 'remember' }))).toEqual({
+      kind: 'home',
+    });
+    expect(afterYesNextLabel({ kind: 'home', line: 'Yes — Bio means life.' }, 'remember')).toBe(
+      'Home →',
+    );
+    expect(afterYesNextLabel({ kind: 'next', id: geoId, line: 'Yes — Bio means life.' })).toBe(
+      'Next →',
+    );
+  });
+});
+
+describe('Remember one-beat: hold meaning, Home — not Geo', () => {
+  it('opens as remember, quizzes, then Done is Home', () => {
+    expect(deckEntryForOpen({ entry: 'remember' })).toBe('remember');
+    expect(isRecallEntry('remember')).toBe(true);
+    expect(isRecallEntry('recall')).toBe(true);
+    expect(isRecallEntry('teach')).toBe(false);
+    expect(
+      showExampleWords({
+        recall: null,
+        currentRootId: bioId,
+        entry: 'remember',
+        correctAdvance: null,
+      }),
+    ).toBe(false);
+
+    const path = lessonAfterCorrect(bioId, false, 'remember');
+    expect(path.dest).toEqual({ kind: 'home', line: 'Yes — Bio means life.' });
+    expect(path.duringYes.winLine).toBe('Yes — Bio means life.');
+    expect(path.duringYes.showExamples).toBe(false);
+    expect(path.afterClip).toEqual({
+      currentRootId: bioId,
+      winLine: 'Yes — Bio means life.',
+      showExamples: false,
+      nextReady: true,
+      nextLabel: 'Home →',
+    });
+    expect(path.afterBeat).toEqual({
+      action: 'home',
+      currentRootId: null,
+      entry: 'teach',
+      showExamples: false,
+    });
+    expect(commitCorrectAdvance(path.dest)).toEqual({ kind: 'home' });
+  });
+
+  it('hides Next and Rush so Remember cannot dump onto Geo', () => {
+    expect(
+      afterHearNextTap({ nextPlay: false, hearFinished: false, entry: 'remember', won: false }),
+    ).toEqual({ showRush: false, showNextRoot: false });
+    expect(
+      afterHearNextTap({ nextPlay: true, hearFinished: false, entry: 'remember', won: false }),
+    ).toEqual({ showRush: false, showNextRoot: false });
+  });
+
+  it('does not change the Yes Bio → Next Geo lesson loop', () => {
+    const path = lessonAfterCorrect(bioId, false);
+    expect(path.afterBeat).toEqual({
+      action: 'open',
+      currentRootId: geoId,
+      entry: 'recall',
+      showExamples: false,
+    });
+    expect(path.afterClip.nextLabel).toBe('Next →');
   });
 });
 
