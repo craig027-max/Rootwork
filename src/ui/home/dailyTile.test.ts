@@ -69,6 +69,7 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
     }
     expect(vm.moreCount).toBe(2);
     expect(vm.primary.label).toMatch(/Start daily/);
+    expect(vm.heroCta).toBeFalsy();
   });
 
   it('names the next Daily root and peeks remaining — not the already-got first three', () => {
@@ -118,6 +119,8 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
     expect(String(vm.lead)).toContain(`${next!.mean}`);
     expect(String(vm.lead)).toContain('2 of 5 already yours');
     expect(vm.scene?.caption).toBe(`${next!.root} · ${next!.mean}`);
+    expect(vm.heroCta).toBe(true);
+    expect(vm.primary.label).toMatch(/Continue daily/);
   });
 
   it('does not invent a fake starter list when today\'s pick is empty', () => {
@@ -141,6 +144,8 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
   it('renders name + meaning lines on the Daily tile before the Start CTA', () => {
     expect(home).toContain('dailyResumePreview');
     expect(home).toContain('dailyNextRoot');
+    expect(home).toContain('isDailyResumeItem');
+    expect(home).toContain('dailyResume: dailyResumeQi != null');
     expect(detail).toContain('dailyResumePreview');
     expect(detail).toContain('dailyNextRoot');
     expect(detail).toContain('sampleLines: true');
@@ -218,6 +223,7 @@ describe('Home Daily tile: done-state recap after Daily is banked', () => {
     }
     expect(vm.primary.label).toMatch(/Play again/);
     expect(vm.primary.label).not.toMatch(/Start daily/);
+    expect(vm.heroCta).toBeFalsy();
   });
 
   it('marks those three lines done with the existing Daily ✓ / DONE chrome', () => {

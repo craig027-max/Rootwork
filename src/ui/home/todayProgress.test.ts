@@ -550,6 +550,7 @@ describe('Today checklist wiring + phone layout', () => {
     expect(home).toContain('dailyResumeQi');
     expect(home).toContain('dailyNextName');
     expect(home).toContain('dailyResumePreview');
+    expect(home).toContain('isDailyResumeItem');
     expect(store).toContain('saveDailyRun');
     expect(store).toContain('clearDailyRun');
     expect(store).toContain('wondral:dailyRun:v1:');

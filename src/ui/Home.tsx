@@ -16,6 +16,7 @@ import {
   buildMenu,
   hasChosenMode,
   homeSelectedIndex,
+  isDailyResumeItem,
   isNextPlayHome,
   isResumeTier,
   listHeading,
@@ -110,7 +111,9 @@ export function Home() {
   });
   const allItems = [...items, ...tucked];
   const [picked, setPicked] = useState<number | null>(null);
-  const selectedIndex = homeSelectedIndex(picked, items, currentTier);
+  const selectedIndex = homeSelectedIndex(picked, items, currentTier, {
+    dailyResume: dailyResumeQi != null,
+  });
   const selected = allItems[Math.min(selectedIndex, allItems.length - 1)]!;
 
   const activeStudent = students.find((s) => s.id === activeStudentId) ?? null;
@@ -160,7 +163,8 @@ export function Home() {
     rushBestStars: stats.bestStars,
     rushBestScore: stats.bestScore ?? 0,
   });
-  const resumeNow = !nextPlay && isResumeTier(selected);
+  const resumeNow =
+    !nextPlay && (isResumeTier(selected) || isDailyResumeItem(selected));
 
   return (
     <div className={`ww-home${nextPlay ? ' is-first' : ''}${resumeNow ? ' is-resume' : ''}`}>

@@ -6,6 +6,7 @@ import {
   DAILY_COUNT,
   afterDailyNextLabel,
   dailyHoldLine,
+  dailyHoldNextLine,
   dailySeed,
   localDayKey,
   pickDailyRoots,
@@ -24,7 +25,8 @@ function palOf(root: Root) {
 /**
  * Daily Challenge — five openable roots for today's local date. Kid-fast:
  * scene on screen, one-beat recall, retry on a miss (teach, don't shame).
- * A correct tap holds the meaning until Next — no 800ms dump onto Photo.
+ * A correct tap holds the meaning until Next — no 800ms dump onto Photo —
+ * and peeks the next root (Next · Aqua · water) so Next is not unnamed.
  * Leaving mid-run persists the next unanswered root so Home can say
  * Continue Daily · 3 of 5. Finishing banks streak/XP; replays are free.
  */
@@ -67,6 +69,7 @@ export function DailyChallenge() {
   const answered = picked !== null;
   const answeredCorrect = answered && beat ? (beat.opts[picked!]?.ok ?? false) : false;
   const isLast = qi + 1 >= deal.length;
+  const nextHold = !isLast ? deal[qi + 1] : undefined;
 
   function close() {
     setView('home');
@@ -270,7 +273,14 @@ export function DailyChallenge() {
             <div className="q-foot">
               {answered && answeredCorrect ? (
                 <>
-                  <span className="q-fb good">{dailyHoldLine(root.root, root.mean)}</span>
+                  <div className="q-hold">
+                    <span className="q-fb good">{dailyHoldLine(root.root, root.mean)}</span>
+                    {nextHold ? (
+                      <span className="q-fb q-next-peek">
+                        {dailyHoldNextLine(nextHold.root, nextHold.mean)}
+                      </span>
+                    ) : null}
+                  </div>
                   <button className="q-next" onClick={advance}>
                     {afterDailyNextLabel(isLast)}
                   </button>

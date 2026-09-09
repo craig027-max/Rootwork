@@ -10,7 +10,8 @@
  * five, then taps Home, must land back on question 3 — not a Start-daily
  * dump — and Home names that next root (Chron · time), not the already-got
  * first three. A correct tap holds the meaning until Next (same spirit as
- * Hear / Yes), so Photo cannot slam over Bio.
+ * Hear / Yes / Remember), then peeks the next root so Next is not a dump
+ * onto an unnamed card. Photo cannot slam over Bio.
  */
 
 import type { Root } from '../data/roots';
@@ -203,6 +204,17 @@ export function dailyHoldLine(rootName: string, mean: string): string {
   const name = rootName.replace(/\s+/g, ' ').trim();
   const spokenMean = mean.replace(/\s+/g, ' ').trim();
   return `Yes — ${name} means ${spokenMean}.`;
+}
+
+/**
+ * After the Yes hold, name the next unanswered Daily root the way Home
+ * already peeks it — so Next is not a dump onto an unnamed card.
+ * Last root has no peek (Done →).
+ */
+export function dailyHoldNextLine(nextName: string, nextMean?: string): string {
+  const name = nextName.replace(/\s+/g, ' ').trim();
+  const mean = nextMean?.replace(/\s+/g, ' ').trim();
+  return mean ? `Next · ${name} · ${mean}` : `Next · ${name}`;
 }
 
 /** Kid-facing label for the one tap that leaves the Daily hold. */
