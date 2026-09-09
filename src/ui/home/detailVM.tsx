@@ -128,6 +128,9 @@ export function buildDetailVM(
         palKey: 'gold',
         caption: 'Daily',
       }),
+      // Mid-run: park Continue daily under the next-root scene — same
+      // one-tap as an in-progress tier, so Aqua is not buried in the list.
+      heroCta: Boolean(dailyResume != null && !extra.dailyDone),
     };
   }
 

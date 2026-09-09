@@ -204,9 +204,18 @@ export function tierTilePreview(
 /**
  * Index into `items` (the main list, not tucked rows) for the current tier.
  * Next-Play board puts the play-now tier at 0; returning dashboard finds
- * the resume tier after the modes.
+ * the resume tier after the modes. A live Daily mid-run lands on Daily so
+ * the next-root peek is the first thing they see — not buried behind HERE.
  */
-export function defaultSelectedIndex(items: MenuItem[], currentTier: TierNum): number {
+export function defaultSelectedIndex(
+  items: MenuItem[],
+  currentTier: TierNum,
+  opts: { dailyResume?: boolean } = {},
+): number {
+  if (opts.dailyResume) {
+    const daily = items.findIndex((it) => it.kind === 'mode' && it.key === 'daily');
+    if (daily >= 0) return daily;
+  }
   const idx = items.findIndex((it) => it.kind === 'tier' && it.t === currentTier && !it.locked);
   return idx >= 0 ? idx : 0;
 }
@@ -215,13 +224,20 @@ export function defaultSelectedIndex(items: MenuItem[], currentTier: TierNum): n
  * Land on the resume row until the kid picks something else this visit.
  * A stale first-run index (0) must not stick after hydrate turns the board
  * into Rush / Daily / tiers — that buried Continue behind the quiz tiles.
+ * Mid-run Daily wins over the HERE tier so Aqua's scene is waiting.
  */
 export function homeSelectedIndex(
   picked: number | null,
   items: MenuItem[],
   currentTier: TierNum,
+  opts: { dailyResume?: boolean } = {},
 ): number {
-  return picked ?? defaultSelectedIndex(items, currentTier);
+  return picked ?? defaultSelectedIndex(items, currentTier, opts);
+}
+
+/** Returning dashboard + this row is a live Daily mid-run (remaining peek). */
+export function isDailyResumeItem(item: MenuItem): boolean {
+  return item.kind === 'mode' && item.key === 'daily' && Boolean(item.previewResume);
 }
 
 /** Kid-facing list heading: start/play, resume, or keep-going after Today ✓. */

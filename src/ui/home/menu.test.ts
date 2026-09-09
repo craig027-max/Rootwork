@@ -5,6 +5,7 @@ import {
   buildMenu,
   defaultSelectedIndex,
   homeSelectedIndex,
+  isDailyResumeItem,
   entryRootName,
   hasChosenMode,
   hasStartedPostStarter,
@@ -207,6 +208,9 @@ describe('buildMenu — started next tier (returning dashboard)', () => {
     expect(defaultSelectedIndex(entitled.items, 2)).toBe(3);
     expect(homeSelectedIndex(null, entitled.items, 2)).toBe(3);
     expect(homeSelectedIndex(0, entitled.items, 2)).toBe(0);
+    expect(homeSelectedIndex(null, entitled.items, 2, { dailyResume: true })).toBe(1);
+    expect(entitled.items[1]).toMatchObject({ kind: 'mode', key: 'daily' });
+    expect(homeSelectedIndex(3, entitled.items, 2, { dailyResume: true })).toBe(3);
     expect(entitled.items[3]).toMatchObject({ key: 'tier-2', current: true });
     const builderRow = entitled.items[3];
     expect(builderRow?.kind).toBe('tier');
@@ -302,6 +306,29 @@ describe('buildMenu — started next tier (returning dashboard)', () => {
     expect(daily.previewDone).toBe(true);
     expect(daily.preview?.map((p) => p.root)).toEqual(deal.slice(0, 3).map((r) => r.root));
     expect(daily.preview?.map((p) => p.mean)).toEqual(deal.slice(0, 3).map((r) => r.mean));
+  });
+
+  it('treats a mid-run Daily row as the resume land — not a fresh Start', () => {
+    const deal = pickDailyRoots(
+      ROOTS.filter((r) => isRootOpenable(rootId(r), false)),
+      dailySeed('2026-09-01', 'kid-a'),
+    );
+    const remaining = deal.slice(2).map((r) => ({ root: r.root, mean: r.mean }));
+    const { items } = buildMenu(startedBuilder, true, {
+      currentTier: 2,
+      dailyPreview: remaining,
+      dailyResumeQi: 2,
+      dailyTotal: 5,
+      dailyNextName: deal[2]?.root,
+    });
+    const daily = items.find((it) => it.kind === 'mode' && it.key === 'daily');
+    expect(daily).toBeTruthy();
+    if (!daily) throw new Error('expected Daily mode row');
+    expect(isDailyResumeItem(daily)).toBe(true);
+    expect(defaultSelectedIndex(items, 2, { dailyResume: true })).toBe(
+      items.findIndex((it) => it.kind === 'mode' && it.key === 'daily'),
+    );
+    expect(isDailyResumeItem(items[0]!)).toBe(false);
   });
 });
 

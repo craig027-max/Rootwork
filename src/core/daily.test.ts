@@ -6,6 +6,7 @@ import {
   afterDailyNextLabel,
   continueDailyLabel,
   dailyHoldLine,
+  dailyHoldNextLine,
   dailyNextRoot,
   dailyNextRowLabel,
   dailyNextSub,
@@ -180,5 +181,12 @@ describe('Daily mid-run resume + hold meaning', () => {
     expect(dailyHoldLine('  Bio  ', '  life ')).toBe('Yes — Bio means life.');
     expect(afterDailyNextLabel(false)).toBe('Next →');
     expect(afterDailyNextLabel(true)).toBe('Done →');
+  });
+
+  it('peeks the next Daily root on the hold — last root has no Next dump', () => {
+    expect(dailyHoldNextLine('Aqua', 'water')).toBe('Next · Aqua · water');
+    expect(dailyHoldNextLine('  Chron  ', '  time ')).toBe('Next · Chron · time');
+    expect(dailyHoldNextLine('Geo')).toBe('Next · Geo');
+    expect(dailyHoldNextLine('Aqua', 'water')).not.toMatch(/Continue |Keep going|Play again/);
   });
 });
