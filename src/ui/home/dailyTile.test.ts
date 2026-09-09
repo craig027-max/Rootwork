@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ROOTS, isRootOpenable, rootId, rootsInTier } from '../../data/roots';
-import { dailySeed, dailyTilePreview, pickDailyRoots } from '../../core/daily';
+import { dailyNextRoot, dailyResumePreview, dailySeed, dailyTilePreview, pickDailyRoots } from '../../core/daily';
 import { buildDetailVM } from './detailVM';
 import { buildMenu } from './menu';
 
@@ -71,19 +71,31 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
     expect(vm.primary.label).toMatch(/Start daily/);
   });
 
-  it('says Continue daily when a mid-run is live — not a Start-daily dump', () => {
+  it('names the next Daily root and peeks remaining — not the already-got first three', () => {
+    const next = dailyNextRoot(today, 2);
+    expect(next).toBeTruthy();
+    const remaining = dailyResumePreview(today, 2);
+    expect(remaining.map((l) => l.root)).toEqual(today.slice(2).map((r) => r.root));
+    expect(remaining[0]?.root).toBe(next?.root);
+
     const midMenu = buildMenu(startedBuilder, false, {
       currentTier: 1,
-      dailyPreview: preview,
+      dailyPreview: remaining,
       dailyResumeQi: 2,
       dailyTotal: 5,
+      dailyNextName: next?.root,
     });
     const midItem = midMenu.items.find((it) => it.kind === 'mode' && it.key === 'daily');
     expect(midItem?.kind).toBe('mode');
     if (midItem?.kind !== 'mode') throw new Error('fixture: Daily tile missing mid-run');
-    expect(midItem.sub).toBe('Continue · 3 of 5');
+    expect(midItem.sub).toBe(`Next · ${next!.root}`);
+    expect(midItem.sub).not.toMatch(/Continue ·|Start daily|Play again/);
     expect(midItem.badge).toBe('2/5');
+    expect(midItem.resumeName).toBe(next!.root);
+    expect(midItem.preview).toEqual(remaining);
     expect(midItem.previewDone).toBe(false);
+    expect(midItem.previewResume).toBe(true);
+    expect(midItem.preview?.map((p) => p.root)).not.toEqual(today.slice(0, 3).map((r) => r.root));
 
     const vm = buildDetailVM(midItem, {
       dailyRoots: today,
@@ -97,6 +109,15 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
     });
     expect(vm.primary.label).toMatch(/Continue daily/);
     expect(vm.primary.label).not.toMatch(/Start daily|Play again/);
+    expect(vm.samples.map((s) => s.root)).toEqual(today.slice(2).map((r) => r.root));
+    expect(vm.samples[0]?.root).toBe(next!.root);
+    expect(vm.samplesDone).toBeFalsy();
+    expect(vm.samplesNext).toBe(true);
+    expect(vm.moreCount).toBe(0);
+    expect(String(vm.lead)).toContain(`Next is ${next!.root}`);
+    expect(String(vm.lead)).toContain(`${next!.mean}`);
+    expect(String(vm.lead)).toContain('2 of 5 already yours');
+    expect(vm.scene?.caption).toBe(`${next!.root} · ${next!.mean}`);
   });
 
   it('does not invent a fake starter list when today\'s pick is empty', () => {
@@ -118,16 +139,21 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
   });
 
   it('renders name + meaning lines on the Daily tile before the Start CTA', () => {
-    expect(home).toContain('dailyTilePreview(dailyRoots)');
-    expect(detail).toContain('dailyTilePreview(extra.dailyRoots)');
+    expect(home).toContain('dailyResumePreview');
+    expect(home).toContain('dailyNextRoot');
+    expect(detail).toContain('dailyResumePreview');
+    expect(detail).toContain('dailyNextRoot');
     expect(detail).toContain('sampleLines: true');
     expect(panel).toContain('ww-samples${vm.sampleLines ? \' is-lines\' : \'\'}${vm.samplesDone ? \' is-done\' : \'\'}');
     expect(panel).toContain('<b>{s.root}</b>');
     expect(panel).toContain('{s.mean}');
     expect(menu).toContain('ww-daily-lines');
     expect(menu).toContain('ww-daily-line');
+    expect(menu).toContain('is-next');
     expect(menu).toContain('{p.root}');
     expect(menu).toContain('{p.mean}');
+    expect(panel).toContain('samplesNext');
+    expect(panel).toContain('is-next');
 
     const samplesAt = panel.indexOf('className={`ww-samples');
     const ctaAt = panel.indexOf('ww-detail-cta');
@@ -140,15 +166,19 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
     expect(phone).toMatch(/\.ww-daily-lines\s*\{[^}]*display:\s*flex/);
     expect(phone).toMatch(/\.ww-daily-line\s*\{[^}]*display:\s*flex/);
     expect(phone).toMatch(/\.ww-daily-line\.is-done\s*\{[^}]*display:\s*flex/);
+    expect(phone).toMatch(/\.ww-daily-line\.is-next\s*\{[^}]*display:\s*flex/);
     expect(phone).toMatch(/\.ww-samples\.is-lines\s*\{[^}]*display:\s*flex/);
     expect(phone).not.toMatch(/\.ww-daily-lines\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.ww-daily-line\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.ww-daily-line\.is-done\s*\{[^}]*display:\s*none/);
+    expect(phone).not.toMatch(/\.ww-daily-line\.is-next\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.ww-daily-mark\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.ww-samples\.is-lines\s*\{[^}]*display:\s*none/);
     expect(css).toMatch(/\.ww-samples\.is-lines\s*\{/);
     expect(css).toMatch(/\.ww-daily-line\s*\{/);
+    expect(css).toMatch(/\.ww-daily-line\.is-next/);
     expect(css).toMatch(/\.ww-daily-mark\s*\{/);
+    expect(css).toMatch(/\.ww-schip\.is-next/);
   });
 });
 

@@ -503,6 +503,9 @@
   .ww-daily-line.is-done {
     display: flex;
   }
+  .ww-daily-line.is-next {
+    display: flex;
+  }
   .ww-daily-mark {
     display: inline;
   }
@@ -523,6 +526,9 @@
     align-items: flex-start;
   }
   .ww-samples.is-lines .ww-schip.is-done {
+    display: flex;
+  }
+  .ww-samples.is-lines .ww-schip.is-next {
     display: flex;
   }
   .ww-samples.is-lines .ww-schip > span:last-child {
@@ -727,6 +733,16 @@
 }
 .ww-daily-line.is-done b {
   color: var(--text-primary);
+}
+.ww-daily-line.is-next b {
+  color: var(--jewel-amber);
+}
+.ww-samples.is-lines .ww-schip.is-next {
+  border-color: rgba(255, 206, 77, 0.42);
+  background: rgba(255, 206, 77, 0.1);
+}
+.ww-samples.is-lines .ww-schip.is-next b {
+  color: var(--jewel-amber);
 }
 .ww-samples.is-lines .ww-schip.is-done {
   border-color: rgba(47, 217, 154, 0.42);

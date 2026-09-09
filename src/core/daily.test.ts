@@ -6,7 +6,11 @@ import {
   afterDailyNextLabel,
   continueDailyLabel,
   dailyHoldLine,
+  dailyNextRoot,
+  dailyNextRowLabel,
+  dailyNextSub,
   dailyProgressLabel,
+  dailyResumePreview,
   dailySeed,
   dailyTilePreview,
   localDayKey,
@@ -104,6 +108,37 @@ describe('dailyTilePreview', () => {
 
   it('returns [] for an empty deal', () => {
     expect(dailyTilePreview([])).toEqual([]);
+  });
+});
+
+describe('dailyResumePreview + dailyNextRoot', () => {
+  const seed = dailySeed('2026-09-01', 'kid-a');
+  const today = pickDailyRoots(T1, seed);
+
+  it('peeks remaining roots from the next unanswered index — not the already-got first three', () => {
+    expect(today).toHaveLength(5);
+    const remaining = dailyResumePreview(today, 2);
+    expect(remaining.map((l) => l.root)).toEqual(today.slice(2).map((r) => r.root));
+    expect(remaining.map((l) => l.mean)).toEqual(today.slice(2).map((r) => r.mean));
+    expect(remaining[0]?.root).toBe(today[2]?.root);
+    expect(remaining.map((l) => l.root)).not.toEqual(today.slice(0, 3).map((r) => r.root));
+    expect(dailyNextRoot(today, 2)).toEqual(today[2]);
+  });
+
+  it('falls back to the first-three teaser on a fresh start and peeks nothing when finished', () => {
+    expect(dailyResumePreview(today, 0)).toEqual(dailyTilePreview(today));
+    expect(dailyResumePreview(today, 5)).toEqual([]);
+    expect(dailyNextRoot(today, 0)).toBeUndefined();
+    expect(dailyNextRoot(today, 5)).toBeUndefined();
+    expect(dailyNextRoot(today, null)).toBeUndefined();
+  });
+
+  it('names the next Daily root on the Today row and the menu Next line', () => {
+    expect(dailyNextRowLabel({ answered: 2, total: 5, nextName: 'Chron', nextMean: 'time' })).toBe(
+      'Daily · 2 of 5 · Chron · time',
+    );
+    expect(dailyNextRowLabel({ answered: 2, total: 5 })).toBe('Daily · 2 of 5');
+    expect(dailyNextSub('Chron')).toBe('Next · Chron');
   });
 });
 
