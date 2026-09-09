@@ -1557,6 +1557,17 @@
   width: 100%;
   height: 100%;
 }
+.ww-caption.is-remember {
+  color: var(--jewel-amber);
+  border-color: rgba(255, 206, 77, 0.42);
+  background: rgba(10, 10, 26, 0.7);
+}
+.ww-eyebrow2.is-remember {
+  color: var(--jewel-amber);
+}
+.ww-card2.is-remember .ww-deck-back {
+  color: var(--jewel-amber);
+}
 .ww-caption {
   position: absolute;
   left: 50%;
@@ -2001,6 +2012,13 @@
     display: block;
   }
   .ww-card-actions {
+    display: flex;
+  }
+  /* Remember one-beat: named root + Home tap stay when eyebrow/lead hide. */
+  .ww-caption.is-remember {
+    display: block;
+  }
+  .ww-card2.is-remember .ww-card-actions {
     display: flex;
   }
   /* Nav is fixed; extra wrap padding was creating a 26px phantom scroll

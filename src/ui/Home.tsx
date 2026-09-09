@@ -162,7 +162,7 @@ export function Home() {
         stats={stats}
         today={today}
         onContinue={(id) => openRoot(id)}
-        onRemember={(id) => openRoot(id, { entry: 'recall' })}
+        onRemember={(id) => openRoot(id, { entry: 'remember' })}
         onDaily={() => setView('daily')}
         onRush={() => setView('quiz')}
       />

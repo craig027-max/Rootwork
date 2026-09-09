@@ -11,9 +11,9 @@ import type { TodayProgress } from './todayProgress';
  * After they learn a root, that row checks off (Learned {root}) and
  * reviews that root — not the next one. When Daily is banked too the
  * heading is Today ✓ and the fat tap is Keep going · {root} (or Rush).
- * Remember {stale root} is the retention beat — one-tap recall, does not
- * block Today ✓. Streak risk stays a visible status line. First-run
- * still drops the extra chrome so Play Bio wins.
+ * Remember {stale root} is the retention beat — one-tap, hold meaning,
+ * then Home. Does not block Today ✓. Streak risk stays a visible status
+ * line. First-run still drops the extra chrome so Play Bio wins.
  */
 export function ProfileBand({
   name,

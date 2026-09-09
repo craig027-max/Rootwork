@@ -22,6 +22,7 @@ import {
   commitCorrectAdvance,
   holdHearAfterClip,
   isLessonStudying,
+  isRecallEntry,
   showExampleWords,
   winLineOnCard,
   type AfterCorrectRecall,
@@ -161,7 +162,7 @@ export function Deck() {
       );
       return;
     }
-    if (deckEntry === 'recall') {
+    if (isRecallEntry(deckEntry)) {
       setRecall((prev) =>
         prev && prev.rootId === currentRootId
           ? prev
@@ -241,6 +242,7 @@ export function Deck() {
   });
   const quizRecall = recall && recall.rootId === id && !won ? recall : null;
   const openSplit = splitForOpenWord(root.words, openWord);
+  const remembering = deckEntry === 'remember';
 
   function go(dir: 1 | -1) {
     if (!allowManualStep(useWondralStore.getState().correctAdvance)) return;
@@ -255,7 +257,7 @@ export function Deck() {
   function onWinNext() {
     if (!allowWinNextTap(useWondralStore.getState().correctAdvance, listening)) return;
     const live = useWondralStore.getState().correctAdvance;
-    const dest = live?.dest ?? afterCorrectRecall(id, entitled);
+    const dest = live?.dest ?? afterCorrectRecall(id, entitled, { entry: deckEntry });
     fireAdvance(dest);
   }
 
@@ -302,7 +304,7 @@ export function Deck() {
       // flashes the examples screen.
       completeRoot(id, { celebrate: false });
       dismissCelebration();
-      const dest = afterCorrectRecall(id, entitled);
+      const dest = afterCorrectRecall(id, entitled, { entry: deckEntry });
       beginCorrectAdvance(id, dest);
       setRecall({ beat: recall.beat, picked: idx, win: dest.line, rootId: id });
       // User gesture — play the baked Yes line now. Missing clip: silent.
@@ -316,10 +318,13 @@ export function Deck() {
   return (
     <>
       <div className="ww-deck-wrap">
-        <article className="ww-card2" style={paletteVars(p.c1rgb, p.grad)}>
+        <article
+          className={`ww-card2${remembering ? ' is-remember' : ''}`}
+          style={paletteVars(p.c1rgb, p.grad)}
+        >
           <div className="ww-strip">
             <button type="button" className="ww-deck-back" onClick={closeRoot}>
-              ← All roots
+              {remembering ? '← Today' : '← All roots'}
             </button>
             <span className="badge2" aria-hidden="true">
               {emoji}
@@ -336,13 +341,18 @@ export function Deck() {
           <div className="ww-hero">
             <div className="ww-scene2">
               <Scene scene={root.scene} pal={p.pal} />
-              <span className="ww-caption">
-                {studying ? `${emoji} watch the scene` : `${emoji} ${root.mean} — ${root.alt}`}
+              <span className={`ww-caption${remembering ? ' is-remember' : ''}`}>
+                {remembering
+                  ? `${emoji} Remember ${root.root}`
+                  : studying
+                    ? `${emoji} watch the scene`
+                    : `${emoji} ${root.mean} — ${root.alt}`}
               </span>
             </div>
             <div className="ww-hero-text">
-              <span className="ww-eyebrow2">
-                <span className="ww-eyebrow-dot" aria-hidden="true" /> {lang} Root
+              <span className={`ww-eyebrow2${remembering ? ' is-remember' : ''}`}>
+                <span className="ww-eyebrow-dot" aria-hidden="true" />
+                {remembering ? `Remember ${root.root}` : `${lang} Root`}
               </span>
               <div className="ww-root">{root.root}</div>
               <div className="ww-pron">
@@ -393,7 +403,11 @@ export function Deck() {
                 <span className="alt">{studying ? 'prove you know it' : root.alt}</span>
               </div>
               {studying ? (
-                <p className="ww-lead2">Look at the scene. Then tap what {root.root} means — or which word it builds.</p>
+                <p className="ww-lead2">
+                  {remembering
+                    ? `You already own ${root.root}. Tap what it means — then Home.`
+                    : `Look at the scene. Then tap what ${root.root} means — or which word it builds.`}
+                </p>
               ) : (
                 /* `lead` is static, authored curriculum content (only our own <b>
                     tags in roots.data.ts) — never user input, so no XSS surface. */
@@ -482,14 +496,21 @@ export function Deck() {
                 block
                 size="lg"
               >
-                {afterYesNextLabel(correctAdvance?.dest ?? afterCorrectRecall(id, entitled))}
+                {afterYesNextLabel(
+                  correctAdvance?.dest ?? afterCorrectRecall(id, entitled, { entry: deckEntry }),
+                  deckEntry,
+                )}
               </Button>
+            ) : quizRecall ? (
+              <span className="ww-muted">
+                {remembering
+                  ? `Remember ${root.root} — one tap. No shame if you miss.`
+                  : "One tap. No shame if you miss — we'll show you."}
+              </span>
             ) : done ? (
               <Badge variant="solid" jewel="jade">
                 ✓ Learned
               </Badge>
-            ) : quizRecall ? (
-              <span className="ww-muted">One tap. No shame if you miss — we'll show you.</span>
             ) : (
               <Button
                 onClick={startRecall}
