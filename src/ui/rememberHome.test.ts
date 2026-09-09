@@ -43,7 +43,9 @@ describe('Remember {root}: one-beat visit, then Home', () => {
     expect(deck).toContain('commitCorrectAdvance');
     expect(deck).toContain('ww-card2${remembering ? \' is-remember\' : \'\'}');
     expect(deck).toContain('ww-caption${remembering ? \' is-remember\' : \'\'}');
-    expect(deck).toContain('You already own ${root.root}. Tap what it means — then Home.');
+    expect(deck).toContain(
+      'You already own ${root.root}. Tap what it means — or which word it builds. Then Home.',
+    );
     expect(deck).toContain('Remember ${root.root} — one tap. No shame if you miss.');
   });
 

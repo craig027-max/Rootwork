@@ -405,7 +405,7 @@ export function Deck() {
               {studying ? (
                 <p className="ww-lead2">
                   {remembering
-                    ? `You already own ${root.root}. Tap what it means — then Home.`
+                    ? `You already own ${root.root}. Tap what it means — or which word it builds. Then Home.`
                     : `Look at the scene. Then tap what ${root.root} means — or which word it builds.`}
                 </p>
               ) : (
