@@ -84,6 +84,15 @@
 .q-go:active { transform: scale(0.98); }
 .q-best { font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.06em; color: var(--text-muted); margin-top: 18px; }
 .q-best b { color: var(--accent-gold); }
+.q-daily-wait {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 0.92rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
+  margin-top: 14px;
+}
 
 /* play */
 .q-play { display: flex; flex-direction: column; }
@@ -252,6 +261,9 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-done-title {
     font-size: 1.25rem;
   }
+  .q-daily-wait {
+    display: block;
+  }
 }
 
 /* Short laptop / phone: question + scene + answers on one screen, no scroll. */
@@ -288,6 +300,7 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-foot { margin-top: 6px; }
   .q-daily .q-hold { display: flex; }
   .q-daily .q-fb.q-next-peek { display: block; }
+  .q-daily-wait { display: block; }
 }
 
 @media (hover: none) {

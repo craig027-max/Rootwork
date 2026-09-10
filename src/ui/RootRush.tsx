@@ -2,7 +2,14 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
 import { PALETTES, ROOTS, TIERS, rootId, isRootOpenable } from '../data/roots';
-import { shuffleWith } from '../core/daily';
+import {
+  dailyNextRoot,
+  dailySeed,
+  localDayKey,
+  pickDailyRoots,
+  resumeDailyQi,
+  shuffleWith,
+} from '../core/daily';
 import { buildRushQuestion, type RushQuestion } from '../core/rush';
 import type { RunResult } from '../core/stats';
 import { Scene } from './Scene';
@@ -15,6 +22,11 @@ import { buildModeEmpty, buildRushResultNext, buildRushStart } from './modes/mod
  * screen. Runs only over roots the learner can actually open (Tier 1 free;
  * everything once entitled) and banks stars / accuracy / XP / streak via the
  * store (core/stats) exactly once per finished run.
+ *
+ * A live Daily mid-run stays named: start peeks Daily · 2 of 5 · Chron ·
+ * time, and the result hero is Continue Daily — same next root Home
+ * already landed on. Play again / Continue {learn} stay when Daily is
+ * not mid-run.
  */
 
 const ROUND = 10;
@@ -46,6 +58,8 @@ export function RootRush() {
   const recordQuizRun = useWondralStore((s) => s.recordQuizRun);
   const stats = useWondralStore((s) => s.stats);
   const completed = useWondralStore((s) => s.completedRoots);
+  const dailyRun = useWondralStore((s) => s.dailyRun);
+  const studentId = useWondralStore((s) => s.activeStudentId);
 
   const [phase, setPhase] = useState<Phase>('start');
   const [tier, setTier] = useState(0); // 0 = all (accessible) tiers
@@ -64,6 +78,20 @@ export function RootRush() {
   // quiz never touches locked content, for prompts or distractors.
   const pool = useMemo(() => ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)), [entitled]);
   const avail = useMemo(() => (tier > 0 ? pool.filter((r) => r.t === tier) : pool), [pool, tier]);
+  const day = localDayKey();
+  const dailyRoots = useMemo(
+    () => pickDailyRoots(pool, dailySeed(day, studentId)),
+    [pool, day, studentId],
+  );
+  const dailyResumeQi =
+    stats.lastDailyDay === day ? null : resumeDailyQi(dailyRun, day, studentId, dailyRoots.length);
+  const dailyNext = dailyNextRoot(dailyRoots, dailyResumeQi);
+  const dailyResume = {
+    dailyResumeQi,
+    dailyTotal: dailyRoots.length,
+    dailyNextName: dailyNext?.root,
+    dailyNextMean: dailyNext?.mean,
+  };
 
   // Question set for the current run — reseeded by `runSeed` so "Play again"
   // always deals a fresh round.
@@ -86,6 +114,14 @@ export function RootRush() {
   function goLearn(id?: string) {
     if (id) openRoot(id);
     else closeQuiz();
+  }
+
+  function goPrimary(kind: 'learn' | 'home' | 'daily', id?: string) {
+    if (kind === 'daily') {
+      setView('daily');
+      return;
+    }
+    goLearn(id);
   }
 
   function startRun() {
@@ -215,8 +251,8 @@ export function RootRush() {
       locked: (i + 1) !== 1 && !entitled,
     })),
   ];
-  const rushStart = buildRushStart(stats);
-  const rushNext = buildRushResultNext(completed, entitled);
+  const rushStart = buildRushStart({ ...stats, ...dailyResume });
+  const rushNext = buildRushResultNext(completed, entitled, dailyResume);
 
   return (
     <div className="q-rush" style={accentStyle(accent)} role="dialog" aria-modal="true" aria-label="Root Rush">
@@ -256,6 +292,11 @@ export function RootRush() {
             {rushStart.recap ? (
               <div className="q-best" role="status">
                 {rushStart.recap}
+              </div>
+            ) : null}
+            {rushStart.waiting ? (
+              <div className="q-daily-wait" role="status">
+                {rushStart.waiting}
               </div>
             ) : null}
           </div>
@@ -356,13 +397,37 @@ export function RootRush() {
                 <span>accuracy</span>
               </div>
             </div>
+            {rushNext.peek ? (
+              <div className="q-daily-wait" role="status">
+                {rushNext.peek}
+              </div>
+            ) : null}
             <div className="q-actions">
-              <button className="q-go" onClick={startRun}>
-                {rushNext.replayLabel}
-              </button>
-              <button className="q-go q-next-learn" onClick={() => goLearn(rushNext.primary.rootId)}>
-                {rushNext.primary.label}
-              </button>
+              {rushNext.dailyResume ? (
+                <>
+                  <button
+                    className="q-go q-next-learn"
+                    onClick={() => goPrimary(rushNext.primary.kind, rushNext.primary.rootId)}
+                  >
+                    {rushNext.primary.label}
+                  </button>
+                  <button className="q-ghost" onClick={startRun}>
+                    {rushNext.replayLabel}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="q-go" onClick={startRun}>
+                    {rushNext.replayLabel}
+                  </button>
+                  <button
+                    className="q-go q-next-learn"
+                    onClick={() => goPrimary(rushNext.primary.kind, rushNext.primary.rootId)}
+                  >
+                    {rushNext.primary.label}
+                  </button>
+                </>
+              )}
               <button className="q-ghost" onClick={() => setPhase('start')}>
                 {rushNext.changeLabel}
               </button>
