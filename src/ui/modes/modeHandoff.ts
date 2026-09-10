@@ -6,16 +6,48 @@
  * on Play again / Back to learning. This names the same next root the Home
  * Continue button uses, and only shows a replay CTA as the secondary tap.
  *
+ * A live Daily mid-run is the same honesty on Rush: Home already names
+ * Chron and lands on that peek (#51 / #53). Rush start / result peek
+ * Daily · 2 of 5 · Chron · time and make Continue Daily the hero — not
+ * only Continue {next learn}.
+ *
  * Pure and Date-free so tests lock the copy without I/O.
  */
+import { continueDailyLabel, dailyNextRowLabel } from '../../core/daily';
 import { rootId, rootsInTier, type Root } from '../../data/roots';
 import { nextPlayRoot, rushBestLabel, tierPrimaryLabel } from '../home/menu';
 
 export interface ModeCta {
-  kind: 'learn' | 'home';
+  kind: 'learn' | 'home' | 'daily';
   label: string;
   rootId?: string;
   rootName?: string;
+}
+
+export interface DailyResumeOpts {
+  /** Next unanswered Daily index when a mid-run is live. */
+  dailyResumeQi?: number | null;
+  dailyTotal?: number;
+  dailyNextName?: string;
+  dailyNextMean?: string;
+}
+
+/**
+ * Same Today-row mid-run line Home already uses. Junk / finished / fresh
+ * start indexes peek nothing — Rush must not invent a Daily resume.
+ */
+export function dailyWaitingLine(opts: DailyResumeOpts): string | null {
+  const total = opts.dailyTotal && opts.dailyTotal > 0 ? opts.dailyTotal : 5;
+  const qi = opts.dailyResumeQi;
+  if (typeof qi !== 'number' || !Number.isInteger(qi) || qi < 1 || qi >= total) {
+    return null;
+  }
+  return dailyNextRowLabel({
+    answered: qi,
+    total,
+    nextName: opts.dailyNextName,
+    nextMean: opts.dailyNextMean,
+  });
 }
 
 /** Same Play / Continue label Home uses for the next unlearned root. */
@@ -98,19 +130,24 @@ export function buildDailyDone(opts: {
 export interface RushStartVM {
   goLabel: string;
   recap: string | null;
+  /** Live Daily mid-run — same Today row, so Rush does not hide it. */
+  waiting: string | null;
 }
 
 /** Rush start: Play again after a real run, with the same best recap as Home. */
-export function buildRushStart(opts: {
-  runs: number;
-  bestPct: number;
-  bestStars: number;
-  bestScore?: number;
-}): RushStartVM {
+export function buildRushStart(
+  opts: {
+    runs: number;
+    bestPct: number;
+    bestStars: number;
+    bestScore?: number;
+  } & DailyResumeOpts,
+): RushStartVM {
   const recap = rushBestLabel(opts);
   return {
     goLabel: opts.runs > 0 ? 'Play again ›' : 'Start round ›',
     recap: recap ? `Best so far — ${recap}` : null,
+    waiting: dailyWaitingLine(opts),
   };
 }
 
@@ -118,13 +155,47 @@ export interface RushResultVM {
   primary: ModeCta;
   replayLabel: string;
   changeLabel: string;
+  peek: string | null;
+  dailyResume: boolean;
 }
 
-/** Rush result: Play again stays, plus Continue {root} so the next learn is named. */
-export function buildRushResultNext(completed: Set<string>, entitled: boolean): RushResultVM {
+/**
+ * Rush result: a live Daily mid-run is the hero (Continue Daily · 3 of 5),
+ * same next root Home already named. Otherwise Play again stays, plus
+ * Continue {root} so the next learn is named.
+ */
+export function buildRushResultNext(
+  completed: Set<string>,
+  entitled: boolean,
+  opts: DailyResumeOpts = {},
+): RushResultVM {
+  const peek = dailyWaitingLine(opts);
+  const total = opts.dailyTotal && opts.dailyTotal > 0 ? opts.dailyTotal : 5;
+  const qi = opts.dailyResumeQi;
+  if (
+    peek &&
+    typeof qi === 'number' &&
+    Number.isInteger(qi) &&
+    qi >= 1 &&
+    qi < total
+  ) {
+    return {
+      primary: {
+        kind: 'daily',
+        label: continueDailyLabel(qi, total),
+        rootName: opts.dailyNextName?.replace(/\s+/g, ' ').trim() || undefined,
+      },
+      replayLabel: 'Play again ›',
+      changeLabel: 'Change level',
+      peek,
+      dailyResume: true,
+    };
+  }
   return {
     primary: learnNextAction(completed, entitled),
     replayLabel: 'Play again ›',
     changeLabel: 'Change level',
+    peek: null,
+    dailyResume: false,
   };
 }

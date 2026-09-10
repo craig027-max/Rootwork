@@ -150,6 +150,7 @@ describe('buildRushStart + result next', () => {
     const vm = buildRushStart({ runs: 0, bestPct: 0, bestStars: 0, bestScore: 0 });
     expect(vm.goLabel).toBe('Start round ›');
     expect(vm.recap).toBeNull();
+    expect(vm.waiting).toBeNull();
   });
 
   it('says Play again after a real run and recaps the same best as Home', () => {
@@ -168,6 +169,7 @@ describe('buildRushStart + result next', () => {
     expect(vm.goLabel).toBe('Play again ›');
     expect(vm.recap).toBe('Best so far — A · 4★ · 2,400');
     expect(vm.recap).not.toMatch(/Bio|Geo|Photo/);
+    expect(vm.waiting).toBeNull();
   });
 
   it('names Continue {root} on the result so Play again is not the only tap', () => {
@@ -175,6 +177,48 @@ describe('buildRushStart + result next', () => {
     expect(vm.replayLabel).toBe('Play again ›');
     expect(vm.changeLabel).toBe('Change level');
     expect(vm.primary.label).toBe(`Continue ${second.root} ›`);
+    expect(vm.primary.kind).toBe('learn');
+    expect(vm.dailyResume).toBe(false);
+    expect(vm.peek).toBeNull();
+  });
+
+  it('peeks a live Daily mid-run on start and makes Continue Daily the result hero', () => {
+    const mid = {
+      dailyResumeQi: 2,
+      dailyTotal: 5,
+      dailyNextName: 'Chron',
+      dailyNextMean: 'time',
+    };
+    const start = buildRushStart({
+      runs: 1,
+      bestPct: 80,
+      bestStars: 4,
+      bestScore: 2400,
+      ...mid,
+    });
+    expect(start.waiting).toBe('Daily · 2 of 5 · Chron · time');
+    expect(start.goLabel).toBe('Play again ›');
+    expect(start.recap).toBe('Best so far — A · 4★ · 2,400');
+
+    const result = buildRushResultNext(startedBuilder, true, mid);
+    expect(result.dailyResume).toBe(true);
+    expect(result.peek).toBe('Daily · 2 of 5 · Chron · time');
+    expect(result.primary).toEqual({
+      kind: 'daily',
+      label: 'Continue Daily · 3 of 5 ›',
+      rootName: 'Chron',
+    });
+    expect(result.primary.label).not.toMatch(/Continue ${secondBuilder.root}|Play again|Start daily/);
+    expect(result.replayLabel).toBe('Play again ›');
+  });
+
+  it('does not invent a Daily resume from a fresh start or a finished index', () => {
+    expect(buildRushStart({ runs: 0, bestPct: 0, bestStars: 0, dailyResumeQi: 0 }).waiting).toBeNull();
+    expect(buildRushResultNext(midStarter, false, { dailyResumeQi: 5, dailyTotal: 5 }).dailyResume).toBe(
+      false,
+    );
+    expect(buildRushResultNext(midStarter, false, { dailyResumeQi: 5, dailyTotal: 5 }).peek).toBeNull();
+    expect(buildRushResultNext(midStarter, false).primary.label).toBe(`Continue ${second.root} ›`);
   });
 });
 
@@ -211,6 +255,17 @@ describe('Daily / Rush overlay wiring + phone layout', () => {
     expect(rushSrc).not.toContain('Best score ·');
   });
 
+  it('Rush start + result name a live Daily mid-run and resume Daily', () => {
+    expect(rushSrc).toContain('resumeDailyQi');
+    expect(rushSrc).toContain('dailyNextRoot');
+    expect(rushSrc).toContain('goPrimary');
+    expect(rushSrc).toContain("kind === 'daily'");
+    expect(rushSrc).toContain("setView('daily')");
+    expect(rushSrc).toContain('q-daily-wait');
+    expect(rushSrc).toContain('rushNext.dailyResume');
+    expect(rushSrc).toContain('rushStart.waiting');
+  });
+
   it('keeps Home Continue + profile band (#43 / #44) untouched', () => {
     expect(home).toContain('Tap continue');
     expect(menu).toContain('Continue ${opts.rootName}');
@@ -228,8 +283,11 @@ describe('Daily / Rush overlay wiring + phone layout', () => {
     expect(phone).toMatch(/\.q-daily\s+\.q-foot\s*\{[^}]*flex-direction:\s*column/);
     expect(phone).toMatch(/\.q-daily\s+\.q-next\s*\{[^}]*width:\s*100%/);
     expect(phone).toMatch(/\.q-daily-chip\s*\{[^}]*flex-wrap:\s*wrap|\.q-daily-chips/);
+    expect(phone).toMatch(/\.q-daily-wait\s*\{[^}]*display:\s*block/);
+    expect(phone).not.toMatch(/\.q-daily-wait\s*\{[^}]*display:\s*none/);
     expect(css).toMatch(/\.q-daily-chip\.is-done/);
     expect(css).toMatch(/\.q-done-mark/);
     expect(css).toMatch(/\.q-next-learn/);
+    expect(css).toMatch(/\.q-daily-wait\s*\{/);
   });
 });
