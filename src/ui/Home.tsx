@@ -72,7 +72,9 @@ export function Home() {
   const nextLearn = learnNextAction(completed, entitled);
   const rememberId =
     rememberedId ??
-    pickRememberRoot(progress, day, { exclude: [learnedId, nextLearn.rootId] });
+    pickRememberRoot(progress, day, {
+      exclude: [learnedId, nextLearn.rootId, ...dailyRoots.map((r) => rootId(r))],
+    });
   const learn = rootLabel(nextLearn.rootId);
   const remember = rootLabel(rememberId);
   const today = buildTodayProgress({

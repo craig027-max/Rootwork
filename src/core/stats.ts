@@ -176,6 +176,18 @@ export function recordRootLearned(stats: GameStats, input: { day: string }): Gam
 }
 
 /**
+ * First correct Daily tap — play-today streak only. No Daily XP until the
+ * five are banked. Same day is a no-op via bumpStreak, so leaving at 2 of 5
+ * still counts as having played.
+ */
+export function recordDailyHit(stats: GameStats, input: { day: string }): GameStats {
+  return {
+    ...stats,
+    ...bumpStreak(stats, input.day),
+  };
+}
+
+/**
  * Bank a finished Daily Challenge. Same day is a no-op (replay is free, no
  * double XP). A new day awards XP and counts as the day's learning action.
  */

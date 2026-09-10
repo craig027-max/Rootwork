@@ -6,6 +6,7 @@ import {
   gradeForPct,
   levelForXp,
   recordDailyComplete,
+  recordDailyHit,
   recordRootLearned,
   recordRun,
   starsForPct,
@@ -158,6 +159,33 @@ describe('recordRootLearned', () => {
     const next = recordRootLearned(EMPTY_STATS, { day: '2026-06-29' });
     expect(next.xp).toBe(XP_PER_ROOT);
     expect(next.streakCurrent).toBe(1);
+  });
+});
+
+describe('recordDailyHit', () => {
+  it('banks play-today without Daily XP or lastDailyDay', () => {
+    const atRisk = {
+      ...EMPTY_STATS,
+      streakCurrent: 7,
+      streakLongest: 7,
+      lastActiveDay: '2026-08-12',
+    };
+    const next = recordDailyHit(atRisk, { day: '2026-08-13' });
+    expect(next.streakCurrent).toBe(8);
+    expect(next.lastActiveDay).toBe('2026-08-13');
+    expect(next.xp).toBe(0);
+    expect(next.lastDailyDay).toBeNull();
+  });
+
+  it('is a no-op on the same day — finish Daily still awards XP once', () => {
+    const hit = recordDailyHit(EMPTY_STATS, { day: '2026-08-13' });
+    const again = recordDailyHit(hit, { day: '2026-08-13' });
+    expect(again.streakCurrent).toBe(1);
+    expect(again.lastActiveDay).toBe('2026-08-13');
+    const done = recordDailyComplete(again, { day: '2026-08-13' });
+    expect(done.xp).toBe(XP_PER_DAILY);
+    expect(done.lastDailyDay).toBe('2026-08-13');
+    expect(done.streakCurrent).toBe(1);
   });
 });
 

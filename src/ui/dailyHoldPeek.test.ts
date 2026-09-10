@@ -27,11 +27,14 @@ function mediaBlock(source: string, query: string): string {
 describe('Daily hold: peek the next root, then Next — Home lands on that peek', () => {
   it('holds Yes + Next · {root} · {meaning} — last root stays Done', () => {
     expect(daily).toContain('dailyHoldNextLine');
+    expect(daily).toContain('dailyHoldContinueLine');
     expect(daily).toContain('nextHold');
+    expect(daily).toContain('continueHold');
     expect(daily).toContain('q-next-peek');
     expect(daily).toContain('q-hold');
     expect(daily).toContain('afterDailyNextLabel(isLast)');
     expect(daily).toContain('dailyHoldLine(root.root, root.mean)');
+    expect(daily).toContain('learnNextAction');
     expect(daily).not.toMatch(/Keep going ·|Continue \{/);
   });
 

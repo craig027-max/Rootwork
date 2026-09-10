@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
-import { PALETTES, ROOTS, rootId, isRootOpenable, type Root } from '../data/roots';
+import { PALETTES, ROOTS, ROOTS_BY_ID, rootId, isRootOpenable, type Root } from '../data/roots';
 import {
   DAILY_COUNT,
   afterDailyNextLabel,
+  dailyHoldContinueLine,
   dailyHoldLine,
   dailyHoldNextLine,
   dailySeed,
@@ -14,7 +15,7 @@ import {
 } from '../core/daily';
 import { buildRecall, type RecallBeat } from '../core/recall';
 import { Scene } from './Scene';
-import { buildDailyDone, buildModeEmpty } from './modes/modeHandoff';
+import { buildDailyDone, buildModeEmpty, learnNextAction } from './modes/modeHandoff';
 
 type Phase = 'start' | 'play' | 'result';
 
@@ -28,7 +29,9 @@ function palOf(root: Root) {
  * A correct tap holds the meaning until Next — no 800ms dump onto Photo —
  * and peeks the next root (Next · Aqua · water) so Next is not unnamed.
  * Leaving mid-run persists the next unanswered root so Home can say
- * Continue Daily · 3 of 5. Finishing banks streak/XP; replays are free.
+ * Continue Daily · 3 of 5. An owned hit is today's Remember; the first
+ * hit banks play-today. Last hold peeks Continue · next learn. Finishing
+ * banks Daily XP; replays are free.
  */
 export function DailyChallenge() {
   const entitled = useEntitledForDisplay();
@@ -70,6 +73,14 @@ export function DailyChallenge() {
   const answeredCorrect = answered && beat ? (beat.opts[picked!]?.ok ?? false) : false;
   const isLast = qi + 1 >= deal.length;
   const nextHold = !isLast ? deal[qi + 1] : undefined;
+  const nextLearn = learnNextAction(completed, entitled);
+  const continueHold =
+    !nextHold && nextLearn.kind === 'learn' && nextLearn.rootName
+      ? dailyHoldContinueLine(
+          nextLearn.rootName,
+          nextLearn.rootId ? ROOTS_BY_ID[nextLearn.rootId]?.mean : undefined,
+        )
+      : null;
 
   function close() {
     setView('home');
@@ -109,9 +120,16 @@ export function DailyChallenge() {
     if (picked !== null || phase !== 'play' || !beat) return;
     setPicked(idx);
     const ok = beat.opts[idx]?.ok ?? false;
-    if (!ok || doneToday) return;
-    if (qi + 1 >= deal.length) bankIfNeeded();
-    else saveDailyRun(qi + 1);
+    if (!ok || doneToday || !root) return;
+    const hitId = rootId(root);
+    if (qi + 1 >= deal.length) {
+      if (!bankedRef.current) {
+        bankedRef.current = true;
+        recordDailyComplete(hitId);
+      }
+      return;
+    }
+    saveDailyRun(qi + 1, hitId);
   }
 
   function retry() {
@@ -279,6 +297,8 @@ export function DailyChallenge() {
                       <span className="q-fb q-next-peek">
                         {dailyHoldNextLine(nextHold.root, nextHold.mean)}
                       </span>
+                    ) : continueHold ? (
+                      <span className="q-fb q-next-peek">{continueHold}</span>
                     ) : null}
                   </div>
                   <button className="q-next" onClick={advance}>

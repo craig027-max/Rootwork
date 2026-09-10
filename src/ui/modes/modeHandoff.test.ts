@@ -193,6 +193,9 @@ describe('Daily / Rush overlay wiring + phone layout', () => {
     expect(dailySrc).toContain('afterDailyNextLabel');
     expect(dailySrc).toContain('resumeDailyQi');
     expect(dailySrc).toContain('saveDailyRun');
+    expect(dailySrc).toContain('saveDailyRun(qi + 1, hitId)');
+    expect(dailySrc).toContain('recordDailyComplete(hitId)');
+    expect(dailySrc).toContain('dailyHoldContinueLine');
     expect(dailySrc).toContain('clearDailyRun');
     expect(dailySrc).not.toContain('AUTO_ADVANCE_MS');
     expect(dailySrc).not.toContain('Nice — ${root.root} is yours.');
