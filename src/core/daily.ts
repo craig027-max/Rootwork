@@ -11,7 +11,9 @@
  * dump — and Home names that next root (Chron · time), not the already-got
  * first three. A correct tap holds the meaning until Next (same spirit as
  * Hear / Yes / Remember), then peeks the next root so Next is not a dump
- * onto an unnamed card. Photo cannot slam over Bio.
+ * onto an unnamed card. Photo cannot slam over Bio. An owned hit is
+ * today's Remember; the first hit banks the play-today streak. Last hold
+ * peeks Continue · next learn — the same next the done overlay already names.
  */
 
 import type { Root } from '../data/roots';
@@ -209,12 +211,22 @@ export function dailyHoldLine(rootName: string, mean: string): string {
 /**
  * After the Yes hold, name the next unanswered Daily root the way Home
  * already peeks it — so Next is not a dump onto an unnamed card.
- * Last root has no peek (Done →).
+ * Last root has no Daily Next peek — it peeks Continue · next learn instead.
  */
 export function dailyHoldNextLine(nextName: string, nextMean?: string): string {
   const name = nextName.replace(/\s+/g, ' ').trim();
   const mean = nextMean?.replace(/\s+/g, ' ').trim();
   return mean ? `Next · ${name} · ${mean}` : `Next · ${name}`;
+}
+
+/**
+ * Last Daily hold peeks the same Continue · next learn the done overlay uses —
+ * Done → is not a dump onto an unnamed card. No next learn → no peek.
+ */
+export function dailyHoldContinueLine(nextName: string, nextMean?: string): string {
+  const name = nextName.replace(/\s+/g, ' ').trim();
+  const mean = nextMean?.replace(/\s+/g, ' ').trim();
+  return mean ? `Continue · ${name} · ${mean}` : `Continue · ${name}`;
 }
 
 /** Kid-facing label for the one tap that leaves the Daily hold. */

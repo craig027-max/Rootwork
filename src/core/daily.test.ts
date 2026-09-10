@@ -5,6 +5,7 @@ import {
   DAILY_TILE_PREVIEW_COUNT,
   afterDailyNextLabel,
   continueDailyLabel,
+  dailyHoldContinueLine,
   dailyHoldLine,
   dailyHoldNextLine,
   dailyNextRoot,
@@ -188,5 +189,12 @@ describe('Daily mid-run resume + hold meaning', () => {
     expect(dailyHoldNextLine('  Chron  ', '  time ')).toBe('Next · Chron · time');
     expect(dailyHoldNextLine('Geo')).toBe('Next · Geo');
     expect(dailyHoldNextLine('Aqua', 'water')).not.toMatch(/Continue |Keep going|Play again/);
+  });
+
+  it('peeks Continue {learn} on the last hold — same next as the done overlay', () => {
+    expect(dailyHoldContinueLine('Auto', 'self')).toBe('Continue · Auto · self');
+    expect(dailyHoldContinueLine('  Geo  ', '  earth ')).toBe('Continue · Geo · earth');
+    expect(dailyHoldContinueLine('Auto')).toBe('Continue · Auto');
+    expect(dailyHoldContinueLine('Auto', 'self')).not.toMatch(/Next ·|Keep going|Play again|Done →/);
   });
 });

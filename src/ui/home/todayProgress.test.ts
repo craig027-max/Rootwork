@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { EMPTY_STATS, recordRootLearned, recordRun, type GameStats } from '../../core/stats';
+import { EMPTY_STATS, recordDailyHit, recordRootLearned, recordRun, type GameStats } from '../../core/stats';
 import { ROOTS, firstRoot, rootId, rootsInTier, type RootId } from '../../data/roots';
 import { buildProfileProgress } from './profileProgress';
 import {
@@ -302,6 +302,15 @@ describe('pickRememberRoot — oldest stale owned root', () => {
     expect(pickRememberRoot(progress, TODAY, { exclude: [rootId(second)] })).toBeNull();
   });
 
+  it('skips roots already on today\'s Daily deal — Remember is a different stale card', () => {
+    const progress = {
+      [rootId(first)]: { completedAt: atDay('2026-09-01') },
+      [rootId(second)]: { completedAt: atDay('2026-09-02') },
+    };
+    expect(pickRememberRoot(progress, TODAY, { exclude: [rootId(first)] })).toBe(rootId(second));
+    expect(pickRememberRoot(progress, TODAY, { exclude: [rootId(first), rootId(second)] })).toBeNull();
+  });
+
   it('ignores a blob without completedAt', () => {
     expect(pickRememberRoot({ [rootId(first)]: {} }, TODAY)).toBeNull();
   });
@@ -546,6 +555,11 @@ describe('Today checklist wiring + phone layout', () => {
     expect(home).toContain('onRush');
     expect(home).toContain('pickRememberRoot');
     expect(home).toContain('rememberRootToday');
+    expect(home).toContain('dailyRoots.map((r) => rootId(r))');
+    expect(store).toContain('recordDailyHit');
+    expect(store).toContain('applyDailyHit');
+    expect(store).toContain('saveDailyRun: (qi, hitRootId)');
+    expect(store).toContain('recordDailyComplete: (hitRootId)');
     expect(home).toContain('resumeDailyQi');
     expect(home).toContain('dailyResumeQi');
     expect(home).toContain('dailyNextName');
@@ -620,6 +634,13 @@ describe('Today checklist wiring + phone layout', () => {
     expect(risk.hint).toBe('Play today to keep your 7-day streak');
     const banked = buildProfileProgress(recordRootLearned(EMPTY_STATS, { day: TODAY }), 1, TODAY);
     expect(banked.hint).toBe('Streak banked for today ✓');
+    const afterDailyHit = buildProfileProgress(
+      { ...recordDailyHit(returningStats({ lastActiveDay: '2026-09-05' }), { day: TODAY }), lastDailyDay: null },
+      12,
+      TODAY,
+    );
+    expect(afterDailyHit.hint).toBe('Streak banked for today ✓');
+    expect(afterDailyHit.streakKind).toBe('banked');
     const afterRush = recordRun(returningStats(), { correct: 8, total: 10, day: TODAY, score: 2400 });
     expect(buildProfileProgress(afterRush.stats, 12, TODAY).stats.some((s) => s.key === 'stars')).toBe(
       true,

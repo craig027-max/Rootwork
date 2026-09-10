@@ -10,8 +10,9 @@
  * is a one-beat visit (hold meaning, then Home) — Geo must not open.
  * A mid-run Daily says Daily · 2 of 5 · Chron · time (and Continue Daily
  * when that is the fat tap) so the next root is named — not a count-only
- * dump. First-run / next-Play stays a single Play {root} — no Daily /
- * Remember dump.
+ * dump. An owned Daily hit is today's Remember (Home excludes today's
+ * deal from the Remember pick so Bio is not asked twice). First-run /
+ * next-Play stays a single Play {root} — no Daily / Remember dump.
  *
  * Pure so tests lock the copy without I/O.
  */

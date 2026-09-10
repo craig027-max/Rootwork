@@ -18,6 +18,7 @@ import {
   EMPTY_STATS,
   bumpStreak,
   recordDailyComplete as applyDailyComplete,
+  recordDailyHit,
   recordRootLearned,
   recordRun,
   type GameStats,
@@ -187,6 +188,25 @@ function persistDailyRun(run: DailyRun | null, studentId: string | null): void {
   }
 }
 
+/**
+ * First correct Daily tap: bank play-today (no Daily XP). If they already
+ * own that root, the hold is today's Remember — stamp review, no second XP.
+ */
+function applyDailyHit(
+  stats: GameStats,
+  progress: RootProgress,
+  studentId: string | null,
+  hitRootId?: string,
+): { stats: GameStats; progress: RootProgress } {
+  const nextStats = recordDailyHit(stats, { day: localDayKey() });
+  saveStats(nextStats, studentId);
+  if (!hitRootId) return { stats: nextStats, progress };
+  const stamped = stampReviewedAt(progress, hitRootId, Date.now());
+  if (!stamped) return { stats: nextStats, progress };
+  saveProgress(stamped, studentId);
+  return { stats: nextStats, progress: stamped };
+}
+
 interface WondralStore {
   // Top-level view.
   view: AppView;
@@ -260,10 +280,10 @@ interface WondralStore {
   /** Record a finished Root Rush run; returns the run summary for the UI. */
   recordQuizRun: (correct: number, total: number, score?: number) => RunResult;
   /** Bank a finished Daily Challenge (XP + streak; no-op if already done today). */
-  recordDailyComplete: () => void;
+  recordDailyComplete: (hitRootId?: string) => void;
   /** In-progress Daily — next unanswered index. Cleared when Daily is banked. */
   dailyRun: DailyRun | null;
-  saveDailyRun: (qi: number) => void;
+  saveDailyRun: (qi: number, hitRootId?: string) => void;
   clearDailyRun: () => void;
 }
 
@@ -406,13 +426,14 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   completedRoots: completedIdSet(INITIAL_PROGRESS),
   stats: INITIAL_STATS,
   dailyRun: INITIAL_DAILY_RUN,
-  saveDailyRun: (qi) => {
+  saveDailyRun: (qi, hitRootId) => {
     const studentId = get().activeStudentId;
     const day = localDayKey();
     if (get().stats.lastDailyDay === day) return;
     const run: DailyRun = { day, studentId, qi };
     persistDailyRun(run, studentId);
-    set({ dailyRun: run });
+    const hit = applyDailyHit(get().stats, get().progress, studentId, hitRootId);
+    set({ dailyRun: run, stats: hit.stats, progress: hit.progress });
   },
   clearDailyRun: () => {
     const studentId = get().activeStudentId;
@@ -426,12 +447,14 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
     set({ stats });
     return run;
   },
-  recordDailyComplete: () => {
+  recordDailyComplete: (hitRootId) => {
     const studentId = get().activeStudentId;
-    const stats = applyDailyComplete(get().stats, { day: localDayKey() });
+    const day = localDayKey();
+    const hit = applyDailyHit(get().stats, get().progress, studentId, hitRootId);
+    const stats = applyDailyComplete(hit.stats, { day });
     saveStats(stats, studentId);
     persistDailyRun(null, studentId);
-    set({ stats, dailyRun: null });
+    set({ stats, dailyRun: null, progress: hit.progress });
   },
   completeRoot: (id, opts) => {
     const cur = get().progress;
