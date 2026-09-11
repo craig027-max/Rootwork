@@ -24,9 +24,9 @@ import { buildModeEmpty, buildRushResultNext, buildRushStart } from './modes/mod
  * store (core/stats) exactly once per finished run.
  *
  * A live Daily mid-run stays named: start peeks Daily · 2 of 5 · Chron ·
- * time, and the result hero is Continue Daily — same next root Home
- * already landed on. Play again / Continue {learn} stay when Daily is
- * not mid-run.
+ * time and offers Continue Daily · 3 of 5 — same tap Home / result
+ * already use. Play again still starts Rush. Continue {learn} stays
+ * when Daily is not mid-run.
  */
 
 const ROUND = 10;
@@ -299,7 +299,16 @@ export function RootRush() {
                 {rushStart.recap}
               </div>
             ) : null}
-            {rushStart.waiting ? (
+            {rushStart.continueDaily && rushStart.waiting ? (
+              <button
+                type="button"
+                className="q-ghost q-daily-continue"
+                onClick={() => goPrimary('daily')}
+              >
+                <span>{rushStart.continueDaily}</span>
+                <em>{rushStart.waiting}</em>
+              </button>
+            ) : rushStart.waiting ? (
               <div className="q-daily-wait" role="status">
                 {rushStart.waiting}
               </div>

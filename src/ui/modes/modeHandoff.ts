@@ -7,9 +7,9 @@
  * Continue button uses, and only shows a replay CTA as the secondary tap.
  *
  * A live Daily mid-run is the same honesty on Rush: Home already names
- * Chron and lands on that peek (#51 / #53). Rush start / result peek
- * Daily · 2 of 5 · Chron · time and make Continue Daily the hero — not
- * only Continue {next learn}.
+ * Chron and lands on that peek (#51 / #53 / #56). Rush start / result
+ * peek Daily · 2 of 5 · Chron · time and make Continue Daily a real
+ * tap — not a status-only dump, and not only Continue {next learn}.
  *
  * Pure and Date-free so tests lock the copy without I/O.
  */
@@ -132,6 +132,11 @@ export interface RushStartVM {
   recap: string | null;
   /** Live Daily mid-run — same Today row, so Rush does not hide it. */
   waiting: string | null;
+  /**
+   * Same Continue Daily · N of 5 Home / result already use. Status-only
+   * peek is not a tap — Chron must be reachable from Rush start.
+   */
+  continueDaily: string | null;
 }
 
 /** Rush start: Play again after a real run, with the same best recap as Home. */
@@ -144,10 +149,22 @@ export function buildRushStart(
   } & DailyResumeOpts,
 ): RushStartVM {
   const recap = rushBestLabel(opts);
+  const waiting = dailyWaitingLine(opts);
+  const total = opts.dailyTotal && opts.dailyTotal > 0 ? opts.dailyTotal : 5;
+  const qi = opts.dailyResumeQi;
+  const continueDaily =
+    waiting &&
+    typeof qi === 'number' &&
+    Number.isInteger(qi) &&
+    qi >= 1 &&
+    qi < total
+      ? continueDailyLabel(qi, total)
+      : null;
   return {
     goLabel: opts.runs > 0 ? 'Play again ›' : 'Start round ›',
     recap: recap ? `Best so far — ${recap}` : null,
-    waiting: dailyWaitingLine(opts),
+    waiting,
+    continueDaily,
   };
 }
 
