@@ -77,6 +77,8 @@ describe('Rush continues a live Daily mid-run', () => {
       dailyNextMean: next?.mean,
     });
     expect(start.waiting).toBe(waiting);
+    expect(start.continueDaily).toBe(continueDailyLabel(2, 5));
+    expect(start.continueDaily).toBe('Continue Daily · 3 of 5 ›');
     expect(start.goLabel).toBe('Play again ›');
 
     const result = buildRushResultNext(startedBuilder, true, {
@@ -103,6 +105,7 @@ describe('Rush continues a live Daily mid-run', () => {
     expect(result.primary.label).toBe(`Continue ${secondBuilder.root} ›`);
     expect(dailyWaitingLine({})).toBeNull();
     expect(dailyWaitingLine({ dailyResumeQi: 0, dailyTotal: 5, dailyNextName: 'Chron' })).toBeNull();
+    expect(buildRushStart({ runs: 0, bestPct: 0, bestStars: 0 }).continueDaily).toBeNull();
   });
 
   it('wires Rush to resume Daily — Play again stays secondary', () => {
@@ -112,12 +115,16 @@ describe('Rush continues a live Daily mid-run', () => {
     expect(rush).toContain('buildRushResultNext(completed, entitled, dailyResume)');
     expect(rush).toContain('goPrimary');
     expect(rush).toContain("setView('daily')");
+    expect(rush).toContain("goPrimary('daily')");
     expect(rush).toContain('q-daily-wait');
+    expect(rush).toContain('q-daily-continue');
     expect(rush).toContain('rushNext.dailyResume');
     expect(rush).toContain('rushStart.waiting');
+    expect(rush).toContain('rushStart.continueDaily');
     expect(handoff).toContain('continueDailyLabel');
     expect(handoff).toContain('dailyNextRowLabel');
     expect(handoff).toContain("kind: 'daily'");
+    expect(handoff).toContain('continueDaily');
   });
 
   it('keeps the Daily peek readable on a phone and a short screen', () => {
@@ -125,9 +132,16 @@ describe('Rush continues a live Daily mid-run', () => {
     const short = mediaBlock(css, 'max-height: 720px');
     expect(phone).toMatch(/\.q-daily-wait\s*\{[^}]*display:\s*block/);
     expect(short).toMatch(/\.q-daily-wait\s*\{[^}]*display:\s*block/);
+    expect(phone).toMatch(/\.q-daily-continue\s*\{[^}]*display:\s*flex/);
+    expect(short).toMatch(/\.q-daily-continue\s*\{[^}]*display:\s*flex/);
+    expect(phone).toMatch(/\.q-daily-continue em\s*\{[^}]*display:\s*block/);
+    expect(short).toMatch(/\.q-daily-continue em\s*\{[^}]*display:\s*block/);
     expect(phone).not.toMatch(/\.q-daily-wait\s*\{[^}]*display:\s*none/);
     expect(short).not.toMatch(/\.q-daily-wait\s*\{[^}]*display:\s*none/);
+    expect(phone).not.toMatch(/\.q-daily-continue\s*\{[^}]*display:\s*none/);
+    expect(short).not.toMatch(/\.q-daily-continue\s*\{[^}]*display:\s*none/);
     expect(css).toMatch(/\.q-daily-wait\s*\{/);
+    expect(css).toMatch(/\.q-daily-continue\s*\{/);
   });
 
   it('does not expand the catalog', () => {

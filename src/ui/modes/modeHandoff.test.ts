@@ -151,6 +151,7 @@ describe('buildRushStart + result next', () => {
     expect(vm.goLabel).toBe('Start round ›');
     expect(vm.recap).toBeNull();
     expect(vm.waiting).toBeNull();
+    expect(vm.continueDaily).toBeNull();
   });
 
   it('says Play again after a real run and recaps the same best as Home', () => {
@@ -170,6 +171,7 @@ describe('buildRushStart + result next', () => {
     expect(vm.recap).toBe('Best so far — A · 4★ · 2,400');
     expect(vm.recap).not.toMatch(/Bio|Geo|Photo/);
     expect(vm.waiting).toBeNull();
+    expect(vm.continueDaily).toBeNull();
   });
 
   it('names Continue {root} on the result so Play again is not the only tap', () => {
@@ -197,6 +199,7 @@ describe('buildRushStart + result next', () => {
       ...mid,
     });
     expect(start.waiting).toBe('Daily · 2 of 5 · Chron · time');
+    expect(start.continueDaily).toBe('Continue Daily · 3 of 5 ›');
     expect(start.goLabel).toBe('Play again ›');
     expect(start.recap).toBe('Best so far — A · 4★ · 2,400');
 
@@ -214,6 +217,7 @@ describe('buildRushStart + result next', () => {
 
   it('does not invent a Daily resume from a fresh start or a finished index', () => {
     expect(buildRushStart({ runs: 0, bestPct: 0, bestStars: 0, dailyResumeQi: 0 }).waiting).toBeNull();
+    expect(buildRushStart({ runs: 0, bestPct: 0, bestStars: 0, dailyResumeQi: 0 }).continueDaily).toBeNull();
     expect(buildRushResultNext(midStarter, false, { dailyResumeQi: 5, dailyTotal: 5 }).dailyResume).toBe(
       false,
     );
@@ -266,6 +270,9 @@ describe('Daily / Rush overlay wiring + phone layout', () => {
     expect(rushSrc).toContain('q-daily-wait');
     expect(rushSrc).toContain('rushNext.dailyResume');
     expect(rushSrc).toContain('rushStart.waiting');
+    expect(rushSrc).toContain('rushStart.continueDaily');
+    expect(rushSrc).toContain('q-daily-continue');
+    expect(rushSrc).toContain("goPrimary('daily')");
   });
 
   it('keeps Home Continue + profile band (#43 / #44) untouched', () => {
@@ -286,10 +293,13 @@ describe('Daily / Rush overlay wiring + phone layout', () => {
     expect(phone).toMatch(/\.q-daily\s+\.q-next\s*\{[^}]*width:\s*100%/);
     expect(phone).toMatch(/\.q-daily-chip\s*\{[^}]*flex-wrap:\s*wrap|\.q-daily-chips/);
     expect(phone).toMatch(/\.q-daily-wait\s*\{[^}]*display:\s*block/);
+    expect(phone).toMatch(/\.q-daily-continue\s*\{[^}]*display:\s*flex/);
     expect(phone).not.toMatch(/\.q-daily-wait\s*\{[^}]*display:\s*none/);
+    expect(phone).not.toMatch(/\.q-daily-continue\s*\{[^}]*display:\s*none/);
     expect(css).toMatch(/\.q-daily-chip\.is-done/);
     expect(css).toMatch(/\.q-done-mark/);
     expect(css).toMatch(/\.q-next-learn/);
     expect(css).toMatch(/\.q-daily-wait\s*\{/);
+    expect(css).toMatch(/\.q-daily-continue\s*\{/);
   });
 });
