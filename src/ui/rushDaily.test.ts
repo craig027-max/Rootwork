@@ -106,7 +106,7 @@ describe('Rush continues a live Daily mid-run', () => {
   });
 
   it('wires Rush to resume Daily — Play again stays secondary', () => {
-    expect(rush).toContain('resumeDailyQi');
+    expect(rush).toContain('liveDailyResumeQi');
     expect(rush).toContain('dailyNextRoot');
     expect(rush).toContain('pickDailyRoots');
     expect(rush).toContain('buildRushResultNext(completed, entitled, dailyResume)');

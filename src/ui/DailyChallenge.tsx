@@ -5,13 +5,14 @@ import { PALETTES, ROOTS, ROOTS_BY_ID, rootId, isRootOpenable, type Root } from 
 import {
   DAILY_COUNT,
   afterDailyNextLabel,
+  continueDailyLabel,
   dailyHoldContinueLine,
   dailyHoldLine,
   dailyHoldNextLine,
   dailySeed,
+  liveDailyResumeQi,
   localDayKey,
   pickDailyRoots,
-  resumeDailyQi,
 } from '../core/daily';
 import { buildRecall, type RecallBeat } from '../core/recall';
 import { Scene } from './Scene';
@@ -56,7 +57,7 @@ export function DailyChallenge() {
     () => pickDailyRoots(pool, dailySeed(day, studentId)),
     [pool, day, studentId],
   );
-  const resumeQi = doneToday ? null : resumeDailyQi(dailyRun, day, studentId, deal.length);
+  const resumeQi = liveDailyResumeQi(dailyRun, day, studentId, deal.length, stats.lastDailyDay);
 
   const [phase, setPhase] = useState<Phase>(() => (resumeQi != null ? 'play' : 'start'));
   const [qi, setQi] = useState(() => resumeQi ?? 0);
@@ -69,6 +70,7 @@ export function DailyChallenge() {
   const bankedRef = useRef(false);
 
   const root = deal[qi];
+  const resumeRoot = resumeQi != null ? deal[resumeQi] : undefined;
   const answered = picked !== null;
   const answeredCorrect = answered && beat ? (beat.opts[picked!]?.ok ?? false) : false;
   const isLast = qi + 1 >= deal.length;
@@ -97,10 +99,12 @@ export function DailyChallenge() {
   }
 
   function startRun() {
-    if (!deal[0]) return;
+    const startAt = resumeQi ?? 0;
+    const first = deal[startAt];
+    if (!first) return;
     bankedRef.current = false;
-    setQi(0);
-    dealBeat(deal[0]);
+    setQi(startAt);
+    dealBeat(first);
     setPhase('play');
   }
 
@@ -231,14 +235,15 @@ export function DailyChallenge() {
               <span className="dot" /> Daily Challenge
             </div>
             <h2 className="q-title">
-              Today&rsquo;s <span className="g">five.</span>
+              Today&rsquo;s <span className="g">{resumeQi != null ? 'next.' : 'five.'}</span>
             </h2>
             <p className="q-sub">
-              {deal.length} fresh roots for {day}. See the animation, tap the meaning, keep your
-              streak{streakNow > 0 ? ` — you&rsquo;re on 🔥 ${streakNow}` : ''}.
+              {resumeQi != null && resumeRoot
+                ? `${resumeQi} of ${deal.length} already yours. Next is ${resumeRoot.root} — ${resumeRoot.mean}.`
+                : `${deal.length} fresh roots for ${day}. See the animation, tap the meaning, keep your streak${streakNow > 0 ? ` — you&rsquo;re on 🔥 ${streakNow}` : ''}.`}
             </p>
             <div className="q-daily-chips">
-              {deal.map((r) => (
+              {(resumeQi != null ? deal.slice(resumeQi) : deal).map((r) => (
                 <span className="q-daily-chip" key={r.root}>
                   {r.root}
                   <em>{r.mean}</em>
@@ -246,7 +251,9 @@ export function DailyChallenge() {
               ))}
             </div>
             <button className="q-go" onClick={startRun}>
-              {`Start daily · ${Math.min(DAILY_COUNT, deal.length)} roots ›`}
+              {resumeQi != null
+                ? continueDailyLabel(resumeQi, deal.length)
+                : `Start daily · ${Math.min(DAILY_COUNT, deal.length)} roots ›`}
             </button>
           </div>
         ) : null}

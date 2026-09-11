@@ -7,7 +7,7 @@ import {
   dailySeed,
   localDayKey,
   pickDailyRoots,
-  resumeDailyQi,
+  liveDailyResumeQi,
   shuffleWith,
 } from '../core/daily';
 import { buildRushQuestion, type RushQuestion } from '../core/rush';
@@ -83,8 +83,13 @@ export function RootRush() {
     () => pickDailyRoots(pool, dailySeed(day, studentId)),
     [pool, day, studentId],
   );
-  const dailyResumeQi =
-    stats.lastDailyDay === day ? null : resumeDailyQi(dailyRun, day, studentId, dailyRoots.length);
+  const dailyResumeQi = liveDailyResumeQi(
+    dailyRun,
+    day,
+    studentId,
+    dailyRoots.length,
+    stats.lastDailyDay,
+  );
   const dailyNext = dailyNextRoot(dailyRoots, dailyResumeQi);
   const dailyResume = {
     dailyResumeQi,

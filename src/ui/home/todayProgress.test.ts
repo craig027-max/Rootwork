@@ -23,6 +23,7 @@ const store = readFileSync(join(process.cwd(), 'src/app/store.ts'), 'utf8');
 const menu = readFileSync(join(process.cwd(), 'src/ui/home/menu.ts'), 'utf8');
 const detail = readFileSync(join(process.cwd(), 'src/ui/home/detailVM.tsx'), 'utf8');
 const overlay = readFileSync(join(process.cwd(), 'src/ui/modes/modeHandoff.ts'), 'utf8');
+const hydrate = readFileSync(join(process.cwd(), 'src/core/hydrate.ts'), 'utf8');
 const css = readFileSync(join(process.cwd(), 'src/styles/app.css'), 'utf8');
 
 function mediaBlock(source: string, query: string): string {
@@ -187,7 +188,7 @@ describe('buildTodayProgress — returning dashboard', () => {
     expect(pending.recap).toBeNull();
   });
 
-  it('names a mid-run Daily next root and keeps Continue {root} as the fat tap', () => {
+  it('makes Continue Daily the fat tap on a mid-run — Continue {root} stays on the learn row', () => {
     const next = learnNextAction(startedBuilder, true);
     const vm = buildTodayProgress({
       firstRun: false,
@@ -207,12 +208,13 @@ describe('buildTodayProgress — returning dashboard', () => {
       action: 'daily',
     });
     expect(vm.items[0]?.label).not.toBe('Daily · 2 of 5');
-    expect(vm.cta).toEqual({
-      kind: 'learn',
-      label: `Continue ${secondBuilder.root} ›`,
+    expect(vm.items.find((i) => i.key === 'learn')).toMatchObject({
+      label: `Continue ${secondBuilder.root}`,
+      action: 'learn',
       rootId: next.rootId,
     });
-    expect(vm.cta?.label).not.toMatch(/Start daily|Play again|Continue Daily/);
+    expect(vm.cta).toEqual({ kind: 'daily', label: 'Continue Daily · 3 of 5 ›' });
+    expect(vm.cta?.label).not.toMatch(/Start daily|Play again|Continue ${secondBuilder.root}/);
   });
 
   it('makes Continue Daily the fat tap when that is the only open path', () => {
@@ -560,11 +562,15 @@ describe('Today checklist wiring + phone layout', () => {
     expect(store).toContain('applyDailyHit');
     expect(store).toContain('saveDailyRun: (qi, hitRootId)');
     expect(store).toContain('recordDailyComplete: (hitRootId)');
-    expect(home).toContain('resumeDailyQi');
+    expect(home).toContain('liveDailyResumeQi');
     expect(home).toContain('dailyResumeQi');
     expect(home).toContain('dailyNextName');
     expect(home).toContain('dailyResumePreview');
     expect(home).toContain('isDailyResumeItem');
+    expect(hydrate).toContain('resolveBootResume');
+    expect(hydrate).toContain('liveDailyResumeQi');
+    expect(hydrate).toContain("setView('daily')");
+    expect(hydrate).not.toContain('if (target) store.openRoot(target)');
     expect(store).toContain('saveDailyRun');
     expect(store).toContain('clearDailyRun');
     expect(store).toContain('wondral:dailyRun:v1:');

@@ -14,6 +14,8 @@
  * onto an unnamed card. Photo cannot slam over Bio. An owned hit is
  * today's Remember; the first hit banks the play-today streak. Last hold
  * peeks Continue · next learn — the same next the done overlay already names.
+ * Boot Continue prefers that live mid-run over the next learn, so a
+ * returning kid lands on Chron — not a Geo dump.
  */
 
 import type { Root } from '../data/roots';
@@ -167,6 +169,46 @@ export function resumeDailyQi(
   if ((run.studentId ?? null) !== (studentId ?? null)) return null;
   if (!Number.isInteger(run.qi) || run.qi < 1 || run.qi >= total) return null;
   return run.qi;
+}
+
+/**
+ * Live mid-run index for Home / Rush / Daily / boot. A finished Daily
+ * (lastDailyDay is today) must not keep peeking Continue Daily.
+ */
+export function liveDailyResumeQi(
+  run: DailyRun | null | undefined,
+  day: string,
+  studentId: string | null,
+  total: number,
+  lastDailyDay: string | null | undefined,
+): number | null {
+  if (lastDailyDay === day) return null;
+  return resumeDailyQi(run, day, studentId, total);
+}
+
+/** Where a returning kid should land — Daily mid-run wins over the next learn. */
+export type BootResume =
+  | { kind: 'daily' }
+  | { kind: 'learn'; rootId: string }
+  | { kind: 'home' };
+
+/**
+ * Boot Continue. A live Daily mid-run is the same hero Rush / Home already
+ * name — do not dump them onto Geo while Chron is still waiting.
+ * Fresh / finished / junk indexes fall through to the next learn, then Home.
+ */
+export function resolveBootResume(opts: {
+  dailyResumeQi?: number | null;
+  dailyTotal?: number;
+  nextRootId: string | null;
+}): BootResume {
+  const total = opts.dailyTotal && opts.dailyTotal > 0 ? opts.dailyTotal : 5;
+  const qi = opts.dailyResumeQi;
+  if (typeof qi === 'number' && Number.isInteger(qi) && qi >= 1 && qi < total) {
+    return { kind: 'daily' };
+  }
+  if (opts.nextRootId) return { kind: 'learn', rootId: opts.nextRootId };
+  return { kind: 'home' };
 }
 
 /** Checklist / tile copy: how many they have already got right. */
