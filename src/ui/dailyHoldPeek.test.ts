@@ -7,6 +7,7 @@ const daily = readFileSync(join(process.cwd(), 'src/ui/DailyChallenge.tsx'), 'ut
 const home = readFileSync(join(process.cwd(), 'src/ui/Home.tsx'), 'utf8');
 const menu = readFileSync(join(process.cwd(), 'src/ui/home/menu.ts'), 'utf8');
 const detail = readFileSync(join(process.cwd(), 'src/ui/home/detailVM.tsx'), 'utf8');
+const hydrate = readFileSync(join(process.cwd(), 'src/core/hydrate.ts'), 'utf8');
 const quiz = readFileSync(join(process.cwd(), 'src/styles/quiz.css'), 'utf8');
 
 function mediaBlock(source: string, query: string): string {
@@ -46,6 +47,10 @@ describe('Daily hold: peek the next root, then Next — Home lands on that peek'
     expect(menu).toContain("it.key === 'daily'");
     expect(menu).toContain('isDailyResumeItem');
     expect(detail).toContain('heroCta: Boolean(dailyResume != null && !extra.dailyDone)');
+    expect(detail).toContain('continueDailyLabel');
+    expect(hydrate).toContain('resolveBootResume');
+    expect(hydrate).toContain("setView('daily')");
+    expect(home).toContain('liveDailyResumeQi');
   });
 
   it('keeps the next-root peek readable on a phone and a short screen', () => {

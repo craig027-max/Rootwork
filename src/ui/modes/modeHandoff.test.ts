@@ -235,7 +235,9 @@ describe('Daily / Rush overlay wiring + phone layout', () => {
   it('holds the Daily meaning until Next and resumes a mid-run', () => {
     expect(dailySrc).toContain('dailyHoldLine');
     expect(dailySrc).toContain('afterDailyNextLabel');
-    expect(dailySrc).toContain('resumeDailyQi');
+    expect(dailySrc).toContain('liveDailyResumeQi');
+    expect(dailySrc).toContain('resumeQi ?? 0');
+    expect(dailySrc).toContain('continueDailyLabel');
     expect(dailySrc).toContain('saveDailyRun');
     expect(dailySrc).toContain('saveDailyRun(qi + 1, hitId)');
     expect(dailySrc).toContain('recordDailyComplete(hitId)');
@@ -256,7 +258,7 @@ describe('Daily / Rush overlay wiring + phone layout', () => {
   });
 
   it('Rush start + result name a live Daily mid-run and resume Daily', () => {
-    expect(rushSrc).toContain('resumeDailyQi');
+    expect(rushSrc).toContain('liveDailyResumeQi');
     expect(rushSrc).toContain('dailyNextRoot');
     expect(rushSrc).toContain('goPrimary');
     expect(rushSrc).toContain("kind === 'daily'");

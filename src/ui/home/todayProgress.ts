@@ -8,11 +8,13 @@
  * reviews that root. Remember {stale root} · meaning is the retention
  * beat for an older owned root — it does not block Today ✓. Tapping it
  * is a one-beat visit (hold meaning, then Home) — Geo must not open.
- * A mid-run Daily says Daily · 2 of 5 · Chron · time (and Continue Daily
- * when that is the fat tap) so the next root is named — not a count-only
- * dump. An owned Daily hit is today's Remember (Home excludes today's
- * deal from the Remember pick so Bio is not asked twice). First-run /
- * next-Play stays a single Play {root} — no Daily / Remember dump.
+ * A mid-run Daily says Daily · 2 of 5 · Chron · time and makes
+ * Continue Daily the fat tap — same hero Rush already uses — so Geo
+ * does not steal the one-tap while Chron is still waiting. Continue
+ * {next learn} stays on the learn row. An owned Daily hit is today's
+ * Remember (Home excludes today's deal from the Remember pick so Bio
+ * is not asked twice). First-run / next-Play stays a single Play {root}
+ * — no Daily / Remember dump.
  *
  * Pure so tests lock the copy without I/O.
  */
@@ -295,19 +297,17 @@ export function buildTodayProgress(opts: {
   const pathDone = opts.dailyDone && (learnedToday || next.kind !== 'learn');
   const nextName = next.rootName?.trim() || undefined;
   const cta: TodayCta =
-    next.kind === 'learn' && next.rootId
-      ? {
-          kind: 'learn',
-          label: pathDone && nextName ? keepGoingLabel(nextName) : next.label,
-          rootId: next.rootId,
-        }
-      : !opts.dailyDone
+    dailyResume != null
+      ? { kind: 'daily', label: continueDailyLabel(dailyResume, dailyTotal) }
+      : next.kind === 'learn' && next.rootId
         ? {
-            kind: 'daily',
-            label:
-              dailyResume != null ? continueDailyLabel(dailyResume, dailyTotal) : 'Start daily ›',
+            kind: 'learn',
+            label: pathDone && nextName ? keepGoingLabel(nextName) : next.label,
+            rootId: next.rootId,
           }
-        : { kind: 'rush', label: 'Play Root Rush ›' };
+        : !opts.dailyDone
+          ? { kind: 'daily', label: 'Start daily ›' }
+          : { kind: 'rush', label: 'Play Root Rush ›' };
 
   return {
     show: true,

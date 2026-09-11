@@ -1,6 +1,13 @@
 import { useWondralStore } from '../app/store';
-import { moduleIdOfRoot, resumeRootId } from '../data/roots';
+import { ROOTS, isRootOpenable, moduleIdOfRoot, resumeRootId, rootId } from '../data/roots';
 import { getCurrentUser, getSession, onAuthStateChange, signInAnonymously } from './auth';
+import {
+  dailySeed,
+  liveDailyResumeQi,
+  localDayKey,
+  pickDailyRoots,
+  resolveBootResume,
+} from './daily';
 import { flushPendingPushes, getProgress, syncLocalToRemote } from './progress';
 import { getProfile, getStudentProfiles } from './profile';
 import { gateEntitled, getEntitlement, isEntitlementActive } from './entitlement';
@@ -170,9 +177,9 @@ function routeParentLanding(students: StudentProfile[]): void {
 }
 
 /**
- * Boot-time resume: drop a returning learner straight back into the root they'd
- * "Continue" with. Only fires when the app would otherwise land on home, and uses
- * the same `entitled` rule the UIs use so resume never opens a locked root.
+ * Boot-time resume: drop a returning learner straight back into the Continue
+ * they already named. A live Daily mid-run wins — Chron, not Geo — using
+ * the same entitled + deal rules Home / Rush use. Only fires on home.
  */
 function routeResume(): void {
   const store = useWondralStore.getState();
@@ -182,8 +189,24 @@ function routeResume(): void {
     authStatus: store.authStatus,
     entitlementLoaded: store.entitlementLoaded,
   });
-  const target = resumeRootId(store.completedRoots, entitled);
-  if (target) store.openRoot(target);
+  const day = localDayKey();
+  const deal = pickDailyRoots(
+    ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
+    dailySeed(day, store.activeStudentId),
+  );
+  const boot = resolveBootResume({
+    dailyResumeQi: liveDailyResumeQi(
+      store.dailyRun,
+      day,
+      store.activeStudentId,
+      deal.length,
+      store.stats.lastDailyDay,
+    ),
+    dailyTotal: deal.length,
+    nextRootId: resumeRootId(store.completedRoots, entitled),
+  });
+  if (boot.kind === 'daily') store.setView('daily');
+  else if (boot.kind === 'learn') store.openRoot(boot.rootId);
 }
 
 async function hydrateOnce(): Promise<void> {

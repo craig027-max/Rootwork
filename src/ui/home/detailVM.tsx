@@ -1,6 +1,11 @@
 import type { ReactNode } from 'react';
 import { PALETTES, TIERS, rootsInTier, type Root } from '../../data/roots';
-import { dailyNextRoot, dailyResumePreview, dailyTilePreview } from '../../core/daily';
+import {
+  continueDailyLabel,
+  dailyNextRoot,
+  dailyResumePreview,
+  dailyTilePreview,
+} from '../../core/daily';
 import { gradeForPct } from '../../core/stats';
 import {
   entryRootName,
@@ -119,7 +124,7 @@ export function buildDetailVM(
         label: extra.dailyDone
           ? 'Play again 📅'
           : dailyResume != null
-            ? 'Continue daily 📅'
+            ? continueDailyLabel(dailyResume, extra.dailyRoots.length || extra.dailyTotal || 5)
             : 'Start daily 📅',
       },
       secondary: { label: 'Browse roots' },
@@ -128,8 +133,8 @@ export function buildDetailVM(
         palKey: 'gold',
         caption: 'Daily',
       }),
-      // Mid-run: park Continue daily under the next-root scene — same
-      // one-tap as an in-progress tier, so Aqua is not buried in the list.
+      // Mid-run: park Continue Daily · N of 5 under the next-root scene —
+      // same one-tap Rush / Today already name, so Aqua is not buried.
       heroCta: Boolean(dailyResume != null && !extra.dailyDone),
     };
   }

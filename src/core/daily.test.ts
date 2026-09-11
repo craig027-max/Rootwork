@@ -18,6 +18,8 @@ import {
   localDayKey,
   parseDailyRun,
   pickDailyRoots,
+  resolveBootResume,
+  liveDailyResumeQi,
   resumeDailyQi,
 } from './daily';
 
@@ -162,6 +164,33 @@ describe('Daily mid-run resume + hold meaning', () => {
     expect(resumeDailyQi({ ...run, qi: 5 }, today, 'kid-a', 5)).toBeNull();
     expect(resumeDailyQi(null, today, 'kid-a', 5)).toBeNull();
     expect(resumeDailyQi(run, today, 'kid-a', 0)).toBeNull();
+  });
+
+  it('drops a finished Daily from the live mid-run peek', () => {
+    expect(liveDailyResumeQi(run, today, 'kid-a', 5, null)).toBe(2);
+    expect(liveDailyResumeQi(run, today, 'kid-a', 5, today)).toBeNull();
+    expect(liveDailyResumeQi(run, today, 'kid-a', 5, '2026-09-07')).toBe(2);
+  });
+
+  it('boots into Daily mid-run — not the next learn', () => {
+    expect(
+      resolveBootResume({ dailyResumeQi: 2, dailyTotal: 5, nextRootId: 'geo' }),
+    ).toEqual({ kind: 'daily' });
+    expect(
+      resolveBootResume({ dailyResumeQi: null, dailyTotal: 5, nextRootId: 'geo' }),
+    ).toEqual({ kind: 'learn', rootId: 'geo' });
+    expect(resolveBootResume({ dailyResumeQi: 0, nextRootId: 'geo' })).toEqual({
+      kind: 'learn',
+      rootId: 'geo',
+    });
+    expect(resolveBootResume({ dailyResumeQi: 5, dailyTotal: 5, nextRootId: 'geo' })).toEqual({
+      kind: 'learn',
+      rootId: 'geo',
+    });
+    expect(resolveBootResume({ dailyResumeQi: 2, dailyTotal: 5, nextRootId: null })).toEqual({
+      kind: 'daily',
+    });
+    expect(resolveBootResume({ nextRootId: null })).toEqual({ kind: 'home' });
   });
 
   it('parses a stored blob and drops junk', () => {

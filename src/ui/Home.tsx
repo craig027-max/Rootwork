@@ -10,7 +10,7 @@ import {
   dailyTilePreview,
   localDayKey,
   pickDailyRoots,
-  resumeDailyQi,
+  liveDailyResumeQi,
 } from '../core/daily';
 import {
   buildMenu,
@@ -62,9 +62,13 @@ export function Home() {
     ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
     dailySeed(day, activeStudentId),
   );
-  const dailyResumeQi = dailyDone
-    ? null
-    : resumeDailyQi(dailyRun, day, activeStudentId, dailyRoots.length);
+  const dailyResumeQi = liveDailyResumeQi(
+    dailyRun,
+    day,
+    activeStudentId,
+    dailyRoots.length,
+    stats.lastDailyDay,
+  );
   const dailyNext = dailyNextRoot(dailyRoots, dailyResumeQi);
   const profile = buildProfileProgress(stats, completed.size, day);
   const learnedId = learnedRootToday(progress, day);

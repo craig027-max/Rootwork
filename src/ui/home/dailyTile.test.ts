@@ -2,7 +2,14 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ROOTS, isRootOpenable, rootId, rootsInTier } from '../../data/roots';
-import { dailyNextRoot, dailyResumePreview, dailySeed, dailyTilePreview, pickDailyRoots } from '../../core/daily';
+import {
+  continueDailyLabel,
+  dailyNextRoot,
+  dailyResumePreview,
+  dailySeed,
+  dailyTilePreview,
+  pickDailyRoots,
+} from '../../core/daily';
 import { buildDetailVM } from './detailVM';
 import { buildMenu } from './menu';
 
@@ -108,7 +115,8 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
       completed: startedBuilder,
       entitled: false,
     });
-    expect(vm.primary.label).toMatch(/Continue daily/);
+    expect(vm.primary.label).toBe(continueDailyLabel(2, 5));
+    expect(vm.primary.label).toBe('Continue Daily · 3 of 5 ›');
     expect(vm.primary.label).not.toMatch(/Start daily|Play again/);
     expect(vm.samples.map((s) => s.root)).toEqual(today.slice(2).map((r) => r.root));
     expect(vm.samples[0]?.root).toBe(next!.root);
@@ -120,7 +128,7 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
     expect(String(vm.lead)).toContain('2 of 5 already yours');
     expect(vm.scene?.caption).toBe(`${next!.root} · ${next!.mean}`);
     expect(vm.heroCta).toBe(true);
-    expect(vm.primary.label).toMatch(/Continue daily/);
+    expect(vm.primary.label).toBe(continueDailyLabel(2, 5));
   });
 
   it('does not invent a fake starter list when today\'s pick is empty', () => {
@@ -148,6 +156,7 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
     expect(home).toContain('dailyResume: dailyResumeQi != null');
     expect(detail).toContain('dailyResumePreview');
     expect(detail).toContain('dailyNextRoot');
+    expect(detail).toContain('continueDailyLabel');
     expect(detail).toContain('sampleLines: true');
     expect(panel).toContain('ww-samples${vm.sampleLines ? \' is-lines\' : \'\'}${vm.samplesDone ? \' is-done\' : \'\'}');
     expect(panel).toContain('<b>{s.root}</b>');
