@@ -32,6 +32,11 @@ export interface DetailVM {
   scene?: { key: string; pal: [string, string]; caption: string };
   /** First-run Play / in-progress Continue: park the primary button under the scene. */
   heroCta?: boolean;
+  /**
+   * Rush tile mid-run: same Daily · 2 of 5 · Chron · time Today / Rush
+   * start already name — status only; the Continue Daily tap is secondary.
+   */
+  waiting?: string | null;
 }
 
 /**
@@ -86,6 +91,11 @@ export function DetailPanel({
         ) : null}
         <div className="ww-big">{vm.big}</div>
         <p className="lead">{vm.lead}</p>
+        {vm.waiting ? (
+          <p className="ww-detail-wait" role="status">
+            {vm.waiting}
+          </p>
+        ) : null}
 
         {vm.ring ? (
           <div className="ww-prog">

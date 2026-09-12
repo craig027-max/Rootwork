@@ -147,6 +147,11 @@ export function Home() {
 
   function onSecondary(item: MenuItem) {
     if (item.kind === 'mode') {
+      // Mid-run Rush tile: Continue Daily · N of 5 — same tap Rush start uses.
+      if (item.key === 'rush' && dailyResumeQi != null) {
+        setView('daily');
+        return;
+      }
       const first = ROOTS[0];
       if (first) openRoot(rootId(first));
       return;
