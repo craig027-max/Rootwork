@@ -5,9 +5,9 @@
  * says Today ✓ when Daily + a learn are both done. After that, Continue
  * {next} still *looked* like unfinished work, and tapping Learned Photo
  * opened Geo. Keep going · {root} splits done from next: a finished row
- * reviews that root. Remember {stale root} · meaning is the retention
- * beat for an older owned root — it does not block Today ✓. Tapping it
- * is a one-beat visit (hold meaning, then Home) — Geo must not open.
+ * reviews that root as Remember (hold meaning, then Home) — Geo must
+ * not open after Learned Photo. Remember {stale root} · meaning is the
+ * retention beat for an older owned root — it does not block Today ✓.
  * A mid-run Daily says Daily · 2 of 5 · Chron · time and makes
  * Continue Daily the fat tap — same hero Rush already uses — so Geo
  * does not steal the one-tap while Chron is still waiting. Continue

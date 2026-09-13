@@ -16,6 +16,7 @@ import {
 } from '../core/daily';
 import { buildRecall, type RecallBeat } from '../core/recall';
 import { Scene } from './Scene';
+import { recapDeckEntry } from '../core/deckFlow';
 import { buildDailyDone, buildModeEmpty, learnNextAction } from './modes/modeHandoff';
 
 type Phase = 'start' | 'play' | 'result';
@@ -31,8 +32,9 @@ function palOf(root: Root) {
  * and peeks the next root (Next · Aqua · water) so Next is not unnamed.
  * Leaving mid-run persists the next unanswered root so Home can say
  * Continue Daily · 3 of 5. An owned hit is today's Remember; the first
- * hit banks play-today. Last hold peeks Continue · next learn. Finishing
- * banks Daily XP; replays are free.
+ * hit banks play-today. Last hold peeks Continue · next learn. Done
+ * recap chips open owned roots as Remember — not the Geo quiz loop.
+ * Finishing banks Daily XP; replays are free.
  */
 export function DailyChallenge() {
   const entitled = useEntitledForDisplay();
@@ -91,6 +93,11 @@ export function DailyChallenge() {
   function goLearn(id?: string) {
     if (id) openRoot(id);
     else close();
+  }
+
+  function openRecap(r: Root) {
+    const id = rootId(r);
+    openRoot(id, { entry: recapDeckEntry(completed.has(id)) });
   }
 
   function dealBeat(r: Root) {
@@ -346,7 +353,8 @@ export function DailyChallenge() {
                   type="button"
                   className={`q-daily-chip${done.recapDone ? ' is-done' : ''}`}
                   key={r.root}
-                  onClick={() => openRoot(rootId(r))}
+                  onClick={() => openRecap(r)}
+                  aria-label={`Remember ${r.root}`}
                 >
                   {done.recapDone ? (
                     <span className="q-done-mark" aria-hidden="true">

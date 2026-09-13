@@ -528,6 +528,9 @@
   .ww-samples.is-lines .ww-schip.is-done {
     display: flex;
   }
+  .ww-samples.is-lines .ww-schip.is-done.is-tap {
+    display: flex;
+  }
   .ww-samples.is-lines .ww-schip.is-next {
     display: flex;
   }
@@ -964,6 +967,18 @@
   font-family: var(--font-game);
   font-weight: 600;
   font-size: 0.86rem;
+}
+button.ww-schip {
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+  transition: background var(--dur-fast), transform var(--dur-fast) var(--ease-snap),
+    border-color var(--dur-fast);
+}
+button.ww-schip:hover,
+button.ww-schip:focus-visible {
+  background: rgba(var(--spark-rgb), 0.14);
+  transform: translateY(-1px);
 }
 .ww-schip b {
   font-weight: 700;

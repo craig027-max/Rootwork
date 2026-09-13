@@ -26,6 +26,8 @@ function mediaBlock(source: string, query: string): string {
 describe('Remember {root}: one-beat visit, then Home', () => {
   it('Home opens the named root as remember — not the Geo quiz loop', () => {
     expect(home).toContain("entry: 'remember'");
+    expect(home).toContain('recapOpenForRoot');
+    expect(home).toContain('onSample={vm.samplesDone ? onRecap : undefined}');
     expect(home).not.toContain("onRemember={(id) => openRoot(id, { entry: 'recall' })}");
     expect(deck).toContain('isRecallEntry(deckEntry)');
     expect(deck).toContain('afterCorrectRecall(id, entitled, { entry: deckEntry })');

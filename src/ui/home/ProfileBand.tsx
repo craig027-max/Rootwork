@@ -9,7 +9,7 @@ import type { TodayProgress } from './todayProgress';
  * Profile band — avatar + level badge, identity, the stats a kid has
  * actually earned, and (on the returning dashboard) today's checklist.
  * After they learn a root, that row checks off (Learned {root}) and
- * reviews that root — not the next one. When Daily is banked too the
+ * reviews that root as Remember — one beat, then Home, not Geo. When Daily is banked too the
  * heading is Today ✓ and the fat tap is Keep going · {root} (or Rush).
  * Remember {stale root} is the retention beat — one-tap, hold meaning,
  * then Home. Does not block Today ✓. Streak risk stays a visible status
@@ -48,8 +48,8 @@ export function ProfileBand({
     rootId?: string,
   ) {
     if (action === 'daily') onDaily();
-    else if ((action === 'learn' || action === 'review') && rootId) onContinue(rootId);
-    else if (action === 'remember' && rootId) onRemember(rootId);
+    else if (action === 'learn' && rootId) onContinue(rootId);
+    else if ((action === 'review' || action === 'remember') && rootId) onRemember(rootId);
     else if (action === 'rush') onRush();
   }
 
