@@ -168,6 +168,10 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
     expect(menu).toContain('{p.mean}');
     expect(panel).toContain('samplesNext');
     expect(panel).toContain('is-next');
+    expect(panel).toContain('onSample');
+    expect(panel).toContain('Remember ${s.root}');
+    expect(home).toContain('recapOpenForRoot');
+    expect(home).toContain('onSample={vm.samplesDone ? onRecap : undefined}');
 
     const samplesAt = panel.indexOf('className={`ww-samples');
     const ctaAt = panel.indexOf('ww-detail-cta');
@@ -193,6 +197,9 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
     expect(css).toMatch(/\.ww-daily-line\.is-next/);
     expect(css).toMatch(/\.ww-daily-mark\s*\{/);
     expect(css).toMatch(/\.ww-schip\.is-next/);
+    expect(phone).toMatch(/\.ww-samples\.is-lines \.ww-schip\.is-done\.is-tap\s*\{[^}]*display:\s*flex/);
+    expect(phone).not.toMatch(/\.ww-schip\.is-done\.is-tap\s*\{[^}]*display:\s*none/);
+    expect(css).toMatch(/button\.ww-schip\s*\{/);
   });
 });
 
@@ -248,6 +255,9 @@ describe('Home Daily tile: done-state recap after Daily is banked', () => {
     expect(css).toMatch(/\.ww-daily-mark\s*\{[^}]*var\(--success\)/);
     expect(css).toMatch(/\.ww-daily-line\.is-done/);
     expect(css).toMatch(/\.ww-schip\.is-done/);
+    expect(panel).toContain('is-tap');
+    expect(panel).toContain('Remember ${s.root}');
+    expect(home).toContain('onSample={vm.samplesDone ? onRecap : undefined}');
   });
 
   it('does not drop the recap when Daily is done and the deal is empty', () => {

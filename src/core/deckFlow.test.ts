@@ -15,6 +15,8 @@ import {
   commitCorrectAdvance,
   decideCorrectAdvance,
   deckEntryForOpen,
+  recapDeckEntry,
+  recapOpenForRoot,
   entryAfterSuccess,
   hearHoldLine,
   holdHearAfterClip,
@@ -113,6 +115,18 @@ describe('afterCorrectRecall', () => {
     expect(afterYesNextLabel({ kind: 'next', id: geoId, line: 'Yes — Bio means life.' })).toBe(
       'Next →',
     );
+  });
+
+  it('done Daily / Learned recap opens owned roots as Remember — not teach/Geo', () => {
+    expect(recapDeckEntry(true)).toBe('remember');
+    expect(recapDeckEntry(false)).toBe('teach');
+    expect(recapOpenForRoot('Bio', new Set([bioId]))).toEqual({
+      id: bioId,
+      entry: 'remember',
+    });
+    expect(recapOpenForRoot('Bio', new Set())).toEqual({ id: bioId, entry: 'teach' });
+    expect(recapOpenForRoot('no-such-root', new Set([bioId]))).toBeNull();
+    expect(recapOpenForRoot('  Bio  ', new Set([bioId]))?.entry).toBe('remember');
   });
 });
 

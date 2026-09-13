@@ -6,7 +6,7 @@
  * Pure — Deck.tsx owns the timer and the store writes.
  */
 
-import { ROOTS_BY_ID, neighborOpenable, type Root, type RootId } from '../data/roots';
+import { ROOTS, ROOTS_BY_ID, neighborOpenable, rootId, type Root, type RootId } from '../data/roots';
 import type { HearBeatChip } from './hearBeats';
 import { speakablePronunciation } from './speak';
 
@@ -208,6 +208,28 @@ export function afterCorrectRecall(
 /** Play / Next / index omit `entry` and land on examples. Correct recall must not. */
 export function deckEntryForOpen(opts?: { entry?: DeckEntry }): DeckEntry {
   return opts?.entry ?? 'teach';
+}
+
+/**
+ * Done Daily / Learned recap taps. An owned root is Remember — hold the
+ * meaning, then Home. Teach would dump them onto Geo after Yes. Unowned
+ * Daily hits stay teach so they can still meet the card.
+ */
+export function recapDeckEntry(owned: boolean): DeckEntry {
+  return owned ? 'remember' : 'teach';
+}
+
+/** Resolve a recap chip name to the Remember / teach open. Missing names drop. */
+export function recapOpenForRoot(
+  name: string,
+  completed: ReadonlySet<string>,
+): { id: RootId; entry: DeckEntry } | null {
+  const trimmed = name.replace(/\s+/g, ' ').trim();
+  if (!trimmed) return null;
+  const root = ROOTS.find((r) => r.root === trimmed);
+  if (!root) return null;
+  const id = rootId(root);
+  return { id, entry: recapDeckEntry(completed.has(id)) };
 }
 
 /** After the Yes line, the next card opens in recall — never teach/examples. */

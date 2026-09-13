@@ -12,6 +12,7 @@ import {
   pickDailyRoots,
   liveDailyResumeQi,
 } from '../core/daily';
+import { recapOpenForRoot } from '../core/deckFlow';
 import {
   buildMenu,
   hasChosenMode,
@@ -154,6 +155,11 @@ export function Home() {
     else openTier(item.t);
   }
 
+  function onRecap(name: string) {
+    const recap = recapOpenForRoot(name, completed);
+    if (recap) openRoot(recap.id, { entry: recap.entry });
+  }
+
   const vm = buildDetailVM(selected, {
     dailyRoots,
     dailyDone,
@@ -227,6 +233,7 @@ export function Home() {
             vm={vm}
             onPrimary={() => onPrimary(selected)}
             onSecondary={() => onSecondary(selected)}
+            onSample={vm.samplesDone ? onRecap : undefined}
           />
         </div>
       </div>

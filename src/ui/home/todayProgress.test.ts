@@ -585,6 +585,9 @@ describe('Today checklist wiring + phone layout', () => {
     expect(band).toContain("action === 'review'");
     expect(band).toContain("action === 'rush'");
     expect(band).toContain("action === 'remember'");
+    expect(band).toContain("action === 'learn' && rootId) onContinue");
+    expect(band).toContain("(action === 'review' || action === 'remember') && rootId) onRemember");
+    expect(band).not.toContain("(action === 'learn' || action === 'review')");
     expect(band).toContain('Nice work');
     expect(store).toContain('stampReviewedAt');
     expect(store).toContain('reviewedAt');

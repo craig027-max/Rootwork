@@ -44,10 +44,13 @@ export function DetailPanel({
   vm,
   onPrimary,
   onSecondary,
+  onSample,
 }: {
   vm: DetailVM;
   onPrimary: () => void;
   onSecondary: () => void;
+  /** Done Daily / complete-tier recap — Remember tap, not dead chrome. */
+  onSample?: (root: string) => void;
 }) {
   const p = PALETTES[vm.jewel] ?? PALETTES.green!;
   const emoji = vm.scene ? (SCENE_EMOJI[vm.scene.key] ?? '✨') : null;
@@ -99,22 +102,38 @@ export function DetailPanel({
         <div
           className={`ww-samples${vm.sampleLines ? ' is-lines' : ''}${vm.samplesDone ? ' is-done' : ''}`}
         >
-          {vm.samples.map((s, i) => (
-            <div
-              className={`ww-schip${vm.samplesDone ? ' is-done' : ''}${
-                vm.samplesNext && i === 0 && !vm.samplesDone ? ' is-next' : ''
-              }`}
-              key={s.root}
-            >
-              {vm.samplesDone ? (
-                <span className="ww-daily-mark" aria-hidden="true">
-                  ✓
-                </span>
-              ) : null}
-              <b>{s.root}</b>
-              <span>{s.mean}</span>
-            </div>
-          ))}
+          {vm.samples.map((s, i) => {
+            const tapable = Boolean(vm.samplesDone && onSample);
+            const cls = `ww-schip${vm.samplesDone ? ' is-done' : ''}${
+              vm.samplesNext && i === 0 && !vm.samplesDone ? ' is-next' : ''
+            }${tapable ? ' is-tap' : ''}`;
+            const body = (
+              <>
+                {vm.samplesDone ? (
+                  <span className="ww-daily-mark" aria-hidden="true">
+                    ✓
+                  </span>
+                ) : null}
+                <b>{s.root}</b>
+                <span>{s.mean}</span>
+              </>
+            );
+            return tapable && onSample ? (
+              <button
+                type="button"
+                className={cls}
+                key={s.root}
+                onClick={() => onSample(s.root)}
+                aria-label={`Remember ${s.root}`}
+              >
+                {body}
+              </button>
+            ) : (
+              <div className={cls} key={s.root}>
+                {body}
+              </div>
+            );
+          })}
           {vm.moreCount > 0 ? <div className="ww-more">+ {vm.moreCount} more</div> : null}
         </div>
 
