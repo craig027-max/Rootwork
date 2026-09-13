@@ -247,6 +247,15 @@ export function listHeading(nextPlay: boolean, opts: { pathDone?: boolean } = {}
   return 'Jump back in';
 }
 
+/**
+ * Rush menu row when Daily is mid-run — name the waiting root so Chron
+ * is not only on the Daily tile. Fresh / done Daily keep the combo line.
+ */
+export function rushMenuSub(opts: { dailyNextName?: string; dailyDone?: boolean } = {}): string {
+  const name = !opts.dailyDone ? opts.dailyNextName?.replace(/\s+/g, ' ').trim() : '';
+  return name ? `Daily waiting · ${name}` : 'Combo run · match roots to meanings';
+}
+
 /** Returning-dashboard Root Rush meta: letter + stars, plus combo once it exists. */
 export function rushBestLabel(stats: {
   runs: number;
@@ -323,7 +332,7 @@ export function buildMenu(
       icon: '🎯',
       jewel: 'fire',
       title: 'Root Rush',
-      sub: 'Combo run · match roots to meanings',
+      sub: rushMenuSub({ dailyNextName: opts.dailyNextName, dailyDone: opts.dailyDone }),
       best: opts.rushBest,
     },
     {

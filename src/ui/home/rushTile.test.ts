@@ -1,10 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { rootId, rootsInTier } from '../../data/roots';
+import { ROOTS, isRootOpenable, rootId, rootsInTier } from '../../data/roots';
+import { continueDailyLabel, dailyNextRoot, dailyNextRowLabel, dailySeed, pickDailyRoots } from '../../core/daily';
 import { EMPTY_STATS, gradeForPct, recordRun } from '../../core/stats';
 import { buildDetailVM } from './detailVM';
-import { buildMenu, rushBestLabel } from './menu';
+import { buildMenu, rushBestLabel, rushMenuSub } from './menu';
 
 const home = readFileSync(join(process.cwd(), 'src/ui/Home.tsx'), 'utf8');
 const detail = readFileSync(join(process.cwd(), 'src/ui/home/detailVM.tsx'), 'utf8');
@@ -60,6 +61,8 @@ describe('Home Root Rush tile: no fake Starter trio', () => {
     expect(vm.ring).toBeUndefined();
     expect(vm.primary.label).toMatch(/Start the run/);
     expect(vm.primary.label).not.toMatch(/Play again/);
+    expect(vm.waiting).toBeFalsy();
+    expect(vm.secondary?.label).toBe('Browse roots');
   });
 
   it('keeps Rush off the first-run one-Play board', () => {
@@ -117,6 +120,8 @@ describe('Home Root Rush tile: best recap after a run', () => {
     expect(String(vm.lead)).toMatch(/2,400/);
     expect(vm.primary.label).toMatch(/Play again/);
     expect(vm.primary.label).not.toMatch(/Start the run/);
+    expect(vm.waiting).toBeFalsy();
+    expect(vm.secondary?.label).toBe('Browse roots');
   });
 
   it('still keeps Start / Play again as the next tap when there is no combo yet', () => {
@@ -147,6 +152,9 @@ describe('Home Root Rush tile: best recap after a run', () => {
     expect(detail).toContain('samples: []');
     expect(detail).not.toMatch(/rootsInTier\(1\)\.slice\(0,\s*3\)/);
     expect(detail).toContain("played ? 'Play again 🎯' : 'Start the run 🎯'");
+    expect(detail).toContain('dailyWaitingLine');
+    expect(detail).toContain('continueDailyLabel');
+    expect(detail).toContain('continueDaily ?? \'Browse roots\'');
 
     const ctaAt = readFileSync(join(process.cwd(), 'src/ui/home/DetailPanel.tsx'), 'utf8').indexOf(
       'ww-detail-cta',
@@ -161,6 +169,87 @@ describe('Home Root Rush tile: best recap after a run', () => {
     expect(phone).not.toMatch(/\.ww-pmeta \.pm-a\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.ww-pmeta \.pm-b\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.ww-ring\s*\{[^}]*display:\s*none/);
+  });
+});
+
+describe('Home Root Rush tile: Continue Daily is a real tap mid-run', () => {
+  const T1 = ROOTS.filter((r) => isRootOpenable(rootId(r), false));
+  const today = pickDailyRoots(T1, dailySeed('2026-09-10', 'kid-a'));
+  const next = dailyNextRoot(today, 2);
+  const waiting = dailyNextRowLabel({
+    answered: 2,
+    total: 5,
+    nextName: next?.root,
+    nextMean: next?.mean,
+  });
+
+  it('names the same next Daily root Today / Rush start already peek', () => {
+    expect(today).toHaveLength(5);
+    expect(next).toBeTruthy();
+    expect(rushMenuSub({ dailyNextName: next?.root })).toBe(`Daily waiting · ${next!.root}`);
+    expect(rushMenuSub({})).toBe('Combo run · match roots to meanings');
+    expect(rushMenuSub({ dailyNextName: next?.root, dailyDone: true })).toBe(
+      'Combo run · match roots to meanings',
+    );
+
+    const midMenu = buildMenu(startedBuilder, false, {
+      currentTier: 2,
+      dailyResumeQi: 2,
+      dailyTotal: 5,
+      dailyNextName: next?.root,
+    });
+    const midRush = midMenu.items.find((it) => it.kind === 'mode' && it.key === 'rush');
+    expect(midRush?.kind).toBe('mode');
+    if (midRush?.kind !== 'mode') throw new Error('fixture: Rush tile missing mid-run');
+    expect(midRush.sub).toBe(`Daily waiting · ${next!.root}`);
+    expect(midRush.sub).not.toMatch(/Combo run|Browse roots|Play again|Start daily/);
+
+    const vm = buildDetailVM(midRush, {
+      ...extraBase,
+      dailyRoots: today,
+      dailyResumeQi: 2,
+      dailyTotal: 5,
+    });
+    expect(vm.waiting).toBe(waiting);
+    expect(vm.waiting).toContain(next!.root);
+    expect(vm.waiting).toContain(next!.mean);
+    expect(vm.secondary?.label).toBe(continueDailyLabel(2, 5));
+    expect(vm.secondary?.label).toBe('Continue Daily · 3 of 5 ›');
+    expect(vm.primary.label).toMatch(/Start the run/);
+    expect(vm.primary.label).not.toMatch(/Continue Daily|Browse roots/);
+    expect(vm.samples).toEqual([]);
+    expect(vm.samples.map((s) => s.root)).not.toEqual(['Bio', 'Geo', 'Photo']);
+  });
+
+  it('keeps Browse roots when Daily is not mid-run', () => {
+    const vm = buildDetailVM(rushItem, {
+      ...extraBase,
+      dailyRoots: today,
+      dailyResumeQi: 0,
+      dailyTotal: 5,
+    });
+    expect(vm.waiting).toBeNull();
+    expect(vm.secondary?.label).toBe('Browse roots');
+    expect(buildDetailVM(rushItem, extraBase).secondary?.label).toBe('Browse roots');
+  });
+
+  it('wires Home so Continue Daily on Rush opens Daily — not Bio', () => {
+    const panel = readFileSync(join(process.cwd(), 'src/ui/home/DetailPanel.tsx'), 'utf8');
+    expect(home).toContain("item.key === 'rush' && dailyResumeQi != null");
+    expect(home).toContain("setView('daily')");
+    expect(detail).toContain('dailyWaitingLine');
+    expect(detail).toContain('continueDaily ?? \'Browse roots\'');
+    expect(panel).toContain('ww-detail-wait');
+    expect(panel).toContain('vm.waiting');
+    expect(css).toMatch(/\.ww-detail-wait\s*\{/);
+
+    const phone = mediaBlock(css, 'max-width: 860px');
+    expect(phone).toMatch(/\.ww-detail-wait\s*\{[^}]*display:\s*block/);
+    expect(phone).not.toMatch(/\.ww-detail-wait\s*\{[^}]*display:\s*none/);
+  });
+
+  it('does not expand the catalog', () => {
+    expect(ROOTS.length).toBe(183);
   });
 });
 

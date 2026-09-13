@@ -7,9 +7,10 @@
  * Continue button uses, and only shows a replay CTA as the secondary tap.
  *
  * A live Daily mid-run is the same honesty on Rush: Home already names
- * Chron and lands on that peek (#51 / #53 / #56). Rush start / result
- * peek Daily · 2 of 5 · Chron · time and make Continue Daily a real
- * tap — not a status-only dump, and not only Continue {next learn}.
+ * Chron and lands on that peek (#51 / #53 / #56). Home Rush tile, Rush
+ * start, and result peek Daily · 2 of 5 · Chron · time and make
+ * Continue Daily a real tap — not a status-only dump, and not only
+ * Continue {next learn} or Browse roots → Bio.
  *
  * Pure and Date-free so tests lock the copy without I/O.
  */

@@ -16,6 +16,7 @@ import {
   TIER_TILE_PREVIEW_COUNT,
   type MenuItem,
 } from './menu';
+import { dailyWaitingLine } from '../modes/modeHandoff';
 import type { DetailVM } from './DetailPanel';
 
 function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: string; caption: string }) {
@@ -28,7 +29,9 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
   };
 }
 
-/** Derive the detail-panel view model from the selected menu row + live progress. */
+/** Derive the detail-panel view model from the selected menu row + live progress.
+ *  Rush mid-run peeks Daily · N of 5 · {root} and offers Continue Daily —
+ *  Browse roots must not dump Bio while Chron is still waiting. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -64,12 +67,30 @@ export function buildDetailVM(
       const recapLine = recap
         ? ` Best so far — ${recap}${bestScore > 0 ? ' combo' : ''}.`
         : '';
+      const nextDaily = dailyNextRoot(extra.dailyRoots, extra.dailyResumeQi);
+      const waiting = dailyWaitingLine({
+        dailyResumeQi: extra.dailyResumeQi,
+        dailyTotal: extra.dailyRoots.length || extra.dailyTotal,
+        dailyNextName: nextDaily?.root,
+        dailyNextMean: nextDaily?.mean,
+      });
+      const total = extra.dailyRoots.length || extra.dailyTotal || 5;
+      const qi = extra.dailyResumeQi;
+      const continueDaily =
+        waiting &&
+        typeof qi === 'number' &&
+        Number.isInteger(qi) &&
+        qi >= 1 &&
+        qi < total
+          ? continueDailyLabel(qi, total)
+          : null;
       return {
         jewel: item.jewel,
         animKey: item.key,
         eyebrow: 'Quiz Mode',
         big: 'Root Rush',
         lead: `Match roots to meanings and rack up combos — every right answer in a row multiplies your score. Ten questions a run; beat your best.${recapLine}`,
+        waiting,
         ring: played
           ? { pct: bestPct, label: gradeForPct(bestPct) }
           : undefined,
@@ -82,7 +103,9 @@ export function buildDetailVM(
         samples: [],
         moreCount: 0,
         primary: { label: played ? 'Play again 🎯' : 'Start the run 🎯' },
-        secondary: { label: 'Browse roots' },
+        // Mid-run: Continue Daily is the same tap Rush start already uses —
+        // Browse roots must not dump Bio while Chron is waiting.
+        secondary: { label: continueDaily ?? 'Browse roots' },
         scene: sceneFrom(undefined, { key: 'heat', palKey: 'fire', caption: 'Root Rush' }),
       };
     }

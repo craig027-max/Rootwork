@@ -509,6 +509,9 @@
   .ww-daily-mark {
     display: inline;
   }
+  .ww-detail-wait {
+    display: block;
+  }
   .ww-daily-line > span:last-child {
     margin-left: 0;
     flex: 1 1 100%;
@@ -908,6 +911,15 @@
 }
 .ww-detail .lead b {
   color: var(--text-primary);
+}
+.ww-detail-wait {
+  display: block;
+  margin: 14px 0 0;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  letter-spacing: 0.02em;
+  color: rgb(var(--spark-rgb));
 }
 .ww-prog {
   display: flex;

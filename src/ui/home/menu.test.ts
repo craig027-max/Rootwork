@@ -16,6 +16,7 @@ import {
   nextPlayRoot,
   pickCurrentTier,
   rushBestLabel,
+  rushMenuSub,
   tierPrimaryLabel,
   tierTilePreview,
   tuckedSummary,
@@ -382,6 +383,15 @@ describe('copy', () => {
     expect(rushBestLabel({ runs: 2, bestPct: 100, bestStars: 5, bestScore: 4500 })).toBe(
       'S · 5★ · 4,500',
     );
+  });
+
+  it('names a live Daily mid-run on the Rush row — not a combo-only dump', () => {
+    expect(rushMenuSub({ dailyNextName: 'Chron' })).toBe('Daily waiting · Chron');
+    expect(rushMenuSub({ dailyNextName: '  Chron  ' })).toBe('Daily waiting · Chron');
+    expect(rushMenuSub({ dailyNextName: 'Chron', dailyDone: true })).toBe(
+      'Combo run · match roots to meanings',
+    );
+    expect(rushMenuSub({})).toBe('Combo run · match roots to meanings');
   });
 
   it('says start/play on the next-Play board and jump back in on the dashboard', () => {
