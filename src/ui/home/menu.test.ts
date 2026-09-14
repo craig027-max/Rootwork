@@ -439,7 +439,7 @@ describe('homeSecondaryAction — Browse / See all is the catalog, not Bio', () 
   });
 
   it('opens the index on a complete tier See all — Replay stays the primary', () => {
-    const { items } = buildMenu(startedBuilder, false, { currentTier: 2 });
+    const { items } = buildMenu(startedBuilder, true, { currentTier: 2 });
     const starterRow = items.find((it) => it.kind === 'tier' && it.t === 1);
     const builderRow = items.find((it) => it.kind === 'tier' && it.t === 2);
     expect(starterRow?.kind).toBe('tier');
