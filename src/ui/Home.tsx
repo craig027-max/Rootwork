@@ -12,10 +12,11 @@ import {
   pickDailyRoots,
   liveDailyResumeQi,
 } from '../core/daily';
-import { recapOpenForRoot } from '../core/deckFlow';
+import { recapOpenForId, recapOpenForRoot } from '../core/deckFlow';
 import {
   buildMenu,
   hasChosenMode,
+  homeSecondaryAction,
   homeSelectedIndex,
   isDailyResumeItem,
   isNextPlayHome,
@@ -30,6 +31,7 @@ import { ProfileBand } from './home/ProfileBand';
 import { TierMenu } from './home/TierMenu';
 import { DetailPanel } from './home/DetailPanel';
 import { buildDetailVM } from './home/detailVM';
+import { RootIndex } from './deck/RootIndex';
 import { learnNextAction } from './modes/modeHandoff';
 import { buildProfileProgress } from './home/profileProgress';
 import {
@@ -118,6 +120,7 @@ export function Home() {
   });
   const allItems = [...items, ...tucked];
   const [picked, setPicked] = useState<number | null>(null);
+  const [indexOpen, setIndexOpen] = useState(false);
   const selectedIndex = homeSelectedIndex(picked, items, currentTier, {
     dailyResume: dailyResumeQi != null,
   });
@@ -146,22 +149,27 @@ export function Home() {
   }
 
   function onSecondary(item: MenuItem) {
-    if (item.kind === 'mode') {
-      // Mid-run Rush tile: Continue Daily · N of 5 — same tap Rush start uses.
-      if (item.key === 'rush' && dailyResumeQi != null) {
-        setView('daily');
-        return;
-      }
-      const first = ROOTS[0];
-      if (first) openRoot(rootId(first));
+    const tap = homeSecondaryAction(item, { dailyResumeQi });
+    if (tap.kind === 'daily') {
+      setView('daily');
       return;
     }
-    if (item.locked) requestUpgrade();
-    else openTier(item.t);
+    if (tap.kind === 'index') {
+      setIndexOpen(true);
+      return;
+    }
+    if (tap.kind === 'upgrade') requestUpgrade();
+    else openTier(tap.t);
   }
 
   function onRecap(name: string) {
     const recap = recapOpenForRoot(name, completed);
+    if (recap) openRoot(recap.id, { entry: recap.entry });
+  }
+
+  function onBrowsePick(id: string) {
+    const recap = recapOpenForId(id, completed);
+    setIndexOpen(false);
     if (recap) openRoot(recap.id, { entry: recap.entry });
   }
 
@@ -242,6 +250,14 @@ export function Home() {
           />
         </div>
       </div>
+      {indexOpen ? (
+        <RootIndex
+          entitled={entitled}
+          completed={completed}
+          onPick={onBrowsePick}
+          onClose={() => setIndexOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }

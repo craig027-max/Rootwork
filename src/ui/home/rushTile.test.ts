@@ -235,8 +235,10 @@ describe('Home Root Rush tile: Continue Daily is a real tap mid-run', () => {
 
   it('wires Home so Continue Daily on Rush opens Daily — not Bio', () => {
     const panel = readFileSync(join(process.cwd(), 'src/ui/home/DetailPanel.tsx'), 'utf8');
-    expect(home).toContain("item.key === 'rush' && dailyResumeQi != null");
+    expect(home).toContain('homeSecondaryAction');
+    expect(home).toContain("tap.kind === 'daily'");
     expect(home).toContain("setView('daily')");
+    expect(home).not.toContain('openRoot(rootId(first))');
     expect(detail).toContain('dailyWaitingLine');
     expect(detail).toContain('continueDaily ?? \'Browse roots\'');
     expect(panel).toContain('ww-detail-wait');

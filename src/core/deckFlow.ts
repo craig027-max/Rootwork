@@ -228,7 +228,19 @@ export function recapOpenForRoot(
   if (!trimmed) return null;
   const root = ROOTS.find((r) => r.root === trimmed);
   if (!root) return null;
-  const id = rootId(root);
+  return recapOpenForId(rootId(root), completed);
+}
+
+/**
+ * Catalog / index tap. Owned roots are Remember — hold meaning, then Home.
+ * Teach would dump them onto Geo after Yes (Browse roots → Bio). Unowned
+ * stay teach so they can still meet the card.
+ */
+export function recapOpenForId(
+  id: string,
+  completed: ReadonlySet<string>,
+): { id: RootId; entry: DeckEntry } | null {
+  if (!ROOTS_BY_ID[id]) return null;
   return { id, entry: recapDeckEntry(completed.has(id)) };
 }
 

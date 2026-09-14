@@ -584,6 +584,21 @@
     display: block;
     max-width: none;
   }
+  .ww-index {
+    display: block;
+  }
+  .ww-ichip {
+    display: block;
+  }
+  .ww-ichip.is-done {
+    display: block;
+  }
+  .ww-ichip.is-done .ir {
+    display: inline-flex;
+  }
+  .ww-ichip .ww-daily-mark {
+    display: inline;
+  }
   .ww-profile.is-slim,
   .ww-profile.is-first {
     padding: 16px;
@@ -1904,6 +1919,14 @@ button.ww-schip:focus-visible {
 }
 .ww-ichip.lockchip {
   opacity: 0.55;
+}
+.ww-ichip.is-done {
+  border-color: color-mix(in srgb, var(--success) 35%, rgba(255, 255, 255, 0.08));
+}
+.ww-ichip.is-done .ir {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 .ww-ichip .ir {
   font-family: var(--font-game);

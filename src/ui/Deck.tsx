@@ -23,6 +23,7 @@ import {
   holdHearAfterClip,
   isLessonStudying,
   isRecallEntry,
+  recapOpenForId,
   showExampleWords,
   winLineOnCard,
   type AfterCorrectRecall,
@@ -548,10 +549,12 @@ export function Deck() {
       {indexOpen ? (
         <RootIndex
           entitled={entitled}
+          completed={completed}
           onPick={(pickId) => {
             if (!allowNextRootTap(useWondralStore.getState().correctAdvance, listening)) return;
+            const recap = recapOpenForId(pickId, completed);
             setIndexOpen(false);
-            openRoot(pickId);
+            if (recap) openRoot(recap.id, { entry: recap.entry });
           }}
           onClose={() => setIndexOpen(false)}
         />
