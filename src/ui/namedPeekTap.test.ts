@@ -102,7 +102,7 @@ describe('Named peek / Replay is a real Continue or Remember tap', () => {
   });
 
   it('in-progress Geo peek Continues Geo; done Bio recap Remembers', () => {
-    const { items } = buildMenu(startedBuilder, false, { currentTier: 2 });
+    const { items } = buildMenu(startedBuilder, true, { currentTier: 2 });
     const starterRow = items.find((it) => it.kind === 'tier' && it.t === 1);
     const builderRow = items.find((it) => it.kind === 'tier' && it.t === 2);
     expect(starterRow && builderRow).toBeTruthy();
