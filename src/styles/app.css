@@ -537,6 +537,12 @@
   .ww-samples.is-lines .ww-schip.is-next {
     display: flex;
   }
+  .ww-samples.is-lines .ww-schip.is-tap {
+    display: flex;
+  }
+  .ww-samples.is-lines .ww-schip.is-next.is-tap {
+    display: flex;
+  }
   .ww-samples.is-lines .ww-schip > span:last-child {
     margin-left: 0;
     flex: 1 1 100%;

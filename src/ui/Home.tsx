@@ -24,9 +24,10 @@ import {
   listHeading,
   pickCurrentTier,
   rushBestLabel,
-  tierEntryRoot,
+  tierPrimaryOpen,
   type MenuItem,
 } from './home/menu';
+import { homeSampleAction } from './home/samplePeek';
 import { ProfileBand } from './home/ProfileBand';
 import { TierMenu } from './home/TierMenu';
 import { DetailPanel } from './home/DetailPanel';
@@ -131,10 +132,10 @@ export function Home() {
   const avatar = activeStudent?.avatar ?? DEFAULT_AVATAR;
 
   function openTier(t: TierNum) {
-    const entry = tierEntryRoot(t, completed, entitled);
+    const entry = tierPrimaryOpen(t, completed, entitled);
     if (entry) {
       setSelectedTier(t);
-      openRoot(rootId(entry));
+      openRoot(entry.id, { entry: entry.entry });
     }
   }
 
@@ -165,6 +166,16 @@ export function Home() {
   function onRecap(name: string) {
     const recap = recapOpenForRoot(name, completed);
     if (recap) openRoot(recap.id, { entry: recap.entry });
+  }
+
+  function onSamplePick(name: string) {
+    const tap = homeSampleAction(selected, name, { dailyDone });
+    if (!tap) return;
+    if (tap.kind === 'daily') {
+      setView('daily');
+      return;
+    }
+    onRecap(tap.name);
   }
 
   function onBrowsePick(id: string) {
@@ -246,7 +257,7 @@ export function Home() {
             vm={vm}
             onPrimary={() => onPrimary(selected)}
             onSecondary={() => onSecondary(selected)}
-            onSample={vm.samplesDone ? onRecap : undefined}
+            onSample={vm.sampleTap ? onSamplePick : undefined}
           />
         </div>
       </div>

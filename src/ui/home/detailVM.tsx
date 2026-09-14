@@ -17,6 +17,7 @@ import {
   type MenuItem,
 } from './menu';
 import { dailyWaitingLine } from '../modes/modeHandoff';
+import { samplePeekTap } from './samplePeek';
 import type { DetailVM } from './DetailPanel';
 
 function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: string; caption: string }) {
@@ -31,7 +32,8 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
 
 /** Derive the detail-panel view model from the selected menu row + live progress.
  *  Rush mid-run peeks Daily · N of 5 · {root} and offers Continue Daily —
- *  Browse roots must not dump Bio while Chron is still waiting. */
+ *  Browse roots must not dump Bio while Chron is still waiting. Named
+ *  peek chips are real taps (Remember / Continue Daily / Continue {root}). */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -101,6 +103,7 @@ export function buildDetailVM(
             : 'Ten questions a run'
           : undefined,
         samples: [],
+        sampleTap: samplePeekTap({ mode: 'rush', sampleCount: 0 }),
         moreCount: 0,
         primary: { label: played ? 'Play again 🎯' : 'Start the run 🎯' },
         // Mid-run: Continue Daily is the same tap Rush start already uses —
@@ -142,6 +145,11 @@ export function buildDetailVM(
       sampleLines: true,
       samplesDone: extra.dailyDone && dailySamples.length > 0,
       samplesNext: Boolean(dailyResume != null && !extra.dailyDone && dailySamples.length > 0),
+      sampleTap: samplePeekTap({
+        mode: 'daily',
+        dailyDone: extra.dailyDone,
+        sampleCount: dailySamples.length,
+      }),
       moreCount: Math.max(0, remainingAfterPeek),
       primary: {
         label: extra.dailyDone
@@ -178,6 +186,7 @@ export function buildDetailVM(
       locked: true,
       lead: leadWithNames(`${name} unlocks the full curriculum — roots like `, teaser.slice(0, 3)),
       samples: teaser.map((r) => ({ root: r.root, mean: r.mean })),
+      sampleTap: samplePeekTap({ locked: true, sampleCount: teaser.length }),
       moreCount: Math.max(0, item.total - teaser.length),
       primary: { label: '🔓 Ask a grown-up to unlock' },
       scene: sceneFrom(teaser[0], { key: 'dna', palKey: item.jewel, caption: name }),
@@ -217,6 +226,12 @@ export function buildDetailVM(
     samples: peek,
     sampleLines: !firstPlay && peek.length > 0,
     samplesDone: complete && peek.length > 0,
+    sampleTap: samplePeekTap({
+      nextPlay: firstPlay,
+      complete,
+      empty,
+      sampleCount: peek.length,
+    }),
     moreCount: firstPlay ? 0 : Math.max(0, remaining),
     primary: {
       label: tierPrimaryLabel({

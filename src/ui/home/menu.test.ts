@@ -419,7 +419,7 @@ describe('copy', () => {
       'Play Urb ›',
     );
     expect(tierPrimaryLabel({ nextPlay: false, complete: true, rootName: 'Bio' })).toBe(
-      'Replay tier ›',
+      'Remember Bio ›',
     );
   });
 });
@@ -438,7 +438,7 @@ describe('homeSecondaryAction — Browse / See all is the catalog, not Bio', () 
     expect(homeSecondaryAction(rush, { dailyResumeQi: 2 })).not.toEqual({ kind: 'tier', t: 1 });
   });
 
-  it('opens the index on a complete tier See all — Replay stays the primary', () => {
+  it('opens the index on a complete tier See all — Remember is the primary', () => {
     const { items } = buildMenu(startedBuilder, true, { currentTier: 2 });
     const starterRow = items.find((it) => it.kind === 'tier' && it.t === 1);
     const builderRow = items.find((it) => it.kind === 'tier' && it.t === 2);
