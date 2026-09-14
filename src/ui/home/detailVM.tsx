@@ -150,7 +150,8 @@ export function buildDetailVM(
             ? continueDailyLabel(dailyResume, extra.dailyRoots.length || extra.dailyTotal || 5)
             : 'Start daily 📅',
       },
-      secondary: { label: 'Browse roots' },
+        // Browse roots opens the catalog (Remember for owned) — not Bio teach.
+        secondary: { label: 'Browse roots' },
       scene: sceneFrom(nextDaily ?? extra.dailyRoots[0], {
         key: 'stars',
         palKey: 'gold',

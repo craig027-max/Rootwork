@@ -16,6 +16,7 @@ import {
   decideCorrectAdvance,
   deckEntryForOpen,
   recapDeckEntry,
+  recapOpenForId,
   recapOpenForRoot,
   entryAfterSuccess,
   hearHoldLine,
@@ -127,6 +128,13 @@ describe('afterCorrectRecall', () => {
     expect(recapOpenForRoot('Bio', new Set())).toEqual({ id: bioId, entry: 'teach' });
     expect(recapOpenForRoot('no-such-root', new Set([bioId]))).toBeNull();
     expect(recapOpenForRoot('  Bio  ', new Set([bioId]))?.entry).toBe('remember');
+  });
+
+  it('catalog / index id taps use the same Remember / teach split', () => {
+    expect(recapOpenForId(bioId, new Set([bioId]))).toEqual({ id: bioId, entry: 'remember' });
+    expect(recapOpenForId(bioId, new Set())).toEqual({ id: bioId, entry: 'teach' });
+    expect(recapOpenForId(geoId, new Set([bioId]))).toEqual({ id: geoId, entry: 'teach' });
+    expect(recapOpenForId('no-such-root', new Set([bioId]))).toBeNull();
   });
 });
 

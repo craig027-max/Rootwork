@@ -4,6 +4,7 @@ import { dailySeed, dailyTilePreview, pickDailyRoots } from '../../core/daily';
 import {
   buildMenu,
   defaultSelectedIndex,
+  homeSecondaryAction,
   homeSelectedIndex,
   isDailyResumeItem,
   entryRootName,
@@ -420,5 +421,42 @@ describe('copy', () => {
     expect(tierPrimaryLabel({ nextPlay: false, complete: true, rootName: 'Bio' })).toBe(
       'Replay tier ›',
     );
+  });
+});
+
+describe('homeSecondaryAction — Browse / See all is the catalog, not Bio', () => {
+  it('opens the index on Daily / Rush Browse roots — Chron mid-run still Continues Daily', () => {
+    const { items } = buildMenu(startedBuilder, false, { currentTier: 2 });
+    const rush = items.find((it) => it.kind === 'mode' && it.key === 'rush');
+    const daily = items.find((it) => it.kind === 'mode' && it.key === 'daily');
+    expect(rush && daily).toBeTruthy();
+    if (!rush || !daily) throw new Error('fixture: Rush / Daily missing');
+    expect(homeSecondaryAction(rush)).toEqual({ kind: 'index' });
+    expect(homeSecondaryAction(daily)).toEqual({ kind: 'index' });
+    expect(homeSecondaryAction(rush, { dailyResumeQi: 2 })).toEqual({ kind: 'daily' });
+    expect(homeSecondaryAction(daily, { dailyResumeQi: 2 })).toEqual({ kind: 'index' });
+    expect(homeSecondaryAction(rush, { dailyResumeQi: 2 })).not.toEqual({ kind: 'tier', t: 1 });
+  });
+
+  it('opens the index on a complete tier See all — Replay stays the primary', () => {
+    const { items } = buildMenu(startedBuilder, true, { currentTier: 2 });
+    const starterRow = items.find((it) => it.kind === 'tier' && it.t === 1);
+    const builderRow = items.find((it) => it.kind === 'tier' && it.t === 2);
+    expect(starterRow?.kind).toBe('tier');
+    expect(builderRow?.kind).toBe('tier');
+    if (starterRow?.kind !== 'tier' || builderRow?.kind !== 'tier') {
+      throw new Error('fixture: Starter / Builder missing');
+    }
+    expect(starterRow.pct).toBe(100);
+    expect(homeSecondaryAction(starterRow)).toEqual({ kind: 'index' });
+    expect(homeSecondaryAction(builderRow)).toEqual({ kind: 'tier', t: 2 });
+  });
+
+  it('still upgrades a locked paid teaser', () => {
+    const { tucked } = buildMenu(startedBuilder, false, { currentTier: 2 });
+    const locked = tucked.find((it) => it.locked);
+    expect(locked).toBeTruthy();
+    if (!locked) throw new Error('fixture: locked tier missing');
+    expect(homeSecondaryAction(locked)).toEqual({ kind: 'upgrade' });
   });
 });

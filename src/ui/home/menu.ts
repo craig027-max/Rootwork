@@ -289,6 +289,30 @@ export function isResumeTier(item: MenuItem): boolean {
   return item.kind === 'tier' && item.current && !item.locked && item.pct < 100;
 }
 
+/**
+ * Home preview ghost tap. Rush mid-run is Continue Daily — Chron, not Bio.
+ * Browse roots / See all roots open the catalog. They must not dump Bio
+ * teach → Geo after Yes. Incomplete tiers still enter that tier.
+ */
+export type HomeSecondary =
+  | { kind: 'daily' }
+  | { kind: 'index' }
+  | { kind: 'upgrade' }
+  | { kind: 'tier'; t: TierNum };
+
+export function homeSecondaryAction(
+  item: MenuItem,
+  opts: { dailyResumeQi?: number | null } = {},
+): HomeSecondary {
+  if (item.kind === 'mode') {
+    if (item.key === 'rush' && opts.dailyResumeQi != null) return { kind: 'daily' };
+    return { kind: 'index' };
+  }
+  if (item.locked) return { kind: 'upgrade' };
+  if (item.pct === 100) return { kind: 'index' };
+  return { kind: 'tier', t: item.t };
+}
+
 /** Collapsed-row label for tucked higher tiers. */
 export function tuckedSummary(tucked: TierItem[]): string {
   if (tucked.length === 0) return '';

@@ -8,6 +8,7 @@ import {
   isRootOpenable,
   type Root,
 } from '../../data/roots';
+import { recapDeckEntry } from '../../core/deckFlow';
 import { paletteVars } from '../components/styleVars';
 
 function palRgb(root: Root): string {
@@ -16,15 +17,19 @@ function palRgb(root: Root): string {
 
 /**
  * Full-screen index overlay: every root grouped by tier as jewel-tinted chips.
- * Picking a chip jumps the deck to that card. Locked (paid) roots still appear
- * but are dimmed — opening one routes through the deck's existing upgrade guard.
+ * Picking a chip jumps the deck to that card. Owned chips are Remember —
+ * hold the meaning, then Home — so Browse / See all cannot dump Bio → Geo.
+ * Locked (paid) roots still appear but are dimmed — opening one routes
+ * through the deck's existing upgrade guard.
  */
 export function RootIndex({
   entitled,
+  completed,
   onPick,
   onClose,
 }: {
   entitled: boolean;
+  completed?: ReadonlySet<string>;
   onPick: (id: string) => void;
   onClose: () => void;
 }) {
@@ -70,15 +75,23 @@ export function RootIndex({
               {rootsInTier((ti + 1) as 1 | 2 | 3 | 4 | 5).map((root) => {
                 const id = rootId(root);
                 const locked = !isRootOpenable(id, entitled);
+                const owned = Boolean(completed?.has(id));
+                const remember = recapDeckEntry(owned) === 'remember';
                 return (
                   <button
                     key={id}
                     type="button"
-                    className={`ww-ichip${locked ? ' lockchip' : ''}`}
+                    className={`ww-ichip${locked ? ' lockchip' : ''}${owned ? ' is-done' : ''}`}
                     style={paletteVars(palRgb(root), (PALETTES[root.pal] ?? PALETTES.green!).grad)}
                     onClick={() => onPick(id)}
+                    aria-label={remember ? `Remember ${root.root}` : root.root}
                   >
                     <div className="ir">
+                      {owned ? (
+                        <span className="ww-daily-mark" aria-hidden="true">
+                          ✓
+                        </span>
+                      ) : null}
                       {root.root} {locked ? '🔒' : ''}
                     </div>
                     <div className="im">{root.mean}</div>
