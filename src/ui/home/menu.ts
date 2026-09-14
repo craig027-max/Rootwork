@@ -26,6 +26,7 @@ import {
   type Root,
   type TierNum,
 } from '../../data/roots';
+import { recapOpenForId, type DeckEntry } from '../../core/deckFlow';
 import { dailyNextSub } from '../../core/daily';
 import { gradeForPct, starsForPct } from '../../core/stats';
 
@@ -280,8 +281,23 @@ export function tierPrimaryLabel(opts: {
 }): string {
   if (opts.keepGoing) return `Keep going · ${opts.rootName} ›`;
   if (opts.nextPlay || opts.empty) return `Play ${opts.rootName} ›`;
-  if (opts.complete) return 'Replay tier ›';
+  if (opts.complete) return `Remember ${opts.rootName} ›`;
   return `Continue ${opts.rootName} ›`;
+}
+
+/**
+ * Primary tap on a tier. A finished tier Remembers the first owned root —
+ * Replay must not dump Bio teach → Geo. An in-progress / empty tier still
+ * teaches the named next root.
+ */
+export function tierPrimaryOpen(
+  t: TierNum,
+  completed: Set<string>,
+  entitled: boolean,
+): { id: string; entry: DeckEntry } | null {
+  const entry = tierEntryRoot(t, completed, entitled);
+  if (!entry) return null;
+  return recapOpenForId(rootId(entry), completed);
 }
 
 /** Returning dashboard + this row is the in-progress resume tier. */
@@ -292,7 +308,8 @@ export function isResumeTier(item: MenuItem): boolean {
 /**
  * Home preview ghost tap. Rush mid-run is Continue Daily — Chron, not Bio.
  * Browse roots / See all roots open the catalog. They must not dump Bio
- * teach → Geo after Yes. Incomplete tiers still enter that tier.
+ * teach → Geo after Yes. Incomplete tiers still enter that tier. A finished
+ * tier's primary is Remember {root} — Replay is not a Bio teach dump.
  */
 export type HomeSecondary =
   | { kind: 'daily' }

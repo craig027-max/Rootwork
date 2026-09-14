@@ -4,6 +4,7 @@ import { paletteVars, type CSSVars } from '../components/styleVars';
 import { Button } from '../components/Button';
 import { Scene } from '../Scene';
 import { SCENE_EMOJI } from '../scenes';
+import { samplePeekLabel, type SamplePeekTap } from './samplePeek';
 
 export interface DetailVM {
   /** PALETTES key driving the panel theme. */
@@ -25,6 +26,8 @@ export interface DetailVM {
   samplesDone?: boolean;
   /** Mid-run Daily: first remaining line is the next unanswered root. */
   samplesNext?: boolean;
+  /** Named peek chips are real taps — Remember, Continue Daily, or Continue {root}. */
+  sampleTap?: SamplePeekTap;
   moreCount: number;
   primary: { label: string; disabled?: boolean };
   secondary?: { label: string };
@@ -54,7 +57,7 @@ export function DetailPanel({
   vm: DetailVM;
   onPrimary: () => void;
   onSecondary: () => void;
-  /** Done Daily / complete-tier recap — Remember tap, not dead chrome. */
+  /** Named peek chip — Remember / Continue Daily / Continue {root}, not dead chrome. */
   onSample?: (root: string) => void;
 }) {
   const p = PALETTES[vm.jewel] ?? PALETTES.green!;
@@ -113,9 +116,10 @@ export function DetailPanel({
           className={`ww-samples${vm.sampleLines ? ' is-lines' : ''}${vm.samplesDone ? ' is-done' : ''}`}
         >
           {vm.samples.map((s, i) => {
-            const tapable = Boolean(vm.samplesDone && onSample);
+            const tapable = Boolean(vm.sampleTap && onSample);
+            const isNext = Boolean(vm.samplesNext && i === 0 && !vm.samplesDone);
             const cls = `ww-schip${vm.samplesDone ? ' is-done' : ''}${
-              vm.samplesNext && i === 0 && !vm.samplesDone ? ' is-next' : ''
+              isNext ? ' is-next' : ''
             }${tapable ? ' is-tap' : ''}`;
             const body = (
               <>
@@ -128,13 +132,13 @@ export function DetailPanel({
                 <span>{s.mean}</span>
               </>
             );
-            return tapable && onSample ? (
+            return tapable && onSample && vm.sampleTap ? (
               <button
                 type="button"
                 className={cls}
                 key={s.root}
                 onClick={() => onSample(s.root)}
-                aria-label={`Remember ${s.root}`}
+                aria-label={samplePeekLabel(vm.sampleTap, s.root, { dailyNext: isNext })}
               >
                 {body}
               </button>

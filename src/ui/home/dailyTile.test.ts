@@ -77,6 +77,7 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
     expect(vm.moreCount).toBe(2);
     expect(vm.primary.label).toMatch(/Start daily/);
     expect(vm.heroCta).toBeFalsy();
+    expect(vm.sampleTap).toBe('daily');
   });
 
   it('names the next Daily root and peeks remaining — not the already-got first three', () => {
@@ -129,6 +130,7 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
     expect(vm.scene?.caption).toBe(`${next!.root} · ${next!.mean}`);
     expect(vm.heroCta).toBe(true);
     expect(vm.primary.label).toBe(continueDailyLabel(2, 5));
+    expect(vm.sampleTap).toBe('daily');
   });
 
   it('does not invent a fake starter list when today\'s pick is empty', () => {
@@ -169,9 +171,9 @@ describe('Home Daily tile: three names + one-line meanings before Start', () => 
     expect(panel).toContain('samplesNext');
     expect(panel).toContain('is-next');
     expect(panel).toContain('onSample');
-    expect(panel).toContain('Remember ${s.root}');
+    expect(panel).toContain('samplePeekLabel');
     expect(home).toContain('recapOpenForRoot');
-    expect(home).toContain('onSample={vm.samplesDone ? onRecap : undefined}');
+    expect(home).toContain('onSample={vm.sampleTap ? onSamplePick : undefined}');
 
     const samplesAt = panel.indexOf('className={`ww-samples');
     const ctaAt = panel.indexOf('ww-detail-cta');
@@ -240,6 +242,7 @@ describe('Home Daily tile: done-state recap after Daily is banked', () => {
     expect(vm.primary.label).toMatch(/Play again/);
     expect(vm.primary.label).not.toMatch(/Start daily/);
     expect(vm.heroCta).toBeFalsy();
+    expect(vm.sampleTap).toBe('remember');
   });
 
   it('marks those three lines done with the existing Daily ✓ / DONE chrome', () => {
@@ -256,8 +259,8 @@ describe('Home Daily tile: done-state recap after Daily is banked', () => {
     expect(css).toMatch(/\.ww-daily-line\.is-done/);
     expect(css).toMatch(/\.ww-schip\.is-done/);
     expect(panel).toContain('is-tap');
-    expect(panel).toContain('Remember ${s.root}');
-    expect(home).toContain('onSample={vm.samplesDone ? onRecap : undefined}');
+    expect(panel).toContain('samplePeekLabel');
+    expect(home).toContain('onSample={vm.sampleTap ? onSamplePick : undefined}');
   });
 
   it('does not drop the recap when Daily is done and the deal is empty', () => {

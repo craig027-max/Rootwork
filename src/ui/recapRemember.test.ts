@@ -46,8 +46,8 @@ describe('Done Daily / Learned recap is Remember — not Geo', () => {
     expect(daily).toContain('aria-label={`Remember ${r.root}`}');
     expect(daily).not.toContain('onClick={() => openRoot(rootId(r))}');
     expect(home).toContain('recapOpenForRoot');
-    expect(home).toContain('onSample={vm.samplesDone ? onRecap : undefined}');
-    expect(panel).toContain('Remember ${s.root}');
+    expect(home).toContain('onSample={vm.sampleTap ? onSamplePick : undefined}');
+    expect(panel).toContain('samplePeekLabel');
     expect(panel).toContain('is-tap');
   });
 

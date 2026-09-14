@@ -100,6 +100,7 @@ describe('Home tier tile: mid-Starter peek (Bio owned)', () => {
     expect(vm.primary.label).toBe('Continue Geo ›');
     expect(vm.primary.label).not.toMatch(/Bio/);
     expect(vm.heroCta).toBe(true);
+    expect(vm.sampleTap).toBe('continue');
     expect(vm.secondary).toBeUndefined();
     expect(vm.samples[0]?.root).toBe('Geo');
     expect(vm.sampleLines).toBe(true);
@@ -125,7 +126,7 @@ describe('Home tier tile: complete Starter recap', () => {
   const row = returning.items.find((it) => it.kind === 'tier' && it.t === 1);
   if (!row || row.kind !== 'tier') throw new Error('fixture: Starter tile missing on dashboard');
 
-  it('recaps owned roots with ✓ — Replay stays, not a first-play teaser', () => {
+  it('recaps owned roots with ✓ — Remember Bio, not a Replay → Geo dump', () => {
     expect(row.pct).toBe(100);
 
     const vm = buildDetailVM(row, {
@@ -142,7 +143,8 @@ describe('Home tier tile: complete Starter recap', () => {
     expect(String(vm.lead)).toMatch(/every root owned/);
     expect(String(vm.lead)).not.toMatch(/Play to meet/);
     expect(String(vm.lead)).not.toMatch(/roots like/);
-    expect(vm.primary.label).toBe('Replay tier ›');
+    expect(vm.primary.label).toBe('Remember Bio ›');
+    expect(vm.sampleTap).toBe('remember');
     expect(vm.heroCta).toBeFalsy();
     expect(vm.secondary?.label).toBe('See all roots');
     expect(vm.ring?.label).toBe('✓');
@@ -179,6 +181,7 @@ describe('Home tier tile: first-run one-Play board stays one Play', () => {
     expect(vm.samples.map((s) => s.root)).not.toEqual(['Bio', 'Geo', 'Photo', 'Aqua']);
     expect(vm.sampleLines).toBeFalsy();
     expect(vm.samplesDone).toBeFalsy();
+    expect(vm.sampleTap).toBeUndefined();
     expect(vm.moreCount).toBe(0);
   });
 
@@ -227,6 +230,7 @@ describe('Home tier tile: empty unlocked tier invites Play', () => {
     expect(vm.secondary).toBeUndefined();
     expect(vm.samples[0]?.root).toBe(firstScholar.root);
     expect(vm.sampleLines).toBe(true);
+    expect(vm.sampleTap).toBe('play');
     expect(vm.pmA).toBe(`0 of ${row.total} roots owned`);
   });
 });
@@ -247,6 +251,7 @@ describe('Home tier tile: locked paid teaser stays a teaser', () => {
     expect(vm.samples.map((s) => s.root)).toEqual(builder.slice(0, 4).map((r) => r.root));
     expect(vm.sampleLines).toBeFalsy();
     expect(vm.samplesDone).toBeFalsy();
+    expect(vm.sampleTap).toBeUndefined();
     expect(vm.primary.label).toMatch(/Ask a grown-up to unlock/);
   });
 });
