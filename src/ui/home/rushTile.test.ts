@@ -149,7 +149,7 @@ describe('Home Root Rush tile: best recap after a run', () => {
     expect(home).toContain('rushRuns: stats.runs');
     expect(home).toContain('rushBestScore: stats.bestScore ?? 0');
     expect(detail).toContain("item.key === 'rush'");
-    expect(detail).toContain('samples: []');
+    expect(detail).toContain('homeRushRecapPreview');
     expect(detail).not.toMatch(/rootsInTier\(1\)\.slice\(0,\s*3\)/);
     expect(detail).toContain("played ? 'Play again 🎯' : 'Start the run 🎯'");
     expect(detail).toContain('dailyWaitingLine');
@@ -257,15 +257,15 @@ describe('Home Root Rush tile: Continue Daily is a real tap mid-run', () => {
 
 describe('Root Rush combo bestScore uses the normal stats path', () => {
   it('recordQuizRun passes combo score into recordRun and saveStats', () => {
-    expect(store).toContain('recordQuizRun: (correct, total, score)');
+    expect(store).toContain('recordQuizRun: (correct: number, total: number, score?: number, recap?: RushRecapLine[])');
     expect(store).toContain(
-      'recordRun(get().stats, { correct, total, day: localDayKey(), score })',
+      'recordRun(get().stats, { correct, total, day, score })',
     );
     expect(store).toContain('saveStats(stats, studentId)');
   });
 
   it('does not dual-write wondral:stats:v1 from RootRush', () => {
-    expect(rush).toContain('recordQuizRun(correctCount, questions.length, score)');
+    expect(rush).toContain('recordQuizRun(correctCount, questions.length, score, recap?.roots)');
     expect(rush).toContain('run.isNewBestScore');
     expect(rush).not.toContain('persistBestScore');
     expect(rush).not.toContain('wondral:stats:v1:');

@@ -17,6 +17,7 @@ import {
   type MenuItem,
 } from './menu';
 import { dailyWaitingLine } from '../modes/modeHandoff';
+import { homeRushRecapPreview, type RushRecap } from '../../core/rushRecap';
 import { samplePeekTap } from './samplePeek';
 import type { DetailVM } from './DetailPanel';
 
@@ -33,7 +34,9 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
 /** Derive the detail-panel view model from the selected menu row + live progress.
  *  Rush mid-run peeks Daily · N of 5 · {root} and offers Continue Daily —
  *  Browse roots must not dump Bio while Chron is still waiting. Named
- *  peek chips are real taps (Remember / Continue Daily / Continue {root}). */
+ *  peek chips are real taps (Remember / Continue Daily / Continue {root}).
+ *  Last Rush recap chips Remember the real run — never a Bio / Geo / Photo
+ *  teaser. Mid-run Daily keeps that tile empty so Chron stays the hero. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -52,6 +55,8 @@ export function buildDetailVM(
     rushBestPct?: number;
     rushBestStars?: number;
     rushBestScore?: number;
+    /** Last finished Rush — named Remember chips, not a Starter teaser. */
+    rushRecap?: RushRecap | null;
   },
 ): DetailVM {
   if (item.kind === 'mode') {
@@ -86,6 +91,12 @@ export function buildDetailVM(
         qi < total
           ? continueDailyLabel(qi, total)
           : null;
+      const rushSamples = homeRushRecapPreview(extra.rushRecap, {
+        dailyResume: Boolean(continueDaily),
+      });
+      const rushMore = extra.rushRecap
+        ? Math.max(0, extra.rushRecap.roots.length - rushSamples.length)
+        : 0;
       return {
         jewel: item.jewel,
         animKey: item.key,
@@ -102,9 +113,11 @@ export function buildDetailVM(
             ? `${bestScore.toLocaleString('en-US')} combo`
             : 'Ten questions a run'
           : undefined,
-        samples: [],
-        sampleTap: samplePeekTap({ mode: 'rush', sampleCount: 0 }),
-        moreCount: 0,
+        samples: rushSamples,
+        sampleLines: rushSamples.length > 0,
+        samplesDone: rushSamples.length > 0,
+        sampleTap: samplePeekTap({ mode: 'rush', sampleCount: rushSamples.length }),
+        moreCount: rushMore,
         primary: { label: played ? 'Play again 🎯' : 'Start the run 🎯' },
         // Mid-run: Continue Daily is the same tap Rush start already uses —
         // Browse roots must not dump Bio while Chron is waiting.

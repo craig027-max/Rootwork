@@ -11,6 +11,8 @@ import {
   shuffleWith,
 } from '../core/daily';
 import { buildRushQuestion, type RushQuestion } from '../core/rush';
+import { recapDeckEntry } from '../core/deckFlow';
+import { rushHoldLine, rushRecapChipLabel, rushRecapFromRun } from '../core/rushRecap';
 import type { RunResult } from '../core/stats';
 import { Scene } from './Scene';
 import { buildModeEmpty, buildRushResultNext, buildRushStart } from './modes/modeHandoff';
@@ -27,11 +29,17 @@ import { buildModeEmpty, buildRushResultNext, buildRushStart } from './modes/mod
  * time and offers Continue Daily · 3 of 5 — same tap Home / result
  * already use. Play again still starts Rush. Continue {learn} stays
  * when Daily is not mid-run.
+ *
+ * A correct tap names the meaning (Yes — Chron means time) then keeps
+ * the combo auto-advance. Result recaps this run as Remember chips —
+ * owned roots hold meaning then Home, never Bio → Geo. A correct owned
+ * hit banks today's Remember the same way Daily already does.
  */
 
 const ROUND = 10;
 const MAX_MULT = 8;
-const AUTO_ADVANCE_MS = 900;
+/** Long enough to read Yes — {root} means {meaning}, still auto (no Next dump). */
+const AUTO_ADVANCE_MS = 1600;
 
 // ── accent (jewel re-theming) ─────────────────────────────────
 
@@ -56,6 +64,7 @@ export function RootRush() {
   const setView = useWondralStore((s) => s.setView);
   const openRoot = useWondralStore((s) => s.openRoot);
   const recordQuizRun = useWondralStore((s) => s.recordQuizRun);
+  const rememberRushHit = useWondralStore((s) => s.rememberRushHit);
   const stats = useWondralStore((s) => s.stats);
   const completed = useWondralStore((s) => s.completedRoots);
   const dailyRun = useWondralStore((s) => s.dailyRun);
@@ -72,6 +81,8 @@ export function RootRush() {
   const [correctCount, setCorrectCount] = useState(0);
   const [result, setResult] = useState<RunResult | null>(null);
   const [newBestScore, setNewBestScore] = useState(false);
+  const [hits, setHits] = useState<boolean[]>([]);
+  const hitsRef = useRef<boolean[]>([]);
   const recordedRunRef = useRef(-1); // runSeed of the last banked run
 
   // Every root the learner may open (Tier 1 free; all once entitled) — the
@@ -121,6 +132,10 @@ export function RootRush() {
     else closeQuiz();
   }
 
+  function openRecap(id: string) {
+    openRoot(id, { entry: recapDeckEntry(completed.has(id)) });
+  }
+
   function goPrimary(kind: 'learn' | 'home' | 'daily', id?: string) {
     if (kind === 'daily') {
       setView('daily');
@@ -139,19 +154,29 @@ export function RootRush() {
     setCorrectCount(0);
     setResult(null);
     setNewBestScore(false);
+    setHits([]);
+    hitsRef.current = [];
     setPhase('play');
   }
 
   function answer(idx: number) {
     if (picked !== null || phase !== 'play' || !q) return;
     setPicked(idx);
-    if (q.opts[idx]?.ok) {
+    const ok = q.opts[idx]?.ok ?? false;
+    setHits((prev) => {
+      const next = prev.slice();
+      next[qi] = ok;
+      hitsRef.current = next;
+      return next;
+    });
+    if (ok) {
       const nextStreak = streak + 1;
       const m = Math.min(MAX_MULT, Math.max(1, nextStreak));
       setStreak(nextStreak);
       setMaxStreak((x) => Math.max(x, nextStreak));
       setScore((x) => x + 100 * m);
       setCorrectCount((x) => x + 1);
+      rememberRushHit(rootId(q.root));
     } else {
       setStreak(0);
     }
@@ -168,7 +193,11 @@ export function RootRush() {
     // final answer by the time the Next click / auto-advance timer fires).
     if (recordedRunRef.current !== runSeed) {
       recordedRunRef.current = runSeed;
-      const run = recordQuizRun(correctCount, questions.length, score);
+      const recap = rushRecapFromRun(
+        questions.map((item, i) => ({ id: rootId(item.root), ok: hitsRef.current[i] === true })),
+        { day, studentId },
+      );
+      const run = recordQuizRun(correctCount, questions.length, score, recap?.roots);
       setResult(run);
       setNewBestScore(Boolean(run.isNewBestScore));
     }
@@ -202,9 +231,10 @@ export function RootRush() {
     keyRef.current = handleKey;
   });
 
-  // Auto-advance after a correct answer (~900ms) so kids aren't clicking Next
-  // on every question. Wrong answers keep the explicit Next button so the
-  // correct answer can be read. Enter/Space still skips ahead early.
+  // Auto-advance after a correct answer so kids aren't clicking Next on every
+  // question. 1600ms is long enough to read Yes — {root} means {meaning}.
+  // Wrong answers keep the explicit Next button so the correct answer can
+  // be read. Enter/Space still skips ahead early.
   useEffect(() => {
     if (phase !== 'play' || picked === null || !answeredCorrect) return;
     const t = window.setTimeout(() => advanceRef.current(), AUTO_ADVANCE_MS);
@@ -361,8 +391,7 @@ export function RootRush() {
             <div className="q-foot">
               {answered && answeredCorrect ? (
                 <span className="q-fb good">
-                  +{(100 * mult).toLocaleString()}
-                  {mult > 1 ? <> &nbsp;·&nbsp; {mult}× combo</> : null}
+                  {rushHoldLine(q.root.root, q.root.mean, 100 * mult, mult)}
                 </span>
               ) : null}
               {answered && !answeredCorrect ? (
@@ -416,6 +445,29 @@ export function RootRush() {
                 {rushNext.peek}
               </div>
             ) : null}
+            <div className="q-daily-chips q-rush-recap" style={{ marginTop: 22 }}>
+              {questions.map((item, i) => {
+                const id = rootId(item.root);
+                const owned = completed.has(id);
+                return (
+                  <button
+                    type="button"
+                    className={`q-daily-chip${hits[i] ? ' is-done' : ''}`}
+                    key={`${item.root.root}-${i}`}
+                    onClick={() => openRecap(id)}
+                    aria-label={rushRecapChipLabel(item.root.root, owned)}
+                  >
+                    {hits[i] ? (
+                      <span className="q-done-mark" aria-hidden="true">
+                        ✓
+                      </span>
+                    ) : null}
+                    {item.root.root}
+                    <em>{item.root.mean}</em>
+                  </button>
+                );
+              })}
+            </div>
             <div className="q-actions">
               {rushNext.dailyResume ? (
                 <>
