@@ -207,13 +207,17 @@ export function tierTilePreview(
  * Next-Play board puts the play-now tier at 0; returning dashboard finds
  * the resume tier after the modes. A live Daily mid-run lands on Daily so
  * the next-root peek is the first thing they see — not buried behind HERE.
+ * Daily banked with no learn today lands on that recap so Remember chips
+ * wait; a learn today keeps the HERE / Keep going tier.
  */
 export function defaultSelectedIndex(
   items: MenuItem[],
   currentTier: TierNum,
-  opts: { dailyResume?: boolean } = {},
+  opts: { dailyResume?: boolean; dailyDone?: boolean; learnedToday?: boolean } = {},
 ): number {
-  if (opts.dailyResume) {
+  // Mid-run Daily, or Daily just banked with no learn yet — land on the
+  // recap so Remember chips are waiting. A learn today keeps the HERE tier.
+  if (opts.dailyResume || (opts.dailyDone && !opts.learnedToday)) {
     const daily = items.findIndex((it) => it.kind === 'mode' && it.key === 'daily');
     if (daily >= 0) return daily;
   }
@@ -231,7 +235,7 @@ export function homeSelectedIndex(
   picked: number | null,
   items: MenuItem[],
   currentTier: TierNum,
-  opts: { dailyResume?: boolean } = {},
+  opts: { dailyResume?: boolean; dailyDone?: boolean; learnedToday?: boolean } = {},
 ): number {
   return picked ?? defaultSelectedIndex(items, currentTier, opts);
 }

@@ -13,6 +13,7 @@ import {
   liveDailyResumeQi,
 } from '../core/daily';
 import { recapOpenForId, recapOpenForRoot } from '../core/deckFlow';
+import { liveRushRecap } from '../core/rushRecap';
 import {
   buildMenu,
   hasChosenMode,
@@ -49,6 +50,7 @@ export function Home() {
   const progress = useWondralStore((s) => s.progress);
   const stats = useWondralStore((s) => s.stats);
   const dailyRun = useWondralStore((s) => s.dailyRun);
+  const rushRecap = useWondralStore((s) => s.rushRecap);
   const students = useWondralStore((s) => s.students);
   const activeStudentId = useWondralStore((s) => s.activeStudentId);
   const openRoot = useWondralStore((s) => s.openRoot);
@@ -93,6 +95,7 @@ export function Home() {
     dailyTotal: dailyRoots.length,
     dailyNextName: dailyNext?.root,
     dailyNextMean: dailyNext?.mean,
+    dailyRecapNames: dailyRoots.map((r) => r.root),
     completed,
     entitled,
     learnedToday: learnedId !== null,
@@ -122,8 +125,11 @@ export function Home() {
   const allItems = [...items, ...tucked];
   const [picked, setPicked] = useState<number | null>(null);
   const [indexOpen, setIndexOpen] = useState(false);
+  const lastRush = liveRushRecap(rushRecap, activeStudentId);
   const selectedIndex = homeSelectedIndex(picked, items, currentTier, {
     dailyResume: dailyResumeQi != null,
+    dailyDone,
+    learnedToday: learnedId !== null,
   });
   const selected = allItems[Math.min(selectedIndex, allItems.length - 1)]!;
 
@@ -198,6 +204,7 @@ export function Home() {
     rushBestPct: stats.bestPct,
     rushBestStars: stats.bestStars,
     rushBestScore: stats.bestScore ?? 0,
+    rushRecap: lastRush,
   });
   const resumeNow =
     !nextPlay && (isResumeTier(selected) || isDailyResumeItem(selected));

@@ -124,7 +124,7 @@ describe('Named peek / Replay is a real Continue or Remember tap', () => {
     expect(recapOpenForRoot('Geo', bioOwned)).toEqual({ id: rootId(geo), entry: 'teach' });
   });
 
-  it('does not make locked teasers or first-run / Rush chips tappable', () => {
+  it('does not make locked teasers or first-run chips tappable', () => {
     const { tucked } = buildMenu(startedBuilder, false, { currentTier: 2 });
     const locked = tucked.find((it) => it.locked);
     expect(locked).toBeTruthy();
@@ -135,7 +135,8 @@ describe('Named peek / Replay is a real Continue or Remember tap', () => {
     expect(samplePeekTap({ mode: 'rush', sampleCount: 0 })).toBeUndefined();
     const { items } = buildMenu(startedBuilder, false, { currentTier: 2 });
     const rush = items.find((it) => it.kind === 'mode' && it.key === 'rush');
-    expect(rush && homeSampleAction(rush, 'Bio')).toBeNull();
+    expect(rush && homeSampleAction(rush, 'Bio')).toEqual({ kind: 'root', name: 'Bio' });
+    expect(samplePeekTap({ mode: 'rush', sampleCount: 3 })).toBe('remember');
   });
 
   it('Home preview wires named chips + Remember Replay — not openRoot(entry) teach', () => {

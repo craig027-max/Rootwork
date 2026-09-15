@@ -6,6 +6,7 @@ import { ROOTS, firstRoot, rootId, rootsInTier, type RootId } from '../../data/r
 import { buildProfileProgress } from './profileProgress';
 import {
   buildTodayProgress,
+  dailyDoneRowLabel,
   keepGoingLabel,
   learnedRootName,
   learnedRootToday,
@@ -146,14 +147,16 @@ describe('buildTodayProgress — returning dashboard', () => {
       firstRun: false,
       nextPlay: false,
       dailyDone: true,
+      dailyRecapNames: ['Chron', 'Photo', 'Aqua'],
       completed: startedBuilder,
       entitled: true,
     });
 
+    expect(dailyDoneRowLabel(['Chron', 'Photo', 'Aqua'])).toBe('Daily · done · Chron · Photo · Aqua');
     expect(vm.items[0]).toMatchObject({
       key: 'daily',
       done: true,
-      label: 'Daily · done for today',
+      label: 'Daily · done · Chron · Photo · Aqua',
     });
     expect(vm.cta?.kind).toBe('learn');
     expect(vm.cta?.label).toBe(`Continue ${secondBuilder.root} ›`);
@@ -566,6 +569,7 @@ describe('Today checklist wiring + phone layout', () => {
     expect(home).toContain('dailyResumeQi');
     expect(home).toContain('dailyNextName');
     expect(home).toContain('dailyResumePreview');
+    expect(home).toContain('dailyRecapNames');
     expect(home).toContain('isDailyResumeItem');
     expect(hydrate).toContain('resolveBootResume');
     expect(hydrate).toContain('liveDailyResumeQi');

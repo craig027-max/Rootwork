@@ -14,6 +14,7 @@ import {
 } from '../core/progress';
 import { addStudentProfile, deleteStudentProfile, renameStudentProfile } from '../core/profile';
 import { localDayKey, parseDailyRun, type DailyRun } from '../core/daily';
+import { parseRushRecap, type RushRecap, type RushRecapLine } from '../core/rushRecap';
 import {
   EMPTY_STATS,
   bumpStreak,
@@ -188,6 +189,35 @@ function persistDailyRun(run: DailyRun | null, studentId: string | null): void {
   }
 }
 
+// Last Rush recap is namespaced per student, same scheme as Daily mid-run.
+// Home / result Remember chips must be the real last run — not a Starter dump.
+const RUSH_RECAP_KEY_PREFIX = 'wondral:rushRecap:v1:';
+
+function rushRecapKey(studentId: string | null): string {
+  return RUSH_RECAP_KEY_PREFIX + (studentId ?? 'anon');
+}
+
+function loadRushRecap(studentId: string | null): RushRecap | null {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(rushRecapKey(studentId));
+    if (!raw) return null;
+    return parseRushRecap(JSON.parse(raw));
+  } catch {
+    return null;
+  }
+}
+
+function persistRushRecap(recap: RushRecap | null, studentId: string | null): void {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    if (recap) localStorage.setItem(rushRecapKey(studentId), JSON.stringify(recap));
+    else localStorage.removeItem(rushRecapKey(studentId));
+  } catch {
+    // ignore quota / privacy errors
+  }
+}
+
 /**
  * First correct Daily tap: bank play-today (no Daily XP). If they already
  * own that root, the hold is today's Remember — stamp review, no second XP.
@@ -205,6 +235,22 @@ function applyDailyHit(
   if (!stamped) return { stats: nextStats, progress };
   saveProgress(stamped, studentId);
   return { stats: nextStats, progress: stamped };
+}
+
+/**
+ * Correct Rush tap on an owned root: today's Remember. Unowned stays
+ * unlearned. Same-day repeat is a no-op via stampReviewedAt.
+ */
+function applyRushHit(
+  progress: RootProgress,
+  studentId: string | null,
+  hitRootId?: string,
+): RootProgress {
+  if (!hitRootId) return progress;
+  const stamped = stampReviewedAt(progress, hitRootId, Date.now());
+  if (!stamped) return progress;
+  saveProgress(stamped, studentId);
+  return stamped;
 }
 
 interface WondralStore {
@@ -278,7 +324,11 @@ interface WondralStore {
   // Gamification — derived from learning + quiz activity, persisted per student.
   stats: GameStats;
   /** Record a finished Root Rush run; returns the run summary for the UI. */
-  recordQuizRun: (correct: number, total: number, score?: number) => RunResult;
+  recordQuizRun: (correct: number, total: number, score?: number, recap?: RushRecapLine[]) => RunResult;
+  /** Correct owned Rush tap — today's Remember, no second XP. */
+  rememberRushHit: (rootId: string) => void;
+  /** Last finished Rush recap — Home / result Remember chips. */
+  rushRecap: RushRecap | null;
   /** Bank a finished Daily Challenge (XP + streak; no-op if already done today). */
   recordDailyComplete: (hitRootId?: string) => void;
   /** In-progress Daily — next unanswered index. Cleared when Daily is banked. */
@@ -291,6 +341,7 @@ const INITIAL_ACTIVE_STUDENT = loadActiveStudentId();
 const INITIAL_PROGRESS = loadProgress(INITIAL_ACTIVE_STUDENT);
 const INITIAL_STATS = loadStats(INITIAL_ACTIVE_STUDENT);
 const INITIAL_DAILY_RUN = loadDailyRun(INITIAL_ACTIVE_STUDENT);
+const INITIAL_RUSH_RECAP = loadRushRecap(INITIAL_ACTIVE_STUDENT);
 
 export const useWondralStore = create<WondralStore>((set, get) => ({
   // Boot on /privacy or /terms when deep-linked; App.tsx keeps the URL in sync
@@ -357,6 +408,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       completedRoots: completedIdSet(freePlay),
       stats: loadStats(null),
       dailyRun: loadDailyRun(null),
+      rushRecap: loadRushRecap(null),
       view: 'home',
       currentRootId: null,
       deckEntry: 'teach',
@@ -376,6 +428,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       completedRoots: completedIdSet(next),
       stats: loadStats(id),
       dailyRun: loadDailyRun(id),
+      rushRecap: loadRushRecap(id),
     });
   },
   addStudent: async (nickname, avatar) => {
@@ -426,6 +479,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   completedRoots: completedIdSet(INITIAL_PROGRESS),
   stats: INITIAL_STATS,
   dailyRun: INITIAL_DAILY_RUN,
+  rushRecap: INITIAL_RUSH_RECAP,
   saveDailyRun: (qi, hitRootId) => {
     const studentId = get().activeStudentId;
     const day = localDayKey();
@@ -440,11 +494,23 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
     persistDailyRun(null, studentId);
     set({ dailyRun: null });
   },
-  recordQuizRun: (correct, total, score) => {
+  rememberRushHit: (rootId) => {
     const studentId = get().activeStudentId;
-    const { stats, run } = recordRun(get().stats, { correct, total, day: localDayKey(), score });
+    const progress = applyRushHit(get().progress, studentId, rootId);
+    if (progress === get().progress) return;
+    set({ progress });
+  },
+  recordQuizRun: (correct, total, score, recapLines) => {
+    const studentId = get().activeStudentId;
+    const day = localDayKey();
+    const { stats, run } = recordRun(get().stats, { correct, total, day, score });
     saveStats(stats, studentId);
-    set({ stats });
+    const recap =
+      recapLines && recapLines.length > 0
+        ? parseRushRecap({ day, studentId, roots: recapLines })
+        : get().rushRecap;
+    if (recap) persistRushRecap(recap, studentId);
+    set({ stats, ...(recap ? { rushRecap: recap } : {}) });
     return run;
   },
   recordDailyComplete: (hitRootId) => {
@@ -501,7 +567,8 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
     const studentId = get().activeStudentId;
     saveProgress({}, studentId);
     persistDailyRun(null, studentId);
-    set({ progress: {}, completedRoots: new Set(), dailyRun: null });
+    persistRushRecap(null, studentId);
+    set({ progress: {}, completedRoots: new Set(), dailyRun: null, rushRecap: null });
     void clearRemoteProgress(studentId).catch((err) => {
        
       console.warn('[progress] remote clear failed', err);

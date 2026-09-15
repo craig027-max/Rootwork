@@ -59,6 +59,16 @@ export function keepGoingLabel(rootName: string): string {
   return `Keep going · ${rootName} ›`;
 }
 
+/** Today-row after Daily is banked — name the recap, not a nameless done dump. */
+export function dailyDoneRowLabel(names?: readonly string[]): string {
+  const cleaned = (names ?? [])
+    .map((n) => n.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .slice(0, 3);
+  if (cleaned.length === 0) return 'Daily · done for today';
+  return `Daily · done · ${cleaned.join(' · ')}`;
+}
+
 export interface RootLabel {
   name?: string;
   mean?: string;
@@ -195,6 +205,8 @@ export function buildTodayProgress(opts: {
   /** Next unanswered Daily root — named on the Today row, not a count-only dump. */
   dailyNextName?: string;
   dailyNextMean?: string;
+  /** Today's Daily names — named on the done row so Remember is not anonymous. */
+  dailyRecapNames?: readonly string[];
   completed: Set<string>;
   entitled: boolean;
   learnedToday?: boolean;
@@ -239,7 +251,7 @@ export function buildTodayProgress(opts: {
       key: 'daily',
       done: opts.dailyDone,
       label: opts.dailyDone
-        ? 'Daily · done for today'
+        ? dailyDoneRowLabel(opts.dailyRecapNames)
         : dailyResume != null
           ? dailyNextRowLabel({
               answered: dailyResume,

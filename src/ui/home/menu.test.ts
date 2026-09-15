@@ -212,6 +212,10 @@ describe('buildMenu — started next tier (returning dashboard)', () => {
     expect(homeSelectedIndex(0, entitled.items, 2)).toBe(0);
     expect(homeSelectedIndex(null, entitled.items, 2, { dailyResume: true })).toBe(1);
     expect(entitled.items[1]).toMatchObject({ kind: 'mode', key: 'daily' });
+    expect(homeSelectedIndex(null, entitled.items, 2, { dailyDone: true })).toBe(1);
+    expect(homeSelectedIndex(null, entitled.items, 2, { dailyDone: true, learnedToday: true })).toBe(
+      3,
+    );
     expect(homeSelectedIndex(3, entitled.items, 2, { dailyResume: true })).toBe(3);
     expect(entitled.items[3]).toMatchObject({ key: 'tier-2', current: true });
     const builderRow = entitled.items[3];
