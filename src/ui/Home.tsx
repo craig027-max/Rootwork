@@ -13,7 +13,7 @@ import {
   liveDailyResumeQi,
 } from '../core/daily';
 import { recapOpenForId, recapOpenForRoot } from '../core/deckFlow';
-import { liveRushRecap } from '../core/rushRecap';
+import { homeRushRecapPreview, liveRushRecap, todayRushRecap } from '../core/rushRecap';
 import {
   buildMenu,
   hasChosenMode,
@@ -111,6 +111,11 @@ export function Home() {
     dailyResumeQi != null
       ? dailyResumePreview(dailyRoots, dailyResumeQi)
       : dailyTilePreview(dailyRoots);
+  const lastRush = liveRushRecap(rushRecap, activeStudentId);
+  const rushToday = todayRushRecap(rushRecap, activeStudentId, day);
+  const rushPreview = homeRushRecapPreview(lastRush, {
+    dailyResume: dailyResumeQi != null,
+  });
   const { items, tucked } = buildMenu(completed, entitled, {
     currentTier,
     rushBest,
@@ -119,17 +124,18 @@ export function Home() {
     dailyResumeQi,
     dailyTotal: dailyRoots.length,
     dailyPreview,
+    rushPreview,
     dailyNextName: dailyNext?.root,
     nextPlay,
   });
   const allItems = [...items, ...tucked];
   const [picked, setPicked] = useState<number | null>(null);
   const [indexOpen, setIndexOpen] = useState(false);
-  const lastRush = liveRushRecap(rushRecap, activeStudentId);
   const selectedIndex = homeSelectedIndex(picked, items, currentTier, {
     dailyResume: dailyResumeQi != null,
     dailyDone,
     learnedToday: learnedId !== null,
+    rushToday: rushToday != null,
   });
   const selected = allItems[Math.min(selectedIndex, allItems.length - 1)]!;
 

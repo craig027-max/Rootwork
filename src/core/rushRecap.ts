@@ -6,8 +6,10 @@
  * sample list so Bio / Geo / Photo could not pretend to be the quiz.
  * This keeps that honesty: chips are the real last run (never a Starter
  * teaser). A correct owned hit is today's Remember — same stamp Daily
- * already uses. Mid-run Daily still wins the Home Rush tile so Chron
- * is not buried under a recap dump.
+ * already uses. A miss stays unmarked — Home must not paint Geo ✓ just
+ * because it was in the run. Mid-run Daily still wins the Home Rush
+ * tile so Chron is not buried under a recap dump. Today's last run
+ * lands Home on Rush so those chips wait; yesterday's still peeks.
  *
  * Pure and Date-injectable so tests lock the copy without I/O.
  */
@@ -18,6 +20,14 @@ import { ROOTS_BY_ID } from '../data/roots';
 export const RUSH_RECAP_PREVIEW_COUNT = 4;
 
 export interface RushRecapLine {
+  id: string;
+  root: string;
+  mean: string;
+  ok: boolean;
+}
+
+/** Named last-run peek — keep `ok` so a miss cannot wear a fake ✓. */
+export interface RushRecapPeek {
   id: string;
   root: string;
   mean: string;
@@ -69,27 +79,51 @@ export function liveRushRecap(
   return recap;
 }
 
-/** Kid-facing name + meaning lines from a last run (catalog file order is not used). */
+/**
+ * Last-run recap from *today* for this kid. Yesterday still peeks on the
+ * Rush tile, but Home only lands on Rush when the run is today's — Daily
+ * done / HERE must not lose to a stale recap.
+ */
+export function todayRushRecap(
+  recap: RushRecap | null | undefined,
+  studentId: string | null,
+  day: string,
+): RushRecap | null {
+  const live = liveRushRecap(recap, studentId);
+  if (!live || live.day !== day) return null;
+  return live;
+}
+
+/** ✓ only on a real hit / done recap — a miss must not look finished. */
+export function peekChipDone(opts: { done?: boolean; ok?: boolean }): boolean {
+  if (opts.ok === false) return false;
+  if (opts.ok === true) return true;
+  return Boolean(opts.done);
+}
+
+/** Kid-facing name + meaning + hit/miss from a last run (catalog file order is not used). */
 export function rushRecapPreview(
   recap: RushRecap | null | undefined,
   count: number = RUSH_RECAP_PREVIEW_COUNT,
-): { root: string; mean: string }[] {
+): RushRecapPeek[] {
   if (!recap || recap.roots.length === 0 || count <= 0) return [];
   return recap.roots.slice(0, Math.min(count, recap.roots.length)).map((r) => ({
+    id: r.id,
     root: r.root,
     mean: r.mean,
+    ok: r.ok,
   }));
 }
 
 /**
  * Home Rush tile recap. A live Daily mid-run keeps the tile empty so Chron
  * is not buried under last-run chips. Fresh / no-run stays empty — never
- * a Bio / Geo / Photo dump.
+ * a Bio / Geo / Photo dump. Hits keep ✓; misses stay unmarked.
  */
 export function homeRushRecapPreview(
   recap: RushRecap | null | undefined,
   opts: { dailyResume?: boolean; count?: number } = {},
-): { root: string; mean: string }[] {
+): RushRecapPeek[] {
   if (opts.dailyResume) return [];
   return rushRecapPreview(recap, opts.count);
 }
@@ -132,9 +166,25 @@ export function rushHoldLine(
   return `Yes — ${name} means ${spokenMean}. +${pts.toLocaleString('en-US')}${combo}`;
 }
 
-/** Kid-facing aria on a Rush result chip. */
-export function rushRecapChipLabel(rootName: string, owned: boolean): string {
+/**
+ * After a miss — the meaning, then Next. Not a label-only dump
+ * ("Nope — it's time") that hides the root they just missed.
+ */
+export function rushMissLine(rootName: string, mean: string): string {
   const name = rootName.replace(/\s+/g, ' ').trim();
+  const spokenMean = mean.replace(/\s+/g, ' ').trim();
+  if (!name || !spokenMean) return 'Nope — try the next one.';
+  return `Nope — ${name} means ${spokenMean}.`;
+}
+
+/** Kid-facing aria on a Rush result / Home peek chip. */
+export function rushRecapChipLabel(
+  rootName: string,
+  owned: boolean,
+  ok?: boolean,
+): string {
+  const name = rootName.replace(/\s+/g, ' ').trim();
+  if (ok === false) return name ? `Missed ${name}` : 'Missed';
   if (!name) return owned ? 'Remember' : 'Meet this root';
   return owned ? `Remember ${name}` : `Meet ${name}`;
 }

@@ -17,7 +17,7 @@ import {
   type MenuItem,
 } from './menu';
 import { dailyWaitingLine } from '../modes/modeHandoff';
-import { homeRushRecapPreview, type RushRecap } from '../../core/rushRecap';
+import { homeRushRecapPreview, peekChipDone, type RushRecap } from '../../core/rushRecap';
 import { samplePeekTap } from './samplePeek';
 import type { DetailVM } from './DetailPanel';
 
@@ -36,7 +36,8 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  Browse roots must not dump Bio while Chron is still waiting. Named
  *  peek chips are real taps (Remember / Continue Daily / Continue {root}).
  *  Last Rush recap chips Remember the real run — never a Bio / Geo / Photo
- *  teaser. Mid-run Daily keeps that tile empty so Chron stays the hero. */
+ *  teaser. Hits keep ✓; a miss stays unmarked. Mid-run Daily keeps that
+ *  tile empty so Chron stays the hero. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -115,7 +116,7 @@ export function buildDetailVM(
           : undefined,
         samples: rushSamples,
         sampleLines: rushSamples.length > 0,
-        samplesDone: rushSamples.length > 0,
+        samplesDone: rushSamples.length > 0 && rushSamples.every((s) => peekChipDone({ ok: s.ok })),
         sampleTap: samplePeekTap({ mode: 'rush', sampleCount: rushSamples.length }),
         moreCount: rushMore,
         primary: { label: played ? 'Play again 🎯' : 'Start the run 🎯' },

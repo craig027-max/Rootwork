@@ -1,6 +1,7 @@
 import { useEffect, useRef, type KeyboardEvent } from 'react';
 import { PALETTES } from '../../data/roots';
 import { paletteVars } from '../components/styleVars';
+import { peekChipDone } from '../../core/rushRecap';
 import { tuckedSummary, type MenuItem, type TierItem } from './menu';
 
 function jewelVarsOf(jewel: string) {
@@ -103,22 +104,26 @@ export function TierMenu({
           </span>
           {it.kind === 'mode' && it.preview && it.preview.length > 0 ? (
             <span className={`ww-daily-lines${it.previewDone ? ' is-done' : ''}`}>
-              {it.preview.map((p, idx) => (
-                <span
-                  className={`ww-daily-line${it.previewDone ? ' is-done' : ''}${
-                    it.previewResume && idx === 0 && !it.previewDone ? ' is-next' : ''
-                  }`}
-                  key={p.root}
-                >
-                  {it.previewDone ? (
-                    <span className="ww-daily-mark" aria-hidden="true">
-                      ✓
-                    </span>
-                  ) : null}
-                  <b>{p.root}</b>
-                  <span>{p.mean}</span>
-                </span>
-              ))}
+              {it.preview.map((p, idx) => {
+                const lineDone = peekChipDone({ done: it.previewDone, ok: p.ok });
+                const lineMiss = p.ok === false;
+                return (
+                  <span
+                    className={`ww-daily-line${lineDone ? ' is-done' : ''}${
+                      lineMiss ? ' is-miss' : ''
+                    }${it.previewResume && idx === 0 && !lineDone ? ' is-next' : ''}`}
+                    key={p.root}
+                  >
+                    {lineDone ? (
+                      <span className="ww-daily-mark" aria-hidden="true">
+                        ✓
+                      </span>
+                    ) : null}
+                    <b>{p.root}</b>
+                    <span>{p.mean}</span>
+                  </span>
+                );
+              })}
             </span>
           ) : null}
           {it.kind === 'tier' && !it.locked && !playNow ? (

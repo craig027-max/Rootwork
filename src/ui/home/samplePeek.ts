@@ -33,9 +33,12 @@ export function samplePeekTap(opts: {
 export function samplePeekLabel(
   tap: SamplePeekTap,
   rootName: string,
-  opts: { dailyNext?: boolean } = {},
+  opts: { dailyNext?: boolean; ok?: boolean } = {},
 ): string {
   const name = rootName.replace(/\s+/g, ' ').trim();
+  if (tap === 'remember' && opts.ok === false) {
+    return name ? `Missed ${name}` : 'Missed';
+  }
   if (!name) {
     if (tap === 'remember') return 'Remember';
     if (tap === 'daily') return 'Continue Daily';
