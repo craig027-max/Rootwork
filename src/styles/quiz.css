@@ -209,6 +209,13 @@
 .q-daily-chip.is-done {
   border-color: rgba(47, 217, 154, 0.45);
 }
+.q-daily-chip.is-miss {
+  border-color: rgba(255, 92, 107, 0.4);
+  background: rgba(255, 92, 107, 0.08);
+}
+.q-rush-start-recap {
+  margin-top: 16px;
+}
 .q-done-mark {
   color: var(--success);
   font-weight: 800;
@@ -265,6 +272,7 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-hud { flex-wrap: wrap; gap: 6px 10px; }
   .q-foot { flex-wrap: wrap; min-height: 44px; }
   .q-fb.good { display: block; }
+  .q-fb.bad { display: block; }
   .q-daily .q-foot { flex-direction: column; align-items: stretch; }
   .q-daily .q-hold { display: flex; }
   .q-daily .q-fb.q-next-peek { display: block; }
@@ -294,6 +302,12 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   }
   .q-rush-recap .q-daily-chip {
     display: inline-flex;
+  }
+  .q-daily-chip.is-miss {
+    display: inline-flex;
+  }
+  .q-rush-start-recap {
+    display: flex;
   }
   .q-done-title {
     font-size: 1.25rem;
@@ -348,6 +362,8 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-daily-continue em { display: block; }
   .q-rush-recap { display: flex; }
   .q-rush-recap .q-daily-chip { display: inline-flex; }
+  .q-daily-chip.is-miss { display: inline-flex; }
+  .q-fb.bad { display: block; }
   .q-result .q-fb.good { display: block; }
 }
 

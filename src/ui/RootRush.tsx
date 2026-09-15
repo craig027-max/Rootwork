@@ -12,7 +12,14 @@ import {
 } from '../core/daily';
 import { buildRushQuestion, type RushQuestion } from '../core/rush';
 import { recapDeckEntry } from '../core/deckFlow';
-import { rushHoldLine, rushRecapChipLabel, rushRecapFromRun } from '../core/rushRecap';
+import {
+  homeRushRecapPreview,
+  liveRushRecap,
+  rushHoldLine,
+  rushMissLine,
+  rushRecapChipLabel,
+  rushRecapFromRun,
+} from '../core/rushRecap';
 import type { RunResult } from '../core/stats';
 import { Scene } from './Scene';
 import { buildModeEmpty, buildRushResultNext, buildRushStart } from './modes/modeHandoff';
@@ -31,9 +38,11 @@ import { buildModeEmpty, buildRushResultNext, buildRushStart } from './modes/mod
  * when Daily is not mid-run.
  *
  * A correct tap names the meaning (Yes — Chron means time) then keeps
- * the combo auto-advance. Result recaps this run as Remember chips —
- * owned roots hold meaning then Home, never Bio → Geo. A correct owned
- * hit banks today's Remember the same way Daily already does.
+ * the combo auto-advance. A miss names it too (Nope — Chron means time)
+ * so the Next dump is not label-only. Result + start recap this run as
+ * Remember chips — hits keep ✓, misses stay Missed. Owned roots hold
+ * meaning then Home, never Bio → Geo. A correct owned hit banks today's
+ * Remember the same way Daily already does.
  */
 
 const ROUND = 10;
@@ -65,6 +74,7 @@ export function RootRush() {
   const openRoot = useWondralStore((s) => s.openRoot);
   const recordQuizRun = useWondralStore((s) => s.recordQuizRun);
   const rememberRushHit = useWondralStore((s) => s.rememberRushHit);
+  const rushRecap = useWondralStore((s) => s.rushRecap);
   const stats = useWondralStore((s) => s.stats);
   const completed = useWondralStore((s) => s.completedRoots);
   const dailyRun = useWondralStore((s) => s.dailyRun);
@@ -286,6 +296,8 @@ export function RootRush() {
       locked: (i + 1) !== 1 && !entitled,
     })),
   ];
+  const lastRush = liveRushRecap(rushRecap, studentId);
+  const startPeek = homeRushRecapPreview(lastRush, { dailyResume: dailyResumeQi != null });
   const rushStart = buildRushStart({ ...stats, ...dailyResume });
   const rushNext = buildRushResultNext(completed, entitled, dailyResume);
 
@@ -327,6 +339,30 @@ export function RootRush() {
             {rushStart.recap ? (
               <div className="q-best" role="status">
                 {rushStart.recap}
+              </div>
+            ) : null}
+            {startPeek.length > 0 ? (
+              <div className="q-daily-chips q-rush-recap q-rush-start-recap">
+                {startPeek.map((s) => {
+                  const owned = completed.has(s.id);
+                  return (
+                    <button
+                      type="button"
+                      className={`q-daily-chip${s.ok ? ' is-done' : ' is-miss'}`}
+                      key={s.id}
+                      onClick={() => openRecap(s.id)}
+                      aria-label={rushRecapChipLabel(s.root, owned, s.ok)}
+                    >
+                      {s.ok ? (
+                        <span className="q-done-mark" aria-hidden="true">
+                          ✓
+                        </span>
+                      ) : null}
+                      {s.root}
+                      <em>{s.mean}</em>
+                    </button>
+                  );
+                })}
               </div>
             ) : null}
             {rushStart.continueDaily && rushStart.waiting ? (
@@ -397,7 +433,7 @@ export function RootRush() {
               {answered && !answeredCorrect ? (
                 <>
                   <span className="q-fb bad">
-                    Nope — it&rsquo;s <b>{q.opts.find((o) => o.ok)?.label}</b>
+                    {rushMissLine(q.root.root, q.root.mean)}
                   </span>
                   <button className="q-next" onClick={advance}>
                     {isLast ? 'See results ›' : 'Next ›'}
@@ -449,15 +485,16 @@ export function RootRush() {
               {questions.map((item, i) => {
                 const id = rootId(item.root);
                 const owned = completed.has(id);
+                const hit = hits[i] === true;
                 return (
                   <button
                     type="button"
-                    className={`q-daily-chip${hits[i] ? ' is-done' : ''}`}
+                    className={`q-daily-chip${hit ? ' is-done' : ' is-miss'}`}
                     key={`${item.root.root}-${i}`}
                     onClick={() => openRecap(id)}
-                    aria-label={rushRecapChipLabel(item.root.root, owned)}
+                    aria-label={rushRecapChipLabel(item.root.root, owned, hit)}
                   >
-                    {hits[i] ? (
+                    {hit ? (
                       <span className="q-done-mark" aria-hidden="true">
                         ✓
                       </span>

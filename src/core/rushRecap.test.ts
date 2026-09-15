@@ -5,10 +5,13 @@ import {
   homeRushRecapPreview,
   liveRushRecap,
   parseRushRecap,
+  peekChipDone,
   rushHoldLine,
+  rushMissLine,
   rushRecapChipLabel,
   rushRecapFromRun,
   rushRecapPreview,
+  todayRushRecap,
 } from './rushRecap';
 
 const first = firstRoot();
@@ -72,8 +75,8 @@ describe('rushRecapPreview + homeRushRecapPreview', () => {
       photo.root,
     ]);
     expect(rushRecapPreview(kidRecap, 2)).toEqual([
-      { root: first.root, mean: first.mean },
-      { root: geo.root, mean: geo.mean },
+      { id: rootId(first), root: first.root, mean: first.mean, ok: true },
+      { id: rootId(geo), root: geo.root, mean: geo.mean, ok: false },
     ]);
     expect(homeRushRecapPreview(kidRecap).map((s) => s.root)).toEqual([
       first.root,
@@ -88,16 +91,38 @@ describe('rushRecapPreview + homeRushRecapPreview', () => {
   });
 });
 
-describe('rushHoldLine + rushRecapChipLabel', () => {
+describe('rushHoldLine + rushMissLine + rushRecapChipLabel', () => {
   it('names the meaning on a correct hold — not points-only', () => {
     expect(rushHoldLine('Chron', 'time', 200, 2)).toBe('Yes — Chron means time. +200 · 2× combo');
     expect(rushHoldLine('Bio', 'life', 100, 1)).toBe('Yes — Bio means life. +100');
     expect(rushHoldLine('', '', 100, 1)).toBe('+100');
   });
 
-  it('names Remember vs Meet on a result chip', () => {
+  it('names the meaning on a miss — not a label-only dump', () => {
+    expect(rushMissLine('Chron', 'time')).toBe('Nope — Chron means time.');
+    expect(rushMissLine('Bio', 'life')).toBe('Nope — Bio means life.');
+    expect(rushMissLine('', '')).toBe('Nope — try the next one.');
+  });
+
+  it('names Remember vs Meet vs Missed on a result chip', () => {
     expect(rushRecapChipLabel('Bio', true)).toBe('Remember Bio');
     expect(rushRecapChipLabel('Chron', false)).toBe('Meet Chron');
+    expect(rushRecapChipLabel('Geo', true, false)).toBe('Missed Geo');
+    expect(rushRecapChipLabel('Chron', false, false)).toBe('Missed Chron');
+    expect(rushRecapChipLabel('Photo', true, true)).toBe('Remember Photo');
+  });
+});
+
+describe('todayRushRecap + peekChipDone', () => {
+  it('lands only on today\'s last run — yesterday still peeks, does not steal Home', () => {
+    expect(todayRushRecap(kidRecap, 'kid-a', '2026-09-15')).toEqual(kidRecap);
+    expect(todayRushRecap(kidRecap, 'kid-a', '2026-09-16')).toBeNull();
+    expect(todayRushRecap(kidRecap, 'kid-b', '2026-09-15')).toBeNull();
+    expect(peekChipDone({ ok: true })).toBe(true);
+    expect(peekChipDone({ ok: false })).toBe(false);
+    expect(peekChipDone({ done: true, ok: false })).toBe(false);
+    expect(peekChipDone({ done: true })).toBe(true);
+    expect(peekChipDone({ done: false })).toBe(false);
   });
 });
 

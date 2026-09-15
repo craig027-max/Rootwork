@@ -6,9 +6,11 @@ import { recapOpenForId } from '../core/deckFlow';
 import { stampReviewedAt } from './home/progressStamp';
 import {
   homeRushRecapPreview,
+  peekChipDone,
   rushHoldLine,
   rushRecapChipLabel,
   rushRecapFromRun,
+  todayRushRecap,
 } from '../core/rushRecap';
 import { buildDetailVM } from './home/detailVM';
 import { buildMenu, defaultSelectedIndex, homeSelectedIndex } from './home/menu';
@@ -101,8 +103,11 @@ describe('Rush recap is Remember — not a grade-only / Bio → Geo dump', () =>
       rushRecap: lastRun,
     });
     expect(vm.samples.map((s) => s.root)).toEqual([photo.root, first.root, geo.root]);
+    expect(vm.samples.map((s) => s.ok)).toEqual([true, true, false]);
     expect(vm.sampleTap).toBe('remember');
-    expect(vm.samplesDone).toBe(true);
+    expect(vm.samplesDone).toBe(false);
+    expect(peekChipDone({ ok: vm.samples[0]?.ok })).toBe(true);
+    expect(peekChipDone({ ok: vm.samples[2]?.ok })).toBe(false);
     expect(vm.samples.map((s) => s.root)).not.toEqual(['Bio', 'Geo', 'Photo']);
   });
 
@@ -144,12 +149,28 @@ describe('Rush recap is Remember — not a grade-only / Bio → Geo dump', () =>
     expect(homeSelectedIndex(null, entitled.items, 2, { dailyResume: true, dailyDone: false })).toBe(
       1,
     );
+    expect(todayRushRecap(lastRun, 'kid-a', '2026-09-15')).toEqual(lastRun);
+    expect(homeSelectedIndex(null, entitled.items, 2, { rushToday: true })).toBe(0);
+    expect(entitled.items[0]).toMatchObject({ kind: 'mode', key: 'rush' });
+    expect(
+      homeSelectedIndex(null, entitled.items, 2, {
+        dailyResume: true,
+        rushToday: true,
+      }),
+    ).toBe(1);
+    expect(
+      homeSelectedIndex(null, entitled.items, 2, {
+        dailyDone: true,
+        rushToday: true,
+      }),
+    ).toBe(0);
   });
 
   it('wires Rush hold + recap chips + Remember stamp — not openRoot teach', () => {
     expect(rushHoldLine('Chron', 'time', 200, 2)).toBe('Yes — Chron means time. +200 · 2× combo');
     expect(rush).toContain('const AUTO_ADVANCE_MS = 1600');
     expect(rush).toContain('rushHoldLine');
+    expect(rush).toContain('rushMissLine');
     expect(rush).toContain('rememberRushHit');
     expect(rush).toContain('rushRecapFromRun');
     expect(rush).toContain('openRecap');
@@ -162,11 +183,14 @@ describe('Rush recap is Remember — not a grade-only / Bio → Geo dump', () =>
     expect(store).toContain('wondral:rushRecap:v1:');
     expect(store).toContain('parseRushRecap');
     expect(home).toContain('liveRushRecap');
+    expect(home).toContain('todayRushRecap');
+    expect(home).toContain('rushToday: rushToday != null');
     expect(home).toContain('dailyRecapNames');
     expect(home).toContain('learnedToday: learnedId !== null');
     expect(home).toContain('rushRecap: lastRush');
     expect(detail).toContain('homeRushRecapPreview');
     expect(detail).toContain('rushRecap');
+    expect(menu).toContain('opts.rushToday');
     expect(menu).toContain('dailyDone && !opts.learnedToday');
   });
 
@@ -174,11 +198,14 @@ describe('Rush recap is Remember — not a grade-only / Bio → Geo dump', () =>
     const phone = mediaBlock(css, 'max-width: 560px');
     expect(phone).toMatch(/\.q-rush-recap\s*\{[^}]*display:\s*flex/);
     expect(phone).toMatch(/\.q-fb\.good\s*\{[^}]*display:\s*block/);
+    expect(phone).toMatch(/\.q-fb\.bad\s*\{[^}]*display:\s*block/);
     expect(phone).not.toMatch(/\.q-rush-recap\s*\{[^}]*display:\s*none/);
     const short = mediaBlock(css, 'max-height: 720px');
     expect(short).toMatch(/\.q-rush-recap\s*\{[^}]*display:\s*flex/);
     const homePhone = mediaBlock(appCss, 'max-width: 860px');
     expect(homePhone).toMatch(/\.ww-samples\.is-lines \.ww-schip\.is-done\.is-tap\s*\{[^}]*display:\s*flex/);
+    expect(homePhone).toMatch(/\.ww-samples\.is-lines \.ww-schip\.is-miss\.is-tap\s*\{[^}]*display:\s*flex/);
+    expect(homePhone).not.toMatch(/\.ww-schip\.is-miss\s*\{[^}]*display:\s*none/);
   });
 
   it('does not expand the catalog', () => {

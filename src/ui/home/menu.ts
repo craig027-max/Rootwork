@@ -50,8 +50,8 @@ export interface ModeItem {
   disabled?: boolean;
   /** Best-result meta for the row (e.g. "A · 4★" for Root Rush), design's `best`. */
   best?: string;
-  /** Daily tile peek: today's three names + one-line meanings, before Start. */
-  preview?: { root: string; mean: string }[];
+  /** Daily / last-Rush peek: names + meanings. Rush lines keep `ok` so a miss is not a ✓. */
+  preview?: { root: string; mean: string; ok?: boolean }[];
   /** When Daily is banked, the preview lines are a done recap (✓ on each). */
   previewDone?: boolean;
   /** Mid-run Daily: remaining-root peek — first line is the next unanswered. */
@@ -208,16 +208,34 @@ export function tierTilePreview(
  * the resume tier after the modes. A live Daily mid-run lands on Daily so
  * the next-root peek is the first thing they see — not buried behind HERE.
  * Daily banked with no learn today lands on that recap so Remember chips
- * wait; a learn today keeps the HERE / Keep going tier.
+ * wait; a learn today keeps the HERE / Keep going tier. Today's last
+ * Rush wins over Daily-done / HERE so hit/miss chips wait — not buried
+ * behind Chron's recap or Astro. Mid-run Daily still beats Rush.
  */
 export function defaultSelectedIndex(
   items: MenuItem[],
   currentTier: TierNum,
-  opts: { dailyResume?: boolean; dailyDone?: boolean; learnedToday?: boolean } = {},
+  opts: {
+    dailyResume?: boolean;
+    dailyDone?: boolean;
+    learnedToday?: boolean;
+    rushToday?: boolean;
+  } = {},
 ): number {
-  // Mid-run Daily, or Daily just banked with no learn yet — land on the
-  // recap so Remember chips are waiting. A learn today keeps the HERE tier.
-  if (opts.dailyResume || (opts.dailyDone && !opts.learnedToday)) {
+  // Mid-run Daily always wins — Chron is still waiting.
+  if (opts.dailyResume) {
+    const daily = items.findIndex((it) => it.kind === 'mode' && it.key === 'daily');
+    if (daily >= 0) return daily;
+  }
+  // Today's last Rush — land on those hit/miss chips. Yesterday's recap
+  // still peeks on the tile; it must not steal Daily-done / HERE.
+  if (opts.rushToday) {
+    const rush = items.findIndex((it) => it.kind === 'mode' && it.key === 'rush');
+    if (rush >= 0) return rush;
+  }
+  // Daily just banked with no learn yet — land on the recap so Remember
+  // chips are waiting. A learn today keeps the HERE tier.
+  if (opts.dailyDone && !opts.learnedToday) {
     const daily = items.findIndex((it) => it.kind === 'mode' && it.key === 'daily');
     if (daily >= 0) return daily;
   }
@@ -235,7 +253,12 @@ export function homeSelectedIndex(
   picked: number | null,
   items: MenuItem[],
   currentTier: TierNum,
-  opts: { dailyResume?: boolean; dailyDone?: boolean; learnedToday?: boolean } = {},
+  opts: {
+    dailyResume?: boolean;
+    dailyDone?: boolean;
+    learnedToday?: boolean;
+    rushToday?: boolean;
+  } = {},
 ): number {
   return picked ?? defaultSelectedIndex(items, currentTier, opts);
 }
@@ -362,6 +385,8 @@ export function buildMenu(
     dailyResumeQi?: number | null;
     dailyTotal?: number;
     dailyPreview?: { root: string; mean: string }[];
+    /** Last Rush names + hit/miss — menu row peeks the real run, not a Starter trio. */
+    rushPreview?: { root: string; mean: string; ok?: boolean }[];
     /** Next unanswered Daily root name when a mid-run is live. */
     dailyNextName?: string;
     nextPlay?: boolean;
@@ -379,6 +404,7 @@ export function buildMenu(
       title: 'Root Rush',
       sub: rushMenuSub({ dailyNextName: opts.dailyNextName, dailyDone: opts.dailyDone }),
       best: opts.rushBest,
+      preview: opts.rushPreview && opts.rushPreview.length > 0 ? opts.rushPreview : undefined,
     },
     {
       kind: 'mode',

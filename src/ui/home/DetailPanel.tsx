@@ -4,6 +4,7 @@ import { paletteVars, type CSSVars } from '../components/styleVars';
 import { Button } from '../components/Button';
 import { Scene } from '../Scene';
 import { SCENE_EMOJI } from '../scenes';
+import { peekChipDone } from '../../core/rushRecap';
 import { samplePeekLabel, type SamplePeekTap } from './samplePeek';
 
 export interface DetailVM {
@@ -19,10 +20,10 @@ export interface DetailVM {
   ring?: { pct: number; label: string };
   pmA?: string;
   pmB?: ReactNode;
-  samples: { root: string; mean: string }[];
+  samples: { root: string; mean: string; ok?: boolean }[];
   /** Daily tile: stack name + one-line meaning so kids can read today's set. */
   sampleLines?: boolean;
-  /** Daily done: mark the three preview lines as a recap, not a fresh teaser. */
+  /** Daily done / all-hit Rush: mark preview lines as a recap, not a fresh teaser. */
   samplesDone?: boolean;
   /** Mid-run Daily: first remaining line is the next unanswered root. */
   samplesNext?: boolean;
@@ -117,13 +118,15 @@ export function DetailPanel({
         >
           {vm.samples.map((s, i) => {
             const tapable = Boolean(vm.sampleTap && onSample);
-            const isNext = Boolean(vm.samplesNext && i === 0 && !vm.samplesDone);
-            const cls = `ww-schip${vm.samplesDone ? ' is-done' : ''}${
-              isNext ? ' is-next' : ''
-            }${tapable ? ' is-tap' : ''}`;
+            const chipDone = peekChipDone({ done: vm.samplesDone, ok: s.ok });
+            const chipMiss = s.ok === false;
+            const isNext = Boolean(vm.samplesNext && i === 0 && !chipDone);
+            const cls = `ww-schip${chipDone ? ' is-done' : ''}${
+              chipMiss ? ' is-miss' : ''
+            }${isNext ? ' is-next' : ''}${tapable ? ' is-tap' : ''}`;
             const body = (
               <>
-                {vm.samplesDone ? (
+                {chipDone ? (
                   <span className="ww-daily-mark" aria-hidden="true">
                     ✓
                   </span>
@@ -138,7 +141,10 @@ export function DetailPanel({
                 className={cls}
                 key={s.root}
                 onClick={() => onSample(s.root)}
-                aria-label={samplePeekLabel(vm.sampleTap, s.root, { dailyNext: isNext })}
+                aria-label={samplePeekLabel(vm.sampleTap, s.root, {
+                  dailyNext: isNext,
+                  ok: s.ok,
+                })}
               >
                 {body}
               </button>

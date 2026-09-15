@@ -534,6 +534,15 @@
   .ww-samples.is-lines .ww-schip.is-done.is-tap {
     display: flex;
   }
+  .ww-samples.is-lines .ww-schip.is-miss {
+    display: flex;
+  }
+  .ww-samples.is-lines .ww-schip.is-miss.is-tap {
+    display: flex;
+  }
+  .ww-daily-line.is-miss {
+    display: flex;
+  }
   .ww-samples.is-lines .ww-schip.is-next {
     display: flex;
   }
@@ -774,6 +783,13 @@
 .ww-samples.is-lines .ww-schip.is-done {
   border-color: rgba(47, 217, 154, 0.42);
   background: rgba(47, 217, 154, 0.1);
+}
+.ww-samples.is-lines .ww-schip.is-miss {
+  border-color: rgba(255, 92, 107, 0.38);
+  background: rgba(255, 92, 107, 0.08);
+}
+.ww-daily-line.is-miss b {
+  color: var(--text-secondary);
 }
 .ww-samples.is-lines .ww-schip.is-done > span:last-child {
   margin-left: auto;
