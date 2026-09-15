@@ -38,7 +38,8 @@ import { buildModeEmpty, buildRushResultNext, buildRushStart } from './modes/mod
 
 const ROUND = 10;
 const MAX_MULT = 8;
-const AUTO_ADVANCE_MS = 900;
+/** Long enough to read Yes — {root} means {meaning}, still auto (no Next dump). */
+const AUTO_ADVANCE_MS = 1600;
 
 // ── accent (jewel re-theming) ─────────────────────────────────
 
@@ -230,9 +231,10 @@ export function RootRush() {
     keyRef.current = handleKey;
   });
 
-  // Auto-advance after a correct answer (~900ms) so kids aren't clicking Next
-  // on every question. Wrong answers keep the explicit Next button so the
-  // correct answer can be read. Enter/Space still skips ahead early.
+  // Auto-advance after a correct answer so kids aren't clicking Next on every
+  // question. 1600ms is long enough to read Yes — {root} means {meaning}.
+  // Wrong answers keep the explicit Next button so the correct answer can
+  // be read. Enter/Space still skips ahead early.
   useEffect(() => {
     if (phase !== 'play' || picked === null || !answeredCorrect) return;
     const t = window.setTimeout(() => advanceRef.current(), AUTO_ADVANCE_MS);
