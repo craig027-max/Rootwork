@@ -41,7 +41,7 @@ npm run lint
 ```
 
 The app runs with **no backend configured** (free Tier 1 works; gated CTAs degrade gracefully).
-To wire the isolated backend and deploy, see **[DEPLOYMENT.md](DEPLOYMENT.md)**.
+To wire the isolated backend and deploy, see **[DEPLOYMENT.md](DEPLOYMENT.md)**. Parked (not current ship): [Root fusion / Word Pokémon](docs/FUTURE_Root_Fusion_Word_Pokemon.md).
 
 ## The gates (and why they're tested)
 
