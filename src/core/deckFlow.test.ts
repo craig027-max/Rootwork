@@ -18,6 +18,7 @@ import {
   recapDeckEntry,
   recapOpenForId,
   recapOpenForRoot,
+  rememberMissLine,
   entryAfterSuccess,
   hearHoldLine,
   holdHearAfterClip,
@@ -171,6 +172,15 @@ describe('Remember one-beat: hold meaning, Home — not Geo', () => {
       showExamples: false,
     });
     expect(commitCorrectAdvance(path.dest)).toEqual({ kind: 'home' });
+  });
+
+  it('Remember miss names the meaning then Home — not a Try-again dump', () => {
+    expect(rememberMissLine('Geo', 'earth')).toBe('Nope — Geo means earth.');
+    expect(rememberMissLine('  Chron  ', '  time ')).toBe('Nope — Chron means time.');
+    expect(rememberMissLine('', 'time')).toBe("Nope — that's okay.");
+    expect(rememberMissLine('Geo', 'earth').toLowerCase()).not.toMatch(
+      /try again|you've got this|shame|stupid|fail|loser/,
+    );
   });
 
   it('hides Next and Rush so Remember cannot dump onto Geo', () => {

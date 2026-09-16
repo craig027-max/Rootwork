@@ -462,6 +462,13 @@
 .ww-today-item.is-remember .ww-today-mark {
   color: var(--jewel-amber);
 }
+.ww-today-item.is-miss {
+  border-color: rgba(255, 92, 107, 0.38);
+  background: rgba(255, 92, 107, 0.08);
+}
+.ww-today-item.is-miss .ww-today-mark {
+  color: var(--danger);
+}
 .ww-today-cta {
   display: block;
   width: 100%;
@@ -593,6 +600,9 @@
     align-items: flex-start;
   }
   .ww-today-item.is-remember {
+    display: inline-flex;
+  }
+  .ww-today-item.is-miss {
     display: inline-flex;
   }
   .ww-today-cta {
@@ -1292,6 +1302,9 @@ button.ww-schip:focus-visible {
   color: var(--text-secondary);
   line-height: 1.5;
   font-size: 0.95rem;
+}
+.ww-recall-teach.is-remember {
+  display: flex;
 }
 
 .ww-card2 {
@@ -2107,6 +2120,10 @@ button.ww-schip:focus-visible {
     display: block;
   }
   .ww-card2.is-remember .ww-card-actions {
+    display: flex;
+  }
+  .ww-recall-teach.is-remember,
+  .ww-card2.is-remember .ww-recall-teach {
     display: flex;
   }
   /* Nav is fixed; extra wrap padding was creating a 26px phantom scroll

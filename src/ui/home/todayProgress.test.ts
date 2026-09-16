@@ -11,10 +11,12 @@ import {
   learnedRootName,
   learnedRootToday,
   pickRememberRoot,
+  pickRushMissRemember,
   rememberRootToday,
   rootLabel,
   stampReviewedAt,
 } from './todayProgress';
+import { rushRecapFromRun } from '../../core/rushRecap';
 import { learnNextAction } from '../modes/modeHandoff';
 import { isNextPlayHome, nextPlayRoot } from './menu';
 
@@ -321,6 +323,53 @@ describe('pickRememberRoot — oldest stale owned root', () => {
   });
 });
 
+describe('pickRushMissRemember — today\'s Rush miss beats stale Bio', () => {
+  function atDay(day: string, hour = 15): number {
+    const [y, m, d] = day.split('-').map(Number);
+    return new Date(y!, m! - 1, d, hour).getTime();
+  }
+
+  const photo = starter[2];
+  if (!photo) throw new Error('fixture: expected Photo');
+
+  const lastRun = rushRecapFromRun(
+    [
+      { id: rootId(photo), ok: true },
+      { id: rootId(first), ok: true },
+      { id: rootId(second), ok: false },
+    ],
+    { day: TODAY, studentId: 'kid-a' },
+  );
+  const yesterday = rushRecapFromRun(
+    [{ id: rootId(second), ok: false }],
+    { day: '2026-09-05', studentId: 'kid-a' },
+  );
+  const owned = {
+    [rootId(first)]: { completedAt: atDay('2026-09-01'), reviewedAt: atDay(TODAY, 10) },
+    [rootId(second)]: { completedAt: atDay('2026-09-02') },
+    [rootId(photo)]: { completedAt: atDay('2026-09-03'), reviewedAt: atDay(TODAY, 11) },
+  };
+
+  it('names the first owned miss in play order — not oldest Bio', () => {
+    expect(pickRememberRoot(owned, TODAY)).toBe(rootId(second));
+    expect(pickRushMissRemember(lastRun, owned, TODAY)).toBe(rootId(second));
+    expect(pickRushMissRemember(lastRun, owned, TODAY)).not.toBe(rootId(first));
+  });
+
+  it('drops hits, unowned Meet roots, reviewed misses, and yesterday', () => {
+    expect(pickRushMissRemember(yesterday, owned, TODAY)).toBeNull();
+    expect(
+      pickRushMissRemember(lastRun, { [rootId(first)]: { completedAt: atDay('2026-09-01') } }, TODAY),
+    ).toBeNull();
+    const reviewedMiss = {
+      ...owned,
+      [rootId(second)]: { completedAt: atDay('2026-09-02'), reviewedAt: atDay(TODAY, 12) },
+    };
+    expect(pickRushMissRemember(lastRun, reviewedMiss, TODAY)).toBeNull();
+    expect(pickRushMissRemember(lastRun, owned, TODAY, { exclude: [rootId(second)] })).toBeNull();
+  });
+});
+
 describe('rememberRootToday + stampReviewedAt', () => {
   function atDay(day: string, hour = 15): number {
     const [y, m, d] = day.split('-').map(Number);
@@ -478,6 +527,33 @@ describe('buildTodayProgress — next-root meaning + Remember', () => {
     });
   });
 
+  it('names Missed {Rush miss} · meaning and keeps Continue as the hero', () => {
+    const next = learnNextAction(startedBuilder, true);
+    const vm = buildTodayProgress({
+      firstRun: false,
+      nextPlay: false,
+      dailyDone: false,
+      completed: startedBuilder,
+      entitled: true,
+      rememberedToday: false,
+      rememberRoot: second.root,
+      rememberMean: second.mean,
+      rememberRootId: rootId(second),
+      rememberMissed: true,
+    });
+    expect(vm.items.find((i) => i.key === 'remember')).toEqual({
+      key: 'remember',
+      done: false,
+      label: `Missed ${second.root} · ${second.mean}`,
+      action: 'remember',
+      rootId: rootId(second),
+      missed: true,
+    });
+    expect(vm.cta?.label).toBe(next.label);
+    expect(vm.pathDone).toBe(false);
+    expect(vm.items.find((i) => i.key === 'remember')?.label).not.toMatch(/Remembered |Remember /);
+  });
+
   it('adds Remember {stale root} · meaning and keeps Continue as the hero', () => {
     const next = learnNextAction(startedBuilder, true);
     const vm = buildTodayProgress({
@@ -559,6 +635,8 @@ describe('Today checklist wiring + phone layout', () => {
     expect(home).toContain('onDaily');
     expect(home).toContain('onRush');
     expect(home).toContain('pickRememberRoot');
+    expect(home).toContain('pickRushMissRemember');
+    expect(home).toContain('rememberMissed');
     expect(home).toContain('rememberRootToday');
     expect(home).toContain('dailyRoots.map((r) => rootId(r))');
     expect(store).toContain('recordDailyHit');
@@ -581,6 +659,8 @@ describe('Today checklist wiring + phone layout', () => {
     expect(band).toContain('ww-today');
     expect(band).toContain('ww-today-item');
     expect(band).toContain('is-remember');
+    expect(band).toContain('item.missed');
+    expect(band).toContain('is-miss');
     expect(band).toContain('ww-today-cta');
     expect(band).toContain('ww-today-recap');
     expect(band).toContain('role="list"');
@@ -630,6 +710,9 @@ describe('Today checklist wiring + phone layout', () => {
     expect(phone).not.toMatch(/\.ww-today-cta\s*\{[^}]*display:\s*none/);
     expect(css).toMatch(/\.ww-today-item\.is-done/);
     expect(css).toMatch(/\.ww-today-item\.is-remember/);
+    expect(css).toMatch(/\.ww-today-item\.is-miss/);
+    expect(phone).toMatch(/\.ww-today-item\.is-miss\s*\{[^}]*display:\s*inline-flex|\.ww-today-item\.is-miss\s*\{[^}]*display:\s*flex/);
+    expect(phone).not.toMatch(/\.ww-today-item\.is-miss\s*\{[^}]*display:\s*none/);
     expect(css).toMatch(/\.ww-today-mark/);
     expect(css).toMatch(/\.ww-today\.is-done/);
     expect(css).toMatch(/\.ww-today-recap/);

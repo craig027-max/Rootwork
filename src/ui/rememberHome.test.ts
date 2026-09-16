@@ -49,12 +49,15 @@ describe('Remember {root}: one-beat visit, then Home', () => {
       'You already own ${root.root}. Tap what it means — or which word it builds. Then Home.',
     );
     expect(deck).toContain('Remember ${root.root} — one tap. No shame if you miss.');
+    expect(deck).toContain('rememberMissLine');
+    expect(deck).toContain('quizRecall.picked === null');
   });
 
   it('keeps Remember chrome + Home tap readable on a short phone', () => {
     const short = mediaBlock(css, 'max-height: 720px');
     expect(short).toMatch(/\.ww-caption\.is-remember\s*\{[^}]*display:\s*block/);
     expect(short).toMatch(/\.ww-card2\.is-remember \.ww-card-actions\s*\{[^}]*display:\s*flex/);
+    expect(short).toMatch(/\.ww-recall-teach\.is-remember/);
     expect(short).toMatch(/\.ww-recall-win\s*,/);
     expect(short).not.toMatch(/\.ww-caption\.is-remember\s*\{[^}]*display:\s*none/);
     expect(short).not.toMatch(/\.ww-card2\.is-remember \.ww-card-actions\s*\{[^}]*display:\s*none/);

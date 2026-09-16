@@ -40,6 +40,7 @@ import {
   buildTodayProgress,
   learnedRootToday,
   pickRememberRoot,
+  pickRushMissRemember,
   rememberRootToday,
   rootLabel,
 } from './home/todayProgress';
@@ -80,10 +81,17 @@ export function Home() {
   const learnedId = learnedRootToday(progress, day);
   const rememberedId = rememberRootToday(progress, day);
   const nextLearn = learnNextAction(completed, entitled);
+  const lastRush = liveRushRecap(rushRecap, activeStudentId);
+  const rushToday = todayRushRecap(rushRecap, activeStudentId, day);
+  const rememberExclude = [learnedId, nextLearn.rootId, ...dailyRoots.map((r) => rootId(r))];
+  const rushMissId = pickRushMissRemember(rushToday, progress, day, {
+    exclude: rememberExclude,
+  });
   const rememberId =
+    rushMissId ??
     rememberedId ??
     pickRememberRoot(progress, day, {
-      exclude: [learnedId, nextLearn.rootId, ...dailyRoots.map((r) => rootId(r))],
+      exclude: rememberExclude,
     });
   const learn = rootLabel(nextLearn.rootId);
   const remember = rootLabel(rememberId);
@@ -102,17 +110,16 @@ export function Home() {
     learnedRoot: rootLabel(learnedId).name,
     learnedRootId: learnedId ?? undefined,
     learnMean: learn.mean,
-    rememberedToday: rememberedId !== null,
+    rememberedToday: rushMissId == null && rememberedId !== null,
     rememberRoot: remember.name,
     rememberMean: remember.mean,
     rememberRootId: rememberId ?? undefined,
+    rememberMissed: rushMissId != null,
   });
   const dailyPreview =
     dailyResumeQi != null
       ? dailyResumePreview(dailyRoots, dailyResumeQi)
       : dailyTilePreview(dailyRoots);
-  const lastRush = liveRushRecap(rushRecap, activeStudentId);
-  const rushToday = todayRushRecap(rushRecap, activeStudentId, day);
   const rushPreview = homeRushRecapPreview(lastRush, {
     dailyResume: dailyResumeQi != null,
   });

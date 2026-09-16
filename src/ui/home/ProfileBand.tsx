@@ -111,7 +111,7 @@ export function ProfileBand({
                 key={item.key}
                 className={`ww-today-item${item.done ? ' is-done' : ''}${
                   item.key === 'remember' ? ' is-remember' : ''
-                }`}
+                }${item.missed ? ' is-miss' : ''}`}
                 disabled={item.action === 'none'}
                 onClick={() => runAction(item.action, item.rootId)}
               >
