@@ -174,6 +174,17 @@ export function successLine(root: Root): string {
   return `Yes — ${root.root} means ${root.mean}.`;
 }
 
+/**
+ * After a Remember miss — the meaning, then Home. Not a Try-again dump
+ * that pretends the one-beat visit is a quiz they must pass.
+ */
+export function rememberMissLine(rootName: string, mean: string): string {
+  const name = rootName.replace(/\s+/g, ' ').trim();
+  const spokenMean = mean.replace(/\s+/g, ' ').trim();
+  if (!name || !spokenMean) return "Nope — that's okay.";
+  return `Nope — ${name} means ${spokenMean}.`;
+}
+
 export function starterDoneLine(): string {
   return 'Starter done. Nice work.';
 }

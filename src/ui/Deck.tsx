@@ -24,6 +24,7 @@ import {
   isLessonStudying,
   isRecallEntry,
   recapOpenForId,
+  rememberMissLine,
   showExampleWords,
   winLineOnCard,
   type AfterCorrectRecall,
@@ -471,9 +472,19 @@ export function Deck() {
                 })}
               </div>
               {quizRecall.picked !== null ? (
-                <div className="ww-recall-teach">
-                  <p>{quizRecall.beat.teach}</p>
-                  <Button onClick={startRecall}>Try again — you've got this</Button>
+                <div className={`ww-recall-teach${remembering ? ' is-remember' : ''}`}>
+                  <p>
+                    {remembering
+                      ? rememberMissLine(root.root, root.mean)
+                      : quizRecall.beat.teach}
+                  </p>
+                  {remembering ? (
+                    <Button onClick={closeRoot} block size="lg">
+                      Home →
+                    </Button>
+                  ) : (
+                    <Button onClick={startRecall}>Try again — you've got this</Button>
+                  )}
                 </div>
               ) : null}
             </div>
@@ -502,7 +513,7 @@ export function Deck() {
                   deckEntry,
                 )}
               </Button>
-            ) : quizRecall ? (
+            ) : quizRecall && quizRecall.picked === null ? (
               <span className="ww-muted">
                 {remembering
                   ? `Remember ${root.root} — one tap. No shame if you miss.`

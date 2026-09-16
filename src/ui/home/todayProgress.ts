@@ -13,12 +13,15 @@
  * does not steal the one-tap while Chron is still waiting. Continue
  * {next learn} stays on the learn row. An owned Daily hit is today's
  * Remember (Home excludes today's deal from the Remember pick so Bio
- * is not asked twice). First-run / next-Play stays a single Play {root}
- * — no Daily / Remember dump.
+ * is not asked twice). After today's Rush, an owned miss wins Remember
+ * — Missed Geo, not a stale Bio, and not Remembered Photo hiding the
+ * miss. Yesterday's recap does not steal the row. First-run / next-Play
+ * stays a single Play {root} — no Daily / Remember dump.
  *
  * Pure so tests lock the copy without I/O.
  */
 import { continueDailyLabel, dailyNextRowLabel, localDayKey } from '../../core/daily';
+import type { RushRecap } from '../../core/rushRecap';
 import { ROOTS_BY_ID } from '../../data/roots';
 import { learnNextAction } from '../modes/modeHandoff';
 import { type ProgressStamp, stampReviewedAt } from './progressStamp';
@@ -35,6 +38,8 @@ export interface TodayItem {
   label: string;
   action: TodayAction;
   rootId?: string;
+  /** Today's Rush miss — Missed stays Missed, not a fake ✓. */
+  missed?: boolean;
 }
 
 export interface TodayCta {
@@ -157,6 +162,41 @@ export function pickRememberRoot(
   return best?.id ?? null;
 }
 
+/**
+ * First owned miss from today's last Rush that is still unreviewed.
+ * Play order — the Missed chip they already see — not oldest stale Bio.
+ * Hits, unowned Meet roots, today's learn, and reviewed-today drop.
+ * Yesterday's recap must not steal Today's Remember.
+ */
+export function pickRushMissRemember(
+  recap: RushRecap | null | undefined,
+  progress: Record<string, ProgressStamp>,
+  day: string,
+  opts: { exclude?: Iterable<string | null | undefined> } = {},
+): string | null {
+  if (!recap || recap.day !== day || recap.roots.length === 0) return null;
+  const exclude = new Set(
+    [...(opts.exclude ?? [])].filter((id): id is string => typeof id === 'string' && id.length > 0),
+  );
+  for (const line of recap.roots) {
+    if (line.ok || exclude.has(line.id) || !ROOTS_BY_ID[line.id]) continue;
+    const rec = progress[line.id];
+    const at = rec?.completedAt;
+    if (typeof at !== 'number' || !Number.isFinite(at)) continue;
+    if (localDayKey(new Date(at)) === day) continue;
+    const reviewed = rec?.reviewedAt;
+    if (
+      typeof reviewed === 'number' &&
+      Number.isFinite(reviewed) &&
+      localDayKey(new Date(reviewed)) === day
+    ) {
+      continue;
+    }
+    return line.id;
+  }
+  return null;
+}
+
 function stripCta(label: string): string {
   return label.replace(/\s*›\s*$/, '');
 }
@@ -179,12 +219,18 @@ function rememberRowLabel(opts: {
   done: boolean;
   name?: string;
   mean?: string;
+  missed?: boolean;
 }): string {
   if (opts.done) {
     return opts.name ? `Remembered ${opts.name}` : 'Remembered a root today';
   }
   const name = opts.name?.trim();
   const mean = opts.mean?.trim();
+  if (opts.missed) {
+    if (name && mean) return `Missed ${name} · ${mean}`;
+    if (name) return `Missed ${name}`;
+    return 'Missed a root';
+  }
   if (name && mean) return `Remember ${name} · ${mean}`;
   if (name) return `Remember ${name}`;
   return 'Remember a root';
@@ -218,6 +264,8 @@ export function buildTodayProgress(opts: {
   rememberRoot?: string;
   rememberMean?: string;
   rememberRootId?: string;
+  /** Today's Rush miss — Today names Missed {root}, not Remembered {hit}. */
+  rememberMissed?: boolean;
 }): TodayProgress {
   if (opts.firstRun || opts.nextPlay) {
     return {
@@ -238,6 +286,7 @@ export function buildTodayProgress(opts: {
   const rememberName = opts.rememberRoot?.trim() || undefined;
   const rememberMean = opts.rememberMean?.trim() || undefined;
   const rememberId = opts.rememberRootId?.trim() || undefined;
+  const rememberMissed = Boolean(opts.rememberMissed) && !rememberedToday;
   const dailyTotal = opts.dailyTotal && opts.dailyTotal > 0 ? opts.dailyTotal : 5;
   const dailyResume =
     !opts.dailyDone &&
@@ -300,9 +349,11 @@ export function buildTodayProgress(opts: {
         done: rememberedToday,
         name: rememberName,
         mean: rememberMean,
+        missed: rememberMissed,
       }),
       action: rememberId ? 'remember' : 'none',
       ...(rememberId ? { rootId: rememberId } : {}),
+      ...(rememberMissed ? { missed: true } : {}),
     });
   }
 
