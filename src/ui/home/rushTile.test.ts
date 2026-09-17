@@ -154,7 +154,7 @@ describe('Home Root Rush tile: best recap after a run', () => {
     expect(detail).toContain("played ? 'Play again 🎯' : 'Start the run 🎯'");
     expect(detail).toContain('dailyWaitingLine');
     expect(detail).toContain('continueDailyLabel');
-    expect(detail).toContain('continueDaily ?? \'Browse roots\'');
+    expect(detail).toContain('continueDaily ?? (miss ? rememberMissCtaLabel(miss.name) : \'Browse roots\')');
 
     const ctaAt = readFileSync(join(process.cwd(), 'src/ui/home/DetailPanel.tsx'), 'utf8').indexOf(
       'ww-detail-cta',
@@ -240,7 +240,7 @@ describe('Home Root Rush tile: Continue Daily is a real tap mid-run', () => {
     expect(home).toContain("setView('daily')");
     expect(home).not.toContain('openRoot(rootId(first))');
     expect(detail).toContain('dailyWaitingLine');
-    expect(detail).toContain('continueDaily ?? \'Browse roots\'');
+    expect(detail).toContain('continueDaily ?? (miss ? rememberMissCtaLabel(miss.name) : \'Browse roots\')');
     expect(panel).toContain('ww-detail-wait');
     expect(panel).toContain('vm.waiting');
     expect(css).toMatch(/\.ww-detail-wait\s*\{/);

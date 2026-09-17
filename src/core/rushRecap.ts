@@ -10,6 +10,8 @@
  * because it was in the run. Mid-run Daily still wins the Home Rush
  * tile so Chron is not buried under a recap dump. Today's last run
  * lands Home on Rush so those chips wait; yesterday's still peeks.
+ * After Daily + a learn, an owned miss makes Remember the Rush
+ * result hero — Play again must not sit over Geo.
  *
  * Pure and Date-injectable so tests lock the copy without I/O.
  */
@@ -187,4 +189,19 @@ export function rushRecapChipLabel(
   if (ok === false) return name ? `Missed ${name}` : 'Missed';
   if (!name) return owned ? 'Remember' : 'Meet this root';
   return owned ? `Remember ${name}` : `Meet ${name}`;
+}
+
+/** Fat tap after Daily + a learn are done but a Rush miss still waits. */
+export function rememberMissCtaLabel(rootName: string): string {
+  const name = rootName.replace(/\s+/g, ' ').trim();
+  return name ? `Remember ${name} ›` : 'Remember ›';
+}
+
+/** Recap while Today ✓ / Rush result wait on a miss — not Play again over Geo. */
+export function todayMissRecap(name?: string, also?: string): string {
+  const n = name?.replace(/\s+/g, ' ').trim();
+  const a = also?.replace(/\s+/g, ' ').trim();
+  if (n && a) return `Remember ${n} · then ${a}`;
+  if (n) return `Remember ${n} — missed in Rush`;
+  return 'Remember a missed root';
 }

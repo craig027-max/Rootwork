@@ -8,9 +8,11 @@ import {
   peekChipDone,
   rushHoldLine,
   rushMissLine,
+  rememberMissCtaLabel,
   rushRecapChipLabel,
   rushRecapFromRun,
   rushRecapPreview,
+  todayMissRecap,
   todayRushRecap,
 } from './rushRecap';
 
@@ -110,6 +112,9 @@ describe('rushHoldLine + rushMissLine + rushRecapChipLabel', () => {
     expect(rushRecapChipLabel('Geo', true, false)).toBe('Missed Geo');
     expect(rushRecapChipLabel('Chron', false, false)).toBe('Missed Chron');
     expect(rushRecapChipLabel('Photo', true, true)).toBe('Remember Photo');
+    expect(rememberMissCtaLabel(geo.root)).toBe(`Remember ${geo.root} ›`);
+    expect(todayMissRecap(geo.root)).toBe(`Remember ${geo.root} — missed in Rush`);
+    expect(todayMissRecap(geo.root, photo.root)).toBe(`Remember ${geo.root} · then ${photo.root}`);
   });
 });
 

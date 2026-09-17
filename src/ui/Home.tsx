@@ -119,6 +119,7 @@ export function Home() {
     rememberMissed: rushMissId != null,
     rememberAlso,
   });
+  const missHero = Boolean(today.missWaiting && today.cta?.kind === 'remember' && rushMissId);
   const dailyPreview =
     dailyResumeQi != null
       ? dailyResumePreview(dailyRoots, dailyResumeQi)
@@ -136,6 +137,7 @@ export function Home() {
     dailyPreview,
     rushPreview,
     dailyNextName: dailyNext?.root,
+    rushMissName: missHero ? remember.name : undefined,
     nextPlay,
   });
   const allItems = [...items, ...tucked];
@@ -172,9 +174,16 @@ export function Home() {
   }
 
   function onSecondary(item: MenuItem) {
-    const tap = homeSecondaryAction(item, { dailyResumeQi });
+    const tap = homeSecondaryAction(item, {
+      dailyResumeQi,
+      rememberMissId: missHero ? rushMissId : null,
+    });
     if (tap.kind === 'daily') {
       setView('daily');
+      return;
+    }
+    if (tap.kind === 'remember') {
+      openRoot(tap.rootId, { entry: 'remember' });
       return;
     }
     if (tap.kind === 'index') {
@@ -216,6 +225,10 @@ export function Home() {
     completed,
     entitled,
     pathDone: today.pathDone,
+    learnedToday: learnedId !== null,
+    rememberMissId: missHero ? rushMissId : null,
+    rememberMissName: missHero ? remember.name : undefined,
+    rememberAlso: missHero ? rememberAlso : undefined,
     rushRuns: stats.runs,
     rushBestPct: stats.bestPct,
     rushBestStars: stats.bestStars,

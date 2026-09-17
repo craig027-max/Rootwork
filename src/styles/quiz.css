@@ -119,6 +119,18 @@
   color: var(--text-secondary);
   overflow-wrap: anywhere;
 }
+.q-daily-wait.is-miss,
+.q-rush-remember em {
+  color: #ff8a8f;
+}
+.q-rush-remember {
+  border-color: rgba(255, 92, 107, 0.4);
+  background: rgba(255, 92, 107, 0.08);
+}
+.q-go.is-miss {
+  background: linear-gradient(100deg, #ff8a6b, #ff5c6b);
+  box-shadow: 0 0 30px rgba(255, 92, 107, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
 
 /* play */
 .q-play { display: flex; flex-direction: column; }
@@ -321,6 +333,15 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-daily-continue em {
     display: block;
   }
+  .q-rush-remember {
+    display: flex;
+  }
+  .q-daily-wait.is-miss {
+    display: block;
+  }
+  .q-go.is-miss {
+    display: block;
+  }
 }
 
 /* Short laptop / phone: question + scene + answers on one screen, no scroll. */
@@ -360,6 +381,9 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-daily-wait { display: block; }
   .q-daily-continue { display: flex; }
   .q-daily-continue em { display: block; }
+  .q-rush-remember { display: flex; }
+  .q-daily-wait.is-miss { display: block; }
+  .q-go.is-miss { display: block; }
   .q-rush-recap { display: flex; }
   .q-rush-recap .q-daily-chip { display: inline-flex; }
   .q-daily-chip.is-miss { display: inline-flex; }

@@ -19,10 +19,12 @@ import {
   rushMissLine,
   rushRecapChipLabel,
   rushRecapFromRun,
+  todayRushRecap,
 } from '../core/rushRecap';
 import type { RunResult } from '../core/stats';
 import { Scene } from './Scene';
-import { buildModeEmpty, buildRushResultNext, buildRushStart } from './modes/modeHandoff';
+import { learnedRootToday, listRushMissRemember, rootLabel } from './home/todayProgress';
+import { buildModeEmpty, buildRushResultNext, buildRushStart, learnNextAction } from './modes/modeHandoff';
 
 /**
  * Root Rush — the full-screen jewel-themed quiz overlay, ported from the design
@@ -34,8 +36,9 @@ import { buildModeEmpty, buildRushResultNext, buildRushStart } from './modes/mod
  *
  * A live Daily mid-run stays named: start peeks Daily · 2 of 5 · Chron ·
  * time and offers Continue Daily · 3 of 5 — same tap Home / result
- * already use. Play again still starts Rush. Continue {learn} stays
- * when Daily is not mid-run.
+ * already use. After Daily + a learn, an owned miss is Remember Geo —
+ * Play again still starts Rush, but it is not the fat tap over Geo.
+ * Continue {learn} stays when Daily / a learn is still open.
  *
  * A correct tap names the meaning (Yes — Chron means time) then keeps
  * the combo auto-advance. A miss names it too (Nope — Chron means time)
@@ -77,6 +80,7 @@ export function RootRush() {
   const rushRecap = useWondralStore((s) => s.rushRecap);
   const stats = useWondralStore((s) => s.stats);
   const completed = useWondralStore((s) => s.completedRoots);
+  const progress = useWondralStore((s) => s.progress);
   const dailyRun = useWondralStore((s) => s.dailyRun);
   const studentId = useWondralStore((s) => s.activeStudentId);
 
@@ -118,6 +122,21 @@ export function RootRush() {
     dailyNextName: dailyNext?.root,
     dailyNextMean: dailyNext?.mean,
   };
+  const dailyDone = stats.lastDailyDay === day;
+  const learnedId = learnedRootToday(progress, day);
+  const nextLearn = learnNextAction(completed, entitled);
+  const rushToday = todayRushRecap(rushRecap, studentId, day);
+  const rushMissIds = listRushMissRemember(rushToday, progress, day, {
+    exclude: [learnedId, nextLearn.rootId, ...dailyRoots.map((r) => rootId(r))],
+  });
+  const rushMissId = rushMissIds[0] ?? null;
+  const missRemember = {
+    rememberMissId: rushMissId,
+    rememberMissName: rootLabel(rushMissId).name,
+    rememberAlso: rootLabel(rushMissIds[1]).name,
+    dailyDone,
+    learnedToday: learnedId !== null,
+  };
 
   // Question set for the current run — reseeded by `runSeed` so "Play again"
   // always deals a fresh round.
@@ -146,9 +165,14 @@ export function RootRush() {
     openRoot(id, { entry: recapDeckEntry(completed.has(id)) });
   }
 
-  function goPrimary(kind: 'learn' | 'home' | 'daily', id?: string) {
+  function goPrimary(kind: 'learn' | 'home' | 'daily' | 'remember', id?: string) {
     if (kind === 'daily') {
       setView('daily');
+      return;
+    }
+    if (kind === 'remember') {
+      if (id) openRoot(id, { entry: 'remember' });
+      else closeQuiz();
       return;
     }
     goLearn(id);
@@ -298,8 +322,14 @@ export function RootRush() {
   ];
   const lastRush = liveRushRecap(rushRecap, studentId);
   const startPeek = homeRushRecapPreview(lastRush, { dailyResume: dailyResumeQi != null });
-  const rushStart = buildRushStart({ ...stats, ...dailyResume });
-  const rushNext = buildRushResultNext(completed, entitled, dailyResume);
+  const rushStart = buildRushStart({
+    ...stats,
+    ...dailyResume,
+    ...missRemember,
+    completed,
+    entitled,
+  });
+  const rushNext = buildRushResultNext(completed, entitled, { ...dailyResume, ...missRemember });
 
   return (
     <div className="q-rush" style={accentStyle(accent)} role="dialog" aria-modal="true" aria-label="Root Rush">
@@ -373,6 +403,15 @@ export function RootRush() {
               >
                 <span>{rushStart.continueDaily}</span>
                 <em>{rushStart.waiting}</em>
+              </button>
+            ) : rushStart.rememberMiss && rushStart.rememberPeek ? (
+              <button
+                type="button"
+                className="q-ghost q-daily-continue q-rush-remember"
+                onClick={() => goPrimary('remember', rushStart.rememberMissId ?? undefined)}
+              >
+                <span>{rushStart.rememberMiss}</span>
+                <em>{rushStart.rememberPeek}</em>
               </button>
             ) : rushStart.waiting ? (
               <div className="q-daily-wait" role="status">
@@ -477,7 +516,7 @@ export function RootRush() {
               </div>
             </div>
             {rushNext.peek ? (
-              <div className="q-daily-wait" role="status">
+              <div className={`q-daily-wait${rushNext.missWaiting ? ' is-miss' : ''}`} role="status">
                 {rushNext.peek}
               </div>
             ) : null}
@@ -506,10 +545,10 @@ export function RootRush() {
               })}
             </div>
             <div className="q-actions">
-              {rushNext.dailyResume ? (
+              {rushNext.dailyResume || rushNext.missWaiting ? (
                 <>
                   <button
-                    className="q-go q-next-learn"
+                    className={`q-go q-next-learn${rushNext.missWaiting ? ' is-miss' : ''}`}
                     onClick={() => goPrimary(rushNext.primary.kind, rushNext.primary.rootId)}
                   >
                     {rushNext.primary.label}

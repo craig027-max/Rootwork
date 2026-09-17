@@ -112,7 +112,7 @@ describe('Rush continues a live Daily mid-run', () => {
     expect(rush).toContain('liveDailyResumeQi');
     expect(rush).toContain('dailyNextRoot');
     expect(rush).toContain('pickDailyRoots');
-    expect(rush).toContain('buildRushResultNext(completed, entitled, dailyResume)');
+    expect(rush).toContain('buildRushResultNext(completed, entitled, { ...dailyResume, ...missRemember })');
     expect(rush).toContain('goPrimary');
     expect(rush).toContain("setView('daily')");
     expect(rush).toContain("goPrimary('daily')");

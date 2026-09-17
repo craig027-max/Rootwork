@@ -152,6 +152,8 @@ describe('buildRushStart + result next', () => {
     expect(vm.recap).toBeNull();
     expect(vm.waiting).toBeNull();
     expect(vm.continueDaily).toBeNull();
+    expect(vm.rememberMiss).toBeNull();
+    expect(vm.rememberPeek).toBeNull();
   });
 
   it('says Play again after a real run and recaps the same best as Home', () => {
@@ -181,6 +183,7 @@ describe('buildRushStart + result next', () => {
     expect(vm.primary.label).toBe(`Continue ${second.root} ›`);
     expect(vm.primary.kind).toBe('learn');
     expect(vm.dailyResume).toBe(false);
+    expect(vm.missWaiting).toBe(false);
     expect(vm.peek).toBeNull();
   });
 
@@ -269,8 +272,11 @@ describe('Daily / Rush overlay wiring + phone layout', () => {
     expect(rushSrc).toContain("setView('daily')");
     expect(rushSrc).toContain('q-daily-wait');
     expect(rushSrc).toContain('rushNext.dailyResume');
+    expect(rushSrc).toContain('rushNext.missWaiting');
+    expect(rushSrc).toContain("kind === 'remember'");
     expect(rushSrc).toContain('rushStart.waiting');
     expect(rushSrc).toContain('rushStart.continueDaily');
+    expect(rushSrc).toContain('rushStart.rememberMiss');
     expect(rushSrc).toContain('q-daily-continue');
     expect(rushSrc).toContain("goPrimary('daily')");
   });

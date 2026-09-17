@@ -277,11 +277,16 @@ export function listHeading(nextPlay: boolean, opts: { pathDone?: boolean } = {}
 
 /**
  * Rush menu row when Daily is mid-run — name the waiting root so Chron
- * is not only on the Daily tile. Fresh / done Daily keep the combo line.
+ * is not only on the Daily tile. A path-done Rush miss names Remember
+ * so Play again does not hide Geo. Fresh / done Daily keep the combo line.
  */
-export function rushMenuSub(opts: { dailyNextName?: string; dailyDone?: boolean } = {}): string {
+export function rushMenuSub(
+  opts: { dailyNextName?: string; dailyDone?: boolean; missName?: string } = {},
+): string {
   const name = !opts.dailyDone ? opts.dailyNextName?.replace(/\s+/g, ' ').trim() : '';
-  return name ? `Daily waiting · ${name}` : 'Combo run · match roots to meanings';
+  if (name) return `Daily waiting · ${name}`;
+  const miss = opts.missName?.replace(/\s+/g, ' ').trim();
+  return miss ? `Missed ${miss} · remember` : 'Combo run · match roots to meanings';
 }
 
 /** Returning-dashboard Root Rush meta: letter + stars, plus combo once it exists. */
@@ -340,16 +345,19 @@ export function isResumeTier(item: MenuItem): boolean {
  */
 export type HomeSecondary =
   | { kind: 'daily' }
+  | { kind: 'remember'; rootId: string }
   | { kind: 'index' }
   | { kind: 'upgrade' }
   | { kind: 'tier'; t: TierNum };
 
 export function homeSecondaryAction(
   item: MenuItem,
-  opts: { dailyResumeQi?: number | null } = {},
+  opts: { dailyResumeQi?: number | null; rememberMissId?: string | null } = {},
 ): HomeSecondary {
   if (item.kind === 'mode') {
     if (item.key === 'rush' && opts.dailyResumeQi != null) return { kind: 'daily' };
+    const missId = opts.rememberMissId?.trim();
+    if (item.key === 'rush' && missId) return { kind: 'remember', rootId: missId };
     return { kind: 'index' };
   }
   if (item.locked) return { kind: 'upgrade' };
@@ -389,6 +397,8 @@ export function buildMenu(
     rushPreview?: { root: string; mean: string; ok?: boolean }[];
     /** Next unanswered Daily root name when a mid-run is live. */
     dailyNextName?: string;
+    /** Path-done Rush miss — menu row names Remember, not a combo-only dump. */
+    rushMissName?: string;
     nextPlay?: boolean;
     choseMode?: boolean;
   } = {},
@@ -402,7 +412,11 @@ export function buildMenu(
       icon: '🎯',
       jewel: 'fire',
       title: 'Root Rush',
-      sub: rushMenuSub({ dailyNextName: opts.dailyNextName, dailyDone: opts.dailyDone }),
+      sub: rushMenuSub({
+        dailyNextName: opts.dailyNextName,
+        dailyDone: opts.dailyDone,
+        missName: opts.rushMissName,
+      }),
       best: opts.rushBest,
       preview: opts.rushPreview && opts.rushPreview.length > 0 ? opts.rushPreview : undefined,
     },
