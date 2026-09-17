@@ -39,8 +39,8 @@ import { buildProfileProgress } from './home/profileProgress';
 import {
   buildTodayProgress,
   learnedRootToday,
+  listRushMissRemember,
   pickRememberRoot,
-  pickRushMissRemember,
   rememberRootToday,
   rootLabel,
 } from './home/todayProgress';
@@ -84,15 +84,17 @@ export function Home() {
   const lastRush = liveRushRecap(rushRecap, activeStudentId);
   const rushToday = todayRushRecap(rushRecap, activeStudentId, day);
   const rememberExclude = [learnedId, nextLearn.rootId, ...dailyRoots.map((r) => rootId(r))];
-  const rushMissId = pickRushMissRemember(rushToday, progress, day, {
+  const rushMissIds = listRushMissRemember(rushToday, progress, day, {
     exclude: rememberExclude,
   });
+  const rushMissId = rushMissIds[0] ?? null;
   const rememberId =
     rushMissId ??
     rememberedId ??
     pickRememberRoot(progress, day, {
       exclude: rememberExclude,
     });
+  const rememberAlso = rootLabel(rushMissIds[1]).name;
   const learn = rootLabel(nextLearn.rootId);
   const remember = rootLabel(rememberId);
   const today = buildTodayProgress({
@@ -115,6 +117,7 @@ export function Home() {
     rememberMean: remember.mean,
     rememberRootId: rememberId ?? undefined,
     rememberMissed: rushMissId != null,
+    rememberAlso,
   });
   const dailyPreview =
     dailyResumeQi != null

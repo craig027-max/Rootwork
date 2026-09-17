@@ -407,6 +407,9 @@
 .ww-today.is-done .ww-today-recap {
   color: var(--success);
 }
+.ww-today-recap.is-miss {
+  color: var(--text-primary);
+}
 .ww-today-list {
   display: flex;
   flex-wrap: wrap;
@@ -473,6 +476,10 @@
   display: block;
   width: 100%;
   max-width: 420px;
+}
+.ww-today-cta.is-miss .btn {
+  border-color: rgba(255, 92, 107, 0.45);
+  box-shadow: 0 0 0 1px rgba(255, 92, 107, 0.18);
 }
 .ww-today-cta .btn {
   width: 100%;
@@ -594,6 +601,9 @@
   .ww-today-recap {
     display: block;
   }
+  .ww-today-recap.is-miss {
+    display: block;
+  }
   .ww-today-item {
     display: inline-flex;
     flex-wrap: wrap;
@@ -608,6 +618,9 @@
   .ww-today-cta {
     display: block;
     max-width: none;
+  }
+  .ww-today-cta.is-miss {
+    display: block;
   }
   .ww-index {
     display: block;
