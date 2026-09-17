@@ -12,14 +12,19 @@
  * Continue Daily a real tap — not a status-only dump, and not only
  * Continue {next learn} or Browse roots → Bio.
  *
+ * After Daily + a learn, an owned Rush miss is the same honesty:
+ * Remember {Geo} is the result hero — Play again / Continue {Astro}
+ * must not sit over the miss Today already named.
+ *
  * Pure and Date-free so tests lock the copy without I/O.
  */
 import { continueDailyLabel, dailyNextRowLabel } from '../../core/daily';
+import { rememberMissCtaLabel, todayMissRecap } from '../../core/rushRecap';
 import { rootId, rootsInTier, type Root } from '../../data/roots';
 import { nextPlayRoot, rushBestLabel, tierPrimaryLabel } from '../home/menu';
 
 export interface ModeCta {
-  kind: 'learn' | 'home' | 'daily';
+  kind: 'learn' | 'home' | 'daily' | 'remember';
   label: string;
   rootId?: string;
   rootName?: string;
@@ -31,6 +36,46 @@ export interface DailyResumeOpts {
   dailyTotal?: number;
   dailyNextName?: string;
   dailyNextMean?: string;
+}
+
+/** Owned Rush miss Today already named — result / start / Home Rush tile. */
+export interface RushMissRememberOpts {
+  rememberMissId?: string | null;
+  rememberMissName?: string;
+  rememberAlso?: string;
+  dailyDone?: boolean;
+  learnedToday?: boolean;
+}
+
+/**
+ * Daily + a learn (or no next learn) are done. A live Daily mid-run is
+ * not "clear" — Chron is still waiting.
+ */
+export function rushPathClear(
+  completed: Set<string>,
+  entitled: boolean,
+  opts: { dailyDone?: boolean; learnedToday?: boolean } & DailyResumeOpts,
+): boolean {
+  if (dailyWaitingLine(opts)) return false;
+  const next = learnNextAction(completed, entitled);
+  return Boolean(opts.dailyDone) && (Boolean(opts.learnedToday) || next.kind !== 'learn');
+}
+
+/**
+ * Remember Geo is the Rush hero only when Today would already make it
+ * the fat tap. Continue Daily / unfinished Continue {learn} stay first.
+ */
+export function rushMissRememberReady(
+  completed: Set<string>,
+  entitled: boolean,
+  opts: RushMissRememberOpts & DailyResumeOpts,
+): { id: string; name: string; also?: string } | null {
+  if (!rushPathClear(completed, entitled, opts)) return null;
+  const id = opts.rememberMissId?.trim();
+  const name = opts.rememberMissName?.replace(/\s+/g, ' ').trim();
+  if (!id || !name) return null;
+  const also = opts.rememberAlso?.replace(/\s+/g, ' ').trim() || undefined;
+  return { id, name, also };
 }
 
 /**
@@ -138,6 +183,10 @@ export interface RushStartVM {
    * peek is not a tap — Chron must be reachable from Rush start.
    */
   continueDaily: string | null;
+  /** Path-done Rush miss — Remember Geo, not only Play again. */
+  rememberMiss: string | null;
+  rememberMissId: string | null;
+  rememberPeek: string | null;
 }
 
 /** Rush start: Play again after a real run, with the same best recap as Home. */
@@ -147,7 +196,10 @@ export function buildRushStart(
     bestPct: number;
     bestStars: number;
     bestScore?: number;
-  } & DailyResumeOpts,
+    completed?: Set<string>;
+    entitled?: boolean;
+  } & DailyResumeOpts &
+    RushMissRememberOpts,
 ): RushStartVM {
   const recap = rushBestLabel(opts);
   const waiting = dailyWaitingLine(opts);
@@ -161,11 +213,15 @@ export function buildRushStart(
     qi < total
       ? continueDailyLabel(qi, total)
       : null;
+  const miss = rushMissRememberReady(opts.completed ?? new Set(), opts.entitled ?? false, opts);
   return {
     goLabel: opts.runs > 0 ? 'Play again ›' : 'Start round ›',
     recap: recap ? `Best so far — ${recap}` : null,
     waiting,
     continueDaily,
+    rememberMiss: miss ? rememberMissCtaLabel(miss.name) : null,
+    rememberMissId: miss?.id ?? null,
+    rememberPeek: miss ? todayMissRecap(miss.name, miss.also) : null,
   };
 }
 
@@ -175,17 +231,20 @@ export interface RushResultVM {
   changeLabel: string;
   peek: string | null;
   dailyResume: boolean;
+  /** Owned miss is the fat tap — Play again stays ghost. */
+  missWaiting: boolean;
 }
 
 /**
  * Rush result: a live Daily mid-run is the hero (Continue Daily · 3 of 5),
- * same next root Home already named. Otherwise Play again stays, plus
- * Continue {root} so the next learn is named.
+ * same next root Home already named. After Daily + a learn, an owned
+ * miss is Remember {root} — Play again / Continue {next} must not sit
+ * over Geo. Otherwise Play again stays, plus Continue {root}.
  */
 export function buildRushResultNext(
   completed: Set<string>,
   entitled: boolean,
-  opts: DailyResumeOpts = {},
+  opts: DailyResumeOpts & RushMissRememberOpts = {},
 ): RushResultVM {
   const peek = dailyWaitingLine(opts);
   const total = opts.dailyTotal && opts.dailyTotal > 0 ? opts.dailyTotal : 5;
@@ -207,6 +266,23 @@ export function buildRushResultNext(
       changeLabel: 'Change level',
       peek,
       dailyResume: true,
+      missWaiting: false,
+    };
+  }
+  const miss = rushMissRememberReady(completed, entitled, opts);
+  if (miss) {
+    return {
+      primary: {
+        kind: 'remember',
+        label: rememberMissCtaLabel(miss.name),
+        rootId: miss.id,
+        rootName: miss.name,
+      },
+      replayLabel: 'Play again ›',
+      changeLabel: 'Change level',
+      peek: todayMissRecap(miss.name, miss.also),
+      dailyResume: false,
+      missWaiting: true,
     };
   }
   return {
@@ -215,5 +291,6 @@ export function buildRushResultNext(
     changeLabel: 'Change level',
     peek: null,
     dailyResume: false,
+    missWaiting: false,
   };
 }

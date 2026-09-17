@@ -526,6 +526,9 @@
   .ww-detail-wait {
     display: block;
   }
+  .ww-detail-wait.is-miss {
+    display: block;
+  }
   .ww-daily-line > span:last-child {
     margin-left: 0;
     flex: 1 1 100%;
@@ -980,6 +983,9 @@
   line-height: 1.45;
   letter-spacing: 0.02em;
   color: rgb(var(--spark-rgb));
+}
+.ww-detail-wait.is-miss {
+  color: #ff8a8f;
 }
 .ww-prog {
   display: flex;

@@ -16,8 +16,14 @@ import {
   TIER_TILE_PREVIEW_COUNT,
   type MenuItem,
 } from './menu';
-import { dailyWaitingLine } from '../modes/modeHandoff';
-import { homeRushRecapPreview, peekChipDone, type RushRecap } from '../../core/rushRecap';
+import { dailyWaitingLine, rushMissRememberReady } from '../modes/modeHandoff';
+import {
+  homeRushRecapPreview,
+  peekChipDone,
+  rememberMissCtaLabel,
+  todayMissRecap,
+  type RushRecap,
+} from '../../core/rushRecap';
 import { samplePeekTap } from './samplePeek';
 import type { DetailVM } from './DetailPanel';
 
@@ -37,7 +43,9 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  peek chips are real taps (Remember / Continue Daily / Continue {root}).
  *  Last Rush recap chips Remember the real run — never a Bio / Geo / Photo
  *  teaser. Hits keep ✓; a miss stays unmarked. Mid-run Daily keeps that
- *  tile empty so Chron stays the hero. */
+ *  tile empty so Chron stays the hero. After Daily + a learn, an owned
+ *  miss names Remember on the tile — Play again / Browse roots must
+ *  not sit over Geo. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -52,6 +60,10 @@ export function buildDetailVM(
     entitled: boolean;
     /** Today ✓ — resume CTA is Keep going, not another Continue. */
     pathDone?: boolean;
+    learnedToday?: boolean;
+    rememberMissId?: string | null;
+    rememberMissName?: string;
+    rememberAlso?: string;
     rushRuns?: number;
     rushBestPct?: number;
     rushBestStars?: number;
@@ -92,6 +104,15 @@ export function buildDetailVM(
         qi < total
           ? continueDailyLabel(qi, total)
           : null;
+      const miss = rushMissRememberReady(extra.completed, extra.entitled, {
+        dailyResumeQi: extra.dailyResumeQi,
+        dailyTotal: extra.dailyRoots.length || extra.dailyTotal,
+        dailyDone: extra.dailyDone,
+        learnedToday: extra.learnedToday,
+        rememberMissId: extra.rememberMissId,
+        rememberMissName: extra.rememberMissName,
+        rememberAlso: extra.rememberAlso,
+      });
       const rushSamples = homeRushRecapPreview(extra.rushRecap, {
         dailyResume: Boolean(continueDaily),
       });
@@ -104,7 +125,6 @@ export function buildDetailVM(
         eyebrow: 'Quiz Mode',
         big: 'Root Rush',
         lead: `Match roots to meanings and rack up combos — every right answer in a row multiplies your score. Ten questions a run; beat your best.${recapLine}`,
-        waiting,
         ring: played
           ? { pct: bestPct, label: gradeForPct(bestPct) }
           : undefined,
@@ -120,9 +140,13 @@ export function buildDetailVM(
         sampleTap: samplePeekTap({ mode: 'rush', sampleCount: rushSamples.length }),
         moreCount: rushMore,
         primary: { label: played ? 'Play again 🎯' : 'Start the run 🎯' },
-        // Mid-run: Continue Daily is the same tap Rush start already uses —
-        // Browse roots must not dump Bio while Chron is waiting.
-        secondary: { label: continueDaily ?? 'Browse roots' },
+        // Mid-run: Continue Daily. Path-done miss: Remember Geo.
+        // Browse roots must not dump Bio over either.
+        secondary: {
+          label: continueDaily ?? (miss ? rememberMissCtaLabel(miss.name) : 'Browse roots'),
+        },
+        waiting: continueDaily ? waiting : miss ? todayMissRecap(miss.name, miss.also) : waiting,
+        waitingMiss: Boolean(miss && !continueDaily),
         scene: sceneFrom(undefined, { key: 'heat', palKey: 'fire', caption: 'Root Rush' }),
       };
     }

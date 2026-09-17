@@ -39,8 +39,10 @@ export interface DetailVM {
   /**
    * Rush tile mid-run: same Daily · 2 of 5 · Chron · time Today / Rush
    * start already name — status only; the Continue Daily tap is secondary.
+   * Path-done miss uses the Remember recap here instead.
    */
   waiting?: string | null;
+  waitingMiss?: boolean;
 }
 
 /**
@@ -96,7 +98,7 @@ export function DetailPanel({
         <div className="ww-big">{vm.big}</div>
         <p className="lead">{vm.lead}</p>
         {vm.waiting ? (
-          <p className="ww-detail-wait" role="status">
+          <p className={`ww-detail-wait${vm.waitingMiss ? ' is-miss' : ''}`} role="status">
             {vm.waiting}
           </p>
         ) : null}

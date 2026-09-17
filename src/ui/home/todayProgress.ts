@@ -25,13 +25,18 @@
  * Pure so tests lock the copy without I/O.
  */
 import { continueDailyLabel, dailyNextRowLabel, localDayKey } from '../../core/daily';
-import type { RushRecap } from '../../core/rushRecap';
+import {
+  rememberMissCtaLabel,
+  todayMissRecap,
+  type RushRecap,
+} from '../../core/rushRecap';
 import { ROOTS_BY_ID } from '../../data/roots';
 import { learnNextAction } from '../modes/modeHandoff';
 import { type ProgressStamp, stampReviewedAt } from './progressStamp';
 
 export type { ProgressStamp };
 export { stampReviewedAt };
+export { rememberMissCtaLabel, todayMissRecap };
 
 export type TodayItemKey = 'daily' | 'learn' | 'remember';
 export type TodayAction = 'daily' | 'learn' | 'rush' | 'review' | 'remember' | 'none';
@@ -68,21 +73,6 @@ export interface TodayProgress {
 /** Extra-play label after Today ✓ — not another Continue (that's unfinished). */
 export function keepGoingLabel(rootName: string): string {
   return `Keep going · ${rootName} ›`;
-}
-
-/** Fat tap after Daily + learn are done but a Rush miss is still waiting. */
-export function rememberMissCtaLabel(rootName: string): string {
-  const name = rootName.replace(/\s+/g, ' ').trim();
-  return name ? `Remember ${name} ›` : 'Remember ›';
-}
-
-/** Recap while Today ✓ is waiting on a Rush miss — not "Daily and Photo are done". */
-export function todayMissRecap(name?: string, also?: string): string {
-  const n = name?.replace(/\s+/g, ' ').trim();
-  const a = also?.replace(/\s+/g, ' ').trim();
-  if (n && a) return `Remember ${n} · then ${a}`;
-  if (n) return `Remember ${n} — missed in Rush`;
-  return 'Remember a missed root';
 }
 
 /** Today-row after Daily is banked — name the recap, not a nameless done dump. */
