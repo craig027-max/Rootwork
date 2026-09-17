@@ -89,10 +89,13 @@ describe('Today Remember after Rush is honest — Missed Geo, not stale Bio', ()
     });
     expect(vm.cta?.kind).toBe('learn');
     expect(vm.cta?.label).not.toMatch(/Play again|Try again/);
+    expect(vm.pathDone).toBe(false);
+    expect(vm.missWaiting).toBe(true);
+    expect(vm.recap).toBeNull();
   });
 
   it('wires Home pick + Remember miss hold + Home tap — not Try again', () => {
-    expect(home).toContain('pickRushMissRemember');
+    expect(home).toContain('listRushMissRemember');
     expect(home).toContain('todayRushRecap');
     expect(home).toContain('rememberMissed: rushMissId != null');
     expect(home).toContain('rushMissId ??');

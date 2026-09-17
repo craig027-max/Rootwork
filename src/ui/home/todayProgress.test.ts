@@ -10,6 +10,7 @@ import {
   keepGoingLabel,
   learnedRootName,
   learnedRootToday,
+  listRushMissRemember,
   pickRememberRoot,
   pickRushMissRemember,
   rememberRootToday,
@@ -252,6 +253,7 @@ describe('buildTodayProgress — returning dashboard', () => {
     expect(caughtUp.items[0]?.done).toBe(true);
     expect(caughtUp.items.map((i) => i.key)).toEqual(['daily']);
     expect(caughtUp.pathDone).toBe(true);
+    expect(caughtUp.missWaiting).toBe(false);
     expect(caughtUp.heading).toBe('Today ✓');
     expect(caughtUp.recap).toBe("Today's path is done");
     expect(caughtUp.cta).toEqual({ kind: 'rush', label: 'Play Root Rush ›' });
@@ -354,6 +356,7 @@ describe('pickRushMissRemember — today\'s Rush miss beats stale Bio', () => {
     expect(pickRememberRoot(owned, TODAY)).toBe(rootId(second));
     expect(pickRushMissRemember(lastRun, owned, TODAY)).toBe(rootId(second));
     expect(pickRushMissRemember(lastRun, owned, TODAY)).not.toBe(rootId(first));
+    expect(listRushMissRemember(lastRun, owned, TODAY)).toEqual([rootId(second)]);
   });
 
   it('drops hits, unowned Meet roots, reviewed misses, and yesterday', () => {
@@ -441,6 +444,7 @@ describe('buildTodayProgress — learn row can finish', () => {
     });
 
     expect(vm.pathDone).toBe(true);
+    expect(vm.missWaiting).toBe(false);
     expect(vm.heading).toBe('Today ✓');
     expect(vm.recap).toBe(`Daily and ${firstBuilder.root} are done`);
     expect(vm.items[0]).toMatchObject({ key: 'daily', done: true });
@@ -635,7 +639,8 @@ describe('Today checklist wiring + phone layout', () => {
     expect(home).toContain('onDaily');
     expect(home).toContain('onRush');
     expect(home).toContain('pickRememberRoot');
-    expect(home).toContain('pickRushMissRemember');
+    expect(home).toContain('listRushMissRemember');
+    expect(home).toContain('rememberAlso');
     expect(home).toContain('rememberMissed');
     expect(home).toContain('rememberRootToday');
     expect(home).toContain('dailyRoots.map((r) => rootId(r))');
@@ -713,6 +718,12 @@ describe('Today checklist wiring + phone layout', () => {
     expect(css).toMatch(/\.ww-today-item\.is-miss/);
     expect(phone).toMatch(/\.ww-today-item\.is-miss\s*\{[^}]*display:\s*inline-flex|\.ww-today-item\.is-miss\s*\{[^}]*display:\s*flex/);
     expect(phone).not.toMatch(/\.ww-today-item\.is-miss\s*\{[^}]*display:\s*none/);
+    expect(phone).toMatch(/\.ww-today-recap\.is-miss\s*\{[^}]*display:\s*block/);
+    expect(phone).toMatch(/\.ww-today-cta\.is-miss\s*\{[^}]*display:\s*block/);
+    expect(phone).not.toMatch(/\.ww-today-recap\.is-miss\s*\{[^}]*display:\s*none/);
+    expect(phone).not.toMatch(/\.ww-today-cta\.is-miss\s*\{[^}]*display:\s*none/);
+    expect(css).toMatch(/\.ww-today-recap\.is-miss/);
+    expect(css).toMatch(/\.ww-today-cta\.is-miss/);
     expect(css).toMatch(/\.ww-today-mark/);
     expect(css).toMatch(/\.ww-today\.is-done/);
     expect(css).toMatch(/\.ww-today-recap/);

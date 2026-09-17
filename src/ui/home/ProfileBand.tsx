@@ -11,9 +11,11 @@ import type { TodayProgress } from './todayProgress';
  * After they learn a root, that row checks off (Learned {root}) and
  * reviews that root as Remember — one beat, then Home, not Geo. When Daily is banked too the
  * heading is Today ✓ and the fat tap is Keep going · {root} (or Rush).
- * Remember {stale root} is the retention beat — one-tap, hold meaning,
- * then Home. Does not block Today ✓. Streak risk stays a visible status
- * line. First-run still drops the extra chrome so Play Bio wins.
+ * A live Rush miss blocks that check — Remember Geo is the fat tap,
+ * not Nice work over Missed Geo. Remember {stale root} is the retention
+ * beat — one-tap, hold meaning, then Home. Does not block Today ✓.
+ * Streak risk stays a visible status line. First-run still drops the
+ * extra chrome so Play Bio wins.
  */
 export function ProfileBand({
   name,
@@ -99,11 +101,13 @@ export function ProfileBand({
         ))}
       </div>
       {today.show ? (
-        <div className={`ww-today${today.pathDone ? ' is-done' : ''}`}>
+        <div className={`ww-today${today.pathDone ? ' is-done' : ''}${today.missWaiting ? ' is-miss' : ''}`}>
           <div className="ww-today-h" role={today.pathDone ? 'status' : undefined}>
             {today.heading}
           </div>
-          {today.recap ? <div className="ww-today-recap">{today.recap}</div> : null}
+          {today.recap ? (
+            <div className={`ww-today-recap${today.missWaiting ? ' is-miss' : ''}`}>{today.recap}</div>
+          ) : null}
           <div className="ww-today-list" role="list" aria-label="Today">
             {today.items.map((item) => (
               <button
@@ -123,7 +127,7 @@ export function ProfileBand({
             ))}
           </div>
           {todayCta ? (
-            <div className="ww-today-cta">
+            <div className={`ww-today-cta${today.missWaiting && todayCta.kind === 'remember' ? ' is-miss' : ''}`}>
               <Button size="lg" block onClick={() => runAction(todayCta.kind, todayCta.rootId)}>
                 {todayCta.label}
               </Button>

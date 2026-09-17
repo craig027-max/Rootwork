@@ -15,8 +15,12 @@
  * Remember (Home excludes today's deal from the Remember pick so Bio
  * is not asked twice). After today's Rush, an owned miss wins Remember
  * — Missed Geo, not a stale Bio, and not Remembered Photo hiding the
- * miss. Yesterday's recap does not steal the row. First-run / next-Play
- * stays a single Play {root} — no Daily / Remember dump.
+ * miss. Today ✓ waits until that miss is Remembered — Daily + a learn
+ * must not paint Nice work / Keep going while Geo is still sitting
+ * there. Two unreviewed misses peek the next name (then Chron) so the
+ * row is not a one-chip lie. Yesterday's recap does not steal the row.
+ * First-run / next-Play stays a single Play {root} — no Daily / Remember
+ * dump. Continue Daily / unfinished Continue {learn} stay the fat tap.
  *
  * Pure so tests lock the copy without I/O.
  */
@@ -43,7 +47,7 @@ export interface TodayItem {
 }
 
 export interface TodayCta {
-  kind: 'learn' | 'daily' | 'rush';
+  kind: 'learn' | 'daily' | 'rush' | 'remember';
   label: string;
   rootId?: string;
 }
@@ -51,17 +55,34 @@ export interface TodayCta {
 export interface TodayProgress {
   show: boolean;
   heading: string;
-  /** Daily banked and today's learn is done (or there is no next root). */
+  /** Daily banked, today's learn is done (or there is no next root), and no live Rush miss. */
   pathDone: boolean;
-  /** Kid-facing recap once the path is done — not a second checklist. */
+  /** Kid-facing recap once the path is done — or while a Rush miss still waits. */
   recap: string | null;
   items: TodayItem[];
   cta: TodayCta | null;
+  /** Unreviewed Rush miss — Today ✓ must not fire, and the recap/CTA can mark miss. */
+  missWaiting: boolean;
 }
 
 /** Extra-play label after Today ✓ — not another Continue (that's unfinished). */
 export function keepGoingLabel(rootName: string): string {
   return `Keep going · ${rootName} ›`;
+}
+
+/** Fat tap after Daily + learn are done but a Rush miss is still waiting. */
+export function rememberMissCtaLabel(rootName: string): string {
+  const name = rootName.replace(/\s+/g, ' ').trim();
+  return name ? `Remember ${name} ›` : 'Remember ›';
+}
+
+/** Recap while Today ✓ is waiting on a Rush miss — not "Daily and Photo are done". */
+export function todayMissRecap(name?: string, also?: string): string {
+  const n = name?.replace(/\s+/g, ' ').trim();
+  const a = also?.replace(/\s+/g, ' ').trim();
+  if (n && a) return `Remember ${n} · then ${a}`;
+  if (n) return `Remember ${n} — missed in Rush`;
+  return 'Remember a missed root';
 }
 
 /** Today-row after Daily is banked — name the recap, not a nameless done dump. */
@@ -163,21 +184,22 @@ export function pickRememberRoot(
 }
 
 /**
- * First owned miss from today's last Rush that is still unreviewed.
- * Play order — the Missed chip they already see — not oldest stale Bio.
+ * Owned misses from today's last Rush that are still unreviewed.
+ * Play order — the Missed chips they already see — not oldest stale Bio.
  * Hits, unowned Meet roots, today's learn, and reviewed-today drop.
  * Yesterday's recap must not steal Today's Remember.
  */
-export function pickRushMissRemember(
+export function listRushMissRemember(
   recap: RushRecap | null | undefined,
   progress: Record<string, ProgressStamp>,
   day: string,
   opts: { exclude?: Iterable<string | null | undefined> } = {},
-): string | null {
-  if (!recap || recap.day !== day || recap.roots.length === 0) return null;
+): string[] {
+  if (!recap || recap.day !== day || recap.roots.length === 0) return [];
   const exclude = new Set(
     [...(opts.exclude ?? [])].filter((id): id is string => typeof id === 'string' && id.length > 0),
   );
+  const ids: string[] = [];
   for (const line of recap.roots) {
     if (line.ok || exclude.has(line.id) || !ROOTS_BY_ID[line.id]) continue;
     const rec = progress[line.id];
@@ -192,9 +214,19 @@ export function pickRushMissRemember(
     ) {
       continue;
     }
-    return line.id;
+    ids.push(line.id);
   }
-  return null;
+  return ids;
+}
+
+/** First remaining owned Rush miss — the Today tap. */
+export function pickRushMissRemember(
+  recap: RushRecap | null | undefined,
+  progress: Record<string, ProgressStamp>,
+  day: string,
+  opts: { exclude?: Iterable<string | null | undefined> } = {},
+): string | null {
+  return listRushMissRemember(recap, progress, day, opts)[0] ?? null;
 }
 
 function stripCta(label: string): string {
@@ -220,14 +252,18 @@ function rememberRowLabel(opts: {
   name?: string;
   mean?: string;
   missed?: boolean;
+  also?: string;
 }): string {
   if (opts.done) {
     return opts.name ? `Remembered ${opts.name}` : 'Remembered a root today';
   }
   const name = opts.name?.trim();
   const mean = opts.mean?.trim();
+  const also = opts.also?.replace(/\s+/g, ' ').trim();
   if (opts.missed) {
+    if (name && mean && also) return `Missed ${name} · ${mean} · then ${also}`;
     if (name && mean) return `Missed ${name} · ${mean}`;
+    if (name && also) return `Missed ${name} · then ${also}`;
     if (name) return `Missed ${name}`;
     return 'Missed a root';
   }
@@ -266,6 +302,8 @@ export function buildTodayProgress(opts: {
   rememberRootId?: string;
   /** Today's Rush miss — Today names Missed {root}, not Remembered {hit}. */
   rememberMissed?: boolean;
+  /** Next remaining Rush miss — peek "then Chron" so two misses are not a one-chip lie. */
+  rememberAlso?: string;
 }): TodayProgress {
   if (opts.firstRun || opts.nextPlay) {
     return {
@@ -275,6 +313,7 @@ export function buildTodayProgress(opts: {
       recap: null,
       items: [],
       cta: null,
+      missWaiting: false,
     };
   }
 
@@ -287,6 +326,7 @@ export function buildTodayProgress(opts: {
   const rememberMean = opts.rememberMean?.trim() || undefined;
   const rememberId = opts.rememberRootId?.trim() || undefined;
   const rememberMissed = Boolean(opts.rememberMissed) && !rememberedToday;
+  const rememberAlso = rememberMissed ? opts.rememberAlso?.replace(/\s+/g, ' ').trim() || undefined : undefined;
   const dailyTotal = opts.dailyTotal && opts.dailyTotal > 0 ? opts.dailyTotal : 5;
   const dailyResume =
     !opts.dailyDone &&
@@ -350,6 +390,7 @@ export function buildTodayProgress(opts: {
         name: rememberName,
         mean: rememberMean,
         missed: rememberMissed,
+        also: rememberAlso,
       }),
       action: rememberId ? 'remember' : 'none',
       ...(rememberId ? { rootId: rememberId } : {}),
@@ -357,20 +398,34 @@ export function buildTodayProgress(opts: {
     });
   }
 
-  const pathDone = opts.dailyDone && (learnedToday || next.kind !== 'learn');
+  const pathClear = opts.dailyDone && (learnedToday || next.kind !== 'learn');
+  const pathDone = pathClear && !rememberMissed;
   const nextName = next.rootName?.trim() || undefined;
+  const unfinishedLearn = next.kind === 'learn' && Boolean(next.rootId) && !pathClear;
   const cta: TodayCta =
     dailyResume != null
       ? { kind: 'daily', label: continueDailyLabel(dailyResume, dailyTotal) }
-      : next.kind === 'learn' && next.rootId
+      : unfinishedLearn && next.rootId
         ? {
             kind: 'learn',
-            label: pathDone && nextName ? keepGoingLabel(nextName) : next.label,
+            label: next.label,
             rootId: next.rootId,
           }
-        : !opts.dailyDone
-          ? { kind: 'daily', label: 'Start daily ›' }
-          : { kind: 'rush', label: 'Play Root Rush ›' };
+        : rememberMissed && rememberId && pathClear
+          ? {
+              kind: 'remember',
+              label: rememberMissCtaLabel(rememberName ?? ''),
+              rootId: rememberId,
+            }
+          : next.kind === 'learn' && next.rootId
+            ? {
+                kind: 'learn',
+                label: pathDone && nextName ? keepGoingLabel(nextName) : next.label,
+                rootId: next.rootId,
+              }
+            : !opts.dailyDone
+              ? { kind: 'daily', label: 'Start daily ›' }
+              : { kind: 'rush', label: 'Play Root Rush ›' };
 
   return {
     show: true,
@@ -380,8 +435,11 @@ export function buildTodayProgress(opts: {
       ? learnedName
         ? `Daily and ${learnedName} are done`
         : "Today's path is done"
-      : null,
+      : pathClear && rememberMissed
+        ? todayMissRecap(rememberName, rememberAlso)
+        : null,
     items,
     cta,
+    missWaiting: rememberMissed,
   };
 }
