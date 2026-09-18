@@ -5,6 +5,10 @@ import {
   DAILY_TILE_PREVIEW_COUNT,
   afterDailyNextLabel,
   dailyHoldKeepGoingLine,
+  dailyDoneLead,
+  dailyDoneMenuSub,
+  dailyDoneOverlaySub,
+  dailyRecapChipLabel,
   continueDailyLabel,
   dailyHoldContinueLine,
   dailyHoldLine,
@@ -233,5 +237,24 @@ describe('Daily mid-run resume + hold meaning', () => {
     expect(dailyHoldKeepGoingLine('  Geo  ', '  earth ')).toBe('Keep going · Geo · earth');
     expect(dailyHoldKeepGoingLine('Auto')).toBe('Keep going · Auto');
     expect(dailyHoldKeepGoingLine('Auto', 'self')).not.toMatch(/Continue |Next ·|Play again|Done →/);
+  });
+
+  it('recaps Daily done — not a fresh-start pitch, and Meet vs Remember', () => {
+    expect(dailyDoneLead(3)).toBe("Today's five are done. Same until tomorrow. Streak banked — 🔥 3 days.");
+    expect(dailyDoneLead(1)).toBe("Today's five are done. Same until tomorrow. Streak banked — 🔥 1 day.");
+    expect(dailyDoneLead()).toBe("Today's five are done. Same until tomorrow.");
+    expect(dailyDoneLead(0)).toBe("Today's five are done. Same until tomorrow.");
+    expect(dailyDoneLead(3)).not.toMatch(/Five fresh roots|keep your streak/i);
+    expect(dailyDoneMenuSub(['Chron', 'Photo', 'Aqua'])).toBe('Done · Chron · Photo · Aqua');
+    expect(dailyDoneMenuSub(['  Chron  ', 'Photo', 'Aqua', 'Bio'])).toBe(
+      'Done · Chron · Photo · Aqua',
+    );
+    expect(dailyDoneMenuSub([])).toBe('Done for today · same five until tomorrow');
+    expect(dailyDoneOverlaySub(true)).toBe("Today's five are done. Same until tomorrow.");
+    expect(dailyDoneOverlaySub(false)).toBe("Today's five are done. Replay is just for fun.");
+    expect(dailyRecapChipLabel('Chron', true)).toBe('Remember Chron');
+    expect(dailyRecapChipLabel('Chron', false)).toBe('Meet Chron');
+    expect(dailyRecapChipLabel('  Geo  ', false)).toBe('Meet Geo');
+    expect(dailyRecapChipLabel('', true)).toBe('Remember');
   });
 });

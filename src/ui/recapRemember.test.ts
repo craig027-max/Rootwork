@@ -43,7 +43,8 @@ describe('Done Daily / Learned recap is Remember — not Geo', () => {
   it('Daily done chips and Home Daily recap use the Remember open', () => {
     expect(daily).toContain('recapDeckEntry');
     expect(daily).toContain('openRecap(r)');
-    expect(daily).toContain('aria-label={`Remember ${r.root}`}');
+    expect(daily).toContain('dailyRecapChipLabel');
+    expect(daily).toContain('aria-label={dailyRecapChipLabel(r.root, completed.has(rootId(r)))}');
     expect(daily).not.toContain('onClick={() => openRoot(rootId(r))}');
     expect(home).toContain('recapOpenForRoot');
     expect(home).toContain('onSample={vm.sampleTap ? onSamplePick : undefined}');

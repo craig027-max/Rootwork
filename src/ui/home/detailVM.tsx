@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react';
-import { PALETTES, ROOTS_BY_ID, TIERS, rootsInTier, type Root } from '../../data/roots';
+import { PALETTES, ROOTS, ROOTS_BY_ID, TIERS, rootId, rootsInTier, type Root } from '../../data/roots';
 import {
   continueDailyLabel,
+  dailyDoneLead,
   dailyNextRoot,
   dailyResumePreview,
   dailyTilePreview,
@@ -45,9 +46,10 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  teaser. Hits keep ✓; a miss stays unmarked. Mid-run Daily keeps that
  *  tile empty so Chron stays the hero. After Daily is banked and today's
  *  learn is still open, Continue {root} is the fat tap — Play again must
- *  not sit over Chron. After Daily + a learn, an owned miss names
- *  Remember on the Rush tile — Play again / Browse roots must not sit
- *  over Geo. */
+ *  not sit over Chron. Done lead recaps today's five — not a fresh-start
+ *  pitch. Recap chips Remember owned / Meet unowned. After Daily + a
+ *  learn, an owned miss names Remember on the Rush tile — Play again /
+ *  Browse roots must not sit over Geo. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -165,14 +167,13 @@ export function buildDetailVM(
         ? extra.dailyRoots.length - dailySamples.length
         : extra.dailyRoots.length - dailyResume - dailySamples.length;
     const streakLine =
-      extra.streak > 0
-        ? extra.dailyDone
-          ? ` Streak banked — 🔥 ${extra.streak} day${extra.streak === 1 ? '' : 's'}.`
-          : ` You're on a 🔥 ${extra.streak}-day streak.`
+      extra.streak > 0 && !extra.dailyDone
+        ? ` You're on a 🔥 ${extra.streak}-day streak.`
         : '';
     const midLead = nextDaily
       ? `Next is ${nextDaily.root} — ${nextDaily.mean}. ${dailyResume} of ${extra.dailyRoots.length} already yours.`
       : `Five fresh roots every day. See the animation, tap what it means, keep your streak.`;
+    const doneLead = extra.dailyDone ? dailyDoneLead(extra.streak) : null;
     const doneNext = extra.dailyDone
       ? dailyDonePrimary(extra.completed, extra.entitled, { learnedToday: extra.learnedToday })
       : null;
@@ -189,10 +190,17 @@ export function buildDetailVM(
       animKey: item.key,
       eyebrow: 'Daily Challenge',
       big: 'Daily',
-      lead: extra.dailyDone || dailyResume == null
-        ? `Five fresh roots every day. See the animation, tap what it means, keep your streak.${streakLine}`
-        : `${midLead}${streakLine}`,
-      samples: dailySamples,
+      lead: doneLead
+        ? doneLead
+        : dailyResume == null
+          ? `Five fresh roots every day. See the animation, tap what it means, keep your streak.${streakLine}`
+          : `${midLead}${streakLine}`,
+      samples: extra.dailyDone
+        ? dailySamples.map((s) => ({
+            ...s,
+            owned: ROOTS.some((r) => r.root === s.root && extra.completed.has(rootId(r))),
+          }))
+        : dailySamples,
       sampleLines: true,
       samplesDone: extra.dailyDone && dailySamples.length > 0,
       samplesNext: Boolean(dailyResume != null && !extra.dailyDone && dailySamples.length > 0),

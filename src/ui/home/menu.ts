@@ -27,7 +27,7 @@ import {
   type TierNum,
 } from '../../data/roots';
 import { recapOpenForId, type DeckEntry } from '../../core/deckFlow';
-import { dailyNextSub } from '../../core/daily';
+import { dailyDoneMenuSub, dailyNextSub } from '../../core/daily';
 import { gradeForPct, starsForPct } from '../../core/stats';
 
 /** Per-tier presentation: emoji chip + the PALETTES jewel key that themes the row. */
@@ -434,7 +434,7 @@ export function buildMenu(
       jewel: 'gold',
       title: 'Daily Challenge',
       sub: opts.dailyDone
-        ? 'Done for today · same five until tomorrow'
+        ? dailyDoneMenuSub(opts.dailyPreview?.map((p) => p.root))
         : opts.dailyNextName
           ? dailyNextSub(opts.dailyNextName)
           : opts.dailyResumeQi != null && opts.dailyResumeQi >= 1

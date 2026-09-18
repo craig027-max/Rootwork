@@ -22,7 +22,7 @@
  *
  * Pure and Date-free so tests lock the copy without I/O.
  */
-import { continueDailyLabel, dailyNextRowLabel } from '../../core/daily';
+import { continueDailyLabel, dailyDoneOverlaySub, dailyNextRowLabel } from '../../core/daily';
 import { rememberMissCtaLabel, todayMissRecap } from '../../core/rushRecap';
 import { rootId, rootsInTier, type Root } from '../../data/roots';
 import { nextPlayRoot, rushBestLabel, tierPrimaryLabel } from '../home/menu';
@@ -184,7 +184,8 @@ export function dailyDonePrimary(
 
 /**
  * Daily already-banked landing + just-finished result. Recaps all five
- * (name + meaning + ✓). The fat tap is the same next Today already named.
+ * (name + meaning + ✓). Sub says today's five are done — not a
+ * fresh-start pitch. The fat tap is the same next Today already named.
  */
 export function buildDailyDone(opts: {
   deal: readonly Pick<Root, 'root' | 'mean'>[];
@@ -199,9 +200,7 @@ export function buildDailyDone(opts: {
   return {
     title: opts.justFinished ? null : 'Done for today.',
     streakLine,
-    sub: opts.justFinished
-      ? 'Streak banked. Same five roots until tomorrow.'
-      : 'Streak banked for today ✓. Same five until tomorrow — replay is just for fun.',
+    sub: dailyDoneOverlaySub(opts.justFinished),
     recap: opts.deal.map((r) => ({ root: r.root, mean: r.mean })),
     recapDone: true,
     primary: dailyDonePrimary(opts.completed, opts.entitled, {

@@ -10,6 +10,7 @@ import {
   dailyHoldKeepGoingLine,
   dailyHoldLine,
   dailyHoldNextLine,
+  dailyRecapChipLabel,
   dailySeed,
   liveDailyResumeQi,
   localDayKey,
@@ -35,8 +36,9 @@ function palOf(root: Root) {
  * Leaving mid-run persists the next unanswered root so Home can say
  * Continue Daily · 3 of 5. An owned hit is today's Remember; the first
  * hit banks play-today. Last hold peeks Continue · next learn — or Keep
- * going when today's learn is already done. Done recap chips open owned
- * roots as Remember — not the Geo quiz loop. The done fat tap matches
+ * going when today's learn is already done. Done copy recaps today's
+ * five — not a fresh-start pitch. Recap chips Remember owned roots and
+ * Meet unowned ones — not the Geo quiz loop. The done fat tap matches
  * Today: Continue {learn}, Keep going, or Rush. Finishing banks Daily
  * XP; replays are free.
  */
@@ -377,7 +379,7 @@ export function DailyChallenge() {
                   className={`q-daily-chip${done.recapDone ? ' is-done' : ''}`}
                   key={r.root}
                   onClick={() => openRecap(r)}
-                  aria-label={`Remember ${r.root}`}
+                  aria-label={dailyRecapChipLabel(r.root, completed.has(rootId(r)))}
                 >
                   {done.recapDone ? (
                     <span className="q-done-mark" aria-hidden="true">
