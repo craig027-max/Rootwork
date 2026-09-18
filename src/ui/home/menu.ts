@@ -352,12 +352,19 @@ export type HomeSecondary =
 
 export function homeSecondaryAction(
   item: MenuItem,
-  opts: { dailyResumeQi?: number | null; rememberMissId?: string | null } = {},
+  opts: {
+    dailyResumeQi?: number | null;
+    rememberMissId?: string | null;
+    /** Daily banked and today's learn still open — Play again is the ghost. */
+    dailyDone?: boolean;
+    learnedToday?: boolean;
+  } = {},
 ): HomeSecondary {
   if (item.kind === 'mode') {
     if (item.key === 'rush' && opts.dailyResumeQi != null) return { kind: 'daily' };
     const missId = opts.rememberMissId?.trim();
     if (item.key === 'rush' && missId) return { kind: 'remember', rootId: missId };
+    if (item.key === 'daily' && opts.dailyDone && !opts.learnedToday) return { kind: 'daily' };
     return { kind: 'index' };
   }
   if (item.locked) return { kind: 'upgrade' };

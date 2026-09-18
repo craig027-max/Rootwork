@@ -21,6 +21,10 @@
  * row is not a one-chip lie. Yesterday's recap does not steal the row.
  * First-run / next-Play stays a single Play {root} — no Daily / Remember
  * dump. Continue Daily / unfinished Continue {learn} stay the fat tap.
+ * After Daily is banked, the Daily overlay and Home Daily tile use that
+ * same next — Play again must not sit over Continue {learn}. Once the
+ * learn is done, Daily result says Keep going (or Rush), not another
+ * Continue. Rush-miss Remember stays on Today / Rush (#65–#67).
  *
  * Pure so tests lock the copy without I/O.
  */

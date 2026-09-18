@@ -39,7 +39,8 @@ const starter = rootsInTier(1);
 const starterDone = new Set(starter.map((r) => rootId(r)));
 const builder = rootsInTier(2);
 const firstBuilder = builder[0];
-if (!firstBuilder) throw new Error('fixture: expected a first Builder root');
+const secondBuilder = builder[1];
+if (!firstBuilder || !secondBuilder) throw new Error('fixture: expected Builder roots');
 const startedBuilder = new Set([...starterDone, rootId(firstBuilder)]);
 
 const today = pickDailyRoots(T1, dailySeed('2026-09-01', 'kid-a'));
@@ -227,7 +228,7 @@ describe('Home Daily tile: done-state recap after Daily is banked', () => {
       streak: 3,
       nextPlay: false,
       completed: startedBuilder,
-      entitled: false,
+      entitled: true,
     });
 
     expect(vm.samples).toHaveLength(3);
@@ -239,9 +240,27 @@ describe('Home Daily tile: done-state recap after Daily is banked', () => {
       expect(s.mean.length).toBeGreaterThan(0);
       expect(s.mean).not.toMatch(/\n/);
     }
-    expect(vm.primary.label).toMatch(/Play again/);
-    expect(vm.primary.label).not.toMatch(/Start daily/);
+    expect(vm.primary.label).toBe(`Continue ${secondBuilder.root} ›`);
+    expect(vm.primary.label).not.toMatch(/Play again|Start daily/);
+    expect(vm.secondary?.label).toBe('Play again ›');
     expect(vm.heroCta).toBeFalsy();
+    expect(vm.sampleTap).toBe('remember');
+    expect(vm.scene?.caption).toBe(`${secondBuilder.root} · ${secondBuilder.mean}`);
+  });
+
+  it('keeps Play again as Daily\'s own tap once today\'s learn is done', () => {
+    const vm = buildDetailVM(doneItem, {
+      dailyRoots: today,
+      dailyDone: true,
+      streak: 3,
+      nextPlay: false,
+      completed: startedBuilder,
+      entitled: true,
+      learnedToday: true,
+    });
+    expect(vm.primary.label).toMatch(/Play again/);
+    expect(vm.primary.label).not.toMatch(/Continue |Keep going|Start daily/);
+    expect(vm.secondary?.label).toBe('Browse roots');
     expect(vm.sampleTap).toBe('remember');
   });
 
@@ -280,11 +299,12 @@ describe('Home Daily tile: done-state recap after Daily is banked', () => {
       streak: 1,
       nextPlay: false,
       completed: startedBuilder,
-      entitled: false,
+      entitled: true,
     });
     expect(vm.samples).toEqual([]);
     expect(vm.samplesDone).toBe(false);
     expect(vm.samples.map((s) => s.root)).not.toEqual(['Bio', 'Geo', 'Photo']);
-    expect(vm.primary.label).toMatch(/Play again/);
+    expect(vm.primary.label).toBe(`Continue ${secondBuilder.root} ›`);
+    expect(vm.secondary?.label).toBe('Play again ›');
   });
 });

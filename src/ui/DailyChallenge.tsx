@@ -7,6 +7,7 @@ import {
   afterDailyNextLabel,
   continueDailyLabel,
   dailyHoldContinueLine,
+  dailyHoldKeepGoingLine,
   dailyHoldLine,
   dailyHoldNextLine,
   dailySeed,
@@ -17,7 +18,8 @@ import {
 import { buildRecall, type RecallBeat } from '../core/recall';
 import { Scene } from './Scene';
 import { recapDeckEntry } from '../core/deckFlow';
-import { buildDailyDone, buildModeEmpty, learnNextAction } from './modes/modeHandoff';
+import { buildDailyDone, buildModeEmpty, learnNextAction, type ModeCta } from './modes/modeHandoff';
+import { learnedRootToday } from './home/todayProgress';
 
 type Phase = 'start' | 'play' | 'result';
 
@@ -32,9 +34,11 @@ function palOf(root: Root) {
  * and peeks the next root (Next · Aqua · water) so Next is not unnamed.
  * Leaving mid-run persists the next unanswered root so Home can say
  * Continue Daily · 3 of 5. An owned hit is today's Remember; the first
- * hit banks play-today. Last hold peeks Continue · next learn. Done
- * recap chips open owned roots as Remember — not the Geo quiz loop.
- * Finishing banks Daily XP; replays are free.
+ * hit banks play-today. Last hold peeks Continue · next learn — or Keep
+ * going when today's learn is already done. Done recap chips open owned
+ * roots as Remember — not the Geo quiz loop. The done fat tap matches
+ * Today: Continue {learn}, Keep going, or Rush. Finishing banks Daily
+ * XP; replays are free.
  */
 export function DailyChallenge() {
   const entitled = useEntitledForDisplay();
@@ -46,6 +50,7 @@ export function DailyChallenge() {
   const dailyRun = useWondralStore((s) => s.dailyRun);
   const stats = useWondralStore((s) => s.stats);
   const completed = useWondralStore((s) => s.completedRoots);
+  const progress = useWondralStore((s) => s.progress);
   const studentId = useWondralStore((s) => s.activeStudentId);
 
   const day = localDayKey();
@@ -78,12 +83,13 @@ export function DailyChallenge() {
   const isLast = qi + 1 >= deal.length;
   const nextHold = !isLast ? deal[qi + 1] : undefined;
   const nextLearn = learnNextAction(completed, entitled);
+  const learnedToday = learnedRootToday(progress, day) !== null;
+  const nextLearnMean = nextLearn.rootId ? ROOTS_BY_ID[nextLearn.rootId]?.mean : undefined;
   const continueHold =
     !nextHold && nextLearn.kind === 'learn' && nextLearn.rootName
-      ? dailyHoldContinueLine(
-          nextLearn.rootName,
-          nextLearn.rootId ? ROOTS_BY_ID[nextLearn.rootId]?.mean : undefined,
-        )
+      ? learnedToday
+        ? dailyHoldKeepGoingLine(nextLearn.rootName, nextLearnMean)
+        : dailyHoldContinueLine(nextLearn.rootName, nextLearnMean)
       : null;
 
   function close() {
@@ -93,6 +99,22 @@ export function DailyChallenge() {
   function goLearn(id?: string) {
     if (id) openRoot(id);
     else close();
+  }
+
+  function goPrimary(cta: ModeCta) {
+    if (cta.kind === 'rush') {
+      setView('quiz');
+      return;
+    }
+    if (cta.kind === 'daily') {
+      setView('daily');
+      return;
+    }
+    if (cta.kind === 'remember' && cta.rootId) {
+      openRoot(cta.rootId, { entry: 'remember' });
+      return;
+    }
+    goLearn(cta.rootId);
   }
 
   function openRecap(r: Root) {
@@ -222,6 +244,7 @@ export function DailyChallenge() {
     justFinished: phase === 'result',
     completed,
     entitled,
+    learnedToday,
   });
 
   return (
@@ -367,7 +390,7 @@ export function DailyChallenge() {
               ))}
             </div>
             <div className="q-actions">
-              <button className="q-go q-next-learn" onClick={() => goLearn(done.primary.rootId)}>
+              <button className="q-go q-next-learn" onClick={() => goPrimary(done.primary)}>
                 {done.primary.label}
               </button>
               <button className="q-ghost" onClick={startRun}>

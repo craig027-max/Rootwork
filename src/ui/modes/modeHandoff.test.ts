@@ -8,6 +8,7 @@ import {
   buildModeEmpty,
   buildRushResultNext,
   buildRushStart,
+  dailyDonePrimary,
   learnNextAction,
 } from './modeHandoff';
 
@@ -132,6 +133,43 @@ describe('buildDailyDone', () => {
     expect(reopen.primary.label).toBe(`Continue ${second.root} ›`);
     expect(reopen.recapDone).toBe(true);
   });
+
+  it('says Keep going · {root} once today\'s learn is already done — not another Continue', () => {
+    const vm = buildDailyDone({
+      deal: todayDeal,
+      streak: 7,
+      justFinished: true,
+      completed: startedBuilder,
+      entitled: true,
+      learnedToday: true,
+    });
+    expect(vm.primary).toEqual({
+      kind: 'learn',
+      label: `Keep going · ${secondBuilder.root} ›`,
+      rootId: rootId(secondBuilder),
+      rootName: secondBuilder.root,
+    });
+    expect(vm.primary.label).not.toMatch(/Continue |Play again|Back to learning/);
+    expect(vm.replayLabel).toBe('Play again ›');
+  });
+
+  it('hands a caught-up kid Root Rush — not Back to learning', () => {
+    const allOpen = new Set(ROOTS.filter((r) => r.t === 1 || r.t === 2).map((r) => rootId(r)));
+    expect(dailyDonePrimary(allOpen, false)).toEqual({
+      kind: 'rush',
+      label: 'Play Root Rush ›',
+    });
+    const vm = buildDailyDone({
+      deal: todayDeal,
+      streak: 3,
+      justFinished: true,
+      completed: allOpen,
+      entitled: false,
+    });
+    expect(vm.primary.kind).toBe('rush');
+    expect(vm.primary.label).toBe('Play Root Rush ›');
+    expect(vm.primary.label).not.toMatch(/Back to learning|Continue |Play again/);
+  });
 });
 
 describe('buildModeEmpty', () => {
@@ -236,6 +274,9 @@ describe('Daily / Rush overlay wiring + phone layout', () => {
     expect(dailySrc).toContain('showDoneLanding');
     expect(dailySrc).toContain('q-done-mark');
     expect(dailySrc).toContain('goLearn');
+    expect(dailySrc).toContain('goPrimary');
+    expect(dailySrc).toContain('learnedToday');
+    expect(dailySrc).toContain("cta.kind === 'rush'");
     expect(dailySrc).not.toContain('Already banked for today — replay is just for fun.');
   });
 
@@ -249,6 +290,7 @@ describe('Daily / Rush overlay wiring + phone layout', () => {
     expect(dailySrc).toContain('saveDailyRun(qi + 1, hitId)');
     expect(dailySrc).toContain('recordDailyComplete(hitId)');
     expect(dailySrc).toContain('dailyHoldContinueLine');
+    expect(dailySrc).toContain('dailyHoldKeepGoingLine');
     expect(dailySrc).toContain('clearDailyRun');
     expect(dailySrc).not.toContain('AUTO_ADVANCE_MS');
     expect(dailySrc).not.toContain('Nice — ${root.root} is yours.');

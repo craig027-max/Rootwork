@@ -34,7 +34,7 @@ import { TierMenu } from './home/TierMenu';
 import { DetailPanel } from './home/DetailPanel';
 import { buildDetailVM } from './home/detailVM';
 import { RootIndex } from './deck/RootIndex';
-import { learnNextAction } from './modes/modeHandoff';
+import { dailyDonePrimary, learnNextAction } from './modes/modeHandoff';
 import { buildProfileProgress } from './home/profileProgress';
 import {
   buildTodayProgress,
@@ -165,8 +165,24 @@ export function Home() {
 
   function onPrimary(item: MenuItem) {
     if (item.kind === 'mode') {
-      if (item.key === 'rush') setView('quiz');
-      if (item.key === 'daily') setView('daily');
+      if (item.key === 'rush') {
+        setView('quiz');
+        return;
+      }
+      if (item.key === 'daily') {
+        if (dailyDone && learnedId == null) {
+          const next = dailyDonePrimary(completed, entitled, { learnedToday: false });
+          if (next.kind === 'learn' && next.rootId) {
+            openRoot(next.rootId);
+            return;
+          }
+          if (next.kind === 'rush') {
+            setView('quiz');
+            return;
+          }
+        }
+        setView('daily');
+      }
       return;
     }
     if (item.locked) requestUpgrade();
@@ -177,6 +193,8 @@ export function Home() {
     const tap = homeSecondaryAction(item, {
       dailyResumeQi,
       rememberMissId: missHero ? rushMissId : null,
+      dailyDone,
+      learnedToday: learnedId !== null,
     });
     if (tap.kind === 'daily') {
       setView('daily');
