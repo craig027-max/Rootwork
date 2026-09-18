@@ -4,6 +4,7 @@ import {
   DAILY_COUNT,
   DAILY_TILE_PREVIEW_COUNT,
   afterDailyNextLabel,
+  dailyHoldKeepGoingLine,
   continueDailyLabel,
   dailyHoldContinueLine,
   dailyHoldLine,
@@ -225,5 +226,12 @@ describe('Daily mid-run resume + hold meaning', () => {
     expect(dailyHoldContinueLine('  Geo  ', '  earth ')).toBe('Continue · Geo · earth');
     expect(dailyHoldContinueLine('Auto')).toBe('Continue · Auto');
     expect(dailyHoldContinueLine('Auto', 'self')).not.toMatch(/Next ·|Keep going|Play again|Done →/);
+  });
+
+  it('peeks Keep going on the last hold once today\'s learn is already done', () => {
+    expect(dailyHoldKeepGoingLine('Auto', 'self')).toBe('Keep going · Auto · self');
+    expect(dailyHoldKeepGoingLine('  Geo  ', '  earth ')).toBe('Keep going · Geo · earth');
+    expect(dailyHoldKeepGoingLine('Auto')).toBe('Keep going · Auto');
+    expect(dailyHoldKeepGoingLine('Auto', 'self')).not.toMatch(/Continue |Next ·|Play again|Done →/);
   });
 });

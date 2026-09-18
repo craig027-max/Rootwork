@@ -12,6 +12,10 @@
  * Continue Daily a real tap — not a status-only dump, and not only
  * Continue {next learn} or Browse roots → Bio.
  *
+ * After Daily is banked, the done overlay / Home Daily tile use the
+ * same next Today already named — Continue {learn}, Keep going, or
+ * Rush. Play again stays the ghost over unfinished work.
+ *
  * After Daily + a learn, an owned Rush miss is the same honesty:
  * Remember {Geo} is the result hero — Play again / Continue {Astro}
  * must not sit over the miss Today already named.
@@ -24,7 +28,7 @@ import { rootId, rootsInTier, type Root } from '../../data/roots';
 import { nextPlayRoot, rushBestLabel, tierPrimaryLabel } from '../home/menu';
 
 export interface ModeCta {
-  kind: 'learn' | 'home' | 'daily' | 'remember';
+  kind: 'learn' | 'home' | 'daily' | 'remember' | 'rush';
   label: string;
   rootId?: string;
   rootName?: string;
@@ -147,8 +151,40 @@ export interface DailyDoneVM {
 }
 
 /**
+ * Same Today-path hero after Daily is banked. Unfinished Continue {learn}
+ * stays first. Once today's learn is done, Keep going · {root} — not
+ * another Continue. Caught-up kids get Root Rush, not Back to learning.
+ * Play again stays the ghost. Rush-miss Remember stays on Today / Rush
+ * (#65–#67) — Daily does not steal that thread.
+ */
+export function dailyDonePrimary(
+  completed: Set<string>,
+  entitled: boolean,
+  opts: { learnedToday?: boolean } = {},
+): ModeCta {
+  const next = learnNextAction(completed, entitled);
+  if (next.kind === 'learn' && next.rootId && !opts.learnedToday) {
+    return next;
+  }
+  if (next.kind === 'learn' && next.rootId && next.rootName) {
+    return {
+      kind: 'learn',
+      label: tierPrimaryLabel({
+        nextPlay: false,
+        complete: false,
+        rootName: next.rootName,
+        keepGoing: true,
+      }),
+      rootId: next.rootId,
+      rootName: next.rootName,
+    };
+  }
+  return { kind: 'rush', label: 'Play Root Rush ›' };
+}
+
+/**
  * Daily already-banked landing + just-finished result. Recaps all five
- * (name + meaning + ✓) and makes Continue {root} the hero tap.
+ * (name + meaning + ✓). The fat tap is the same next Today already named.
  */
 export function buildDailyDone(opts: {
   deal: readonly Pick<Root, 'root' | 'mean'>[];
@@ -156,6 +192,7 @@ export function buildDailyDone(opts: {
   justFinished: boolean;
   completed: Set<string>;
   entitled: boolean;
+  learnedToday?: boolean;
 }): DailyDoneVM {
   const streakLine =
     opts.streak > 0 ? `🔥 ${opts.streak} day streak` : 'Streak banked for today ✓';
@@ -167,7 +204,9 @@ export function buildDailyDone(opts: {
       : 'Streak banked for today ✓. Same five until tomorrow — replay is just for fun.',
     recap: opts.deal.map((r) => ({ root: r.root, mean: r.mean })),
     recapDone: true,
-    primary: learnNextAction(opts.completed, opts.entitled),
+    primary: dailyDonePrimary(opts.completed, opts.entitled, {
+      learnedToday: opts.learnedToday,
+    }),
     replayLabel: 'Play again ›',
     homeLabel: 'Home',
   };

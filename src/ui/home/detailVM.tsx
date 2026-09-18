@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { PALETTES, TIERS, rootsInTier, type Root } from '../../data/roots';
+import { PALETTES, ROOTS_BY_ID, TIERS, rootsInTier, type Root } from '../../data/roots';
 import {
   continueDailyLabel,
   dailyNextRoot,
@@ -16,7 +16,7 @@ import {
   TIER_TILE_PREVIEW_COUNT,
   type MenuItem,
 } from './menu';
-import { dailyWaitingLine, rushMissRememberReady } from '../modes/modeHandoff';
+import { dailyDonePrimary, dailyWaitingLine, rushMissRememberReady } from '../modes/modeHandoff';
 import {
   homeRushRecapPreview,
   peekChipDone,
@@ -43,9 +43,11 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  peek chips are real taps (Remember / Continue Daily / Continue {root}).
  *  Last Rush recap chips Remember the real run — never a Bio / Geo / Photo
  *  teaser. Hits keep ✓; a miss stays unmarked. Mid-run Daily keeps that
- *  tile empty so Chron stays the hero. After Daily + a learn, an owned
- *  miss names Remember on the tile — Play again / Browse roots must
- *  not sit over Geo. */
+ *  tile empty so Chron stays the hero. After Daily is banked and today's
+ *  learn is still open, Continue {root} is the fat tap — Play again must
+ *  not sit over Chron. After Daily + a learn, an owned miss names
+ *  Remember on the Rush tile — Play again / Browse roots must not sit
+ *  over Geo. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -171,6 +173,17 @@ export function buildDetailVM(
     const midLead = nextDaily
       ? `Next is ${nextDaily.root} — ${nextDaily.mean}. ${dailyResume} of ${extra.dailyRoots.length} already yours.`
       : `Five fresh roots every day. See the animation, tap what it means, keep your streak.`;
+    const doneNext = extra.dailyDone
+      ? dailyDonePrimary(extra.completed, extra.entitled, { learnedToday: extra.learnedToday })
+      : null;
+    // Banked Daily + unfinished Today path: Continue {learn} / Rush is the
+    // fat tap. Play again stays the ghost. Once today's learn is done,
+    // Daily's own tap is Play again (Keep going lives on the HERE tier).
+    const doneHero = Boolean(doneNext && !extra.learnedToday);
+    const nextLearnRoot =
+      doneHero && doneNext?.kind === 'learn' && doneNext.rootId
+        ? ROOTS_BY_ID[doneNext.rootId]
+        : undefined;
     return {
       jewel: item.jewel,
       animKey: item.key,
@@ -191,14 +204,17 @@ export function buildDetailVM(
       moreCount: Math.max(0, remainingAfterPeek),
       primary: {
         label: extra.dailyDone
-          ? 'Play again 📅'
+          ? doneHero && doneNext
+            ? doneNext.label
+            : 'Play again 📅'
           : dailyResume != null
             ? continueDailyLabel(dailyResume, extra.dailyRoots.length || extra.dailyTotal || 5)
             : 'Start daily 📅',
       },
-        // Browse roots opens the catalog (Remember for owned) — not Bio teach.
-        secondary: { label: 'Browse roots' },
-      scene: sceneFrom(nextDaily ?? extra.dailyRoots[0], {
+        // Unfinished Today path: Play again is the ghost. Otherwise Browse
+        // roots opens the catalog (Remember for owned) — not Bio teach.
+        secondary: { label: doneHero ? 'Play again ›' : 'Browse roots' },
+      scene: sceneFrom(nextLearnRoot ?? nextDaily ?? extra.dailyRoots[0], {
         key: 'stars',
         palKey: 'gold',
         caption: 'Daily',

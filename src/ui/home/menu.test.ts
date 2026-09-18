@@ -444,6 +444,12 @@ describe('homeSecondaryAction — Browse / See all is the catalog, not Bio', () 
     expect(homeSecondaryAction(daily)).toEqual({ kind: 'index' });
     expect(homeSecondaryAction(rush, { dailyResumeQi: 2 })).toEqual({ kind: 'daily' });
     expect(homeSecondaryAction(daily, { dailyResumeQi: 2 })).toEqual({ kind: 'index' });
+    expect(homeSecondaryAction(daily, { dailyDone: true, learnedToday: false })).toEqual({
+      kind: 'daily',
+    });
+    expect(homeSecondaryAction(daily, { dailyDone: true, learnedToday: true })).toEqual({
+      kind: 'index',
+    });
     expect(homeSecondaryAction(rush, { dailyResumeQi: 2 })).not.toEqual({ kind: 'tier', t: 1 });
   });
 

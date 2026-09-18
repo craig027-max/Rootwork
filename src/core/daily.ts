@@ -13,7 +13,8 @@
  * Hear / Yes / Remember), then peeks the next root so Next is not a dump
  * onto an unnamed card. Photo cannot slam over Bio. An owned hit is
  * today's Remember; the first hit banks the play-today streak. Last hold
- * peeks Continue · next learn — the same next the done overlay already names.
+ * peeks Continue · next learn — or Keep going when today's learn is
+ * already done. Same next the done overlay already names.
  * Boot Continue prefers that live mid-run over the next learn, so a
  * returning kid lands on Chron — not a Geo dump.
  */
@@ -269,6 +270,16 @@ export function dailyHoldContinueLine(nextName: string, nextMean?: string): stri
   const name = nextName.replace(/\s+/g, ' ').trim();
   const mean = nextMean?.replace(/\s+/g, ' ').trim();
   return mean ? `Continue · ${name} · ${mean}` : `Continue · ${name}`;
+}
+
+/**
+ * Last Daily hold after today's learn is already done — Keep going, not
+ * another unfinished Continue. Same extra-play language as Today ✓.
+ */
+export function dailyHoldKeepGoingLine(nextName: string, nextMean?: string): string {
+  const name = nextName.replace(/\s+/g, ' ').trim();
+  const mean = nextMean?.replace(/\s+/g, ' ').trim();
+  return mean ? `Keep going · ${name} · ${mean}` : `Keep going · ${name}`;
 }
 
 /** Kid-facing label for the one tap that leaves the Daily hold. */
