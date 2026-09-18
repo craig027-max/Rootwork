@@ -216,8 +216,9 @@ describe('Daily done is Continue {learn} / Keep going — not Play again over Ch
     expect(phone).not.toMatch(/\.q-next-learn\s*\{[^}]*display:\s*none/);
     expect(css).toMatch(/\.q-next-learn/);
     const homePhone = mediaBlock(appCss, 'max-width: 860px');
-    expect(homePhone).toMatch(/\.ww-detail-cta\s*\{[^}]*display:\s*flex|\.ww-detail-cta\s*\{/);
-    expect(homePhone).not.toMatch(/\.ww-detail-cta\s*\{[^}]*display:\s*none/);
+    expect(homePhone).toMatch(/\.ww-today-cta\s*\{[^}]*display:\s*block/);
+    expect(homePhone).not.toMatch(/\.ww-today-cta\s*\{[^}]*display:\s*none/);
+    expect(homePhone).toMatch(/\.ww-samples\.is-lines \.ww-schip\.is-done\.is-tap\s*\{[^}]*display:\s*flex/);
   });
 
   it('does not expand the catalog', () => {

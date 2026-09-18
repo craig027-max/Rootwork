@@ -24,7 +24,13 @@ import {
 import type { RunResult } from '../core/stats';
 import { Scene } from './Scene';
 import { learnedRootToday, listRushMissRemember, rootLabel } from './home/todayProgress';
-import { buildModeEmpty, buildRushResultNext, buildRushStart, learnNextAction } from './modes/modeHandoff';
+import {
+  buildModeEmpty,
+  buildRushResultNext,
+  buildRushStart,
+  learnNextAction,
+  type ModeCta,
+} from './modes/modeHandoff';
 
 /**
  * Root Rush — the full-screen jewel-themed quiz overlay, ported from the design
@@ -165,7 +171,7 @@ export function RootRush() {
     openRoot(id, { entry: recapDeckEntry(completed.has(id)) });
   }
 
-  function goPrimary(kind: 'learn' | 'home' | 'daily' | 'remember', id?: string) {
+  function goPrimary(kind: ModeCta['kind'], id?: string) {
     if (kind === 'daily') {
       setView('daily');
       return;
@@ -173,6 +179,10 @@ export function RootRush() {
     if (kind === 'remember') {
       if (id) openRoot(id, { entry: 'remember' });
       else closeQuiz();
+      return;
+    }
+    if (kind === 'rush') {
+      startRun();
       return;
     }
     goLearn(id);

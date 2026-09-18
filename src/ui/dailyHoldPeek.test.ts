@@ -38,7 +38,7 @@ describe('Daily hold: peek the next root, then Next — Home lands on that peek'
     expect(daily).toContain('dailyHoldLine(root.root, root.mean)');
     expect(daily).toContain('learnNextAction');
     expect(daily).toContain('learnedToday');
-    expect(daily).not.toMatch(/Continue \{/);
+    expect(daily).toContain('dailyHoldKeepGoingLine');
   });
 
   it('lands returning Home on Daily mid-run so the next-root scene is first', () => {
