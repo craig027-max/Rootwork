@@ -278,15 +278,26 @@ export function listHeading(nextPlay: boolean, opts: { pathDone?: boolean } = {}
 /**
  * Rush menu row when Daily is mid-run — name the waiting root so Chron
  * is not only on the Daily tile. A path-done Rush miss names Remember
- * so Play again does not hide Geo. Fresh / done Daily keep the combo line.
+ * so Play again does not hide Geo. After Daily is banked, name Continue
+ * / Keep going so Play again does not hide Auto. Fresh Daily keeps the
+ * combo line.
  */
 export function rushMenuSub(
-  opts: { dailyNextName?: string; dailyDone?: boolean; missName?: string } = {},
+  opts: {
+    dailyNextName?: string;
+    dailyDone?: boolean;
+    missName?: string;
+    learnName?: string;
+    keepGoing?: boolean;
+  } = {},
 ): string {
   const name = !opts.dailyDone ? opts.dailyNextName?.replace(/\s+/g, ' ').trim() : '';
   if (name) return `Daily waiting · ${name}`;
   const miss = opts.missName?.replace(/\s+/g, ' ').trim();
-  return miss ? `Missed ${miss} · remember` : 'Combo run · match roots to meanings';
+  if (miss) return `Missed ${miss} · remember`;
+  const learn = opts.learnName?.replace(/\s+/g, ' ').trim();
+  if (learn) return opts.keepGoing ? `Keep going · ${learn}` : `Continue · ${learn}`;
+  return 'Combo run · match roots to meanings';
 }
 
 /** Returning-dashboard Root Rush meta: letter + stars, plus combo once it exists. */
@@ -346,6 +357,7 @@ export function isResumeTier(item: MenuItem): boolean {
 export type HomeSecondary =
   | { kind: 'daily' }
   | { kind: 'remember'; rootId: string }
+  | { kind: 'rush' }
   | { kind: 'index' }
   | { kind: 'upgrade' }
   | { kind: 'tier'; t: TierNum };
@@ -358,12 +370,15 @@ export function homeSecondaryAction(
     /** Daily banked and today's learn still open — Play again is the ghost. */
     dailyDone?: boolean;
     learnedToday?: boolean;
+    /** Daily banked + Continue / Keep going is the Rush fat tap — Play again is the ghost. */
+    learnWaiting?: boolean;
   } = {},
 ): HomeSecondary {
   if (item.kind === 'mode') {
     if (item.key === 'rush' && opts.dailyResumeQi != null) return { kind: 'daily' };
     const missId = opts.rememberMissId?.trim();
     if (item.key === 'rush' && missId) return { kind: 'remember', rootId: missId };
+    if (item.key === 'rush' && opts.learnWaiting) return { kind: 'rush' };
     if (item.key === 'daily' && opts.dailyDone && !opts.learnedToday) return { kind: 'daily' };
     return { kind: 'index' };
   }
@@ -406,6 +421,10 @@ export function buildMenu(
     dailyNextName?: string;
     /** Path-done Rush miss — menu row names Remember, not a combo-only dump. */
     rushMissName?: string;
+    /** Daily banked + Today still names this learn — not a combo-only dump. */
+    rushLearnName?: string;
+    /** Today ✓ — extra play, not unfinished Continue. */
+    rushKeepGoing?: boolean;
     nextPlay?: boolean;
     choseMode?: boolean;
   } = {},
@@ -423,6 +442,8 @@ export function buildMenu(
         dailyNextName: opts.dailyNextName,
         dailyDone: opts.dailyDone,
         missName: opts.rushMissName,
+        learnName: opts.rushLearnName,
+        keepGoing: opts.rushKeepGoing,
       }),
       best: opts.rushBest,
       preview: opts.rushPreview && opts.rushPreview.length > 0 ? opts.rushPreview : undefined,

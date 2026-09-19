@@ -44,7 +44,8 @@ import {
  * time and offers Continue Daily · 3 of 5 — same tap Home / result
  * already use. After Daily + a learn, an owned miss is Remember Geo —
  * Play again still starts Rush, but it is not the fat tap over Geo.
- * Continue {learn} stays when Daily / a learn is still open.
+ * After Daily is banked and Today still names Continue / Keep going,
+ * that tap is the result hero — Play again stays the ghost.
  *
  * A correct tap names the meaning (Yes — Chron means time) then keeps
  * the combo auto-advance. A miss names it too (Nope — Chron means time)
@@ -423,6 +424,15 @@ export function RootRush() {
                 <span>{rushStart.rememberMiss}</span>
                 <em>{rushStart.rememberPeek}</em>
               </button>
+            ) : rushStart.continueLearn && rushStart.continueLearnPeek ? (
+              <button
+                type="button"
+                className="q-ghost q-daily-continue q-rush-learn"
+                onClick={() => goPrimary('learn', rushStart.continueLearnId ?? undefined)}
+              >
+                <span>{rushStart.continueLearn}</span>
+                <em>{rushStart.continueLearnPeek}</em>
+              </button>
             ) : rushStart.waiting ? (
               <div className="q-daily-wait" role="status">
                 {rushStart.waiting}
@@ -555,7 +565,7 @@ export function RootRush() {
               })}
             </div>
             <div className="q-actions">
-              {rushNext.dailyResume || rushNext.missWaiting ? (
+              {rushNext.dailyResume || rushNext.missWaiting || rushNext.learnWaiting ? (
                 <>
                   <button
                     className={`q-go q-next-learn${rushNext.missWaiting ? ' is-miss' : ''}`}

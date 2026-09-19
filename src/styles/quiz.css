@@ -336,6 +336,9 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-rush-remember {
     display: flex;
   }
+  .q-rush-learn {
+    display: flex;
+  }
   .q-daily-wait.is-miss {
     display: block;
   }
@@ -382,6 +385,7 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-daily-continue { display: flex; }
   .q-daily-continue em { display: block; }
   .q-rush-remember { display: flex; }
+  .q-rush-learn { display: flex; }
   .q-daily-wait.is-miss { display: block; }
   .q-go.is-miss { display: block; }
   .q-rush-recap { display: flex; }
