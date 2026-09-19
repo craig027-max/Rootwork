@@ -34,7 +34,7 @@ import { TierMenu } from './home/TierMenu';
 import { DetailPanel } from './home/DetailPanel';
 import { buildDetailVM } from './home/detailVM';
 import { RootIndex } from './deck/RootIndex';
-import { dailyDonePrimary, learnNextAction } from './modes/modeHandoff';
+import { dailyDonePrimary, learnNextAction, rushLearnReady } from './modes/modeHandoff';
 import { buildProfileProgress } from './home/profileProgress';
 import {
   buildTodayProgress,
@@ -120,6 +120,16 @@ export function Home() {
     rememberAlso,
   });
   const missHero = Boolean(today.missWaiting && today.cta?.kind === 'remember' && rushMissId);
+  const learnHeroCta = rushLearnReady(completed, entitled, {
+    dailyResumeQi,
+    dailyTotal: dailyRoots.length,
+    dailyDone,
+    learnedToday: learnedId !== null,
+    rememberMissId: rushMissId,
+    rememberMissName: remember.name,
+    rememberAlso,
+  });
+  const learnHero = learnHeroCta != null;
   const dailyPreview =
     dailyResumeQi != null
       ? dailyResumePreview(dailyRoots, dailyResumeQi)
@@ -138,6 +148,8 @@ export function Home() {
     rushPreview,
     dailyNextName: dailyNext?.root,
     rushMissName: missHero ? remember.name : undefined,
+    rushLearnName: learnHero ? learnHeroCta.rootName ?? learn.name : undefined,
+    rushKeepGoing: Boolean(learnHero && today.pathDone),
     nextPlay,
   });
   const allItems = [...items, ...tucked];
@@ -166,6 +178,10 @@ export function Home() {
   function onPrimary(item: MenuItem) {
     if (item.kind === 'mode') {
       if (item.key === 'rush') {
+        if (learnHero && learnHeroCta.rootId) {
+          openRoot(learnHeroCta.rootId);
+          return;
+        }
         setView('quiz');
         return;
       }
@@ -195,9 +211,14 @@ export function Home() {
       rememberMissId: missHero ? rushMissId : null,
       dailyDone,
       learnedToday: learnedId !== null,
+      learnWaiting: learnHero,
     });
     if (tap.kind === 'daily') {
       setView('daily');
+      return;
+    }
+    if (tap.kind === 'rush') {
+      setView('quiz');
       return;
     }
     if (tap.kind === 'remember') {
@@ -254,7 +275,10 @@ export function Home() {
     rushRecap: lastRush,
   });
   const resumeNow =
-    !nextPlay && (isResumeTier(selected) || isDailyResumeItem(selected));
+    !nextPlay &&
+    (isResumeTier(selected) ||
+      isDailyResumeItem(selected) ||
+      (learnHero && selected.kind === 'mode' && selected.key === 'rush'));
 
   return (
     <div className={`ww-home${nextPlay ? ' is-first' : ''}${resumeNow ? ' is-resume' : ''}`}>

@@ -17,7 +17,7 @@ import {
   TIER_TILE_PREVIEW_COUNT,
   type MenuItem,
 } from './menu';
-import { dailyDonePrimary, dailyWaitingLine, rushMissRememberReady } from '../modes/modeHandoff';
+import { dailyDonePrimary, dailyWaitingLine, rushLearnReady, rushMissRememberReady } from '../modes/modeHandoff';
 import {
   homeRushRecapPreview,
   peekChipDone,
@@ -108,7 +108,7 @@ export function buildDetailVM(
         qi < total
           ? continueDailyLabel(qi, total)
           : null;
-      const miss = rushMissRememberReady(extra.completed, extra.entitled, {
+      const missOpts = {
         dailyResumeQi: extra.dailyResumeQi,
         dailyTotal: extra.dailyRoots.length || extra.dailyTotal,
         dailyDone: extra.dailyDone,
@@ -116,13 +116,18 @@ export function buildDetailVM(
         rememberMissId: extra.rememberMissId,
         rememberMissName: extra.rememberMissName,
         rememberAlso: extra.rememberAlso,
-      });
+      };
+      const miss = rushMissRememberReady(extra.completed, extra.entitled, missOpts);
+      const learn = rushLearnReady(extra.completed, extra.entitled, missOpts);
+      const learnRoot =
+        learn?.rootId ? ROOTS_BY_ID[learn.rootId] : undefined;
       const rushSamples = homeRushRecapPreview(extra.rushRecap, {
         dailyResume: Boolean(continueDaily),
       });
       const rushMore = extra.rushRecap
         ? Math.max(0, extra.rushRecap.roots.length - rushSamples.length)
         : 0;
+      const rushReplay = played ? 'Play again 🎯' : 'Start the run 🎯';
       return {
         jewel: item.jewel,
         animKey: item.key,
@@ -143,15 +148,33 @@ export function buildDetailVM(
         samplesDone: rushSamples.length > 0 && rushSamples.every((s) => peekChipDone({ ok: s.ok })),
         sampleTap: samplePeekTap({ mode: 'rush', sampleCount: rushSamples.length }),
         moreCount: rushMore,
-        primary: { label: played ? 'Play again 🎯' : 'Start the run 🎯' },
+        primary: { label: learn ? learn.label : rushReplay },
         // Mid-run: Continue Daily. Path-done miss: Remember Geo.
-        // Browse roots must not dump Bio over either.
+        // Daily banked + Today still names Continue / Keep going: that
+        // tap. Browse roots must not dump Bio over any of those.
         secondary: {
-          label: continueDaily ?? (miss ? rememberMissCtaLabel(miss.name) : 'Browse roots'),
+          label:
+            continueDaily ??
+            (miss
+              ? rememberMissCtaLabel(miss.name)
+              : learn
+                ? played
+                  ? 'Play again ›'
+                  : 'Start the run ›'
+                : 'Browse roots'),
         },
-        waiting: continueDaily ? waiting : miss ? todayMissRecap(miss.name, miss.also) : waiting,
+        waiting: continueDaily
+          ? waiting
+          : miss
+            ? todayMissRecap(miss.name, miss.also)
+            : learn
+              ? [learn.rootName, learnRoot?.mean.replace(/\s+/g, ' ').trim()]
+                  .filter((part): part is string => Boolean(part?.trim()))
+                  .join(' · ')
+              : waiting,
         waitingMiss: Boolean(miss && !continueDaily),
-        scene: sceneFrom(undefined, { key: 'heat', palKey: 'fire', caption: 'Root Rush' }),
+        scene: sceneFrom(learnRoot, { key: 'heat', palKey: 'fire', caption: 'Root Rush' }),
+        heroCta: Boolean(learn),
       };
     }
     const dailyResume =

@@ -20,11 +20,16 @@
  * Remember {Geo} is the result hero — Play again / Continue {Astro}
  * must not sit over the miss Today already named.
  *
+ * After Daily is banked and a learn is still the Today hero (no miss),
+ * Rush uses that same Continue {learn} / Keep going tap — Play again
+ * stays the ghost. Home lands on today's Rush; Play again must not
+ * sit over Auto the way it used to sit over Chron on Daily (#68).
+ *
  * Pure and Date-free so tests lock the copy without I/O.
  */
 import { continueDailyLabel, dailyDoneOverlaySub, dailyNextRowLabel } from '../../core/daily';
 import { rememberMissCtaLabel, todayMissRecap } from '../../core/rushRecap';
-import { rootId, rootsInTier, type Root } from '../../data/roots';
+import { ROOTS, rootId, rootsInTier, type Root } from '../../data/roots';
 import { nextPlayRoot, rushBestLabel, tierPrimaryLabel } from '../home/menu';
 
 export interface ModeCta {
@@ -63,6 +68,24 @@ export function rushPathClear(
   if (dailyWaitingLine(opts)) return false;
   const next = learnNextAction(completed, entitled);
   return Boolean(opts.dailyDone) && (Boolean(opts.learnedToday) || next.kind !== 'learn');
+}
+
+/**
+ * Continue {learn} / Keep going is the Rush hero only when Today would
+ * already make it the fat tap. Continue Daily / Remember Geo stay first.
+ * Caught-up kids keep Play again — Play Root Rush is not a second go.
+ */
+export function rushLearnReady(
+  completed: Set<string>,
+  entitled: boolean,
+  opts: RushMissRememberOpts & DailyResumeOpts,
+): ModeCta | null {
+  if (dailyWaitingLine(opts)) return null;
+  if (rushMissRememberReady(completed, entitled, opts)) return null;
+  if (!opts.dailyDone) return null;
+  const next = dailyDonePrimary(completed, entitled, { learnedToday: opts.learnedToday });
+  if (next.kind !== 'learn' || !next.rootId) return null;
+  return next;
 }
 
 /**
@@ -225,6 +248,13 @@ export interface RushStartVM {
   rememberMiss: string | null;
   rememberMissId: string | null;
   rememberPeek: string | null;
+  /**
+   * Daily banked + Today still names Continue / Keep going. Same tap
+   * Home / result already use — Play again stays the go button here.
+   */
+  continueLearn: string | null;
+  continueLearnId: string | null;
+  continueLearnPeek: string | null;
 }
 
 /** Rush start: Play again after a real run, with the same best recap as Home. */
@@ -251,7 +281,17 @@ export function buildRushStart(
     qi < total
       ? continueDailyLabel(qi, total)
       : null;
-  const miss = rushMissRememberReady(opts.completed ?? new Set(), opts.entitled ?? false, opts);
+  const completed = opts.completed ?? new Set();
+  const entitled = opts.entitled ?? false;
+  const miss = rushMissRememberReady(completed, entitled, opts);
+  const learn = rushLearnReady(completed, entitled, opts);
+  const learnMean = learn?.rootId
+    ? ROOTS.find((r) => rootId(r) === learn.rootId)?.mean.replace(/\s+/g, ' ').trim()
+    : undefined;
+  const learnPeek = learn
+    ? [learn.rootName, learnMean].filter((part): part is string => Boolean(part?.trim())).join(' · ') ||
+      null
+    : null;
   return {
     goLabel: opts.runs > 0 ? 'Play again ›' : 'Start round ›',
     recap: recap ? `Best so far — ${recap}` : null,
@@ -260,6 +300,9 @@ export function buildRushStart(
     rememberMiss: miss ? rememberMissCtaLabel(miss.name) : null,
     rememberMissId: miss?.id ?? null,
     rememberPeek: miss ? todayMissRecap(miss.name, miss.also) : null,
+    continueLearn: learn?.label ?? null,
+    continueLearnId: learn?.rootId ?? null,
+    continueLearnPeek: learnPeek,
   };
 }
 
@@ -271,13 +314,17 @@ export interface RushResultVM {
   dailyResume: boolean;
   /** Owned miss is the fat tap — Play again stays ghost. */
   missWaiting: boolean;
+  /** Daily banked + Continue / Keep going is the fat tap — Play again stays ghost. */
+  learnWaiting: boolean;
 }
 
 /**
  * Rush result: a live Daily mid-run is the hero (Continue Daily · 3 of 5),
  * same next root Home already named. After Daily + a learn, an owned
  * miss is Remember {root} — Play again / Continue {next} must not sit
- * over Geo. Otherwise Play again stays, plus Continue {root}.
+ * over Geo. After Daily is banked and Today still names Continue /
+ * Keep going, that tap is the hero — Play again stays the ghost.
+ * Otherwise Play again stays, plus Continue {root}.
  */
 export function buildRushResultNext(
   completed: Set<string>,
@@ -305,6 +352,7 @@ export function buildRushResultNext(
       peek,
       dailyResume: true,
       missWaiting: false,
+      learnWaiting: false,
     };
   }
   const miss = rushMissRememberReady(completed, entitled, opts);
@@ -321,6 +369,24 @@ export function buildRushResultNext(
       peek: todayMissRecap(miss.name, miss.also),
       dailyResume: false,
       missWaiting: true,
+      learnWaiting: false,
+    };
+  }
+  const learn = rushLearnReady(completed, entitled, opts);
+  if (learn) {
+    const mean = learn.rootId
+      ? ROOTS.find((r) => rootId(r) === learn.rootId)?.mean.replace(/\s+/g, ' ').trim()
+      : undefined;
+    return {
+      primary: learn,
+      replayLabel: 'Play again ›',
+      changeLabel: 'Change level',
+      peek:
+        [learn.rootName, mean].filter((part): part is string => Boolean(part?.trim())).join(' · ') ||
+        null,
+      dailyResume: false,
+      missWaiting: false,
+      learnWaiting: true,
     };
   }
   return {
@@ -330,5 +396,6 @@ export function buildRushResultNext(
     peek: null,
     dailyResume: false,
     missWaiting: false,
+    learnWaiting: false,
   };
 }
