@@ -44,7 +44,9 @@ describe('Daily hold: peek the next root, then Next — Home lands on that peek'
   it('lands returning Home on Daily mid-run so the next-root scene is first', () => {
     expect(home).toContain('isDailyResumeItem');
     expect(home).toContain('dailyResume: dailyResumeQi != null');
-    expect(home).toContain('isResumeTier(selected) || isDailyResumeItem(selected)');
+    expect(home).toContain('isResumeTier(selected)');
+    expect(home).toContain('isDailyResumeItem(selected)');
+    expect(home).toContain("learnHero && selected.kind === 'mode' && selected.key === 'rush'");
     expect(menu).toContain('opts.dailyResume');
     expect(menu).toContain("it.key === 'daily'");
     expect(menu).toContain('isDailyResumeItem');
