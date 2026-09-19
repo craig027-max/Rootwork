@@ -20,7 +20,7 @@ export interface DetailVM {
   ring?: { pct: number; label: string };
   pmA?: string;
   pmB?: ReactNode;
-  samples: { root: string; mean: string; ok?: boolean }[];
+  samples: { root: string; mean: string; ok?: boolean; owned?: boolean }[];
   /** Daily tile: stack name + one-line meaning so kids can read today's set. */
   sampleLines?: boolean;
   /** Daily done / all-hit Rush: mark preview lines as a recap, not a fresh teaser. */
@@ -146,6 +146,7 @@ export function DetailPanel({
                 aria-label={samplePeekLabel(vm.sampleTap, s.root, {
                   dailyNext: isNext,
                   ok: s.ok,
+                  owned: s.owned,
                 })}
               >
                 {body}

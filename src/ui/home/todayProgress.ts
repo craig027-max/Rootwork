@@ -24,7 +24,9 @@
  * After Daily is banked, the Daily overlay and Home Daily tile use that
  * same next — Play again must not sit over Continue {learn}. Once the
  * learn is done, Daily result says Keep going (or Rush), not another
- * Continue. Rush-miss Remember stays on Today / Rush (#65–#67).
+ * Continue. Done copy is a recap (Today's five are done / Done · names),
+ * not a fresh-start pitch. Rush-miss Remember stays on Today / Rush
+ * (#65–#67). Continue / Keep going / Rush CTAs stay as #68 left them.
  *
  * Pure so tests lock the copy without I/O.
  */

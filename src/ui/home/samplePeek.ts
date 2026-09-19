@@ -33,19 +33,21 @@ export function samplePeekTap(opts: {
 export function samplePeekLabel(
   tap: SamplePeekTap,
   rootName: string,
-  opts: { dailyNext?: boolean; ok?: boolean } = {},
+  opts: { dailyNext?: boolean; ok?: boolean; owned?: boolean } = {},
 ): string {
   const name = rootName.replace(/\s+/g, ' ').trim();
   if (tap === 'remember' && opts.ok === false) {
     return name ? `Missed ${name}` : 'Missed';
   }
   if (!name) {
-    if (tap === 'remember') return 'Remember';
+    if (tap === 'remember') return opts.owned === false ? 'Meet this root' : 'Remember';
     if (tap === 'daily') return 'Continue Daily';
     if (tap === 'play') return 'Play';
     return 'Continue';
   }
-  if (tap === 'remember') return `Remember ${name}`;
+  if (tap === 'remember') {
+    return opts.owned === false ? `Meet ${name}` : `Remember ${name}`;
+  }
   if (tap === 'daily') return opts.dailyNext ? `Continue Daily · ${name}` : `Start daily · ${name}`;
   if (tap === 'play') return `Play ${name}`;
   return `Continue ${name}`;

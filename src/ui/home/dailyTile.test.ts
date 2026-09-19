@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { ROOTS, isRootOpenable, rootId, rootsInTier } from '../../data/roots';
 import {
   continueDailyLabel,
+  dailyDoneLead,
   dailyNextRoot,
   dailyResumePreview,
   dailySeed,
@@ -240,11 +241,14 @@ describe('Home Daily tile: done-state recap after Daily is banked', () => {
       expect(s.mean.length).toBeGreaterThan(0);
       expect(s.mean).not.toMatch(/\n/);
     }
+    expect(vm.lead).toBe(dailyDoneLead(3));
+    expect(String(vm.lead)).not.toMatch(/Five fresh roots|keep your streak/i);
     expect(vm.primary.label).toBe(`Continue ${secondBuilder.root} ›`);
     expect(vm.primary.label).not.toMatch(/Play again|Start daily/);
     expect(vm.secondary?.label).toBe('Play again ›');
     expect(vm.heroCta).toBeFalsy();
     expect(vm.sampleTap).toBe('remember');
+    expect(vm.samples.some((s) => s.owned === true || s.owned === false)).toBe(true);
     expect(vm.scene?.caption).toBe(`${secondBuilder.root} · ${secondBuilder.mean}`);
   });
 
@@ -267,7 +271,8 @@ describe('Home Daily tile: done-state recap after Daily is banked', () => {
   it('marks those three lines done with the existing Daily ✓ / DONE chrome', () => {
     expect(doneItem.badge).toBe('DONE');
     expect(doneItem.previewDone).toBe(true);
-    expect(doneItem.sub).toMatch(/Done for today/);
+    expect(doneItem.sub).toBe(`Done · ${preview.map((p) => p.root).join(' · ')}`);
+    expect(doneItem.sub).not.toMatch(/Five fresh roots|keep your streak/i);
 
     expect(menu).toContain('it.previewDone');
     expect(menu).toContain('ww-daily-mark');

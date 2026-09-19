@@ -17,6 +17,10 @@
  * already done. Same next the done overlay already names.
  * Boot Continue prefers that live mid-run over the next learn, so a
  * returning kid lands on Chron — not a Geo dump.
+ * After the five are banked, Home / overlay / menu recap that done set —
+ * "Today's five are done" — not a fresh-start pitch over Chron. Recap
+ * chips Remember owned roots and Meet unowned ones. Fat Continue /
+ * Keep going / Rush taps stay where #68 put them.
  */
 
 import type { Root } from '../data/roots';
@@ -285,4 +289,52 @@ export function dailyHoldKeepGoingLine(nextName: string, nextMean?: string): str
 /** Kid-facing label for the one tap that leaves the Daily hold. */
 export function afterDailyNextLabel(isLast: boolean): string {
   return isLast ? 'Done →' : 'Next →';
+}
+
+function cleanDailyNames(names?: readonly string[], max = 3): string[] {
+  return (names ?? [])
+    .map((n) => n.replace(/\s+/g, ' ').trim())
+    .filter(Boolean)
+    .slice(0, max);
+}
+
+/**
+ * Home Daily tile lead after the five are banked — recap, not
+ * "Five fresh roots every day." Chips / Today already name the set.
+ */
+export function dailyDoneLead(streak?: number): string {
+  const days = typeof streak === 'number' && Number.isFinite(streak) ? Math.max(0, Math.round(streak)) : 0;
+  const streakLine =
+    days > 0 ? ` Streak banked — 🔥 ${days} day${days === 1 ? '' : 's'}.` : '';
+  return `Today's five are done. Same until tomorrow.${streakLine}`;
+}
+
+/**
+ * Home Daily menu row after the five are banked — named recap, not a
+ * nameless "Done for today · same five until tomorrow" dump.
+ */
+export function dailyDoneMenuSub(names?: readonly string[]): string {
+  const cleaned = cleanDailyNames(names);
+  if (cleaned.length === 0) return 'Done for today · same five until tomorrow';
+  return `Done · ${cleaned.join(' · ')}`;
+}
+
+/**
+ * Daily overlay sub after the five are banked. Streak stays on the
+ * streak line — this names the recap, not a fresh-start pitch.
+ */
+export function dailyDoneOverlaySub(justFinished: boolean): string {
+  return justFinished
+    ? "Today's five are done. Same until tomorrow."
+    : "Today's five are done. Replay is just for fun.";
+}
+
+/**
+ * Done-recap chip aria. Owned roots Remember; unowned ones Meet —
+ * Daily must not say Remember Chron when Chron is still unlearned.
+ */
+export function dailyRecapChipLabel(rootName: string, owned: boolean): string {
+  const name = rootName.replace(/\s+/g, ' ').trim();
+  if (!name) return owned ? 'Remember' : 'Meet this root';
+  return owned ? `Remember ${name}` : `Meet ${name}`;
 }

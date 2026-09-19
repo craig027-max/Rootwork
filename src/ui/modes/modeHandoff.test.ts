@@ -121,15 +121,15 @@ describe('buildDailyDone', () => {
   it('keeps the just-finished ✓ celebration and names Continue as the hero', () => {
     expect(just.title).toBeNull();
     expect(just.streakLine).toBe('🔥 7 day streak');
-    expect(just.sub).toBe('Streak banked. Same five roots until tomorrow.');
+    expect(just.sub).toBe("Today's five are done. Same until tomorrow.");
+    expect(just.sub).not.toMatch(/Five fresh roots|keep your streak/i);
     expect(just.primary.label).toMatch(/^Continue /);
   });
 
-  it('on re-open, says Done for today — not Today\'s five / keep your streak', () => {
+  it('on re-open, recaps today\'s five are done — not a fresh-start pitch', () => {
     expect(reopen.title).toBe('Done for today.');
-    expect(reopen.sub).toContain('Streak banked for today ✓');
-    expect(reopen.sub).toContain('replay is just for fun');
-    expect(reopen.sub).not.toMatch(/keep your streak/i);
+    expect(reopen.sub).toBe("Today's five are done. Replay is just for fun.");
+    expect(reopen.sub).not.toMatch(/Five fresh roots|keep your streak/i);
     expect(reopen.primary.label).toBe(`Continue ${second.root} ›`);
     expect(reopen.recapDone).toBe(true);
   });
