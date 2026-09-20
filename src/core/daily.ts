@@ -20,7 +20,9 @@
  * After the five are banked, Home / overlay / menu recap that done set —
  * "Today's five are done" — not a fresh-start pitch over Chron. Recap
  * chips Remember owned roots and Meet unowned ones. Fat Continue /
- * Keep going / Rush taps stay where #68 put them.
+ * Keep going / Rush taps stay where #68 put them. After Daily + a
+ * learn, an owned Rush miss makes Remember the done hero — Play
+ * again / Keep going must not sit over Geo.
  */
 
 import type { Root } from '../data/roots';
