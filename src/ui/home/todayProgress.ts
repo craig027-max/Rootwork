@@ -26,7 +26,9 @@
  * learn is done, Daily result says Keep going (or Rush), not another
  * Continue. Done copy is a recap (Today's five are done / Done · names),
  * not a fresh-start pitch. Rush-miss Remember stays on Today / Rush
- * (#65–#67). Continue / Keep going / Rush CTAs stay as #68 left them.
+ * (#65–#67) and Daily's done landing now matches — Play again / Keep
+ * going must not sit over Geo. Continue / Keep going / Rush CTAs stay
+ * as #68 left them when no miss is waiting.
  *
  * Pure so tests lock the copy without I/O.
  */

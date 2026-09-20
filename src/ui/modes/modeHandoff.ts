@@ -16,9 +16,10 @@
  * same next Today already named — Continue {learn}, Keep going, or
  * Rush. Play again stays the ghost over unfinished work.
  *
- * After Daily + a learn, an owned Rush miss is the same honesty:
- * Remember {Geo} is the result hero — Play again / Continue {Astro}
- * must not sit over the miss Today already named.
+ * After Daily + a learn, an owned Rush miss is the same honesty on
+ * Daily's own done landing: Remember {Geo} is the fat tap — Play
+ * again / Keep going must not sit over the miss Today / Rush already
+ * named.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),
  * Rush uses that same Continue {learn} / Keep going tap — Play again
@@ -171,20 +172,36 @@ export interface DailyDoneVM {
   primary: ModeCta;
   replayLabel: string;
   homeLabel: string;
+  /** Path-done Rush miss — same recap Today / Rush already name. */
+  peek: string | null;
+  missWaiting: boolean;
 }
 
 /**
  * Same Today-path hero after Daily is banked. Unfinished Continue {learn}
  * stays first. Once today's learn is done, Keep going · {root} — not
  * another Continue. Caught-up kids get Root Rush, not Back to learning.
- * Play again stays the ghost. Rush-miss Remember stays on Today / Rush
- * (#65–#67) — Daily does not steal that thread.
+ * After Daily + a learn, an owned Rush miss is Remember {Geo} — Play
+ * again / Keep going stay the ghost. Rush-miss Remember stays on Today / Rush
+ * (#65–#67) and Daily now joins that thread.
  */
 export function dailyDonePrimary(
   completed: Set<string>,
   entitled: boolean,
-  opts: { learnedToday?: boolean } = {},
+  opts: { learnedToday?: boolean } & RushMissRememberOpts = {},
 ): ModeCta {
+  const miss = rushMissRememberReady(completed, entitled, {
+    ...opts,
+    dailyDone: true,
+  });
+  if (miss) {
+    return {
+      kind: 'remember',
+      label: rememberMissCtaLabel(miss.name),
+      rootId: miss.id,
+      rootName: miss.name,
+    };
+  }
   const next = learnNextAction(completed, entitled);
   if (next.kind === 'learn' && next.rootId && !opts.learnedToday) {
     return next;
@@ -208,16 +225,21 @@ export function dailyDonePrimary(
 /**
  * Daily already-banked landing + just-finished result. Recaps all five
  * (name + meaning + ✓). Sub says today's five are done — not a
- * fresh-start pitch. The fat tap is the same next Today already named.
+ * fresh-start pitch. The fat tap is the same next Today already named,
+ * including Remember {miss} when that miss is still waiting.
  */
-export function buildDailyDone(opts: {
-  deal: readonly Pick<Root, 'root' | 'mean'>[];
-  streak: number;
-  justFinished: boolean;
-  completed: Set<string>;
-  entitled: boolean;
-  learnedToday?: boolean;
-}): DailyDoneVM {
+export function buildDailyDone(
+  opts: {
+    deal: readonly Pick<Root, 'root' | 'mean'>[];
+    streak: number;
+    justFinished: boolean;
+    completed: Set<string>;
+    entitled: boolean;
+    learnedToday?: boolean;
+  } & RushMissRememberOpts,
+): DailyDoneVM {
+  const missOpts = { ...opts, dailyDone: true };
+  const miss = rushMissRememberReady(opts.completed, opts.entitled, missOpts);
   const streakLine =
     opts.streak > 0 ? `🔥 ${opts.streak} day streak` : 'Streak banked for today ✓';
   return {
@@ -226,11 +248,11 @@ export function buildDailyDone(opts: {
     sub: dailyDoneOverlaySub(opts.justFinished),
     recap: opts.deal.map((r) => ({ root: r.root, mean: r.mean })),
     recapDone: true,
-    primary: dailyDonePrimary(opts.completed, opts.entitled, {
-      learnedToday: opts.learnedToday,
-    }),
+    primary: dailyDonePrimary(opts.completed, opts.entitled, missOpts),
     replayLabel: 'Play again ›',
     homeLabel: 'Home',
+    peek: miss ? todayMissRecap(miss.name, miss.also) : null,
+    missWaiting: Boolean(miss),
   };
 }
 

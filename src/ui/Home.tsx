@@ -186,6 +186,10 @@ export function Home() {
         return;
       }
       if (item.key === 'daily') {
+        if (dailyDone && missHero && rushMissId) {
+          openRoot(rushMissId, { entry: 'remember' });
+          return;
+        }
         if (dailyDone && learnedId == null) {
           const next = dailyDonePrimary(completed, entitled, { learnedToday: false });
           if (next.kind === 'learn' && next.rootId) {
@@ -278,7 +282,8 @@ export function Home() {
     !nextPlay &&
     (isResumeTier(selected) ||
       isDailyResumeItem(selected) ||
-      (learnHero && selected.kind === 'mode' && selected.key === 'rush'));
+      (learnHero && selected.kind === 'mode' && selected.key === 'rush') ||
+      (missHero && selected.kind === 'mode' && selected.key === 'daily'));
 
   return (
     <div className={`ww-home${nextPlay ? ' is-first' : ''}${resumeNow ? ' is-resume' : ''}`}>

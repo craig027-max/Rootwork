@@ -48,8 +48,9 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  learn is still open, Continue {root} is the fat tap — Play again must
  *  not sit over Chron. Done lead recaps today's five — not a fresh-start
  *  pitch. Recap chips Remember owned / Meet unowned. After Daily + a
- *  learn, an owned miss names Remember on the Rush tile — Play again /
- *  Browse roots must not sit over Geo. */
+ *  learn, an owned miss names Remember on the Rush tile and on Daily's
+ *  own done landing — Play again / Keep going / Browse roots must not
+ *  sit over Geo. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -197,17 +198,29 @@ export function buildDetailVM(
       ? `Next is ${nextDaily.root} — ${nextDaily.mean}. ${dailyResume} of ${extra.dailyRoots.length} already yours.`
       : `Five fresh roots every day. See the animation, tap what it means, keep your streak.`;
     const doneLead = extra.dailyDone ? dailyDoneLead(extra.streak) : null;
+    const missOpts = {
+      dailyDone: extra.dailyDone,
+      learnedToday: extra.learnedToday,
+      rememberMissId: extra.rememberMissId,
+      rememberMissName: extra.rememberMissName,
+      rememberAlso: extra.rememberAlso,
+    };
+    const miss = extra.dailyDone
+      ? rushMissRememberReady(extra.completed, extra.entitled, missOpts)
+      : null;
     const doneNext = extra.dailyDone
-      ? dailyDonePrimary(extra.completed, extra.entitled, { learnedToday: extra.learnedToday })
+      ? dailyDonePrimary(extra.completed, extra.entitled, missOpts)
       : null;
     // Banked Daily + unfinished Today path: Continue {learn} / Rush is the
     // fat tap. Play again stays the ghost. Once today's learn is done,
-    // Daily's own tap is Play again (Keep going lives on the HERE tier).
-    const doneHero = Boolean(doneNext && !extra.learnedToday);
+    // Daily's own tap is Play again (Keep going lives on the HERE tier)
+    // — unless a Rush miss is still waiting, then Remember is the hero.
+    const doneHero = Boolean(doneNext && (miss || !extra.learnedToday));
     const nextLearnRoot =
       doneHero && doneNext?.kind === 'learn' && doneNext.rootId
         ? ROOTS_BY_ID[doneNext.rootId]
         : undefined;
+    const missRoot = miss ? ROOTS_BY_ID[miss.id] : undefined;
     return {
       jewel: item.jewel,
       animKey: item.key,
@@ -242,17 +255,21 @@ export function buildDetailVM(
             ? continueDailyLabel(dailyResume, extra.dailyRoots.length || extra.dailyTotal || 5)
             : 'Start daily 📅',
       },
-        // Unfinished Today path: Play again is the ghost. Otherwise Browse
-        // roots opens the catalog (Remember for owned) — not Bio teach.
+        // Unfinished Today path / Remember miss: Play again is the ghost.
+        // Otherwise Browse roots opens the catalog (Remember for owned) —
+        // not Bio teach.
         secondary: { label: doneHero ? 'Play again ›' : 'Browse roots' },
-      scene: sceneFrom(nextLearnRoot ?? nextDaily ?? extra.dailyRoots[0], {
+      waiting: miss ? todayMissRecap(miss.name, miss.also) : undefined,
+      waitingMiss: Boolean(miss),
+      scene: sceneFrom(missRoot ?? nextLearnRoot ?? nextDaily ?? extra.dailyRoots[0], {
         key: 'stars',
         palKey: 'gold',
         caption: 'Daily',
       }),
       // Mid-run: park Continue Daily · N of 5 under the next-root scene —
       // same one-tap Rush / Today already name, so Aqua is not buried.
-      heroCta: Boolean(dailyResume != null && !extra.dailyDone),
+      // Path-done miss parks Remember Geo the same way.
+      heroCta: Boolean(dailyResume != null && !extra.dailyDone) || Boolean(miss),
     };
   }
 

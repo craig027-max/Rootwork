@@ -380,6 +380,7 @@ export function homeSecondaryAction(
     if (item.key === 'rush' && missId) return { kind: 'remember', rootId: missId };
     if (item.key === 'rush' && opts.learnWaiting) return { kind: 'rush' };
     if (item.key === 'daily' && opts.dailyDone && !opts.learnedToday) return { kind: 'daily' };
+    if (item.key === 'daily' && opts.dailyDone && missId) return { kind: 'daily' };
     return { kind: 'index' };
   }
   if (item.locked) return { kind: 'upgrade' };

@@ -19,8 +19,9 @@ import {
 import { buildRecall, type RecallBeat } from '../core/recall';
 import { Scene } from './Scene';
 import { recapDeckEntry } from '../core/deckFlow';
+import { todayRushRecap } from '../core/rushRecap';
 import { buildDailyDone, buildModeEmpty, learnNextAction, type ModeCta } from './modes/modeHandoff';
-import { learnedRootToday } from './home/todayProgress';
+import { learnedRootToday, listRushMissRemember, rootLabel } from './home/todayProgress';
 
 type Phase = 'start' | 'play' | 'result';
 
@@ -39,8 +40,9 @@ function palOf(root: Root) {
  * going when today's learn is already done. Done copy recaps today's
  * five — not a fresh-start pitch. Recap chips Remember owned roots and
  * Meet unowned ones — not the Geo quiz loop. The done fat tap matches
- * Today: Continue {learn}, Keep going, or Rush. Finishing banks Daily
- * XP; replays are free.
+ * Today: Continue {learn}, Keep going, Rush, or Remember {miss} when
+ * a Rush miss is still waiting. Finishing banks Daily XP; replays are
+ * free.
  */
 export function DailyChallenge() {
   const entitled = useEntitledForDisplay();
@@ -50,6 +52,7 @@ export function DailyChallenge() {
   const saveDailyRun = useWondralStore((s) => s.saveDailyRun);
   const clearDailyRun = useWondralStore((s) => s.clearDailyRun);
   const dailyRun = useWondralStore((s) => s.dailyRun);
+  const rushRecap = useWondralStore((s) => s.rushRecap);
   const stats = useWondralStore((s) => s.stats);
   const completed = useWondralStore((s) => s.completedRoots);
   const progress = useWondralStore((s) => s.progress);
@@ -85,7 +88,15 @@ export function DailyChallenge() {
   const isLast = qi + 1 >= deal.length;
   const nextHold = !isLast ? deal[qi + 1] : undefined;
   const nextLearn = learnNextAction(completed, entitled);
-  const learnedToday = learnedRootToday(progress, day) !== null;
+  const learnedId = learnedRootToday(progress, day);
+  const learnedToday = learnedId !== null;
+  const rushToday = todayRushRecap(rushRecap, studentId, day);
+  const rushMissIds = listRushMissRemember(rushToday, progress, day, {
+    exclude: [learnedId, nextLearn.rootId, ...deal.map((r) => rootId(r))],
+  });
+  const rushMissId = rushMissIds[0] ?? null;
+  const remember = rootLabel(rushMissId);
+  const rememberAlso = rootLabel(rushMissIds[1]).name;
   const nextLearnMean = nextLearn.rootId ? ROOTS_BY_ID[nextLearn.rootId]?.mean : undefined;
   const continueHold =
     !nextHold && nextLearn.kind === 'learn' && nextLearn.rootName
@@ -247,6 +258,9 @@ export function DailyChallenge() {
     completed,
     entitled,
     learnedToday,
+    rememberMissId: rushMissId,
+    rememberMissName: remember.name,
+    rememberAlso,
   });
 
   return (
@@ -372,6 +386,11 @@ export function DailyChallenge() {
             <p className="q-sub" role="status" style={{ margin: '18px auto 0', textAlign: 'center' }}>
               {done.sub}
             </p>
+            {done.peek ? (
+              <div className={`q-daily-wait${done.missWaiting ? ' is-miss' : ''}`} role="status">
+                {done.peek}
+              </div>
+            ) : null}
             <div className="q-daily-chips" style={{ marginTop: 22 }}>
               {deal.map((r) => (
                 <button
@@ -392,7 +411,10 @@ export function DailyChallenge() {
               ))}
             </div>
             <div className="q-actions">
-              <button className="q-go q-next-learn" onClick={() => goPrimary(done.primary)}>
+              <button
+                className={`q-go q-next-learn${done.missWaiting ? ' is-miss' : ''}`}
+                onClick={() => goPrimary(done.primary)}
+              >
                 {done.primary.label}
               </button>
               <button className="q-ghost" onClick={startRun}>
