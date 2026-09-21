@@ -158,7 +158,7 @@ describe('Rush after a miss is Remember — not Play again over Geo', () => {
     expect(midStart.rememberPeek).toBeNull();
   });
 
-  it('Home Rush tile names Remember Geo — not Browse roots over the miss', () => {
+  it('Home Rush tile: Remember Geo is the fat tap, Play again is the ghost', () => {
     expect(rushMenuSub({ missName: geo.root })).toBe(`Missed ${geo.root} · remember`);
     expect(rushMenuSub({ dailyNextName: 'Chron', missName: geo.root })).toBe('Daily waiting · Chron');
     expect(lastRun).toBeTruthy();
@@ -188,18 +188,38 @@ describe('Rush after a miss is Remember — not Play again over Geo', () => {
       rushBestScore: 2400,
       rushRecap: lastRun,
     });
+    expect(vm.primary.label).toBe(rememberMissCtaLabel(geo.root));
+    expect(vm.secondary?.label).toBe('Play again ›');
     expect(vm.waiting).toBe(todayMissRecap(geo.root));
     expect(vm.waitingMiss).toBe(true);
-    expect(vm.secondary?.label).toBe(rememberMissCtaLabel(geo.root));
-    expect(vm.primary.label).toMatch(/Play again/);
-    expect(vm.primary.label).not.toMatch(/Remember |Browse roots/);
+    expect(vm.heroCta).toBe(true);
+    expect(vm.scene?.caption).toBe(`${geo.root} · ${geo.mean}`);
+    expect(vm.primary.label).not.toMatch(/Play again|Keep going|Continue |Browse roots/);
     expect(homeSecondaryAction(rushRow, { rememberMissId: rootId(geo) })).toEqual({
-      kind: 'remember',
-      rootId: rootId(geo),
+      kind: 'rush',
     });
     expect(homeSecondaryAction(rushRow, { dailyResumeQi: 2, rememberMissId: rootId(geo) })).toEqual({
       kind: 'daily',
     });
+
+    const unfinished = buildDetailVM(rushRow, {
+      dailyRoots: [],
+      dailyDone: true,
+      streak: 3,
+      nextPlay: false,
+      completed: startedBuilder,
+      entitled: true,
+      learnedToday: false,
+      rememberMissId: rootId(geo),
+      rememberMissName: geo.root,
+      rushRuns: 1,
+      rushBestPct: 80,
+      rushBestStars: 4,
+      rushBestScore: 2400,
+    });
+    expect(unfinished.primary.label).toBe(`Continue ${secondBuilder.root} ›`);
+    expect(unfinished.waitingMiss).toBe(false);
+    expect(unfinished.heroCta).toBe(true);
   });
 
   it('wires result + start + Home tile — Remember Geo, not openRoot teach', () => {
@@ -216,12 +236,17 @@ describe('Rush after a miss is Remember — not Play again over Geo', () => {
     expect(home).toContain('missHero');
     expect(home).toContain('rushMissName');
     expect(home).toContain('rememberMissId: missHero ? rushMissId : null');
+    expect(home).toContain('missHero && rushMissId');
+    expect(home).toContain("openRoot(rushMissId, { entry: 'remember' })");
     expect(home).toContain("tap.kind === 'remember'");
     expect(home).toContain("openRoot(tap.rootId, { entry: 'remember' })");
+    expect(home).toContain("selected.key === 'daily' || selected.key === 'rush'");
     expect(menu).toContain('opts.rushMissName');
-    expect(menu).toContain("kind: 'remember'");
+    expect(menu).toContain("item.key === 'rush' && missId) return { kind: 'rush' }");
     expect(detail).toContain('rememberMissCtaLabel');
     expect(detail).toContain('waitingMiss');
+    expect(detail).toContain('miss && missHero');
+    expect(detail).toContain('heroCta: Boolean(learn || missHero)');
     expect(panel).toContain('vm.waitingMiss');
     expect(panel).toContain('is-miss');
   });
@@ -243,6 +268,8 @@ describe('Rush after a miss is Remember — not Play again over Geo', () => {
     expect(css).toMatch(/\.q-go\.is-miss/);
     expect(css).toMatch(/\.q-daily-wait\.is-miss/);
     expect(appCss).toMatch(/\.ww-detail-wait\.is-miss/);
+    expect(appCss).toMatch(/\.ww-detail-hero-cta/);
+    expect(homePhone).toMatch(/\.ww-detail-hero-cta\s*\{[^}]*display:\s*flex|\.ww-detail-cta\s*\{/);
   });
 
   it('does not expand the catalog', () => {

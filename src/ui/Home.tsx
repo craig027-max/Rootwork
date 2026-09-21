@@ -182,6 +182,10 @@ export function Home() {
           openRoot(learnHeroCta.rootId);
           return;
         }
+        if (missHero && rushMissId) {
+          openRoot(rushMissId, { entry: 'remember' });
+          return;
+        }
         setView('quiz');
         return;
       }
@@ -283,7 +287,9 @@ export function Home() {
     (isResumeTier(selected) ||
       isDailyResumeItem(selected) ||
       (learnHero && selected.kind === 'mode' && selected.key === 'rush') ||
-      (missHero && selected.kind === 'mode' && selected.key === 'daily'));
+      (missHero &&
+        selected.kind === 'mode' &&
+        (selected.key === 'daily' || selected.key === 'rush')));
 
   return (
     <div className={`ww-home${nextPlay ? ' is-first' : ''}${resumeNow ? ' is-resume' : ''}`}>

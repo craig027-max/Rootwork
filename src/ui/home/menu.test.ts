@@ -443,6 +443,7 @@ describe('homeSecondaryAction — Browse / See all is the catalog, not Bio', () 
     expect(homeSecondaryAction(rush)).toEqual({ kind: 'index' });
     expect(homeSecondaryAction(daily)).toEqual({ kind: 'index' });
     expect(homeSecondaryAction(rush, { dailyResumeQi: 2 })).toEqual({ kind: 'daily' });
+    expect(homeSecondaryAction(rush, { rememberMissId: 'geo' })).toEqual({ kind: 'rush' });
     expect(homeSecondaryAction(daily, { dailyResumeQi: 2 })).toEqual({ kind: 'index' });
     expect(homeSecondaryAction(daily, { dailyDone: true, learnedToday: false })).toEqual({
       kind: 'daily',
