@@ -49,8 +49,9 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  not sit over Chron. Done lead recaps today's five — not a fresh-start
  *  pitch. Recap chips Remember owned / Meet unowned. After Daily + a
  *  learn, an owned miss names Remember on the Rush tile and on Daily's
- *  own done landing — Play again / Keep going / Browse roots must not
- *  sit over Geo. */
+ *  own done landing — Play again is the ghost. Home lands on today's
+ *  Rush, so that fat tap must be Remember {Geo} — not Play again over
+ *  the same coral miss Today / result / Daily already named. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -129,6 +130,8 @@ export function buildDetailVM(
         ? Math.max(0, extra.rushRecap.roots.length - rushSamples.length)
         : 0;
       const rushReplay = played ? 'Play again 🎯' : 'Start the run 🎯';
+      const missHero = Boolean(miss && !continueDaily);
+      const missRoot = miss ? ROOTS_BY_ID[miss.id] : undefined;
       return {
         jewel: item.jewel,
         animKey: item.key,
@@ -149,20 +152,24 @@ export function buildDetailVM(
         samplesDone: rushSamples.length > 0 && rushSamples.every((s) => peekChipDone({ ok: s.ok })),
         sampleTap: samplePeekTap({ mode: 'rush', sampleCount: rushSamples.length }),
         moreCount: rushMore,
-        primary: { label: learn ? learn.label : rushReplay },
-        // Mid-run: Continue Daily. Path-done miss: Remember Geo.
+        // Mid-run: Play again stays; Continue Daily is the ghost.
+        // Path-done miss: Remember Geo is the fat tap — Play again
+        // must not sit over the same miss Today already named.
         // Daily banked + Today still names Continue / Keep going: that
         // tap. Browse roots must not dump Bio over any of those.
+        primary: {
+          label: miss && missHero
+            ? rememberMissCtaLabel(miss.name)
+            : learn ? learn.label : rushReplay,
+        },
         secondary: {
           label:
             continueDaily ??
-            (miss
-              ? rememberMissCtaLabel(miss.name)
-              : learn
-                ? played
-                  ? 'Play again ›'
-                  : 'Start the run ›'
-                : 'Browse roots'),
+            (missHero || learn
+              ? played
+                ? 'Play again ›'
+                : 'Start the run ›'
+              : 'Browse roots'),
         },
         waiting: continueDaily
           ? waiting
@@ -173,9 +180,9 @@ export function buildDetailVM(
                   .filter((part): part is string => Boolean(part?.trim()))
                   .join(' · ')
               : waiting,
-        waitingMiss: Boolean(miss && !continueDaily),
-        scene: sceneFrom(learnRoot, { key: 'heat', palKey: 'fire', caption: 'Root Rush' }),
-        heroCta: Boolean(learn),
+        waitingMiss: missHero,
+        scene: sceneFrom(missRoot ?? learnRoot, { key: 'heat', palKey: 'fire', caption: 'Root Rush' }),
+        heroCta: Boolean(learn || missHero),
       };
     }
     const dailyResume =

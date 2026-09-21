@@ -257,7 +257,7 @@ describe('Rush after Daily is Continue {learn} / Keep going — not Play again o
     expect(menu).toContain('opts.rushLearnName');
     expect(detail).toContain('rushLearnReady');
     expect(detail).toContain('learn ? learn.label : rushReplay');
-    expect(detail).toContain('heroCta: Boolean(learn)');
+    expect(detail).toContain('heroCta: Boolean(learn || missHero)');
   });
 
   it('keeps Continue / Keep going readable on a phone', () => {

@@ -350,6 +350,7 @@ export function isResumeTier(item: MenuItem): boolean {
 
 /**
  * Home preview ghost tap. Rush mid-run is Continue Daily — Chron, not Bio.
+ * Path-done Rush miss: Remember is the fat tap, so Play again is the ghost.
  * Browse roots / See all roots open the catalog. They must not dump Bio
  * teach → Geo after Yes. Incomplete tiers still enter that tier. A finished
  * tier's primary is Remember {root} — Replay is not a Bio teach dump.
@@ -377,7 +378,7 @@ export function homeSecondaryAction(
   if (item.kind === 'mode') {
     if (item.key === 'rush' && opts.dailyResumeQi != null) return { kind: 'daily' };
     const missId = opts.rememberMissId?.trim();
-    if (item.key === 'rush' && missId) return { kind: 'remember', rootId: missId };
+    if (item.key === 'rush' && missId) return { kind: 'rush' };
     if (item.key === 'rush' && opts.learnWaiting) return { kind: 'rush' };
     if (item.key === 'daily' && opts.dailyDone && !opts.learnedToday) return { kind: 'daily' };
     if (item.key === 'daily' && opts.dailyDone && missId) return { kind: 'daily' };

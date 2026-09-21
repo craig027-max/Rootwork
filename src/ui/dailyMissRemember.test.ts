@@ -237,7 +237,7 @@ describe('Daily after a miss is Remember — not Keep going / Play again over Ge
     expect(daily).toContain("cta.kind === 'remember'");
     expect(home).toContain('dailyDone && missHero && rushMissId');
     expect(home).toContain("openRoot(rushMissId, { entry: 'remember' })");
-    expect(home).toContain("missHero && selected.kind === 'mode' && selected.key === 'daily'");
+    expect(home).toContain("selected.key === 'daily' || selected.key === 'rush'");
     expect(detail).toContain('rushMissRememberReady');
     expect(detail).toContain('waitingMiss: Boolean(miss)');
     expect(detail).toContain('heroCta: Boolean(dailyResume != null && !extra.dailyDone) || Boolean(miss)');
