@@ -268,6 +268,15 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
 .q-stats span { font-family: var(--font-mono); font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
 .q-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: 26px; }
 .q-actions .q-go { margin-top: 0; }
+/* Rush start: Remember / Continue {learn} is the fat tap — Play again is the ghost. */
+.q-start-actions {
+  width: 100%;
+}
+.q-start-actions .q-daily-wait {
+  width: 100%;
+  margin-top: 0;
+  text-align: center;
+}
 .q-ghost { font-family: var(--font-body); font-weight: 600; font-size: 0.92rem; color: var(--text-secondary); padding: 15px 24px; min-height: 48px; border-radius: var(--radius-md); border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.03); cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast); }
 .q-ghost:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
 
@@ -345,6 +354,16 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-go.is-miss {
     display: block;
   }
+  .q-start-actions {
+    display: flex;
+  }
+  .q-start-actions .q-daily-wait {
+    display: block;
+  }
+  .q-start-actions .q-go.is-miss,
+  .q-start-actions .q-ghost {
+    display: block;
+  }
 }
 
 /* Short laptop / phone: question + scene + answers on one screen, no scroll. */
@@ -388,6 +407,10 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-rush-learn { display: flex; }
   .q-daily-wait.is-miss { display: block; }
   .q-go.is-miss { display: block; }
+  .q-start-actions { display: flex; }
+  .q-start-actions .q-daily-wait { display: block; }
+  .q-start-actions .q-go.is-miss,
+  .q-start-actions .q-ghost { display: block; }
   .q-rush-recap { display: flex; }
   .q-rush-recap .q-daily-chip { display: inline-flex; }
   .q-daily-chip.is-miss { display: inline-flex; }

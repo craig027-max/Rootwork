@@ -22,7 +22,8 @@
  * chips Remember owned roots and Meet unowned ones. Fat Continue /
  * Keep going / Rush taps stay where #68 put them. After Daily + a
  * learn, an owned Rush miss makes Remember the done hero — Play
- * again / Keep going must not sit over Geo.
+ * again / Keep going must not sit over Geo. Rush start now matches
+ * that same fat tap.
  */
 
 import type { Root } from '../data/roots';

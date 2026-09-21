@@ -11,9 +11,7 @@
  * tile so Chron is not buried under a recap dump. Today's last run
  * lands Home on Rush so those chips wait; yesterday's still peeks.
  * After Daily + a learn, an owned miss makes Remember the Rush
- * result hero — Play again must not sit over Geo. Home Rush now uses
- * that same fat tap after Daily + a learn, so landing on today's run
- * cannot replay over the miss.
+ * result / Home / start hero — Play again must not sit over Geo.
  *
  * Pure and Date-injectable so tests lock the copy without I/O.
  */
