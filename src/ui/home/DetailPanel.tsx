@@ -83,6 +83,11 @@ export function DetailPanel({
           <Button size="lg" block onClick={onPrimary} disabled={vm.primary.disabled}>
             {vm.primary.label}
           </Button>
+          {vm.secondary ? (
+            <Button variant="ghost" block onClick={onSecondary}>
+              {vm.secondary.label}
+            </Button>
+          ) : null}
         </div>
       ) : null}
       <div className={`ww-detail-anim${vm.locked ? ' ww-locked-state' : ''}`} key={vm.animKey}>

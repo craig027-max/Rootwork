@@ -249,6 +249,9 @@ describe('Rush after a miss is Remember — not Play again over Geo', () => {
     expect(detail).toContain('heroCta: Boolean(learn || missHero)');
     expect(panel).toContain('vm.waitingMiss');
     expect(panel).toContain('is-miss');
+    expect(panel).toContain('ww-detail-hero-cta');
+    expect(panel).toContain('vm.secondary');
+    expect(panel).toContain('variant="ghost"');
   });
 
   it('keeps Remember recap + CTA readable on a phone', () => {
@@ -269,6 +272,11 @@ describe('Rush after a miss is Remember — not Play again over Geo', () => {
     expect(css).toMatch(/\.q-daily-wait\.is-miss/);
     expect(appCss).toMatch(/\.ww-detail-wait\.is-miss/);
     expect(appCss).toMatch(/\.ww-detail-hero-cta/);
+    expect(appCss).toMatch(/\.ww-detail-hero-cta\s*\{[^}]*display:\s*flex/);
+    expect(appCss).toMatch(/\.ww-detail-hero-cta \.btn-ghost/);
+    expect(homePhone).toMatch(/\.ww-detail-hero-cta\s*\{[^}]*display:\s*flex|\.ww-home\.is-resume \.ww-detail-hero-cta/);
+    expect(homePhone).not.toMatch(/\.ww-detail-hero-cta\s*\{[^}]*display:\s*none/);
+    expect(homePhone).not.toMatch(/\.ww-detail-hero-cta \.btn-ghost\s*\{[^}]*display:\s*none/);
   });
 
   it('does not expand the catalog', () => {

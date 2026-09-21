@@ -529,6 +529,13 @@
   .ww-detail-wait.is-miss {
     display: block;
   }
+  .ww-detail-hero-cta {
+    display: flex;
+  }
+  .ww-detail-hero-cta .btn,
+  .ww-detail-hero-cta .btn-ghost {
+    display: block;
+  }
   .ww-daily-line > span:last-child {
     margin-left: 0;
     flex: 1 1 100%;
@@ -1109,6 +1116,9 @@ button.ww-schip:focus-visible {
   flex-wrap: wrap;
 }
 .ww-detail-hero-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   padding: 14px clamp(16px, 2.4vw, 24px) 0;
   position: relative;
   z-index: 1;
@@ -1116,6 +1126,10 @@ button.ww-schip:focus-visible {
 .ww-detail-hero-cta .btn {
   min-height: 56px;
   font-size: 1.12rem;
+}
+.ww-detail-hero-cta .btn-ghost {
+  min-height: 48px;
+  font-size: 0.98rem;
 }
 
 @media (prefers-reduced-motion: no-preference) {
