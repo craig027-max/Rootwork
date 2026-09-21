@@ -19,12 +19,14 @@
  * After Daily + a learn, an owned Rush miss is the same honesty on
  * Daily's own done landing: Remember {Geo} is the fat tap — Play
  * again / Keep going must not sit over the miss Today / Rush already
- * named.
+ * named. Rush start now matches Home / result — Change level must
+ * not put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),
  * Rush uses that same Continue {learn} / Keep going tap — Play again
  * stays the ghost. Home lands on today's Rush; Play again must not
  * sit over Auto the way it used to sit over Chron on Daily (#68).
+ * Rush start uses that same fat tap.
  *
  * Pure and Date-free so tests lock the copy without I/O.
  */
@@ -266,20 +268,29 @@ export interface RushStartVM {
    * peek is not a tap — Chron must be reachable from Rush start.
    */
   continueDaily: string | null;
-  /** Path-done Rush miss — Remember Geo, not only Play again. */
+  /** Path-done Rush miss — Remember Geo is the fat tap. */
   rememberMiss: string | null;
   rememberMissId: string | null;
   rememberPeek: string | null;
   /**
    * Daily banked + Today still names Continue / Keep going. Same tap
-   * Home / result already use — Play again stays the go button here.
+   * Home / result already use — Play again is the ghost here too.
    */
   continueLearn: string | null;
   continueLearnId: string | null;
   continueLearnPeek: string | null;
+  /** Owned miss is the fat tap — Play again stays ghost. */
+  missWaiting: boolean;
+  /** Daily banked + Continue / Keep going is the fat tap — Play again stays ghost. */
+  learnWaiting: boolean;
+  /** Miss landing copy — not the combo pitch over Geo. */
+  heroSub: string | null;
 }
 
-/** Rush start: Play again after a real run, with the same best recap as Home. */
+/** Rush start: Play again after a real run, with the same best recap as Home.
+ *  After Daily + a learn, an owned miss / unfinished learn is the fat tap —
+ *  same hero Home / result already use. Continue Daily stays a ghost so
+ *  mid-run Play again is still the one-tap (Home Rush tile). */
 export function buildRushStart(
   opts: {
     runs: number;
@@ -325,6 +336,9 @@ export function buildRushStart(
     continueLearn: learn?.label ?? null,
     continueLearnId: learn?.rootId ?? null,
     continueLearnPeek: learnPeek,
+    missWaiting: Boolean(miss),
+    learnWaiting: Boolean(learn),
+    heroSub: miss ? 'Play again is just for fun.' : null,
   };
 }
 

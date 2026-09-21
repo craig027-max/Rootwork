@@ -28,8 +28,9 @@
  * not a fresh-start pitch. Rush-miss Remember stays on Today / Rush
  * (#65–#67) and Daily's done landing now matches — Play again / Keep
  * going must not sit over Geo. Home Rush now matches that same fat tap
- * — Play again stays the ghost. Continue / Keep going / Rush CTAs stay
- * as #68 left them when no miss is waiting.
+ * — Play again stays the ghost. Rush start now matches that same fat
+ * tap — Change level must not put Play again back over Geo. Continue /
+ * Keep going / Rush CTAs stay as #68 left them when no miss is waiting.
  *
  * Pure so tests lock the copy without I/O.
  */

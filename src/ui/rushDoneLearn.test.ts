@@ -144,7 +144,7 @@ describe('Rush after Daily is Continue {learn} / Keep going — not Play again o
     expect(caught.primary.kind).not.toBe('learn');
   });
 
-  it('offers Continue / Keep going on Rush start without stealing Play again', () => {
+  it('makes Continue / Keep going the start hero — Play again is the ghost', () => {
     const start = buildRushStart({
       runs: 1,
       bestPct: 80,
@@ -155,11 +155,14 @@ describe('Rush after Daily is Continue {learn} / Keep going — not Play again o
       ...learnOpen,
     });
     expect(start.goLabel).toBe('Play again ›');
+    expect(start.learnWaiting).toBe(true);
+    expect(start.missWaiting).toBe(false);
     expect(start.continueLearn).toBe(`Continue ${secondBuilder.root} ›`);
     expect(start.continueLearnId).toBe(rootId(secondBuilder));
     expect(start.continueLearnPeek).toBe(`${secondBuilder.root} · ${secondBuilder.mean}`);
     expect(start.continueDaily).toBeNull();
     expect(start.rememberMiss).toBeNull();
+    expect(start.heroSub).toBeNull();
 
     const keep = buildRushStart({
       runs: 1,
@@ -170,6 +173,7 @@ describe('Rush after Daily is Continue {learn} / Keep going — not Play again o
       ...pathDone,
     });
     expect(keep.goLabel).toBe('Play again ›');
+    expect(keep.learnWaiting).toBe(true);
     expect(keep.continueLearn).toBe(`Keep going · ${secondBuilder.root} ›`);
     expect(keep.continueLearnPeek).toBe(`${secondBuilder.root} · ${secondBuilder.mean}`);
   });
@@ -243,6 +247,8 @@ describe('Rush after Daily is Continue {learn} / Keep going — not Play again o
     expect(overlay).toContain('learnWaiting: true');
     expect(overlay).toContain('continueLearn');
     expect(rush).toContain('rushStart.continueLearn');
+    expect(rush).toContain('rushStart.learnWaiting');
+    expect(rush).toContain('q-start-actions');
     expect(rush).toContain('q-rush-learn');
     expect(rush).toContain('rushNext.learnWaiting');
     expect(rush).toContain("goPrimary('learn'");

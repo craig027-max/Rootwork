@@ -125,7 +125,7 @@ describe('Rush after a miss is Remember — not Play again over Geo', () => {
     expect(learnOpen.primary.label).not.toMatch(/Remember |Play again/);
   });
 
-  it('offers Remember on Rush start without stealing Play again', () => {
+  it('makes Remember Geo the start hero — Play again is the ghost', () => {
     const start = buildRushStart({
       runs: 1,
       bestPct: 80,
@@ -136,9 +136,12 @@ describe('Rush after a miss is Remember — not Play again over Geo', () => {
       ...missOpts,
     });
     expect(start.goLabel).toBe('Play again ›');
+    expect(start.missWaiting).toBe(true);
+    expect(start.learnWaiting).toBe(false);
     expect(start.rememberMiss).toBe(rememberMissCtaLabel(geo.root));
     expect(start.rememberMissId).toBe(rootId(geo));
     expect(start.rememberPeek).toBe(todayMissRecap(geo.root));
+    expect(start.heroSub).toBe('Play again is just for fun.');
     expect(start.continueDaily).toBeNull();
 
     const midStart = buildRushStart({
@@ -154,8 +157,10 @@ describe('Rush after a miss is Remember — not Play again over Geo', () => {
       ...missOpts,
     });
     expect(midStart.continueDaily).toBe('Continue Daily · 3 of 5 ›');
+    expect(midStart.missWaiting).toBe(false);
     expect(midStart.rememberMiss).toBeNull();
     expect(midStart.rememberPeek).toBeNull();
+    expect(midStart.heroSub).toBeNull();
   });
 
   it('Home Rush tile: Remember Geo is the fat tap, Play again is the ghost', () => {
@@ -233,6 +238,8 @@ describe('Rush after a miss is Remember — not Play again over Geo', () => {
     expect(rush).toContain('rushNext.missWaiting');
     expect(rush).toContain('q-rush-remember');
     expect(rush).toContain('rushStart.rememberMiss');
+    expect(rush).toContain('rushStart.missWaiting');
+    expect(rush).toContain('q-start-actions');
     expect(home).toContain('missHero');
     expect(home).toContain('rushMissName');
     expect(home).toContain('rememberMissId: missHero ? rushMissId : null');

@@ -43,9 +43,10 @@ import {
  * A live Daily mid-run stays named: start peeks Daily · 2 of 5 · Chron ·
  * time and offers Continue Daily · 3 of 5 — same tap Home / result
  * already use. After Daily + a learn, an owned miss is Remember Geo —
- * Play again still starts Rush, but it is not the fat tap over Geo.
- * After Daily is banked and Today still names Continue / Keep going,
- * that tap is the result hero — Play again stays the ghost.
+ * Play again still starts Rush, but it is not the fat tap over Geo on
+ * result, Home, or start (Change level). After Daily is banked and
+ * Today still names Continue / Keep going, that tap is the start /
+ * result hero — Play again stays the ghost.
  *
  * A correct tap names the meaning (Yes — Chron means time) then keeps
  * the combo auto-advance. A miss names it too (Nope — Chron means time)
@@ -353,8 +354,12 @@ export function RootRush() {
               Test your <span className="g">roots.</span>
             </h2>
             <p className="q-sub">
-              {avail.length} roots. {Math.min(ROUND, avail.length)} questions a round. Build a combo —
-              every right answer in a row multiplies your score up to <b>{MAX_MULT}×</b>.
+              {rushStart.heroSub ?? (
+                <>
+                  {avail.length} roots. {Math.min(ROUND, avail.length)} questions a round. Build a combo —
+                  every right answer in a row multiplies your score up to <b>{MAX_MULT}×</b>.
+                </>
+              )}
             </p>
             <div className="q-lvl-label">Choose your level</div>
             <div className="q-chips">
@@ -374,9 +379,63 @@ export function RootRush() {
                 ),
               )}
             </div>
-            <button className="q-go" onClick={startRun}>
-              {rushStart.goLabel}
-            </button>
+            {rushStart.missWaiting && rushStart.rememberMiss ? (
+              <div className="q-actions q-start-actions q-rush-remember">
+                {rushStart.rememberPeek ? (
+                  <div className="q-daily-wait is-miss" role="status">
+                    {rushStart.rememberPeek}
+                  </div>
+                ) : null}
+                <button
+                  type="button"
+                  className="q-go q-next-learn is-miss"
+                  onClick={() => goPrimary('remember', rushStart.rememberMissId ?? undefined)}
+                >
+                  {rushStart.rememberMiss}
+                </button>
+                <button type="button" className="q-ghost" onClick={startRun}>
+                  {rushStart.goLabel}
+                </button>
+              </div>
+            ) : rushStart.learnWaiting && rushStart.continueLearn ? (
+              <div className="q-actions q-start-actions q-rush-learn">
+                {rushStart.continueLearnPeek ? (
+                  <div className="q-daily-wait" role="status">
+                    {rushStart.continueLearnPeek}
+                  </div>
+                ) : null}
+                <button
+                  type="button"
+                  className="q-go q-next-learn"
+                  onClick={() => goPrimary('learn', rushStart.continueLearnId ?? undefined)}
+                >
+                  {rushStart.continueLearn}
+                </button>
+                <button type="button" className="q-ghost" onClick={startRun}>
+                  {rushStart.goLabel}
+                </button>
+              </div>
+            ) : (
+              <>
+                <button className="q-go" onClick={startRun}>
+                  {rushStart.goLabel}
+                </button>
+                {rushStart.continueDaily && rushStart.waiting ? (
+                  <button
+                    type="button"
+                    className="q-ghost q-daily-continue"
+                    onClick={() => goPrimary('daily')}
+                  >
+                    <span>{rushStart.continueDaily}</span>
+                    <em>{rushStart.waiting}</em>
+                  </button>
+                ) : rushStart.waiting ? (
+                  <div className="q-daily-wait" role="status">
+                    {rushStart.waiting}
+                  </div>
+                ) : null}
+              </>
+            )}
             {rushStart.recap ? (
               <div className="q-best" role="status">
                 {rushStart.recap}
@@ -404,38 +463,6 @@ export function RootRush() {
                     </button>
                   );
                 })}
-              </div>
-            ) : null}
-            {rushStart.continueDaily && rushStart.waiting ? (
-              <button
-                type="button"
-                className="q-ghost q-daily-continue"
-                onClick={() => goPrimary('daily')}
-              >
-                <span>{rushStart.continueDaily}</span>
-                <em>{rushStart.waiting}</em>
-              </button>
-            ) : rushStart.rememberMiss && rushStart.rememberPeek ? (
-              <button
-                type="button"
-                className="q-ghost q-daily-continue q-rush-remember"
-                onClick={() => goPrimary('remember', rushStart.rememberMissId ?? undefined)}
-              >
-                <span>{rushStart.rememberMiss}</span>
-                <em>{rushStart.rememberPeek}</em>
-              </button>
-            ) : rushStart.continueLearn && rushStart.continueLearnPeek ? (
-              <button
-                type="button"
-                className="q-ghost q-daily-continue q-rush-learn"
-                onClick={() => goPrimary('learn', rushStart.continueLearnId ?? undefined)}
-              >
-                <span>{rushStart.continueLearn}</span>
-                <em>{rushStart.continueLearnPeek}</em>
-              </button>
-            ) : rushStart.waiting ? (
-              <div className="q-daily-wait" role="status">
-                {rushStart.waiting}
               </div>
             ) : null}
           </div>

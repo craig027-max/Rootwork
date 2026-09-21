@@ -330,7 +330,13 @@ export function Home() {
             <span className="n">Preview</span>
             <span className="s">
               {selected.kind === 'mode'
-                ? 'Game mode'
+                ? missHero
+                  ? 'Remember'
+                  : learnHero && selected.key === 'rush'
+                    ? today.pathDone
+                      ? 'Keep going'
+                      : 'Tap continue'
+                    : 'Game mode'
                 : selected.locked
                   ? 'Locked tier'
                   : nextPlay
