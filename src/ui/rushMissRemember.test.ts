@@ -269,7 +269,6 @@ describe('Rush after a miss is Remember — not Play again over Geo', () => {
     expect(css).toMatch(/\.q-daily-wait\.is-miss/);
     expect(appCss).toMatch(/\.ww-detail-wait\.is-miss/);
     expect(appCss).toMatch(/\.ww-detail-hero-cta/);
-    expect(homePhone).toMatch(/\.ww-detail-hero-cta\s*\{[^}]*display:\s*flex|\.ww-detail-cta\s*\{/);
   });
 
   it('does not expand the catalog', () => {

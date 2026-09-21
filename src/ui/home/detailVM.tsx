@@ -160,9 +160,7 @@ export function buildDetailVM(
         primary: {
           label: miss && missHero
             ? rememberMissCtaLabel(miss.name)
-            : learn
-              ? learn.label
-              : rushReplay,
+            : learn ? learn.label : rushReplay,
         },
         secondary: {
           label:
