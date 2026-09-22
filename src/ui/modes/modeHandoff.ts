@@ -19,8 +19,10 @@
  * After Daily + a learn, an owned Rush miss is the same honesty on
  * Daily's own done landing: Remember {Geo} is the fat tap — Play
  * again / Keep going must not sit over the miss Today / Rush already
- * named. Rush start now matches Home / result — Change level must
- * not put Play again back over Geo.
+ * named. Overlay title / Home Daily lead now match that same name —
+ * Done for today / Streak banked must not sit over Geo. Rush start
+ * now matches Home / result — Change level must not put Play again
+ * back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),
  * Rush uses that same Continue {learn} / Keep going tap — Play again
@@ -177,6 +179,8 @@ export interface DailyDoneVM {
   /** Path-done Rush miss — same recap Today / Rush already name. */
   peek: string | null;
   missWaiting: boolean;
+  /** Giant Daily ✓ — off while Remember is the hero. */
+  celebrateDone: boolean;
 }
 
 /**
@@ -184,7 +188,9 @@ export interface DailyDoneVM {
  * stays first. Once today's learn is done, Keep going · {root} — not
  * another Continue. Caught-up kids get Root Rush, not Back to learning.
  * After Daily + a learn, an owned Rush miss is Remember {Geo} — Play
- * again / Keep going stay the ghost. Rush-miss Remember stays on Today / Rush
+ * again / Keep going stay the ghost. Overlay title is Remember {Geo}
+ * too — Done for today / the giant ✓ / Streak banked must not sit
+ * over the miss. Rush-miss Remember stays on Today / Rush
  * (#65–#67) and Daily now joins that thread.
  */
 export function dailyDonePrimary(
@@ -243,9 +249,17 @@ export function buildDailyDone(
   const missOpts = { ...opts, dailyDone: true };
   const miss = rushMissRememberReady(opts.completed, opts.entitled, missOpts);
   const streakLine =
-    opts.streak > 0 ? `🔥 ${opts.streak} day streak` : 'Streak banked for today ✓';
+    opts.streak > 0
+      ? `🔥 ${opts.streak} day streak`
+      : miss
+        ? ''
+        : 'Streak banked for today ✓';
   return {
-    title: opts.justFinished ? null : 'Done for today.',
+    title: miss
+      ? `Remember ${miss.name}`
+      : opts.justFinished
+        ? null
+        : 'Done for today.',
     streakLine,
     sub: dailyDoneOverlaySub(opts.justFinished),
     recap: opts.deal.map((r) => ({ root: r.root, mean: r.mean })),
@@ -255,6 +269,7 @@ export function buildDailyDone(
     homeLabel: 'Home',
     peek: miss ? todayMissRecap(miss.name, miss.also) : null,
     missWaiting: Boolean(miss),
+    celebrateDone: !miss,
   };
 }
 
