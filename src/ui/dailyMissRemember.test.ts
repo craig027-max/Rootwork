@@ -231,6 +231,8 @@ describe('Daily after a miss is Remember — not Keep going / Play again over Ge
     expect(overlay).toContain('Daily now joins that thread');
     expect(daily).toContain('listRushMissRemember');
     expect(daily).toContain('todayRushRecap');
+    expect(daily).toContain('dailyHoldRememberLine');
+    expect(daily).toContain('lastHoldMiss');
     expect(daily).toContain('rememberMissId: rushMissId');
     expect(daily).toContain('done.missWaiting');
     expect(daily).toContain('done.peek');

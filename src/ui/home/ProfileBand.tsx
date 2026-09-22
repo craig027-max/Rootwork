@@ -2,7 +2,7 @@ import { ROOTS } from '../../data/roots';
 import { levelForXp, XP_PER_LEVEL, type GameStats } from '../../core/stats';
 import { localDayKey } from '../../core/daily';
 import { Button } from '../components/Button';
-import { buildProfileProgress } from './profileProgress';
+import { buildProfileProgress, profileHeroForToday } from './profileProgress';
 import type { TodayProgress } from './todayProgress';
 
 /**
@@ -11,8 +11,9 @@ import type { TodayProgress } from './todayProgress';
  * After they learn a root, that row checks off (Learned {root}) and
  * reviews that root as Remember — one beat, then Home, not Geo. When Daily is banked too the
  * heading is Today ✓ and the fat tap is Keep going · {root} (or Rush).
- * A live Rush miss blocks that check — Remember Geo is the fat tap,
- * not Nice work over Missed Geo. Remember {stale root} is the retention
+ * A live Rush miss blocks that check — Remember Geo is the fat tap
+ * and the Home hello / hint, not Nice work / Welcome back / Streak
+ * banked ✓ over Missed Geo. Remember {stale root} is the retention
  * beat — one-tap, hold meaning, then Home. Does not block Today ✓.
  * Streak risk stays a visible status line. First-run still drops the
  * extra chrome so Play Bio wins.
@@ -40,10 +41,17 @@ export function ProfileBand({
 }) {
   const day = localDayKey();
   const vm = buildProfileProgress(stats, rootsOwned, day, ROOTS.length);
+  const missHero = today.missWaiting && today.cta?.kind === 'remember';
+  const hero = profileHeroForToday(vm, {
+    pathDone: today.pathDone,
+    missWaiting: missHero,
+    missName: today.missName,
+    missRecap: today.recap,
+  });
   const level = levelForXp(stats.xp);
   const intoLevel = stats.xp % XP_PER_LEVEL;
   const xpToNext = XP_PER_LEVEL - intoLevel;
-  const slim = vm.stats.length <= 2;
+  const slim = hero.stats.length <= 2;
 
   function runAction(
     action: 'daily' | 'learn' | 'rush' | 'review' | 'remember' | 'none',
@@ -60,8 +68,8 @@ export function ProfileBand({
   return (
     <section
       className={`ww-profile${vm.firstRun ? ' is-first' : ''}${slim ? ' is-slim' : ''}${
-        vm.streakKind === 'risk' ? ' is-risk' : ''
-      }${vm.streakKind === 'banked' ? ' is-banked' : ''}${today.show ? ' is-today' : ''}${
+        missHero ? ' is-miss' : vm.streakKind === 'risk' ? ' is-risk' : ''
+      }${hero.celebrateBanked ? ' is-banked' : ''}${today.show ? ' is-today' : ''}${
         today.pathDone ? ' is-today-done' : ''
       }`}
       aria-label="Your progress"
@@ -71,11 +79,11 @@ export function ProfileBand({
         <span className="lvl">LV {level}</span>
       </div>
       <div className="ww-pinfo">
-        <div className="ww-hello">{today.pathDone ? 'Nice work' : vm.hello}</div>
+        <div className={`ww-hello${missHero ? ' is-miss' : ''}`}>{hero.hello}</div>
         <h1>{name}</h1>
-        {vm.hint ? (
-          <div className={`ww-profile-hint is-${vm.streakKind}`} role="status">
-            {vm.hint}
+        {hero.hint ? (
+          <div className={`ww-profile-hint is-${hero.hintKind}`} role="status">
+            {hero.hint}
           </div>
         ) : null}
         {vm.showXp ? (
@@ -90,7 +98,7 @@ export function ProfileBand({
         ) : null}
       </div>
       <div className="ww-stats">
-        {vm.stats.map((stat) => (
+        {hero.stats.map((stat) => (
           <div className={`ww-stat ${stat.key}`} key={stat.key}>
             <div className="v">
               {stat.value}

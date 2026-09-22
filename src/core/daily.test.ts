@@ -13,6 +13,7 @@ import {
   dailyHoldContinueLine,
   dailyHoldLine,
   dailyHoldNextLine,
+  dailyHoldRememberLine,
   dailyNextRoot,
   dailyNextRowLabel,
   dailyNextSub,
@@ -237,6 +238,13 @@ describe('Daily mid-run resume + hold meaning', () => {
     expect(dailyHoldKeepGoingLine('  Geo  ', '  earth ')).toBe('Keep going · Geo · earth');
     expect(dailyHoldKeepGoingLine('Auto')).toBe('Keep going · Auto');
     expect(dailyHoldKeepGoingLine('Auto', 'self')).not.toMatch(/Continue |Next ·|Play again|Done →/);
+  });
+
+  it('peeks Remember on the last hold when a Rush miss is the done hero', () => {
+    expect(dailyHoldRememberLine('Geo', 'earth')).toBe('Remember · Geo · earth');
+    expect(dailyHoldRememberLine('  Chron  ', '  time ')).toBe('Remember · Chron · time');
+    expect(dailyHoldRememberLine('Geo')).toBe('Remember · Geo');
+    expect(dailyHoldRememberLine('Geo', 'earth')).not.toMatch(/Keep going|Continue |Next ·|Play again|Done →/);
   });
 
   it('recaps Daily done — not a fresh-start pitch, and Meet vs Remember', () => {

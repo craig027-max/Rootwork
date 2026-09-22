@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { EMPTY_STATS, recordRootLearned, recordRun, type GameStats } from '../../core/stats';
 import { ROOTS } from '../../data/roots';
-import { buildProfileProgress, streakKindFor } from './profileProgress';
+import { buildProfileProgress, profileHeroForToday, streakKindFor } from './profileProgress';
 
 const band = readFileSync(join(process.cwd(), 'src/ui/home/ProfileBand.tsx'), 'utf8');
 const home = readFileSync(join(process.cwd(), 'src/ui/Home.tsx'), 'utf8');
@@ -84,6 +84,63 @@ describe('buildProfileProgress — returning, streak at risk', () => {
   });
 });
 
+describe('profileHeroForToday — Remember over a waiting miss', () => {
+  const banked = buildProfileProgress(returningStreak(TODAY), 12, TODAY);
+
+  it('makes Remember Geo the hello — not Welcome back / Streak banked ✓', () => {
+    const hero = profileHeroForToday(banked, {
+      pathDone: false,
+      missWaiting: true,
+      missName: 'Geo',
+      missRecap: 'Remember Geo — missed in Rush',
+    });
+    expect(hero.hello).toBe('Remember Geo');
+    expect(hero.hello).not.toMatch(/Welcome back|Nice work|Keep your streak/i);
+    expect(hero.hint).toBe('Remember Geo — missed in Rush');
+    expect(hero.hint).not.toMatch(/Streak banked|Nice work/i);
+    expect(hero.hintKind).toBe('miss');
+    expect(hero.celebrateBanked).toBe(false);
+    expect(hero.stats.find((s) => s.key === 'streak')).toMatchObject({
+      value: '🔥 7',
+      label: 'Streak',
+    });
+    expect(hero.stats.find((s) => s.key === 'streak')?.value).not.toMatch(/✓/);
+  });
+
+  it('keeps Nice work / Streak banked once the miss is Remembered', () => {
+    const hero = profileHeroForToday(banked, { pathDone: true, missWaiting: false });
+    expect(hero.hello).toBe('Nice work');
+    expect(hero.hint).toBe('Streak banked for today ✓');
+    expect(hero.hintKind).toBe('banked');
+    expect(hero.celebrateBanked).toBe(true);
+    expect(hero.stats.find((s) => s.key === 'streak')).toMatchObject({
+      value: '🔥 7 ✓',
+      label: 'Banked',
+    });
+  });
+
+  it('keeps the #44 Play-today hint when a miss is not the hero', () => {
+    const risk = buildProfileProgress(returningStreak(YESTERDAY), 12, TODAY);
+    const hero = profileHeroForToday(risk, { missWaiting: false });
+    expect(hero.hello).toBe('Keep your streak');
+    expect(hero.hint).toBe('Play today to keep your 7-day streak');
+    expect(hero.hintKind).toBe('risk');
+    expect(hero.celebrateBanked).toBe(false);
+  });
+
+  it('keeps Streak banked while Continue Daily / Continue {learn} is still the tap', () => {
+    const hero = profileHeroForToday(banked, {
+      pathDone: false,
+      missWaiting: false,
+      missName: 'Geo',
+    });
+    expect(hero.hello).toBe('Welcome back');
+    expect(hero.hint).toBe('Streak banked for today ✓');
+    expect(hero.celebrateBanked).toBe(true);
+    expect(hero.hello).not.toMatch(/Remember /);
+  });
+});
+
 describe('buildProfileProgress — returning, streak banked', () => {
   const vm = buildProfileProgress(returningStreak(TODAY), 12, TODAY);
 
@@ -125,6 +182,14 @@ describe('Profile band wiring + phone layout', () => {
   it('renders the visible hint from the model — not a title-only tooltip', () => {
     expect(home).toContain('<ProfileBand');
     expect(band).toContain('buildProfileProgress');
+    expect(band).toContain('profileHeroForToday');
+    expect(band).toContain('today.missName');
+    expect(band).toContain('missHero');
+    expect(band).toContain("today.cta?.kind === 'remember'");
+    expect(band).toContain('today.missName');
+    expect(band).toContain('hero.hello');
+    expect(band).toContain('hero.hint');
+    expect(band).toContain('ww-hello${missHero ? \' is-miss\' : \'\'}');
     expect(band).toContain('ww-profile-hint');
     expect(band).toContain('role="status"');
     expect(band).not.toMatch(/title=\{/);
@@ -152,5 +217,11 @@ describe('Profile band wiring + phone layout', () => {
     expect(phone).toMatch(/\.ww-profile\.is-first/);
     expect(css).toMatch(/\.ww-profile-hint\.is-risk/);
     expect(css).toMatch(/\.ww-profile-hint\.is-banked/);
+    expect(css).toMatch(/\.ww-profile-hint\.is-miss/);
+    expect(css).toMatch(/\.ww-hello\.is-miss/);
+    expect(css).toMatch(/\.ww-profile\.is-miss \.ww-stat\.streak/);
+    expect(phone).toMatch(/\.ww-profile-hint\.is-miss\s*\{[^}]*display:\s*block/);
+    expect(phone).not.toMatch(/\.ww-profile-hint\.is-miss\s*\{[^}]*display:\s*none/);
+    expect(phone).toMatch(/\.ww-hello\.is-miss\s*\{[^}]*display:\s*block/);
   });
 });

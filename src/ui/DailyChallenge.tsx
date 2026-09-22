@@ -10,6 +10,7 @@ import {
   dailyHoldKeepGoingLine,
   dailyHoldLine,
   dailyHoldNextLine,
+  dailyHoldRememberLine,
   dailyRecapChipLabel,
   dailySeed,
   liveDailyResumeQi,
@@ -20,7 +21,13 @@ import { buildRecall, type RecallBeat } from '../core/recall';
 import { Scene } from './Scene';
 import { recapDeckEntry } from '../core/deckFlow';
 import { todayRushRecap } from '../core/rushRecap';
-import { buildDailyDone, buildModeEmpty, learnNextAction, type ModeCta } from './modes/modeHandoff';
+import {
+  buildDailyDone,
+  buildModeEmpty,
+  learnNextAction,
+  rushMissRememberReady,
+  type ModeCta,
+} from './modes/modeHandoff';
 import { learnedRootToday, listRushMissRemember, rootLabel } from './home/todayProgress';
 
 type Phase = 'start' | 'play' | 'result';
@@ -41,8 +48,9 @@ function palOf(root: Root) {
  * five — not a fresh-start pitch. Recap chips Remember owned roots and
  * Meet unowned ones — not the Geo quiz loop. The done fat tap matches
  * Today: Continue {learn}, Keep going, Rush, or Remember {miss} when
- * a Rush miss is still waiting. Finishing banks Daily XP; replays are
- * free.
+ * a Rush miss is still waiting. Last hold peeks that same Remember —
+ * Keep going must not sit over Geo. Finishing banks Daily XP; replays
+ * are free.
  */
 export function DailyChallenge() {
   const entitled = useEntitledForDisplay();
@@ -98,8 +106,18 @@ export function DailyChallenge() {
   const remember = rootLabel(rushMissId);
   const rememberAlso = rootLabel(rushMissIds[1]).name;
   const nextLearnMean = nextLearn.rootId ? ROOTS_BY_ID[nextLearn.rootId]?.mean : undefined;
-  const continueHold =
-    !nextHold && nextLearn.kind === 'learn' && nextLearn.rootName
+  const lastHoldMiss = !nextHold
+    ? rushMissRememberReady(completed, entitled, {
+        rememberMissId: rushMissId,
+        rememberMissName: remember.name,
+        rememberAlso,
+        dailyDone: true,
+        learnedToday,
+      })
+    : null;
+  const continueHold = lastHoldMiss
+    ? dailyHoldRememberLine(lastHoldMiss.name, remember.mean)
+    : !nextHold && nextLearn.kind === 'learn' && nextLearn.rootName
       ? learnedToday
         ? dailyHoldKeepGoingLine(nextLearn.rootName, nextLearnMean)
         : dailyHoldContinueLine(nextLearn.rootName, nextLearnMean)
