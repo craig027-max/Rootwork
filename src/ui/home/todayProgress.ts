@@ -29,8 +29,11 @@
  * (#65–#67) and Daily's done landing now matches — Play again / Keep
  * going must not sit over Geo. Home Rush now matches that same fat tap
  * — Play again stays the ghost. Rush start now matches that same fat
- * tap — Change level must not put Play again back over Geo. Continue /
- * Keep going / Rush CTAs stay as #68 left them when no miss is waiting.
+ * tap — Change level must not put Play again back over Geo. Home hero
+ * now matches that same name — Welcome back / Streak banked ✓ must
+ * not sit over Geo. Daily's last hold peeks Remember, not Keep going.
+ * Continue / Keep going / Rush CTAs stay as #68 left them when no
+ * miss is waiting.
  *
  * Pure so tests lock the copy without I/O.
  */
@@ -78,6 +81,8 @@ export interface TodayProgress {
   cta: TodayCta | null;
   /** Unreviewed Rush miss — Today ✓ must not fire, and the recap/CTA can mark miss. */
   missWaiting: boolean;
+  /** Kid-facing miss name for the Home hero — not a Welcome-back dump. */
+  missName?: string;
 }
 
 /** Extra-play label after Today ✓ — not another Continue (that's unfinished). */
@@ -314,6 +319,7 @@ export function buildTodayProgress(opts: {
       items: [],
       cta: null,
       missWaiting: false,
+      missName: undefined,
     };
   }
 
@@ -441,5 +447,6 @@ export function buildTodayProgress(opts: {
     items,
     cta,
     missWaiting: rememberMissed,
+    missName: rememberMissed && pathClear ? rememberName : undefined,
   };
 }

@@ -23,7 +23,8 @@
  * Keep going / Rush taps stay where #68 put them. After Daily + a
  * learn, an owned Rush miss makes Remember the done hero — Play
  * again / Keep going must not sit over Geo. Rush start now matches
- * that same fat tap.
+ * that same fat tap. Last hold peeks Remember when that miss is the
+ * done hero — Keep going must not sit over Geo there either.
  */
 
 import type { Root } from '../data/roots';
@@ -287,6 +288,16 @@ export function dailyHoldKeepGoingLine(nextName: string, nextMean?: string): str
   const name = nextName.replace(/\s+/g, ' ').trim();
   const mean = nextMean?.replace(/\s+/g, ' ').trim();
   return mean ? `Keep going · ${name} · ${mean}` : `Keep going · ${name}`;
+}
+
+/**
+ * Last Daily hold after Daily + a learn, when an owned Rush miss is
+ * the done hero — Remember, not Keep going over Geo.
+ */
+export function dailyHoldRememberLine(nextName: string, nextMean?: string): string {
+  const name = nextName.replace(/\s+/g, ' ').trim();
+  const mean = nextMean?.replace(/\s+/g, ' ').trim();
+  return mean ? `Remember · ${name} · ${mean}` : `Remember · ${name}`;
 }
 
 /** Kid-facing label for the one tap that leaves the Daily hold. */

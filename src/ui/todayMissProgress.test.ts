@@ -135,6 +135,7 @@ describe('Today ✓ waits for Remember after a Rush miss — not Nice work over 
     });
     expect(vm.cta?.label).not.toBe(keepGoingLabel(secondBuilder.root));
     expect(vm.cta?.label).not.toMatch(/Keep going|Play Root Rush|Play again/);
+    expect(vm.missName).toBe(geo.root);
     expect(next.rootId).toBe(rootId(secondBuilder));
   });
 
@@ -187,6 +188,7 @@ describe('Today ✓ waits for Remember after a Rush miss — not Nice work over 
     expect(midDaily.pathDone).toBe(false);
     expect(midDaily.missWaiting).toBe(true);
     expect(midDaily.recap).toBeNull();
+    expect(midDaily.missName).toBeUndefined();
 
     const learnOpen = buildTodayProgress({
       firstRun: false,
@@ -206,6 +208,7 @@ describe('Today ✓ waits for Remember after a Rush miss — not Nice work over 
     });
     expect(learnOpen.pathDone).toBe(false);
     expect(learnOpen.recap).toBeNull();
+    expect(learnOpen.missName).toBeUndefined();
   });
 
   it('hands a caught-up kid Remember Geo — not Today ✓ + Play Root Rush', () => {
@@ -231,6 +234,7 @@ describe('Today ✓ waits for Remember after a Rush miss — not Nice work over 
       rootId: rootId(geo),
     });
     expect(vm.cta?.label).not.toMatch(/Play Root Rush|Keep going/);
+    expect(vm.missName).toBe(geo.root);
   });
 
   it('returns Today ✓ + Remembered Geo after the miss is reviewed', () => {
@@ -269,6 +273,8 @@ describe('Today ✓ waits for Remember after a Rush miss — not Nice work over 
     expect(home).toContain('rememberMissed: rushMissId != null');
     expect(home).toContain("entry: 'remember'");
     expect(band).toContain('today.missWaiting');
+    expect(band).toContain('profileHeroForToday');
+    expect(band).toContain('today.missName');
     expect(band).toContain('ww-today-recap');
     expect(band).toContain('ww-today-cta');
     expect(band).toContain("todayCta.kind === 'remember'");

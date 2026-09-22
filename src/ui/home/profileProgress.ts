@@ -29,6 +29,18 @@ export interface ProfileProgress {
   stats: ProfileStat[];
 }
 
+/** Hint color — miss coral sits over banked jade so Geo is not a ✓. */
+export type ProfileHintKind = StreakKind | 'miss';
+
+export interface ProfileHero {
+  hello: string;
+  hint: string | null;
+  hintKind: ProfileHintKind;
+  stats: ProfileStat[];
+  /** Jade "banked" glow — off while Remember is the hero. */
+  celebrateBanked: boolean;
+}
+
 /** Streak state for a given local calendar day. */
 export function streakKindFor(stats: GameStats, day: string): StreakKind {
   if (stats.streakCurrent <= 0) return 'none';
@@ -89,5 +101,45 @@ export function buildProfileProgress(
     streakKind: kind,
     showXp: stats.xp > 0,
     stats: rows,
+  };
+}
+
+/**
+ * Home hero over Today's path. When Remember {Geo} is the fat tap,
+ * Welcome back / Nice work / Streak banked ✓ must not sit over that
+ * miss. The streak number stays (they played); the ✓ / Banked label /
+ * jade glow do not celebrate a finished day. Continue Daily /
+ * unfinished Continue {learn} keep the #44 streak line.
+ */
+export function profileHeroForToday(
+  vm: ProfileProgress,
+  opts: {
+    pathDone?: boolean;
+    missWaiting?: boolean;
+    missName?: string;
+    missRecap?: string | null;
+  } = {},
+): ProfileHero {
+  if (opts.missWaiting) {
+    const name = opts.missName?.replace(/\s+/g, ' ').trim();
+    const recap = opts.missRecap?.replace(/\s+/g, ' ').trim();
+    return {
+      hello: name ? `Remember ${name}` : 'Remember a miss',
+      hint: recap || (name ? `Remember ${name} — missed in Rush` : 'A miss is still waiting'),
+      hintKind: 'miss',
+      stats: vm.stats.map((s) =>
+        s.key === 'streak'
+          ? { ...s, value: s.value.replace(/\s*✓\s*$/, ''), label: 'Streak' }
+          : s,
+      ),
+      celebrateBanked: false,
+    };
+  }
+  return {
+    hello: opts.pathDone ? 'Nice work' : vm.hello,
+    hint: vm.hint,
+    hintKind: vm.streakKind,
+    stats: vm.stats,
+    celebrateBanked: vm.streakKind === 'banked',
   };
 }

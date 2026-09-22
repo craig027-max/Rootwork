@@ -323,10 +323,20 @@
   color: var(--success);
   font-weight: 700;
 }
+.ww-profile-hint.is-miss {
+  color: var(--accent-coral, #ff8a6b);
+  font-weight: 700;
+}
 .ww-profile-hint.is-none {
   color: var(--text-muted);
 }
+.ww-hello.is-miss {
+  color: var(--accent-coral, #ff8a6b);
+}
 .ww-profile.is-risk .ww-stat.streak .v {
+  color: var(--accent-coral, #ff8a6b);
+}
+.ww-profile.is-miss .ww-stat.streak .v {
   color: var(--accent-coral, #ff8a6b);
 }
 .ww-profile.is-banked .ww-stat.streak .v {
@@ -597,6 +607,12 @@
     display: block;
     white-space: normal;
     overflow: visible;
+  }
+  .ww-profile-hint.is-miss {
+    display: block;
+  }
+  .ww-hello.is-miss {
+    display: block;
   }
   .ww-today {
     display: flex;

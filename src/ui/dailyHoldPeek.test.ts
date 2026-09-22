@@ -30,6 +30,9 @@ describe('Daily hold: peek the next root, then Next — Home lands on that peek'
     expect(daily).toContain('dailyHoldNextLine');
     expect(daily).toContain('dailyHoldContinueLine');
     expect(daily).toContain('dailyHoldKeepGoingLine');
+    expect(daily).toContain('dailyHoldRememberLine');
+    expect(daily).toContain('rushMissRememberReady');
+    expect(daily).toContain('lastHoldMiss');
     expect(daily).toContain('nextHold');
     expect(daily).toContain('continueHold');
     expect(daily).toContain('q-next-peek');
