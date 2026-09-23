@@ -31,10 +31,12 @@
  * — Play again stays the ghost. Rush start now matches that same fat
  * tap — Change level must not put Play again back over Geo. Home hero
  * now matches that same name — Welcome back / Streak banked ✓ must
- * not sit over Geo. Daily's last hold peeks Remember, not Keep going.
- * Daily done overlay / Home Daily lead now match that same name —
- * Done for today / Streak banked must not sit over Geo. Continue /
- * Keep going / Rush CTAs stay as #68 left them when no miss is waiting.
+ * not sit over Geo. Daily done title / Home Daily lead now match —
+ * Done for today / Streak banked must not sit over Geo. Rush result
+ * now matches that same chrome — the giant grade / NEW BEST must not
+ * sit over Geo. Daily's last hold peeks Remember, not Keep going.
+ * Continue / Keep going / Rush CTAs stay as #68 left them when no
+ * miss is waiting.
  *
  * Pure so tests lock the copy without I/O.
  */
