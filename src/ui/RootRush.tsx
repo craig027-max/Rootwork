@@ -44,9 +44,11 @@ import {
  * time and offers Continue Daily · 3 of 5 — same tap Home / result
  * already use. After Daily + a learn, an owned miss is Remember Geo —
  * Play again still starts Rush, but it is not the fat tap over Geo on
- * result, Home, or start (Change level). After Daily is banked and
- * Today still names Continue / Keep going, that tap is the start /
- * result hero — Play again stays the ghost.
+ * result, Home, or start (Change level), and the result title is
+ * Remember Geo — not a giant grade / NEW BEST over that same miss.
+ * After Daily is banked and Today still names Continue / Keep going,
+ * that tap is the start / result hero — Play again stays the ghost
+ * and the grade stays.
  *
  * A correct tap names the meaning (Yes — Chron means time) then keeps
  * the combo auto-advance. A miss names it too (Nope — Chron means time)
@@ -145,6 +147,7 @@ export function RootRush() {
     dailyDone,
     learnedToday: learnedId !== null,
   };
+  const rushNext = buildRushResultNext(completed, entitled, { ...dailyResume, ...missRemember });
 
   // Question set for the current run — reseeded by `runSeed` so "Play again"
   // always deals a fresh round.
@@ -300,7 +303,7 @@ export function RootRush() {
   if (phase === 'play' && q) {
     const P = PALETTES[q.root.pal] ?? PALETTES.green!;
     accent = { qc: P.c1rgb, qgrad: P.grad };
-  } else if (phase === 'result' && result?.grade === 'S') {
+  } else if (phase === 'result' && result?.grade === 'S' && rushNext.celebrateGrade) {
     accent = FIRE_ACCENT;
   }
 
@@ -341,7 +344,6 @@ export function RootRush() {
     completed,
     entitled,
   });
-  const rushNext = buildRushResultNext(completed, entitled, { ...dailyResume, ...missRemember });
 
   return (
     <div className="q-rush" style={accentStyle(accent)} role="dialog" aria-modal="true" aria-label="Root Rush">
@@ -535,16 +537,21 @@ export function RootRush() {
             <div className="q-eyebrow">
               <span className="dot" /> {tier === 0 ? 'All tiers' : TIERS[tier - 1]?.n}
             </div>
-            <div className="q-grade" aria-label={`Grade ${result.grade}`}>
-              {result.grade}
-            </div>
-            <div className="q-stars" aria-label={`${result.stars} of 5 stars`}>
+            {rushNext.celebrateGrade ? (
+              <div className="q-grade" aria-label={`Grade ${result.grade}`}>
+                {result.grade}
+              </div>
+            ) : null}
+            {rushNext.title ? (
+              <h2 className={`q-done-title${rushNext.missWaiting ? ' is-miss' : ''}`}>{rushNext.title}</h2>
+            ) : null}
+            <div className={`q-stars${rushNext.missWaiting ? ' is-miss' : ''}`} aria-label={`${result.stars} of 5 stars`}>
               {'★'.repeat(result.stars)}
               {'☆'.repeat(5 - result.stars)}
             </div>
             <div className="q-result-score">
               {score.toLocaleString()}
-              {newBestScore ? <span className="q-newbest">NEW BEST</span> : null}
+              {newBestScore && rushNext.celebrateGrade ? <span className="q-newbest">NEW BEST</span> : null}
             </div>
             <div className="q-stats">
               <div>

@@ -20,9 +20,10 @@
  * Daily's own done landing: Remember {Geo} is the fat tap — Play
  * again / Keep going must not sit over the miss Today / Rush already
  * named. Overlay title / Home Daily lead now match that same name —
- * Done for today / Streak banked must not sit over Geo. Rush start
- * now matches Home / result — Change level must not put Play again
- * back over Geo.
+ * Done for today / Streak banked must not sit over Geo. Rush result
+ * now matches that same chrome — the giant grade / NEW BEST must not
+ * sit over Geo. Rush start now matches Home / result — Change level
+ * must not put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),
  * Rush uses that same Continue {learn} / Keep going tap — Play again
@@ -367,15 +368,20 @@ export interface RushResultVM {
   missWaiting: boolean;
   /** Daily banked + Continue / Keep going is the fat tap — Play again stays ghost. */
   learnWaiting: boolean;
+  /** Path-done Rush miss — Remember Geo, not a nameless grade dump. */
+  title: string | null;
+  /** Giant grade letter / NEW BEST — off while Remember is the hero. */
+  celebrateGrade: boolean;
 }
 
 /**
  * Rush result: a live Daily mid-run is the hero (Continue Daily · 3 of 5),
  * same next root Home already named. After Daily + a learn, an owned
- * miss is Remember {root} — Play again / Continue {next} must not sit
- * over Geo. After Daily is banked and Today still names Continue /
- * Keep going, that tap is the hero — Play again stays the ghost.
- * Otherwise Play again stays, plus Continue {root}.
+ * miss is Remember {root} — Play again / Continue {next} / the giant
+ * grade must not sit over Geo. After Daily is banked and Today still
+ * names Continue / Keep going, that tap is the hero — Play again
+ * stays the ghost and the grade stays. Otherwise Play again stays,
+ * plus Continue {root}.
  */
 export function buildRushResultNext(
   completed: Set<string>,
@@ -404,6 +410,8 @@ export function buildRushResultNext(
       dailyResume: true,
       missWaiting: false,
       learnWaiting: false,
+      title: null,
+      celebrateGrade: true,
     };
   }
   const miss = rushMissRememberReady(completed, entitled, opts);
@@ -421,6 +429,8 @@ export function buildRushResultNext(
       dailyResume: false,
       missWaiting: true,
       learnWaiting: false,
+      title: `Remember ${miss.name}`,
+      celebrateGrade: false,
     };
   }
   const learn = rushLearnReady(completed, entitled, opts);
@@ -438,6 +448,8 @@ export function buildRushResultNext(
       dailyResume: false,
       missWaiting: false,
       learnWaiting: true,
+      title: null,
+      celebrateGrade: true,
     };
   }
   return {
@@ -448,5 +460,7 @@ export function buildRushResultNext(
     dailyResume: false,
     missWaiting: false,
     learnWaiting: false,
+    title: null,
+    celebrateGrade: true,
   };
 }
