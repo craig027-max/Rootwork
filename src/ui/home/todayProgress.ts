@@ -32,8 +32,9 @@
  * tap — Change level must not put Play again back over Geo. Home hero
  * now matches that same name — Welcome back / Streak banked ✓ must
  * not sit over Geo. Daily's last hold peeks Remember, not Keep going.
- * Continue / Keep going / Rush CTAs stay as #68 left them when no
- * miss is waiting.
+ * Daily done overlay / Home Daily lead now match that same name —
+ * Done for today / Streak banked must not sit over Geo. Continue /
+ * Keep going / Rush CTAs stay as #68 left them when no miss is waiting.
  *
  * Pure so tests lock the copy without I/O.
  */

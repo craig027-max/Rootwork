@@ -49,8 +49,9 @@ function palOf(root: Root) {
  * Meet unowned ones — not the Geo quiz loop. The done fat tap matches
  * Today: Continue {learn}, Keep going, Rush, or Remember {miss} when
  * a Rush miss is still waiting. Last hold peeks that same Remember —
- * Keep going must not sit over Geo. Finishing banks Daily XP; replays
- * are free.
+ * Keep going must not sit over Geo. Done title / Home Daily lead
+ * match that same name — Done for today / Streak banked / the giant
+ * ✓ must not sit over Geo. Finishing banks Daily XP; replays are free.
  */
 export function DailyChallenge() {
   const entitled = useEntitledForDisplay();
@@ -394,13 +395,19 @@ export function DailyChallenge() {
             <div className="q-eyebrow">
               <span className="dot" /> Daily Challenge
             </div>
-            <div className="q-grade" aria-label="Daily complete">
-              ✓
-            </div>
-            {done.title ? <h2 className="q-done-title">{done.title}</h2> : null}
-            <div className="q-stars" aria-label={done.streakLine}>
-              {done.streakLine}
-            </div>
+            {done.celebrateDone ? (
+              <div className="q-grade" aria-label="Daily complete">
+                ✓
+              </div>
+            ) : null}
+            {done.title ? (
+              <h2 className={`q-done-title${done.missWaiting ? ' is-miss' : ''}`}>{done.title}</h2>
+            ) : null}
+            {done.streakLine ? (
+              <div className={`q-stars${done.missWaiting ? ' is-miss' : ''}`} aria-label={done.streakLine}>
+                {done.streakLine}
+              </div>
+            ) : null}
             <p className="q-sub" role="status" style={{ margin: '18px auto 0', textAlign: 'center' }}>
               {done.sub}
             </p>

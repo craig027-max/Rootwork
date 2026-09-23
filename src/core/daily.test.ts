@@ -252,6 +252,8 @@ describe('Daily mid-run resume + hold meaning', () => {
     expect(dailyDoneLead(1)).toBe("Today's five are done. Same until tomorrow. Streak banked — 🔥 1 day.");
     expect(dailyDoneLead()).toBe("Today's five are done. Same until tomorrow.");
     expect(dailyDoneLead(0)).toBe("Today's five are done. Same until tomorrow.");
+    expect(dailyDoneLead(3, { missWaiting: true })).toBe("Today's five are done. Same until tomorrow.");
+    expect(dailyDoneLead(3, { missWaiting: true })).not.toMatch(/Streak banked/i);
     expect(dailyDoneLead(3)).not.toMatch(/Five fresh roots|keep your streak/i);
     expect(dailyDoneMenuSub(['Chron', 'Photo', 'Aqua'])).toBe('Done · Chron · Photo · Aqua');
     expect(dailyDoneMenuSub(['  Chron  ', 'Photo', 'Aqua', 'Bio'])).toBe(

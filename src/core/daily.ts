@@ -25,6 +25,9 @@
  * again / Keep going must not sit over Geo. Rush start now matches
  * that same fat tap. Last hold peeks Remember when that miss is the
  * done hero — Keep going must not sit over Geo there either.
+ * Daily done overlay / Home Daily lead now match that same name —
+ * Done for today / Streak banked must not sit over Geo. The
+ * five-are-done recap stays.
  */
 
 import type { Root } from '../data/roots';
@@ -315,11 +318,18 @@ function cleanDailyNames(names?: readonly string[], max = 3): string[] {
 /**
  * Home Daily tile lead after the five are banked — recap, not
  * "Five fresh roots every day." Chips / Today already name the set.
+ * A path-done Rush miss drops Streak banked — Remember is still
+ * waiting, so the tile must not celebrate a finished day over Geo.
  */
-export function dailyDoneLead(streak?: number): string {
+export function dailyDoneLead(
+  streak?: number,
+  opts: { missWaiting?: boolean } = {},
+): string {
   const days = typeof streak === 'number' && Number.isFinite(streak) ? Math.max(0, Math.round(streak)) : 0;
   const streakLine =
-    days > 0 ? ` Streak banked — 🔥 ${days} day${days === 1 ? '' : 's'}.` : '';
+    !opts.missWaiting && days > 0
+      ? ` Streak banked — 🔥 ${days} day${days === 1 ? '' : 's'}.`
+      : '';
   return `Today's five are done. Same until tomorrow.${streakLine}`;
 }
 

@@ -51,7 +51,8 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  learn, an owned miss names Remember on the Rush tile and on Daily's
  *  own done landing — Play again is the ghost. Home lands on today's
  *  Rush, so that fat tap must be Remember {Geo} — not Play again over
- *  the same coral miss Today / result / Daily already named. */
+ *  the same coral miss Today / result / Daily already named. Done
+ *  lead drops Streak banked while that miss is waiting. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -204,7 +205,6 @@ export function buildDetailVM(
     const midLead = nextDaily
       ? `Next is ${nextDaily.root} — ${nextDaily.mean}. ${dailyResume} of ${extra.dailyRoots.length} already yours.`
       : `Five fresh roots every day. See the animation, tap what it means, keep your streak.`;
-    const doneLead = extra.dailyDone ? dailyDoneLead(extra.streak) : null;
     const missOpts = {
       dailyDone: extra.dailyDone,
       learnedToday: extra.learnedToday,
@@ -214,6 +214,9 @@ export function buildDetailVM(
     };
     const miss = extra.dailyDone
       ? rushMissRememberReady(extra.completed, extra.entitled, missOpts)
+      : null;
+    const doneLead = extra.dailyDone
+      ? dailyDoneLead(extra.streak, { missWaiting: Boolean(miss) })
       : null;
     const doneNext = extra.dailyDone
       ? dailyDonePrimary(extra.completed, extra.entitled, missOpts)
