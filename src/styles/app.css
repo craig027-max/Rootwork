@@ -539,6 +539,9 @@
   .ww-detail-wait.is-miss {
     display: block;
   }
+  .ww-big.is-miss {
+    display: block;
+  }
   .ww-detail-hero-cta {
     display: flex;
   }
@@ -988,6 +991,12 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 0 30px rgba(var(--spark-rgb), 0.3));
+}
+.ww-big.is-miss {
+  background: none;
+  -webkit-text-fill-color: #ff8a8f;
+  color: #ff8a8f;
+  filter: none;
 }
 .ww-detail .lead {
   max-width: 52ch;

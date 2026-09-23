@@ -100,7 +100,7 @@ export function DetailPanel({
             🔒
           </span>
         ) : null}
-        <div className="ww-big">{vm.big}</div>
+        <div className={`ww-big${vm.waitingMiss ? ' is-miss' : ''}`}>{vm.big}</div>
         <p className="lead">{vm.lead}</p>
         {vm.waiting ? (
           <p className={`ww-detail-wait${vm.waitingMiss ? ' is-miss' : ''}`} role="status">
