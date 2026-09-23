@@ -52,7 +52,10 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  own done landing — Play again is the ghost. Home lands on today's
  *  Rush, so that fat tap must be Remember {Geo} — not Play again over
  *  the same coral miss Today / result / Daily already named. Done
- *  lead drops Streak banked while that miss is waiting. */
+ *  lead drops Streak banked while that miss is waiting. Rush result
+ *  already drops the giant grade / NEW BEST (#76). The Home tile now
+ *  matches that chrome — Root Rush / Best so far / the A ring must
+ *  not sit over Geo. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -91,9 +94,6 @@ export function buildDetailVM(
         bestStars,
         bestScore,
       });
-      const recapLine = recap
-        ? ` Best so far — ${recap}${bestScore > 0 ? ' combo' : ''}.`
-        : '';
       const nextDaily = dailyNextRoot(extra.dailyRoots, extra.dailyResumeQi);
       const waiting = dailyWaitingLine({
         dailyResumeQi: extra.dailyResumeQi,
@@ -133,17 +133,23 @@ export function buildDetailVM(
       const rushReplay = played ? 'Play again 🎯' : 'Start the run 🎯';
       const missHero = Boolean(miss && !continueDaily);
       const missRoot = miss ? ROOTS_BY_ID[miss.id] : undefined;
+      const recapLine =
+        !missHero && recap
+          ? ` Best so far — ${recap}${bestScore > 0 ? ' combo' : ''}.`
+          : '';
       return {
         jewel: item.jewel,
         animKey: item.key,
         eyebrow: 'Quiz Mode',
-        big: 'Root Rush',
-        lead: `Match roots to meanings and rack up combos — every right answer in a row multiplies your score. Ten questions a run; beat your best.${recapLine}`,
-        ring: played
+        big: missHero && miss ? `Remember ${miss.name}` : 'Root Rush',
+        lead: missHero
+          ? 'Play again is just for fun.'
+          : `Match roots to meanings and rack up combos — every right answer in a row multiplies your score. Ten questions a run; beat your best.${recapLine}`,
+        ring: !missHero && played
           ? { pct: bestPct, label: gradeForPct(bestPct) }
           : undefined,
-        pmA: played ? `${bestStars}★ best` : undefined,
-        pmB: played
+        pmA: !missHero && played ? `${bestStars}★ best` : undefined,
+        pmB: !missHero && played
           ? bestScore > 0
             ? `${bestScore.toLocaleString('en-US')} combo`
             : 'Ten questions a run'

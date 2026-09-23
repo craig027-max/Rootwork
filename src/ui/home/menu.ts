@@ -280,7 +280,8 @@ export function listHeading(nextPlay: boolean, opts: { pathDone?: boolean } = {}
  * is not only on the Daily tile. A path-done Rush miss names Remember
  * so Play again does not hide Geo. After Daily is banked, name Continue
  * / Keep going so Play again does not hide Auto. Fresh Daily keeps the
- * combo line.
+ * combo line. Home lands on today's Rush — the row best / A ring must
+ * not sit over that same miss.
  */
 export function rushMenuSub(
   opts: {
@@ -447,7 +448,7 @@ export function buildMenu(
         learnName: opts.rushLearnName,
         keepGoing: opts.rushKeepGoing,
       }),
-      best: opts.rushBest,
+      best: opts.rushMissName ? undefined : opts.rushBest,
       preview: opts.rushPreview && opts.rushPreview.length > 0 ? opts.rushPreview : undefined,
     },
     {
