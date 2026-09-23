@@ -22,8 +22,8 @@
  * named. Overlay title / Home Daily lead now match that same name —
  * Done for today / Streak banked must not sit over Geo. Rush result
  * now matches that same chrome — the giant grade / NEW BEST must not
- * sit over Geo. Rush start now matches Home / result — Change level
- * must not put Play again back over Geo.
+ * sit over Geo. Rush start now matches Home / result — Change level must
+ * not put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),
  * Rush uses that same Continue {learn} / Keep going tap — Play again
