@@ -25,7 +25,9 @@
  * sit over Geo. Home Rush now matches that same chrome — Root Rush /
  * Best so far / the A ring must not sit over Geo. Rush start now
  * matches that same chrome — Test your roots / Best so far must not
- * sit over Geo. Change level must not put Play again back over Geo.
+ * sit over Geo. Home Daily now matches — Daily / DONE / Done for
+ * today / the 🔥 streak must not sit over Geo. Change level must
+ * not put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),
  * Rush uses that same Continue {learn} / Keep going tap — Play again

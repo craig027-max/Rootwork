@@ -149,6 +149,7 @@ describe('Daily done after a miss is Remember — not Done for today / Streak ba
     expect(vm.lead).toBe(dailyDoneLead(4, { missWaiting: true }));
     expect(vm.lead).toBe("Today's five are done. Same until tomorrow.");
     expect(String(vm.lead)).not.toMatch(/Streak banked|Done for today/i);
+    expect(vm.big).toBe(`Remember ${geo.root}`);
     expect(vm.waiting).toBe(todayMissRecap(geo.root));
     expect(vm.primary.label).toBe(rememberMissCtaLabel(geo.root));
   });
@@ -197,6 +198,7 @@ describe('Daily done after a miss is Remember — not Done for today / Streak ba
     });
     expect(lead.lead).toBe(dailyDoneLead(4));
     expect(String(lead.lead)).toMatch(/Streak banked/);
+    expect(lead.big).toBe('Daily');
   });
 
   it('keeps Continue Daily / unfinished Continue {learn} as Done for today', () => {
@@ -225,6 +227,7 @@ describe('Daily done after a miss is Remember — not Done for today / Streak ba
     expect(daily).toContain('done.celebrateDone');
     expect(daily).toContain("done.missWaiting ? ' is-miss'");
     expect(detail).toContain('dailyDoneLead(extra.streak, { missWaiting: Boolean(miss) })');
+    expect(detail).toContain("big: miss ? `Remember ${miss.name}` : 'Daily'");
     expect(css).toMatch(/\.q-done-title\.is-miss/);
     expect(css).toMatch(/\.q-stars\.is-miss/);
   });

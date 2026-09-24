@@ -37,7 +37,9 @@
  * sit over Geo. Home Rush now matches that same chrome — Root Rush /
  * Best so far / the A ring must not sit over Geo. Rush start now
  * matches that same chrome — Test your roots / Best so far must not
- * sit over Geo. Daily's last hold peeks Remember, not Keep going.
+ * sit over Geo. Home Daily now matches — Daily / DONE / Done for
+ * today / the 🔥 streak must not sit over Geo. Daily's last hold
+ * peeks Remember, not Keep going.
  * Continue / Keep going / Rush CTAs stay as #68 left them when no
  * miss is waiting.
  *
