@@ -44,8 +44,9 @@ import {
  * time and offers Continue Daily · 3 of 5 — same tap Home / result
  * already use. After Daily + a learn, an owned miss is Remember Geo —
  * Play again still starts Rush, but it is not the fat tap over Geo on
- * result, Home, or start (Change level), and the result title is
- * Remember Geo — not a giant grade / NEW BEST over that same miss.
+ * result, Home, or start (Change level), and start / result titles
+ * are Remember Geo — not Test your roots / Best so far / a giant
+ * grade / NEW BEST over that same miss.
  * After Daily is banked and Today still names Continue / Keep going,
  * that tap is the start / result hero — Play again stays the ghost
  * and the grade stays.
@@ -352,8 +353,14 @@ export function RootRush() {
         {phase === 'start' ? (
           <div className="q-card q-start">
             <div className="q-eyebrow"><span className="dot" /> Root Rush</div>
-            <h2 className="q-title">
-              Test your <span className="g">roots.</span>
+            <h2 className={`q-title${rushStart.missWaiting ? ' is-miss' : ''}`}>
+              {rushStart.title ? (
+                rushStart.title
+              ) : (
+                <>
+                  Test your <span className="g">roots.</span>
+                </>
+              )}
             </h2>
             <p className="q-sub">
               {rushStart.heroSub ?? (

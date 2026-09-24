@@ -55,7 +55,8 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  lead drops Streak banked while that miss is waiting. Rush result
  *  already drops the giant grade / NEW BEST (#76). The Home tile now
  *  matches that chrome — Root Rush / Best so far / the A ring must
- *  not sit over Geo. */
+ *  not sit over Geo. Rush start now matches — Test your roots /
+ *  Best so far must not sit over Geo. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {

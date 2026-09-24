@@ -69,6 +69,9 @@
 
 /* start */
 .q-title { font-family: var(--font-game); font-weight: 900; font-size: clamp(2rem,5.5vw,3.1rem); line-height: 1; letter-spacing: -0.02em; margin: 14px 0 14px; }
+.q-title.is-miss {
+  color: #ff8a8f;
+}
 .q-sub { font-size: 1rem; line-height: 1.6; color: var(--text-secondary); max-width: 46ch; }
 .q-sub b { color: var(--text-primary); }
 .q-lvl-label { font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--text-muted); margin: 26px 0 12px; }
@@ -343,6 +346,9 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-done-title {
     font-size: 1.25rem;
   }
+  .q-title.is-miss {
+    display: block;
+  }
   .q-done-title.is-miss {
     display: block;
     font-size: 1.55rem;
@@ -424,6 +430,7 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-rush-learn { display: flex; }
   .q-daily-wait.is-miss { display: block; }
   .q-go.is-miss { display: block; }
+  .q-title.is-miss { display: block; }
   .q-done-title.is-miss { display: block; }
   .q-stars.is-miss { display: block; }
   .q-start-actions { display: flex; }
