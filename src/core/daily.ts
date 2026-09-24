@@ -26,7 +26,9 @@
  * that same fat tap. Last hold peeks Remember when that miss is the
  * done hero — Keep going must not sit over Geo there either.
  * Daily done overlay / Home Daily lead now match that same name —
- * Done for today / Streak banked must not sit over Geo. The
+ * Done for today / Streak banked must not sit over Geo. Home
+ * Daily now matches that same chrome — Daily / DONE / Done for
+ * today / the 🔥 streak must not sit over Geo. The
  * five-are-done recap stays.
  */
 
@@ -335,9 +337,16 @@ export function dailyDoneLead(
 
 /**
  * Home Daily menu row after the five are banked — named recap, not a
- * nameless "Done for today · same five until tomorrow" dump.
+ * nameless "Done for today · same five until tomorrow" dump. A
+ * path-done Rush miss names Remember — DONE / Done for today must
+ * not sit over Geo.
  */
-export function dailyDoneMenuSub(names?: readonly string[]): string {
+export function dailyDoneMenuSub(
+  names?: readonly string[],
+  opts: { missName?: string } = {},
+): string {
+  const miss = opts.missName?.replace(/\s+/g, ' ').trim();
+  if (miss) return `Missed ${miss} · remember`;
   const cleaned = cleanDailyNames(names);
   if (cleaned.length === 0) return 'Done for today · same five until tomorrow';
   return `Done · ${cleaned.join(' · ')}`;

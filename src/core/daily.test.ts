@@ -260,6 +260,11 @@ describe('Daily mid-run resume + hold meaning', () => {
       'Done · Chron · Photo · Aqua',
     );
     expect(dailyDoneMenuSub([])).toBe('Done for today · same five until tomorrow');
+    expect(dailyDoneMenuSub(['Chron', 'Photo', 'Aqua'], { missName: 'Geo' })).toBe(
+      'Missed Geo · remember',
+    );
+    expect(dailyDoneMenuSub([], { missName: '  Geo  ' })).toBe('Missed Geo · remember');
+    expect(dailyDoneMenuSub(['Chron'], { missName: 'Geo' })).not.toMatch(/Done for today|Done ·/i);
     expect(dailyDoneOverlaySub(true)).toBe("Today's five are done. Same until tomorrow.");
     expect(dailyDoneOverlaySub(false)).toBe("Today's five are done. Replay is just for fun.");
     expect(dailyRecapChipLabel('Chron', true)).toBe('Remember Chron');

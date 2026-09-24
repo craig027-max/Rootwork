@@ -51,7 +51,9 @@ function palOf(root: Root) {
  * a Rush miss is still waiting. Last hold peeks that same Remember —
  * Keep going must not sit over Geo. Done title / Home Daily lead
  * match that same name — Done for today / Streak banked / the giant
- * ✓ must not sit over Geo. Finishing banks Daily XP; replays are free.
+ * ✓ must not sit over Geo. Home Daily now matches — Daily / DONE /
+ * Done for today / the 🔥 streak must not sit over Geo. Finishing
+ * banks Daily XP; replays are free.
  */
 export function DailyChallenge() {
   const entitled = useEntitledForDisplay();

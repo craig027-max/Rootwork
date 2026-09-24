@@ -56,7 +56,9 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  already drops the giant grade / NEW BEST (#76). The Home tile now
  *  matches that chrome — Root Rush / Best so far / the A ring must
  *  not sit over Geo. Rush start now matches — Test your roots /
- *  Best so far must not sit over Geo. */
+ *  Best so far must not sit over Geo. Home Daily now matches —
+ *  Daily / DONE / Done for today / the 🔥 streak must not sit
+ *  over Geo. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -242,7 +244,7 @@ export function buildDetailVM(
       jewel: item.jewel,
       animKey: item.key,
       eyebrow: 'Daily Challenge',
-      big: 'Daily',
+      big: miss ? `Remember ${miss.name}` : 'Daily',
       lead: doneLead
         ? doneLead
         : dailyResume == null

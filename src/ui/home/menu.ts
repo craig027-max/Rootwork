@@ -281,7 +281,8 @@ export function listHeading(nextPlay: boolean, opts: { pathDone?: boolean } = {}
  * so Play again does not hide Geo. After Daily is banked, name Continue
  * / Keep going so Play again does not hide Auto. Fresh Daily keeps the
  * combo line. Home lands on today's Rush — the row best / A ring must
- * not sit over that same miss.
+ * not sit over that same miss. Daily's own row matches — DONE /
+ * Done for today / the 🔥 streak must not sit over Geo.
  */
 export function rushMenuSub(
   opts: {
@@ -422,7 +423,7 @@ export function buildMenu(
     rushPreview?: { root: string; mean: string; ok?: boolean }[];
     /** Next unanswered Daily root name when a mid-run is live. */
     dailyNextName?: string;
-    /** Path-done Rush miss — menu row names Remember, not a combo-only dump. */
+    /** Path-done Rush miss — Rush + Daily rows name Remember, not a grade / DONE dump. */
     rushMissName?: string;
     /** Daily banked + Today still names this learn — not a combo-only dump. */
     rushLearnName?: string;
@@ -458,18 +459,25 @@ export function buildMenu(
       jewel: 'gold',
       title: 'Daily Challenge',
       sub: opts.dailyDone
-        ? dailyDoneMenuSub(opts.dailyPreview?.map((p) => p.root))
+        ? dailyDoneMenuSub(opts.dailyPreview?.map((p) => p.root), {
+            missName: opts.rushMissName,
+          })
         : opts.dailyNextName
           ? dailyNextSub(opts.dailyNextName)
           : opts.dailyResumeQi != null && opts.dailyResumeQi >= 1
             ? `Continue · ${(opts.dailyResumeQi ?? 0) + 1} of ${opts.dailyTotal ?? 5}`
             : 'Five fresh roots · keep your streak',
-      badge: opts.dailyDone
+      badge: opts.dailyDone && !opts.rushMissName
         ? 'DONE'
         : opts.dailyResumeQi != null && opts.dailyResumeQi >= 1
           ? `${opts.dailyResumeQi}/${opts.dailyTotal ?? 5}`
           : undefined,
-      best: opts.dailyStreak && opts.dailyStreak > 0 ? `🔥 ${opts.dailyStreak}` : undefined,
+      best:
+        opts.rushMissName
+          ? undefined
+          : opts.dailyStreak && opts.dailyStreak > 0
+            ? `🔥 ${opts.dailyStreak}`
+            : undefined,
       preview: opts.dailyPreview,
       previewDone: Boolean(opts.dailyDone && opts.dailyPreview && opts.dailyPreview.length > 0),
       previewResume: Boolean(
