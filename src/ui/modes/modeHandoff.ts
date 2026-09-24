@@ -24,8 +24,8 @@
  * now matches that same chrome — the giant grade / NEW BEST must not
  * sit over Geo. Home Rush now matches that same chrome — Root Rush /
  * Best so far / the A ring must not sit over Geo. Rush start now
- * matches Home / result — Change level must not put Play again back
- * over Geo.
+ * matches that same chrome — Test your roots / Best so far must not
+ * sit over Geo. Change level must not put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),
  * Rush uses that same Continue {learn} / Keep going tap — Play again
@@ -303,11 +303,15 @@ export interface RushStartVM {
   learnWaiting: boolean;
   /** Miss landing copy — not the combo pitch over Geo. */
   heroSub: string | null;
+  /** Path-done Rush miss — Remember Geo, not Test your roots. */
+  title: string | null;
 }
 
 /** Rush start: Play again after a real run, with the same best recap as Home.
- *  After Daily + a learn, an owned miss / unfinished learn is the fat tap —
- *  same hero Home / result already use. Continue Daily stays a ghost so
+ *  After Daily + a learn, an owned miss is Remember Geo — Test your
+ *  roots / Best so far must not sit over that same coral miss. An
+ *  unfinished learn is the fat tap — same hero Home / result already
+ *  use, and the graded recap stays. Continue Daily stays a ghost so
  *  mid-run Play again is still the one-tap (Home Rush tile). */
 export function buildRushStart(
   opts: {
@@ -345,7 +349,7 @@ export function buildRushStart(
     : null;
   return {
     goLabel: opts.runs > 0 ? 'Play again ›' : 'Start round ›',
-    recap: recap ? `Best so far — ${recap}` : null,
+    recap: miss ? null : recap ? `Best so far — ${recap}` : null,
     waiting,
     continueDaily,
     rememberMiss: miss ? rememberMissCtaLabel(miss.name) : null,
@@ -357,6 +361,7 @@ export function buildRushStart(
     missWaiting: Boolean(miss),
     learnWaiting: Boolean(learn),
     heroSub: miss ? 'Play again is just for fun.' : null,
+    title: miss ? `Remember ${miss.name}` : null,
   };
 }
 
