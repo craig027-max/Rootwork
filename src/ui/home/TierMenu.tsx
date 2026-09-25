@@ -126,7 +126,7 @@ export function TierMenu({
               })}
             </span>
           ) : null}
-          {it.kind === 'tier' && !it.locked && !playNow ? (
+          {it.kind === 'tier' && !it.locked && !playNow && !it.missName ? (
             <span className="ww-menu-bar">
               <i style={{ width: `${it.pct}%` }} />
             </span>

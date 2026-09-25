@@ -18,6 +18,8 @@ import {
   recapDeckEntry,
   recapOpenForId,
   recapOpenForRoot,
+  rememberHintLine,
+  rememberLeadLine,
   rememberMissLine,
   entryAfterSuccess,
   hearHoldLine,
@@ -181,6 +183,24 @@ describe('Remember one-beat: hold meaning, Home — not Geo', () => {
     expect(rememberMissLine('Geo', 'earth').toLowerCase()).not.toMatch(
       /try again|you've got this|shame|stupid|fail|loser/,
     );
+  });
+
+  it('Remember visit after a Rush miss is honest — not You already own', () => {
+    expect(rememberLeadLine('Geo')).toBe(
+      'You already own Geo. Tap what it means — or which word it builds. Then Home.',
+    );
+    expect(rememberLeadLine('Geo', { missed: true })).toBe(
+      'You missed Geo in Rush. Tap what it means — then Home.',
+    );
+    expect(rememberLeadLine('  Chron  ', { missed: true })).toBe(
+      'You missed Chron in Rush. Tap what it means — then Home.',
+    );
+    expect(rememberLeadLine('Geo', { missed: true })).not.toMatch(/You already own|builds/);
+    expect(rememberHintLine('Geo')).toBe('Remember Geo — one tap. No shame if you miss.');
+    expect(rememberHintLine('Geo', { missed: true })).toBe(
+      'Remember Geo — you missed this in Rush.',
+    );
+    expect(rememberHintLine('Geo', { missed: true })).not.toMatch(/No shame|already own/);
   });
 
   it('hides Next and Rush so Remember cannot dump onto Geo', () => {

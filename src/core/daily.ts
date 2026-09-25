@@ -30,6 +30,8 @@
  * Daily now matches that same chrome — Daily / DONE / Done for
  * today / the 🔥 streak must not sit over Geo. Boot Continue /
  * the Home HERE tile now match — Continue {learn} must not sit
+ * over Geo. Progress chrome + the Remember visit now match —
+ * Jump back in / Tap continue / You already own must not sit
  * over Geo. The five-are-done recap stays.
  */
 

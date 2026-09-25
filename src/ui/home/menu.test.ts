@@ -409,6 +409,9 @@ describe('copy', () => {
     expect(listHeading(false)).toBe('Jump back in');
     expect(listHeading(false, { pathDone: true })).toBe('Keep going');
     expect(listHeading(true, { pathDone: true })).toBe('Start playing');
+    expect(listHeading(false, { missWaiting: true })).toBe('Remember');
+    expect(listHeading(false, { pathDone: true, missWaiting: true })).toBe('Remember');
+    expect(listHeading(true, { missWaiting: true })).toBe('Start playing');
   });
 
   it('names the next root on the primary button — Play, not Continue, while Starter is open', () => {

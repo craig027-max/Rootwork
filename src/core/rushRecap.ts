@@ -228,6 +228,19 @@ export function listOwnedRushMissIds(
   return ids;
 }
 
+/** True when this owned Rush miss is still waiting to be Remembered. */
+export function isOwnedRushMiss(
+  id: string,
+  recap: RushRecap | null | undefined,
+  progress: Record<string, { completedAt?: number; reviewedAt?: number }>,
+  day: string,
+  opts: { exclude?: Iterable<string | null | undefined> } = {},
+): boolean {
+  const needle = id.replace(/\s+/g, ' ').trim();
+  if (!needle) return false;
+  return listOwnedRushMissIds(recap, progress, day, opts).includes(needle);
+}
+
 /** Fat tap after Daily + a learn are done but a Rush miss still waits. */
 export function rememberMissCtaLabel(rootName: string): string {
   const name = rootName.replace(/\s+/g, ' ').trim();

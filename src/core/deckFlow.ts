@@ -185,6 +185,27 @@ export function rememberMissLine(rootName: string, mean: string): string {
   return `Nope — ${name} means ${spokenMean}.`;
 }
 
+/**
+ * Remember visit lead. A Rush miss is honest — You already own must
+ * not sit over Geo after Home / Continue already named Missed Geo.
+ */
+export function rememberLeadLine(rootName: string, opts: { missed?: boolean } = {}): string {
+  const name = rootName.replace(/\s+/g, ' ').trim() || 'this root';
+  if (opts.missed) return `You missed ${name} in Rush. Tap what it means — then Home.`;
+  return `You already own ${name}. Tap what it means — or which word it builds. Then Home.`;
+}
+
+/** Remember quiz hint. Rush miss names the miss — not a generic one-tap. */
+export function rememberHintLine(rootName: string, opts: { missed?: boolean } = {}): string {
+  const name = rootName.replace(/\s+/g, ' ').trim();
+  if (opts.missed) {
+    return name ? `Remember ${name} — you missed this in Rush.` : 'Remember — you missed this in Rush.';
+  }
+  return name
+    ? `Remember ${name} — one tap. No shame if you miss.`
+    : 'Remember — one tap. No shame if you miss.';
+}
+
 export function starterDoneLine(): string {
   return 'Starter done. Nice work.';
 }
