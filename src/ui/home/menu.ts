@@ -78,6 +78,8 @@ export interface TierItem {
   current: boolean;
   /** Returning-dashboard resume: the next unlearned root this row continues into. */
   resumeName?: string;
+  /** Path-done Rush miss — HERE / Next · Auto must not sit over Geo. */
+  missName?: string;
 }
 
 export type MenuItem = ModeItem | TierItem;
@@ -282,7 +284,9 @@ export function listHeading(nextPlay: boolean, opts: { pathDone?: boolean } = {}
  * / Keep going so Play again does not hide Auto. Fresh Daily keeps the
  * combo line. Home lands on today's Rush — the row best / A ring must
  * not sit over that same miss. Daily's own row matches — DONE /
- * Done for today / the 🔥 streak must not sit over Geo.
+ * Done for today / the 🔥 streak must not sit over Geo. The HERE /
+ * Continue tile now matches — Next · Auto / Continue {learn} must
+ * not sit over Geo.
  */
 export function rushMenuSub(
   opts: {
@@ -423,7 +427,7 @@ export function buildMenu(
     rushPreview?: { root: string; mean: string; ok?: boolean }[];
     /** Next unanswered Daily root name when a mid-run is live. */
     dailyNextName?: string;
-    /** Path-done Rush miss — Rush + Daily rows name Remember, not a grade / DONE dump. */
+    /** Path-done Rush miss — Rush / Daily / HERE rows name Remember, not Continue {learn}. */
     rushMissName?: string;
     /** Daily banked + Today still names this learn — not a combo-only dump. */
     rushLearnName?: string;
@@ -491,19 +495,21 @@ export function buildMenu(
     },
   ];
 
+  const missName = opts.rushMissName?.replace(/\s+/g, ' ').trim() || undefined;
   const tiers: TierItem[] = TIERS.map((tier, i) => {
     const t = (i + 1) as TierNum;
     const meta = TIER_META[i]!;
     const { done, total, pct } = tierStats(t, completed);
     const locked = t !== 1 && !entitled;
     const current = !locked && t === opts.currentTier;
+    const resumeNow = current && pct < 100;
     return {
       kind: 'tier',
       key: `tier-${t}`,
       icon: meta.icon,
       jewel: meta.jewel,
       title: `Tier ${t} · ${tier.n}`,
-      sub: tier.sub,
+      sub: resumeNow && missName ? `Missed ${missName} · remember` : tier.sub,
       t,
       done,
       total,
@@ -512,7 +518,8 @@ export function buildMenu(
       stars: starsForPct(pct),
       current,
       resumeName:
-        current && pct < 100 ? entryRootName(t, completed, entitled) : undefined,
+        resumeNow && !missName ? entryRootName(t, completed, entitled) : undefined,
+      missName: resumeNow ? missName : undefined,
     };
   });
 
