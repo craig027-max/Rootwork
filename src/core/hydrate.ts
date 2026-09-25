@@ -3,11 +3,13 @@ import { ROOTS, isRootOpenable, moduleIdOfRoot, resumeRootId, rootId } from '../
 import { getCurrentUser, getSession, onAuthStateChange, signInAnonymously } from './auth';
 import {
   dailySeed,
+  latestCompletedRootIdOnDay,
   liveDailyResumeQi,
   localDayKey,
   pickDailyRoots,
   resolveBootResume,
 } from './daily';
+import { listOwnedRushMissIds, todayRushRecap } from './rushRecap';
 import { flushPendingPushes, getProgress, syncLocalToRemote } from './progress';
 import { getProfile, getStudentProfiles } from './profile';
 import { gateEntitled, getEntitlement, isEntitlementActive } from './entitlement';
@@ -179,7 +181,9 @@ function routeParentLanding(students: StudentProfile[]): void {
 /**
  * Boot-time resume: drop a returning learner straight back into the Continue
  * they already named. A live Daily mid-run wins — Chron, not Geo — using
- * the same entitled + deal rules Home / Rush use. Only fires on home.
+ * the same entitled + deal rules Home / Rush use. After Daily + a learn,
+ * an owned Rush miss is Remember — Continue {learn} must not dump over
+ * Geo. Only fires on home.
  */
 function routeResume(): void {
   const store = useWondralStore.getState();
@@ -194,6 +198,15 @@ function routeResume(): void {
     ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
     dailySeed(day, store.activeStudentId),
   );
+  const nextRootId = resumeRootId(store.completedRoots, entitled);
+  const learnedId = latestCompletedRootIdOnDay(store.progress, day);
+  const rememberMissId =
+    listOwnedRushMissIds(
+      todayRushRecap(store.rushRecap, store.activeStudentId, day),
+      store.progress,
+      day,
+      { exclude: [learnedId, nextRootId, ...deal.map((r) => rootId(r))] },
+    )[0] ?? null;
   const boot = resolveBootResume({
     dailyResumeQi: liveDailyResumeQi(
       store.dailyRun,
@@ -203,9 +216,13 @@ function routeResume(): void {
       store.stats.lastDailyDay,
     ),
     dailyTotal: deal.length,
-    nextRootId: resumeRootId(store.completedRoots, entitled),
+    nextRootId,
+    rememberMissId,
+    dailyDone: store.stats.lastDailyDay === day,
+    learnedToday: learnedId != null,
   });
   if (boot.kind === 'daily') store.setView('daily');
+  else if (boot.kind === 'remember') store.openRoot(boot.rootId, { entry: 'remember' });
   else if (boot.kind === 'learn') store.openRoot(boot.rootId);
 }
 

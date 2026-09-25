@@ -657,6 +657,9 @@ describe('Today checklist wiring + phone layout', () => {
     expect(hydrate).toContain('resolveBootResume');
     expect(hydrate).toContain('liveDailyResumeQi');
     expect(hydrate).toContain("setView('daily')");
+    expect(hydrate).toContain("boot.kind === 'remember'");
+    expect(hydrate).toContain("entry: 'remember'");
+    expect(hydrate).toContain('listOwnedRushMissIds');
     expect(hydrate).not.toContain('if (target) store.openRoot(target)');
     expect(store).toContain('saveDailyRun');
     expect(store).toContain('clearDailyRun');

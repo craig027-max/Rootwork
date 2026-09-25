@@ -93,12 +93,12 @@ export function TierMenu({
             {it.kind === 'mode' && it.badge ? <span className="ww-tag">{it.badge}</span> : null}
             {it.kind === 'tier' && it.t === 1 ? <span className="ww-tag">FREE</span> : null}
             {playNow ? <span className="ww-tag here">PLAY</span> : null}
-            {it.kind === 'tier' && it.current && !playNow ? (
+            {it.kind === 'tier' && it.current && !playNow && !it.missName ? (
               <span className="ww-tag here">HERE</span>
             ) : null}
           </span>
           <span className="sub">
-            {it.kind === 'tier' && it.resumeName && !playNow
+            {it.kind === 'tier' && it.resumeName && !playNow && !it.missName
               ? `Next · ${it.resumeName}`
               : it.sub}
           </span>
@@ -146,6 +146,8 @@ export function TierMenu({
                   {'☆'.repeat(5 - it.stars)}
                 </span>
               </>
+            ) : it.missName ? (
+              <span className="pct">›</span>
             ) : it.resumeName ? (
               <>
                 <span className="pct">{it.resumeName} ›</span>

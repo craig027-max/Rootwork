@@ -28,8 +28,9 @@
  * Daily done overlay / Home Daily lead now match that same name —
  * Done for today / Streak banked must not sit over Geo. Home
  * Daily now matches that same chrome — Daily / DONE / Done for
- * today / the 🔥 streak must not sit over Geo. The
- * five-are-done recap stays.
+ * today / the 🔥 streak must not sit over Geo. Boot Continue /
+ * the Home HERE tile now match — Continue {learn} must not sit
+ * over Geo. The five-are-done recap stays.
  */
 
 import type { Root } from '../data/roots';
@@ -204,23 +205,51 @@ export function liveDailyResumeQi(
 export type BootResume =
   | { kind: 'daily' }
   | { kind: 'learn'; rootId: string }
+  | { kind: 'remember'; rootId: string }
   | { kind: 'home' };
+
+/**
+ * Most recently completed root on `day`. Same stamp Home uses for Learned
+ * {root} — boot must not invent a learn-today that Today would not name.
+ */
+export function latestCompletedRootIdOnDay(
+  progress: Record<string, { completedAt?: number }>,
+  day: string,
+): string | null {
+  let best: { id: string; at: number } | null = null;
+  for (const [id, rec] of Object.entries(progress)) {
+    const at = rec?.completedAt;
+    if (typeof at !== 'number' || !Number.isFinite(at)) continue;
+    if (localDayKey(new Date(at)) !== day) continue;
+    if (!best || at > best.at) best = { id, at };
+  }
+  return best?.id ?? null;
+}
 
 /**
  * Boot Continue. A live Daily mid-run is the same hero Rush / Home already
  * name — do not dump them onto Geo while Chron is still waiting.
- * Fresh / finished / junk indexes fall through to the next learn, then Home.
+ * After Daily + a learn, an owned Rush miss is Remember — do not dump
+ * them onto Continue {learn} over Geo. Unfinished Continue {learn}
+ * stays first. Fresh / finished / junk indexes fall through to the
+ * next learn, then Home.
  */
 export function resolveBootResume(opts: {
   dailyResumeQi?: number | null;
   dailyTotal?: number;
   nextRootId: string | null;
+  rememberMissId?: string | null;
+  dailyDone?: boolean;
+  learnedToday?: boolean;
 }): BootResume {
   const total = opts.dailyTotal && opts.dailyTotal > 0 ? opts.dailyTotal : 5;
   const qi = opts.dailyResumeQi;
   if (typeof qi === 'number' && Number.isInteger(qi) && qi >= 1 && qi < total) {
     return { kind: 'daily' };
   }
+  const missId = opts.rememberMissId?.replace(/\s+/g, ' ').trim();
+  const pathClear = Boolean(opts.dailyDone) && (Boolean(opts.learnedToday) || !opts.nextRootId);
+  if (missId && pathClear) return { kind: 'remember', rootId: missId };
   if (opts.nextRootId) return { kind: 'learn', rootId: opts.nextRootId };
   return { kind: 'home' };
 }

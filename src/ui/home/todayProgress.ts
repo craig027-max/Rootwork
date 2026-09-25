@@ -38,15 +38,22 @@
  * Best so far / the A ring must not sit over Geo. Rush start now
  * matches that same chrome — Test your roots / Best so far must not
  * sit over Geo. Home Daily now matches — Daily / DONE / Done for
- * today / the 🔥 streak must not sit over Geo. Daily's last hold
- * peeks Remember, not Keep going.
+ * today / the 🔥 streak must not sit over Geo. Boot Continue /
+ * the Home HERE tile now match — Continue {learn} must not sit
+ * over Geo. Daily's last hold peeks Remember, not Keep going.
  * Continue / Keep going / Rush CTAs stay as #68 left them when no
  * miss is waiting.
  *
  * Pure so tests lock the copy without I/O.
  */
-import { continueDailyLabel, dailyNextRowLabel, localDayKey } from '../../core/daily';
 import {
+  continueDailyLabel,
+  dailyNextRowLabel,
+  latestCompletedRootIdOnDay,
+  localDayKey,
+} from '../../core/daily';
+import {
+  listOwnedRushMissIds,
   rememberMissCtaLabel,
   todayMissRecap,
   type RushRecap,
@@ -135,14 +142,7 @@ export function learnedRootToday(
   progress: Record<string, ProgressStamp>,
   day: string,
 ): string | null {
-  let best: { id: string; at: number } | null = null;
-  for (const [id, rec] of Object.entries(progress)) {
-    const at = rec?.completedAt;
-    if (typeof at !== 'number' || !Number.isFinite(at)) continue;
-    if (localDayKey(new Date(at)) !== day) continue;
-    if (!best || at > best.at) best = { id, at };
-  }
-  return best?.id ?? null;
+  return latestCompletedRootIdOnDay(progress, day);
 }
 
 /**
@@ -208,28 +208,7 @@ export function listRushMissRemember(
   day: string,
   opts: { exclude?: Iterable<string | null | undefined> } = {},
 ): string[] {
-  if (!recap || recap.day !== day || recap.roots.length === 0) return [];
-  const exclude = new Set(
-    [...(opts.exclude ?? [])].filter((id): id is string => typeof id === 'string' && id.length > 0),
-  );
-  const ids: string[] = [];
-  for (const line of recap.roots) {
-    if (line.ok || exclude.has(line.id) || !ROOTS_BY_ID[line.id]) continue;
-    const rec = progress[line.id];
-    const at = rec?.completedAt;
-    if (typeof at !== 'number' || !Number.isFinite(at)) continue;
-    if (localDayKey(new Date(at)) === day) continue;
-    const reviewed = rec?.reviewedAt;
-    if (
-      typeof reviewed === 'number' &&
-      Number.isFinite(reviewed) &&
-      localDayKey(new Date(reviewed)) === day
-    ) {
-      continue;
-    }
-    ids.push(line.id);
-  }
-  return ids;
+  return listOwnedRushMissIds(recap, progress, day, opts);
 }
 
 /** First remaining owned Rush miss — the Today tap. */

@@ -17,6 +17,7 @@
  */
 
 import { ROOTS_BY_ID } from '../data/roots';
+import { localDayKey } from './daily';
 
 /** Home Rush tile peeks this many of the last run — the result still lists all. */
 export const RUSH_RECAP_PREVIEW_COUNT = 4;
@@ -189,6 +190,42 @@ export function rushRecapChipLabel(
   if (ok === false) return name ? `Missed ${name}` : 'Missed';
   if (!name) return owned ? 'Remember' : 'Meet this root';
   return owned ? `Remember ${name}` : `Meet ${name}`;
+}
+
+/**
+ * Owned misses from today's last Rush that are still unreviewed.
+ * Play order — the Missed chips they already see — not oldest stale Bio.
+ * Hits, unowned Meet roots, today's learn, and reviewed-today drop.
+ * Yesterday's recap must not steal Today's Remember.
+ */
+export function listOwnedRushMissIds(
+  recap: RushRecap | null | undefined,
+  progress: Record<string, { completedAt?: number; reviewedAt?: number }>,
+  day: string,
+  opts: { exclude?: Iterable<string | null | undefined> } = {},
+): string[] {
+  if (!recap || recap.day !== day || recap.roots.length === 0) return [];
+  const exclude = new Set(
+    [...(opts.exclude ?? [])].filter((id): id is string => typeof id === 'string' && id.length > 0),
+  );
+  const ids: string[] = [];
+  for (const line of recap.roots) {
+    if (line.ok || exclude.has(line.id) || !ROOTS_BY_ID[line.id]) continue;
+    const rec = progress[line.id];
+    const at = rec?.completedAt;
+    if (typeof at !== 'number' || !Number.isFinite(at)) continue;
+    if (localDayKey(new Date(at)) === day) continue;
+    const reviewed = rec?.reviewedAt;
+    if (
+      typeof reviewed === 'number' &&
+      Number.isFinite(reviewed) &&
+      localDayKey(new Date(reviewed)) === day
+    ) {
+      continue;
+    }
+    ids.push(line.id);
+  }
+  return ids;
 }
 
 /** Fat tap after Daily + a learn are done but a Rush miss still waits. */

@@ -210,7 +210,11 @@ export function Home() {
       return;
     }
     if (item.locked) requestUpgrade();
-    else openTier(item.t);
+    else if (missHero && rushMissId && isResumeTier(item)) {
+      openRoot(rushMissId, { entry: 'remember' });
+    } else {
+      openTier(item.t);
+    }
   }
 
   function onSecondary(item: MenuItem) {

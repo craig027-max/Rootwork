@@ -199,6 +199,52 @@ describe('Daily mid-run resume + hold meaning', () => {
     expect(resolveBootResume({ nextRootId: null })).toEqual({ kind: 'home' });
   });
 
+  it('boots into Remember after a path-done miss — not Continue {learn}', () => {
+    expect(
+      resolveBootResume({
+        dailyResumeQi: null,
+        dailyTotal: 5,
+        nextRootId: 'astro',
+        rememberMissId: 'geo',
+        dailyDone: true,
+        learnedToday: true,
+      }),
+    ).toEqual({ kind: 'remember', rootId: 'geo' });
+    expect(
+      resolveBootResume({
+        nextRootId: null,
+        rememberMissId: 'geo',
+        dailyDone: true,
+        learnedToday: false,
+      }),
+    ).toEqual({ kind: 'remember', rootId: 'geo' });
+    expect(
+      resolveBootResume({
+        dailyResumeQi: 2,
+        dailyTotal: 5,
+        nextRootId: 'astro',
+        rememberMissId: 'geo',
+        dailyDone: false,
+        learnedToday: false,
+      }),
+    ).toEqual({ kind: 'daily' });
+    expect(
+      resolveBootResume({
+        nextRootId: 'astro',
+        rememberMissId: 'geo',
+        dailyDone: true,
+        learnedToday: false,
+      }),
+    ).toEqual({ kind: 'learn', rootId: 'astro' });
+    expect(
+      resolveBootResume({
+        nextRootId: 'astro',
+        dailyDone: true,
+        learnedToday: true,
+      }),
+    ).toEqual({ kind: 'learn', rootId: 'astro' });
+  });
+
   it('parses a stored blob and drops junk', () => {
     expect(parseDailyRun(run)).toEqual(run);
     expect(parseDailyRun({ day: today, studentId: null, qi: 1 })).toEqual({
