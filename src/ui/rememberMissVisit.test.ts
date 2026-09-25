@@ -101,10 +101,12 @@ describe('Remember visit after a miss is honest — not You already own / Tap co
   it('wires Deck + Home Progress — miss lead, Remember heading, no % bar over Geo', () => {
     expect(deck).toContain('isOwnedRushMiss');
     expect(deck).toContain('todayRushRecap');
+    expect(deck).toContain('missRememberVisit');
     expect(deck).toContain('rememberLeadLine(root.root, { missed: missRemember })');
     expect(deck).toContain('rememberHintLine(root.root, { missed: missRemember })');
     expect(deck).toContain("ww-lead2${missRemember ? ' is-remember-miss' : ''}");
     expect(deck).toContain("ww-muted${missRemember ? ' is-remember-miss' : ''}");
+    expect(deck).toContain('done && !remembering');
     expect(deck).not.toContain('You already own ${root.root}');
     expect(home).toContain('missWaiting: missHero');
     expect(home).toContain("? 'Remember'");

@@ -102,6 +102,7 @@ export function Deck() {
   const [listenKind, setListenKind] = useState<'hear' | 'yes' | null>(null);
   const [hearBeat, setHearBeat] = useState<0 | 1 | 2>(0);
   const hearGen = useRef(0);
+  const missRememberVisit = useRef<string | null>(null);
   const [recall, setRecall] = useState<{
     beat: RecallBeat;
     picked: number | null;
@@ -253,9 +254,14 @@ export function Deck() {
   const openSplit = splitForOpenWord(root.words, openWord);
   const remembering = deckEntry === 'remember';
   const day = localDayKey();
-  const missRemember =
+  const missRememberLive =
     remembering &&
     isOwnedRushMiss(id, todayRushRecap(rushRecap, activeStudentId, day), progress, day);
+  // Hold the miss lead for this visit — a correct tap stamps review and
+  // must not flip the card to You already own over Geo.
+  if (remembering && missRememberLive) missRememberVisit.current = id;
+  else if (!remembering || missRememberVisit.current !== id) missRememberVisit.current = null;
+  const missRemember = remembering && (missRememberLive || missRememberVisit.current === id);
 
   function go(dir: 1 | -1) {
     if (!allowManualStep(useWondralStore.getState().correctAdvance)) return;
@@ -530,7 +536,7 @@ export function Deck() {
                   ? rememberHintLine(root.root, { missed: missRemember })
                   : "One tap. No shame if you miss — we'll show you."}
               </span>
-            ) : done ? (
+            ) : done && !remembering ? (
               <Badge variant="solid" jewel="jade">
                 ✓ Learned
               </Badge>

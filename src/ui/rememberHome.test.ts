@@ -38,6 +38,7 @@ describe('Remember {root}: one-beat visit, then Home', () => {
     expect(deck).toContain('rememberLeadLine');
     expect(deck).toContain('rememberHintLine');
     expect(deck).toContain('isOwnedRushMiss');
+    expect(deck).toContain('missRememberVisit');
     expect(deck).toContain('deckEntry');
     expect(store).toContain('deckEntryForOpen');
   });
