@@ -30,7 +30,9 @@
  * the Home HERE tile now match — Continue {learn} must not sit
  * over Geo. Progress chrome + the Remember visit now match —
  * Jump back in / Tap continue / You already own must not sit
- * over Geo. Change level must not put Play again back over Geo.
+ * over Geo. Complete Starter now matches — every root owned /
+ * Remember Bio / Your progress must not sit over Geo.
+ * Change level must not put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),
  * Rush uses that same Continue {learn} / Keep going tap — Play again

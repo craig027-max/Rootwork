@@ -468,6 +468,10 @@ describe('homeSecondaryAction — Browse / See all is the catalog, not Bio', () 
     }
     expect(starterRow.pct).toBe(100);
     expect(homeSecondaryAction(starterRow)).toEqual({ kind: 'index' });
+    expect(homeSecondaryAction(starterRow, { rememberMissId: 'geo' })).toEqual({
+      kind: 'tier',
+      t: 1,
+    });
     expect(homeSecondaryAction(builderRow)).toEqual({ kind: 'tier', t: 2 });
   });
 

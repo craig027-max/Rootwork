@@ -78,7 +78,7 @@ export interface TierItem {
   current: boolean;
   /** Returning-dashboard resume: the next unlearned root this row continues into. */
   resumeName?: string;
-  /** Path-done Rush miss — HERE / Next · Auto must not sit over Geo. */
+  /** Path-done Rush miss — HERE / complete Starter must not sit over Geo. */
   missName?: string;
 }
 
@@ -290,7 +290,8 @@ export function listHeading(
  * not sit over that same miss. Daily's own row matches — DONE /
  * Done for today / the 🔥 streak must not sit over Geo. The HERE /
  * Continue tile now matches — Next · Auto / Continue {learn} must
- * not sit over Geo.
+ * not sit over Geo. Complete Starter now matches — every root
+ * owned / Remember Bio / Your progress must not sit over Geo.
  */
 export function rushMenuSub(
   opts: {
@@ -358,6 +359,16 @@ export function isResumeTier(item: MenuItem): boolean {
   return item.kind === 'tier' && item.current && !item.locked && item.pct < 100;
 }
 
+/** Finished tier recap — Remember Bio, not unfinished Continue. */
+export function isCompleteTier(item: MenuItem): boolean {
+  return item.kind === 'tier' && !item.locked && item.pct === 100;
+}
+
+/** Path-done Rush miss — HERE or complete Starter names Remember, not owned chrome. */
+export function isMissProgressTier(item: MenuItem): boolean {
+  return item.kind === 'tier' && Boolean(item.missName);
+}
+
 /**
  * Home preview ghost tap. Rush mid-run is Continue Daily — Chron, not Bio.
  * Path-done Rush miss: Remember is the fat tap, so Play again is the ghost.
@@ -395,7 +406,12 @@ export function homeSecondaryAction(
     return { kind: 'index' };
   }
   if (item.locked) return { kind: 'upgrade' };
-  if (item.pct === 100) return { kind: 'index' };
+  if (item.pct === 100) {
+    // Path-done miss: Remember Bio is the ghost — See all must not
+    // dump the catalog over Geo.
+    if (opts.rememberMissId) return { kind: 'tier', t: item.t };
+    return { kind: 'index' };
+  }
   return { kind: 'tier', t: item.t };
 }
 
@@ -431,7 +447,7 @@ export function buildMenu(
     rushPreview?: { root: string; mean: string; ok?: boolean }[];
     /** Next unanswered Daily root name when a mid-run is live. */
     dailyNextName?: string;
-    /** Path-done Rush miss — Rush / Daily / HERE rows name Remember, not Continue {learn}. */
+    /** Path-done Rush miss — Rush / Daily / HERE / complete Starter name Remember. */
     rushMissName?: string;
     /** Daily banked + Today still names this learn — not a combo-only dump. */
     rushLearnName?: string;
@@ -507,13 +523,15 @@ export function buildMenu(
     const locked = t !== 1 && !entitled;
     const current = !locked && t === opts.currentTier;
     const resumeNow = current && pct < 100;
+    const completeNow = !locked && pct === 100;
+    const missHere = Boolean(missName) && (resumeNow || completeNow);
     return {
       kind: 'tier',
       key: `tier-${t}`,
       icon: meta.icon,
       jewel: meta.jewel,
       title: `Tier ${t} · ${tier.n}`,
-      sub: resumeNow && missName ? `Missed ${missName} · remember` : tier.sub,
+      sub: missHere ? `Missed ${missName} · remember` : tier.sub,
       t,
       done,
       total,
@@ -523,7 +541,7 @@ export function buildMenu(
       current,
       resumeName:
         resumeNow && !missName ? entryRootName(t, completed, entitled) : undefined,
-      missName: resumeNow ? missName : undefined,
+      missName: missHere ? missName : undefined,
     };
   });
 

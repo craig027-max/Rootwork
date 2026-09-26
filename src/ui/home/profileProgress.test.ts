@@ -200,7 +200,7 @@ describe('Profile band wiring + phone layout', () => {
     expect(menu).toContain("return 'Start playing'");
     expect(menu).toContain("return 'Jump back in'");
     expect(menu).toContain('Continue ${opts.rootName}');
-    expect(detail).toContain('heroCta: firstPlay || resumeNow');
+    expect(detail).toContain('heroCta: firstPlay || resumeNow || missHero');
     expect(home).toContain('is-resume');
     expect(home).toContain('Tap continue');
   });

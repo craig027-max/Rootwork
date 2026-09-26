@@ -22,6 +22,7 @@ import {
   isDailyResumeItem,
   isNextPlayHome,
   isResumeTier,
+  isMissProgressTier,
   listHeading,
   pickCurrentTier,
   rushBestLabel,
@@ -210,7 +211,7 @@ export function Home() {
       return;
     }
     if (item.locked) requestUpgrade();
-    else if (missHero && rushMissId && isResumeTier(item)) {
+    else if (missHero && rushMissId && isMissProgressTier(item)) {
       openRoot(rushMissId, { entry: 'remember' });
     } else {
       openTier(item.t);
@@ -292,8 +293,8 @@ export function Home() {
       isDailyResumeItem(selected) ||
       (learnHero && selected.kind === 'mode' && selected.key === 'rush') ||
       (missHero &&
-        selected.kind === 'mode' &&
-        (selected.key === 'daily' || selected.key === 'rush')));
+        ((selected.kind === 'mode' && (selected.key === 'daily' || selected.key === 'rush')) ||
+          isMissProgressTier(selected))));
 
   return (
     <div className={`ww-home${nextPlay ? ' is-first' : ''}${resumeNow ? ' is-resume' : ''}`}>

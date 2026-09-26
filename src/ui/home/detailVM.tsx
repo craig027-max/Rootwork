@@ -62,7 +62,9 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  over Geo. Boot Continue / the Home HERE tile now match —
  *  Continue {learn} / Next · Auto must not sit over Geo.
  *  Progress chrome + the Remember visit now match — Jump back
- *  in / Tap continue / You already own must not sit over Geo. */
+ *  in / Tap continue / You already own must not sit over Geo.
+ *  Complete Starter now matches — every root owned / Remember
+ *  Bio / Your progress must not sit over Geo. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -329,13 +331,15 @@ export function buildDetailVM(
     rememberMissName: extra.rememberMissName,
     rememberAlso: extra.rememberAlso,
   });
-  const missHero = Boolean(miss && resumeNow && item.current);
+  const missHero = Boolean(miss && ((resumeNow && item.current) || complete));
   const missRoot = missHero && miss ? ROOTS_BY_ID[miss.id] : undefined;
   // First-run stays one Play {root} — no four-root dump. Returning dashboard
   // peeks the next unlearned roots, or recaps owned ones once the tier is done.
   // In-progress resume lifts Continue {root} to a hero tap so recap chrome
   // does not bury the one-tap. Path-done Rush miss: Remember Geo is that
   // tap — Continue {learn} / Next · Auto / the % ring must not sit over Geo.
+  // Complete Starter matches — every root owned / Remember Bio / the
+  // ✓ recap on Geo must not sit over that same miss.
   const peek = firstPlay
     ? []
     : tierTilePreview(item.t, extra.completed, extra.entitled, { complete });
@@ -351,7 +355,9 @@ export function buildDetailVM(
     eyebrow: item.title,
     big: missHero && miss ? `Remember ${miss.name}` : name,
     lead: missHero
-      ? 'Keep going is just for fun.'
+      ? complete
+        ? `Remember ${rootName} is just for fun.`
+        : 'Keep going is just for fun.'
       : firstPlay
         ? `Play to meet ${rootName}.`
         : complete
@@ -367,9 +373,15 @@ export function buildDetailVM(
         : complete
           ? 'Tier complete'
           : `${item.total - item.done} roots to go`,
-    samples: peek,
+    samples: peek.map((s) =>
+      missHero && miss && s.root === miss.name
+        ? { ...s, ok: false }
+        : complete
+          ? { ...s, ok: true }
+          : s,
+    ),
     sampleLines: !firstPlay && peek.length > 0,
-    samplesDone: complete && peek.length > 0,
+    samplesDone: complete && peek.length > 0 && !missHero,
     sampleTap: samplePeekTap({
       nextPlay: firstPlay,
       complete,
@@ -389,14 +401,14 @@ export function buildDetailVM(
           }),
     },
     secondary: missHero
-      ? { label: keepGoingLabel(rootName) }
+      ? { label: complete ? `Remember ${rootName} ›` : keepGoingLabel(rootName) }
       : complete
         ? { label: 'See all roots' }
         : undefined,
     waiting: missHero && miss ? todayMissRecap(miss.name, miss.also) : undefined,
     waitingMiss: missHero,
     scene: sceneFrom(sceneRoot, { key: 'dna', palKey: item.jewel, caption: name }),
-    heroCta: firstPlay || resumeNow,
+    heroCta: firstPlay || resumeNow || missHero,
   };
 }
 
