@@ -3,6 +3,7 @@ import { ROOTS, firstRoot, rootId, rootsInTier } from '../data/roots';
 import {
   RUSH_RECAP_PREVIEW_COUNT,
   homeRushRecapPreview,
+  isOwnedRushMiss,
   liveRushRecap,
   parseRushRecap,
   peekChipDone,
@@ -115,6 +116,35 @@ describe('rushHoldLine + rushMissLine + rushRecapChipLabel', () => {
     expect(rememberMissCtaLabel(geo.root)).toBe(`Remember ${geo.root} ›`);
     expect(todayMissRecap(geo.root)).toBe(`Remember ${geo.root} — missed in Rush`);
     expect(todayMissRecap(geo.root, photo.root)).toBe(`Remember ${geo.root} · then ${photo.root}`);
+  });
+});
+
+describe('isOwnedRushMiss', () => {
+  it('is true only for an owned unreviewed Rush miss on that day', () => {
+    const progress = {
+      [rootId(first)]: { completedAt: Date.parse('2026-09-01T15:00:00Z') },
+      [rootId(geo)]: { completedAt: Date.parse('2026-09-02T15:00:00Z') },
+      [rootId(photo)]: { completedAt: Date.parse('2026-09-03T15:00:00Z') },
+    };
+    expect(isOwnedRushMiss(rootId(geo), kidRecap, progress, '2026-09-15')).toBe(true);
+    expect(isOwnedRushMiss(rootId(first), kidRecap, progress, '2026-09-15')).toBe(false);
+    expect(isOwnedRushMiss(rootId(photo), kidRecap, progress, '2026-09-15')).toBe(false);
+    expect(
+      isOwnedRushMiss(
+        rootId(geo),
+        kidRecap,
+        {
+          ...progress,
+          [rootId(geo)]: {
+            completedAt: Date.parse('2026-09-02T15:00:00Z'),
+            reviewedAt: Date.parse('2026-09-15T18:00:00Z'),
+          },
+        },
+        '2026-09-15',
+      ),
+    ).toBe(false);
+    expect(isOwnedRushMiss(rootId(geo), kidRecap, progress, '2026-09-16')).toBe(false);
+    expect(isOwnedRushMiss('', kidRecap, progress, '2026-09-15')).toBe(false);
   });
 });
 

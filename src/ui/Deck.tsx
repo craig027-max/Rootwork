@@ -24,11 +24,15 @@ import {
   isLessonStudying,
   isRecallEntry,
   recapOpenForId,
+  rememberHintLine,
+  rememberLeadLine,
   rememberMissLine,
   showExampleWords,
   winLineOnCard,
   type AfterCorrectRecall,
 } from '../core/deckFlow';
+import { localDayKey } from '../core/daily';
+import { isOwnedRushMiss, todayRushRecap } from '../core/rushRecap';
 import { buildRecall, type RecallBeat } from '../core/recall';
 import {
   hearBeatChips,
@@ -76,6 +80,9 @@ function highlight(word: string, hl: string): ReactNode {
 export function Deck() {
   const currentRootId = useWondralStore((s) => s.currentRootId);
   const completed = useWondralStore((s) => s.completedRoots);
+  const progress = useWondralStore((s) => s.progress);
+  const rushRecap = useWondralStore((s) => s.rushRecap);
+  const activeStudentId = useWondralStore((s) => s.activeStudentId);
   const stats = useWondralStore((s) => s.stats);
   const completeRoot = useWondralStore((s) => s.completeRoot);
   const openRoot = useWondralStore((s) => s.openRoot);
@@ -95,6 +102,7 @@ export function Deck() {
   const [listenKind, setListenKind] = useState<'hear' | 'yes' | null>(null);
   const [hearBeat, setHearBeat] = useState<0 | 1 | 2>(0);
   const hearGen = useRef(0);
+  const missRememberVisit = useRef<string | null>(null);
   const [recall, setRecall] = useState<{
     beat: RecallBeat;
     picked: number | null;
@@ -245,6 +253,15 @@ export function Deck() {
   const quizRecall = recall && recall.rootId === id && !won ? recall : null;
   const openSplit = splitForOpenWord(root.words, openWord);
   const remembering = deckEntry === 'remember';
+  const day = localDayKey();
+  const missRememberLive =
+    remembering &&
+    isOwnedRushMiss(id, todayRushRecap(rushRecap, activeStudentId, day), progress, day);
+  // Hold the miss lead for this visit — a correct tap stamps review and
+  // must not flip the card to You already own over Geo.
+  if (remembering && missRememberLive) missRememberVisit.current = id;
+  else if (!remembering || missRememberVisit.current !== id) missRememberVisit.current = null;
+  const missRemember = remembering && (missRememberLive || missRememberVisit.current === id);
 
   function go(dir: 1 | -1) {
     if (!allowManualStep(useWondralStore.getState().correctAdvance)) return;
@@ -405,9 +422,9 @@ export function Deck() {
                 <span className="alt">{studying ? 'prove you know it' : root.alt}</span>
               </div>
               {studying ? (
-                <p className="ww-lead2">
+                <p className={`ww-lead2${missRemember ? ' is-remember-miss' : ''}`}>
                   {remembering
-                    ? `You already own ${root.root}. Tap what it means — or which word it builds. Then Home.`
+                    ? rememberLeadLine(root.root, { missed: missRemember })
                     : `Look at the scene. Then tap what ${root.root} means — or which word it builds.`}
                 </p>
               ) : (
@@ -514,12 +531,12 @@ export function Deck() {
                 )}
               </Button>
             ) : quizRecall && quizRecall.picked === null ? (
-              <span className="ww-muted">
+              <span className={`ww-muted${missRemember ? ' is-remember-miss' : ''}`}>
                 {remembering
-                  ? `Remember ${root.root} — one tap. No shame if you miss.`
+                  ? rememberHintLine(root.root, { missed: missRemember })
                   : "One tap. No shame if you miss — we'll show you."}
               </span>
-            ) : done ? (
+            ) : done && !remembering ? (
               <Badge variant="solid" jewel="jade">
                 ✓ Learned
               </Badge>

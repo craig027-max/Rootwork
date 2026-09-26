@@ -270,9 +270,13 @@ export function isDailyResumeItem(item: MenuItem): boolean {
   return item.kind === 'mode' && item.key === 'daily' && Boolean(item.previewResume);
 }
 
-/** Kid-facing list heading: start/play, resume, or keep-going after Today ✓. */
-export function listHeading(nextPlay: boolean, opts: { pathDone?: boolean } = {}): string {
+/** Kid-facing list heading: start/play, Remember after a miss, or keep-going after Today ✓. */
+export function listHeading(
+  nextPlay: boolean,
+  opts: { pathDone?: boolean; missWaiting?: boolean } = {},
+): string {
   if (nextPlay) return 'Start playing';
+  if (opts.missWaiting) return 'Remember';
   if (opts.pathDone) return 'Keep going';
   return 'Jump back in';
 }

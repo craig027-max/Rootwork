@@ -312,7 +312,9 @@ export function Home() {
       <div className={`ww-home-grid${nextPlay ? ' is-first' : ''}${resumeNow ? ' is-resume' : ''}`}>
         <div className="ww-home-list">
           <div className="ww-panel-label">
-            <span className="n">{listHeading(nextPlay, { pathDone: today.pathDone })}</span>
+            <span className="n">
+              {listHeading(nextPlay, { pathDone: today.pathDone, missWaiting: missHero })}
+            </span>
             {nextPlay ? null : (
               <>
                 <span className="s kb-hint">↑ ↓ to browse · Enter to start</span>
@@ -346,9 +348,11 @@ export function Home() {
                   : nextPlay
                     ? 'Tap play'
                     : resumeNow
-                      ? today.pathDone
-                        ? 'Keep going'
-                        : 'Tap continue'
+                      ? missHero
+                        ? 'Remember'
+                        : today.pathDone
+                          ? 'Keep going'
+                          : 'Tap continue'
                       : 'Your progress'}
             </span>
           </div>

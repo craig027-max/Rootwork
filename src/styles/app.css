@@ -1672,6 +1672,10 @@ button.ww-schip:focus-visible {
   color: var(--text-primary);
   font-weight: 700;
 }
+.ww-lead2.is-remember-miss,
+.ww-muted.is-remember-miss {
+  color: var(--text-primary);
+}
 .ww-scene2 {
   grid-area: scene;
   position: relative;
@@ -2173,9 +2177,16 @@ button.ww-schip:focus-visible {
   .ww-card-actions {
     display: flex;
   }
-  /* Remember one-beat: named root + Home tap stay when eyebrow/lead hide. */
+  /* Remember one-beat: named root + Home tap stay when eyebrow/lead hide.
+     A Rush miss keeps the honest lead — You already own must not hide Geo. */
   .ww-caption.is-remember {
     display: block;
+  }
+  .ww-lead2.is-remember-miss,
+  .ww-muted.is-remember-miss {
+    display: block;
+    -webkit-line-clamp: unset;
+    overflow: visible;
   }
   .ww-card2.is-remember .ww-card-actions {
     display: flex;

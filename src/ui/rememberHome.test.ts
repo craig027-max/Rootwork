@@ -35,6 +35,10 @@ describe('Remember {root}: one-beat visit, then Home', () => {
     expect(deck).toContain('Remember ${root.root}');
     expect(deck).toContain('← Today');
     expect(deck).toContain('afterYesNextLabel(');
+    expect(deck).toContain('rememberLeadLine');
+    expect(deck).toContain('rememberHintLine');
+    expect(deck).toContain('isOwnedRushMiss');
+    expect(deck).toContain('missRememberVisit');
     expect(deck).toContain('deckEntry');
     expect(store).toContain('deckEntryForOpen');
   });
@@ -45,10 +49,8 @@ describe('Remember {root}: one-beat visit, then Home', () => {
     expect(deck).toContain('commitCorrectAdvance');
     expect(deck).toContain('ww-card2${remembering ? \' is-remember\' : \'\'}');
     expect(deck).toContain('ww-caption${remembering ? \' is-remember\' : \'\'}');
-    expect(deck).toContain(
-      'You already own ${root.root}. Tap what it means — or which word it builds. Then Home.',
-    );
-    expect(deck).toContain('Remember ${root.root} — one tap. No shame if you miss.');
+    expect(deck).toContain('rememberLeadLine(root.root, { missed: missRemember })');
+    expect(deck).toContain('rememberHintLine(root.root, { missed: missRemember })');
     expect(deck).toContain('rememberMissLine');
     expect(deck).toContain('quizRecall.picked === null');
   });

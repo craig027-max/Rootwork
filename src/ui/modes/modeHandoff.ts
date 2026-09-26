@@ -28,6 +28,8 @@
  * sit over Geo. Home Daily now matches — Daily / DONE / Done for
  * today / the 🔥 streak must not sit over Geo. Boot Continue /
  * the Home HERE tile now match — Continue {learn} must not sit
+ * over Geo. Progress chrome + the Remember visit now match —
+ * Jump back in / Tap continue / You already own must not sit
  * over Geo. Change level must not put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),

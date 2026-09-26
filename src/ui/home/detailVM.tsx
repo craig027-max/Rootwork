@@ -60,7 +60,9 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  Best so far must not sit over Geo. Home Daily now matches —
  *  Daily / DONE / Done for today / the 🔥 streak must not sit
  *  over Geo. Boot Continue / the Home HERE tile now match —
- *  Continue {learn} / Next · Auto must not sit over Geo. */
+ *  Continue {learn} / Next · Auto must not sit over Geo.
+ *  Progress chrome + the Remember visit now match — Jump back
+ *  in / Tap continue / You already own must not sit over Geo. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
