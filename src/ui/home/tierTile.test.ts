@@ -157,7 +157,7 @@ describe('Home tier tile: complete Starter recap', () => {
     expect(panel).toContain('vm.samplesDone');
     expect(panel).toContain('ww-daily-mark');
     expect(panel).toContain('✓');
-    expect(detail).toContain('samplesDone: complete && peek.length > 0');
+    expect(detail).toContain('samplesDone: complete && peek.length > 0 && !missHero');
     expect(css).toMatch(/\.ww-schip\.is-done/);
     expect(css).toMatch(/\.ww-samples\.is-lines .ww-schip.is-done/);
   });
@@ -282,7 +282,7 @@ describe('Home tier tile: phone-width sample / recap lines stay readable', () =>
     expect(home).toContain('homeSelectedIndex');
     expect(home).toContain('is-resume');
     expect(home).toContain('Tap continue');
-    expect(detail).toContain('heroCta: firstPlay || resumeNow');
+    expect(detail).toContain('heroCta: firstPlay || resumeNow || missHero');
     expect(menuSrc).toContain('it.resumeName');
     expect(menuSrc).toContain('Next · ${it.resumeName}');
     expect(menuSrc).toContain("it.pct === 100");

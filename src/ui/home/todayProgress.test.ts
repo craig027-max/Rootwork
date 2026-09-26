@@ -692,7 +692,7 @@ describe('Today checklist wiring + phone layout', () => {
     expect(menu).toContain("return 'Jump back in'");
     expect(menu).toContain('Continue ${opts.rootName}');
     expect(menu).toContain('Keep going · ${opts.rootName}');
-    expect(detail).toContain('heroCta: firstPlay || resumeNow');
+    expect(detail).toContain('heroCta: firstPlay || resumeNow || missHero');
     expect(detail).toContain('keepGoing: Boolean(extra.pathDone && resumeNow)');
     expect(home).toContain('is-resume');
     expect(home).toContain('Tap continue');

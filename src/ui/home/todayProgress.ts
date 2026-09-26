@@ -42,7 +42,9 @@
  * the Home HERE tile now match — Continue {learn} must not sit
  * over Geo. Daily's last hold peeks Remember, not Keep going.
  * Progress chrome + the Remember visit now match — Jump back in /
- * Tap continue / You already own must not sit over Geo.
+ * Tap continue / You already own must not sit over Geo. Complete
+ * Starter now matches — every root owned / Remember Bio / Your
+ * progress must not sit over Geo.
  * Continue / Keep going / Rush CTAs stay as #68 left them when no
  * miss is waiting.
  *

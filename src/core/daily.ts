@@ -32,7 +32,9 @@
  * the Home HERE tile now match — Continue {learn} must not sit
  * over Geo. Progress chrome + the Remember visit now match —
  * Jump back in / Tap continue / You already own must not sit
- * over Geo. The five-are-done recap stays.
+ * over Geo. Complete Starter now matches — every root owned /
+ * Remember Bio / Your progress must not sit over Geo. The
+ * five-are-done recap stays.
  */
 
 import type { Root } from '../data/roots';
