@@ -138,6 +138,8 @@ export function TierMenu({
               <span className="locklbl">🔒 Locked</span>
             ) : playNow ? (
               <span className="pct">Play ›</span>
+            ) : it.missName ? (
+              <span className="pct">›</span>
             ) : it.pct === 100 ? (
               <>
                 <span className="pct">✓</span>
@@ -146,8 +148,6 @@ export function TierMenu({
                   {'☆'.repeat(5 - it.stars)}
                 </span>
               </>
-            ) : it.missName ? (
-              <span className="pct">›</span>
             ) : it.resumeName ? (
               <>
                 <span className="pct">{it.resumeName} ›</span>

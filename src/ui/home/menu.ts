@@ -78,7 +78,7 @@ export interface TierItem {
   current: boolean;
   /** Returning-dashboard resume: the next unlearned root this row continues into. */
   resumeName?: string;
-  /** Path-done Rush miss — HERE / complete Starter must not sit over Geo. */
+  /** Path-done Rush miss — HERE / Starter / Scholar must not sit over Geo. */
   missName?: string;
 }
 
@@ -292,6 +292,9 @@ export function listHeading(
  * Continue tile now matches — Next · Auto / Continue {learn} must
  * not sit over Geo. Complete Starter now matches — every root
  * owned / Remember Bio / Your progress must not sit over Geo.
+ * Later progress (Scholar / Master / AI Level, and locked
+ * Ask-a-grown-up) now matches — Play Bene / Your progress
+ * must not sit over Geo.
  */
 export function rushMenuSub(
   opts: {
@@ -364,7 +367,7 @@ export function isCompleteTier(item: MenuItem): boolean {
   return item.kind === 'tier' && !item.locked && item.pct === 100;
 }
 
-/** Path-done Rush miss — HERE or complete Starter names Remember, not owned chrome. */
+/** Path-done Rush miss — any progress row names Remember, not Play / unlock chrome. */
 export function isMissProgressTier(item: MenuItem): boolean {
   return item.kind === 'tier' && Boolean(item.missName);
 }
@@ -447,7 +450,7 @@ export function buildMenu(
     rushPreview?: { root: string; mean: string; ok?: boolean }[];
     /** Next unanswered Daily root name when a mid-run is live. */
     dailyNextName?: string;
-    /** Path-done Rush miss — Rush / Daily / HERE / complete Starter name Remember. */
+    /** Path-done Rush miss — Rush / Daily / HERE / Starter / Scholar name Remember. */
     rushMissName?: string;
     /** Daily banked + Today still names this learn — not a combo-only dump. */
     rushLearnName?: string;
@@ -523,8 +526,7 @@ export function buildMenu(
     const locked = t !== 1 && !entitled;
     const current = !locked && t === opts.currentTier;
     const resumeNow = current && pct < 100;
-    const completeNow = !locked && pct === 100;
-    const missHere = Boolean(missName) && (resumeNow || completeNow);
+    const missHere = Boolean(missName);
     return {
       kind: 'tier',
       key: `tier-${t}`,

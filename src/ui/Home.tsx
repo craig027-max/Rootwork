@@ -210,10 +210,10 @@ export function Home() {
       }
       return;
     }
-    if (item.locked) requestUpgrade();
-    else if (missHero && rushMissId && isMissProgressTier(item)) {
+    if (missHero && rushMissId && isMissProgressTier(item)) {
       openRoot(rushMissId, { entry: 'remember' });
-    } else {
+    } else if (item.locked) requestUpgrade();
+    else {
       openTier(item.t);
     }
   }
@@ -344,17 +344,17 @@ export function Home() {
                       ? 'Keep going'
                       : 'Tap continue'
                     : 'Game mode'
-                : selected.locked
-                  ? 'Locked tier'
-                  : nextPlay
-                    ? 'Tap play'
-                    : resumeNow
-                      ? missHero
-                        ? 'Remember'
-                        : today.pathDone
+                : missHero && isMissProgressTier(selected)
+                  ? 'Remember'
+                  : selected.locked
+                    ? 'Locked tier'
+                    : nextPlay
+                      ? 'Tap play'
+                      : resumeNow
+                        ? today.pathDone
                           ? 'Keep going'
                           : 'Tap continue'
-                      : 'Your progress'}
+                        : 'Your progress'}
             </span>
           </div>
           <DetailPanel

@@ -44,7 +44,9 @@
  * Progress chrome + the Remember visit now match — Jump back in /
  * Tap continue / You already own must not sit over Geo. Complete
  * Starter now matches — every root owned / Remember Bio / Your
- * progress must not sit over Geo.
+ * progress must not sit over Geo. Later progress now matches —
+ * Play Bene / Your progress / Ask a grown-up must not sit over
+ * Geo.
  * Continue / Keep going / Rush CTAs stay as #68 left them when no
  * miss is waiting.
  *
