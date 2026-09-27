@@ -64,7 +64,9 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  Progress chrome + the Remember visit now match — Jump back
  *  in / Tap continue / You already own must not sit over Geo.
  *  Complete Starter now matches — every root owned / Remember
- *  Bio / Your progress must not sit over Geo. */
+ *  Bio / Your progress must not sit over Geo. Later progress
+ *  now matches — Play Bene / Your progress / Ask a grown-up
+ *  must not sit over Geo. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -304,7 +306,35 @@ export function buildDetailVM(
   const rootName = entryRootName(item.t, extra.completed, extra.entitled);
   const entry = tierEntryRoot(item.t, extra.completed, extra.entitled);
 
+  const miss = rushMissRememberReady(extra.completed, extra.entitled, {
+    dailyDone: extra.dailyDone,
+    learnedToday: extra.learnedToday,
+    rememberMissId: extra.rememberMissId,
+    rememberMissName: extra.rememberMissName,
+    rememberAlso: extra.rememberAlso,
+  });
+  const missHero = Boolean(miss);
+  const missRoot = missHero && miss ? ROOTS_BY_ID[miss.id] : undefined;
+
   if (item.locked) {
+    if (missHero && miss) {
+      return {
+        jewel: item.jewel,
+        animKey: item.key,
+        eyebrow: item.title,
+        big: `Remember ${miss.name}`,
+        lead: 'Ask a grown-up is just for fun.',
+        samples: teaser.map((r) => ({ root: r.root, mean: r.mean })),
+        sampleTap: samplePeekTap({ locked: true, sampleCount: teaser.length }),
+        moreCount: Math.max(0, item.total - teaser.length),
+        primary: { label: rememberMissCtaLabel(miss.name) },
+        secondary: { label: '🔓 Ask a grown-up to unlock' },
+        waiting: todayMissRecap(miss.name, miss.also),
+        waitingMiss: true,
+        scene: sceneFrom(missRoot, { key: 'dna', palKey: item.jewel, caption: name }),
+        heroCta: true,
+      };
+    }
     return {
       jewel: item.jewel,
       animKey: item.key,
@@ -324,22 +354,15 @@ export function buildDetailVM(
   const empty = item.done === 0;
   const firstPlay = extra.nextPlay;
   const resumeNow = !firstPlay && !complete;
-  const miss = rushMissRememberReady(extra.completed, extra.entitled, {
-    dailyDone: extra.dailyDone,
-    learnedToday: extra.learnedToday,
-    rememberMissId: extra.rememberMissId,
-    rememberMissName: extra.rememberMissName,
-    rememberAlso: extra.rememberAlso,
-  });
-  const missHero = Boolean(miss && ((resumeNow && item.current) || complete));
-  const missRoot = missHero && miss ? ROOTS_BY_ID[miss.id] : undefined;
   // First-run stays one Play {root} — no four-root dump. Returning dashboard
   // peeks the next unlearned roots, or recaps owned ones once the tier is done.
   // In-progress resume lifts Continue {root} to a hero tap so recap chrome
   // does not bury the one-tap. Path-done Rush miss: Remember Geo is that
   // tap — Continue {learn} / Next · Auto / the % ring must not sit over Geo.
   // Complete Starter matches — every root owned / Remember Bio / the
-  // ✓ recap on Geo must not sit over that same miss.
+  // ✓ recap on Geo must not sit over that same miss. Later progress
+  // matches — Play Bene / Your progress / Ask a grown-up must not
+  // sit over that same miss.
   const peek = firstPlay
     ? []
     : tierTilePreview(item.t, extra.completed, extra.entitled, { complete });
@@ -357,7 +380,9 @@ export function buildDetailVM(
     lead: missHero
       ? complete
         ? `Remember ${rootName} is just for fun.`
-        : 'Keep going is just for fun.'
+        : empty
+          ? `Play ${rootName} is just for fun.`
+          : 'Keep going is just for fun.'
       : firstPlay
         ? `Play to meet ${rootName}.`
         : complete
@@ -401,7 +426,13 @@ export function buildDetailVM(
           }),
     },
     secondary: missHero
-      ? { label: complete ? `Remember ${rootName} ›` : keepGoingLabel(rootName) }
+      ? {
+          label: complete
+            ? `Remember ${rootName} ›`
+            : empty
+              ? `Play ${rootName} ›`
+              : keepGoingLabel(rootName),
+        }
       : complete
         ? { label: 'See all roots' }
         : undefined,
