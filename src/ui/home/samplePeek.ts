@@ -9,7 +9,8 @@
  * run. Never a dead named chip, never Bio → Geo.
  * Path-done Rush miss: Scholar / Starter / Builder peeks are Missed
  * Geo — Play Bene / Remember Bio / a fake ✓ must not sit over that
- * same coral miss the title already named.
+ * same coral miss the title already named. Browse / All Roots now
+ * matches — 183 roots / Bio ✓ first must not sit over Geo.
  */
 import type { MenuItem } from './menu';
 

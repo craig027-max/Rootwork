@@ -116,6 +116,8 @@ describe('Scholar after a miss is Remember — not Play Bene / Your progress ove
     expect(firstScholar.root).toBe('Bene');
 
     const vm = buildDetailVM(row, extraMiss);
+    expect(vm.eyebrow).toBe('Remember');
+    expect(vm.eyebrow).not.toMatch(/Scholar|Tier 3|Bene/i);
     expect(vm.big).toBe(`Remember ${geo.root}`);
     expect(vm.big).not.toMatch(/Scholar|Bene/i);
     expect(String(vm.lead)).toBe(`Play ${firstScholar.root} is just for fun.`);

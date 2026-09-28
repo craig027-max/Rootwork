@@ -37,7 +37,8 @@
  * progress now matches — Play Bene / Your progress / Ask a
  * grown-up must not sit over Geo. Progress peek chips now
  * match — Play Bene / Remember Bio / a fake ✓ must not sit
- * over Geo. The five-are-done recap stays.
+ * over Geo. Browse / All Roots now matches — 183 roots /
+ * Bio ✓ first must not sit over Geo. The five-are-done recap stays.
  */
 
 import type { Root } from '../data/roots';

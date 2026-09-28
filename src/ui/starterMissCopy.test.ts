@@ -108,6 +108,8 @@ describe('Starter after a miss is Remember — not every root owned / Remember B
     expect(row.resumeName).toBeUndefined();
 
     const vm = buildDetailVM(row, extraMiss);
+    expect(vm.eyebrow).toBe('Remember');
+    expect(vm.eyebrow).not.toMatch(/Starter|Tier 1|Bio/i);
     expect(vm.big).toBe(`Remember ${geo.root}`);
     expect(vm.big).not.toMatch(/Starter|Bio/i);
     expect(String(vm.lead)).toBe(`Remember ${first.root} is just for fun.`);
