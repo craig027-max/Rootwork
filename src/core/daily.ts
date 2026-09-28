@@ -35,7 +35,9 @@
  * over Geo. Complete Starter now matches — every root owned /
  * Remember Bio / Your progress must not sit over Geo. Later
  * progress now matches — Play Bene / Your progress / Ask a
- * grown-up must not sit over Geo. The five-are-done recap stays.
+ * grown-up must not sit over Geo. Progress peek chips now
+ * match — Play Bene / Remember Bio / a fake ✓ must not sit
+ * over Geo. The five-are-done recap stays.
  */
 
 import type { Root } from '../data/roots';

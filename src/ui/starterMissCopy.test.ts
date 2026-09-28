@@ -123,9 +123,11 @@ describe('Starter after a miss is Remember — not every root owned / Remember B
     expect(vm.heroCta).toBe(true);
     expect(vm.scene?.caption).toMatch(new RegExp(`^${geo.root}`));
     expect(vm.scene?.caption).not.toMatch(/^Bio/);
-    expect(vm.samples.find((s) => s.root === geo.root)?.ok).toBe(false);
-    expect(vm.samples.find((s) => s.root === first.root)?.ok).toBe(true);
+    expect(vm.samples.map((s) => s.root)).toEqual([geo.root]);
+    expect(vm.samples[0]?.ok).toBe(false);
+    expect(vm.samples.find((s) => s.root === first.root)).toBeUndefined();
     expect(vm.samplesDone).toBe(false);
+    expect(vm.sampleTap).toBe('remember');
     expect(homeSecondaryAction(row, { rememberMissId: rootId(geo) })).toEqual({
       kind: 'tier',
       t: 1,
@@ -137,6 +139,8 @@ describe('Starter after a miss is Remember — not every root owned / Remember B
     });
     expect(two.big).toBe(`Remember ${geo.root}`);
     expect(two.waiting).toBe(todayMissRecap(geo.root, photo.root));
+    expect(two.samples.map((s) => s.root)).toEqual([geo.root, photo.root]);
+    expect(two.samples.every((s) => s.ok === false)).toBe(true);
     expect(two.ring).toBeUndefined();
   });
 
@@ -204,7 +208,7 @@ describe('Starter after a miss is Remember — not every root owned / Remember B
     expect(detail).toContain('complete');
     expect(detail).toContain('Remember ${rootName} is just for fun.');
     expect(detail).toContain('Remember ${rootName} ›');
-    expect(detail).toContain('ok: false');
+    expect(detail).toContain('missPeekSamples');
     expect(menu).toContain('missHere ? `Missed ${missName} · remember`');
     expect(menu).toContain('isMissProgressTier');
     expect(menu).toContain('if (opts.rememberMissId) return { kind: \'tier\', t: item.t }');

@@ -663,6 +663,12 @@
   .ww-ichip.is-done .ir {
     display: inline-flex;
   }
+  .ww-ichip.is-miss {
+    display: block;
+  }
+  .ww-ichip.is-miss .ir {
+    display: inline-flex;
+  }
   .ww-ichip .ww-daily-mark {
     display: inline;
   }
@@ -2021,6 +2027,15 @@ button.ww-schip:focus-visible {
   border-color: color-mix(in srgb, var(--success) 35%, rgba(255, 255, 255, 0.08));
 }
 .ww-ichip.is-done .ir {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ww-ichip.is-miss {
+  border-color: rgba(255, 92, 107, 0.38);
+  background: rgba(255, 92, 107, 0.08);
+}
+.ww-ichip.is-miss .ir {
   display: inline-flex;
   align-items: center;
   gap: 6px;

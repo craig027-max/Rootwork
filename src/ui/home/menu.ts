@@ -294,7 +294,8 @@ export function listHeading(
  * owned / Remember Bio / Your progress must not sit over Geo.
  * Later progress (Scholar / Master / AI Level, and locked
  * Ask-a-grown-up) now matches — Play Bene / Your progress
- * must not sit over Geo.
+ * must not sit over Geo. Progress peek chips now match —
+ * Play Bene / Remember Bio / a fake ✓ must not sit over Geo.
  */
 export function rushMenuSub(
   opts: {
