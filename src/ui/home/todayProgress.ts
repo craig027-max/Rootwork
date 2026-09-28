@@ -46,7 +46,8 @@
  * Starter now matches — every root owned / Remember Bio / Your
  * progress must not sit over Geo. Later progress now matches —
  * Play Bene / Your progress / Ask a grown-up must not sit over
- * Geo.
+ * Geo. Progress peek chips now match — Play Bene / Remember
+ * Bio / a fake ✓ must not sit over Geo.
  * Continue / Keep going / Rush CTAs stay as #68 left them when no
  * miss is waiting.
  *

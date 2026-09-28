@@ -252,7 +252,11 @@ export function Home() {
   }
 
   function onSamplePick(name: string) {
-    const tap = homeSampleAction(selected, name, { dailyDone });
+    const tap = homeSampleAction(selected, name, {
+      dailyDone,
+      rememberMissName: missHero ? remember.name : undefined,
+      rememberAlso: missHero ? rememberAlso : undefined,
+    });
     if (!tap) return;
     if (tap.kind === 'daily') {
       setView('daily');
@@ -369,6 +373,7 @@ export function Home() {
         <RootIndex
           entitled={entitled}
           completed={completed}
+          rememberMissIds={missHero ? rushMissIds : undefined}
           onPick={onBrowsePick}
           onClose={() => setIndexOpen(false)}
         />

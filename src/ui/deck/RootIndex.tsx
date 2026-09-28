@@ -10,6 +10,7 @@ import {
 } from '../../data/roots';
 import { recapDeckEntry } from '../../core/deckFlow';
 import { paletteVars } from '../components/styleVars';
+import { indexChipKind, indexChipLabel } from './indexChip';
 
 function palRgb(root: Root): string {
   return (PALETTES[root.pal] ?? PALETTES.green!).c1rgb;
@@ -19,20 +20,29 @@ function palRgb(root: Root): string {
  * Full-screen index overlay: every root grouped by tier as jewel-tinted chips.
  * Picking a chip jumps the deck to that card. Owned chips are Remember —
  * hold the meaning, then Home — so Browse / See all cannot dump Bio → Geo.
+ * A waiting Rush miss stays Missed Geo — the catalog must not paint a
+ * fake ✓ over the same coral miss Home already named.
  * Locked (paid) roots still appear but are dimmed — opening one routes
  * through the deck's existing upgrade guard.
  */
 export function RootIndex({
   entitled,
   completed,
+  rememberMissIds,
   onPick,
   onClose,
 }: {
   entitled: boolean;
   completed?: ReadonlySet<string>;
+  /** Today's unreviewed owned Rush misses — catalog chips stay Missed, not ✓. */
+  rememberMissIds?: Iterable<string>;
   onPick: (id: string) => void;
   onClose: () => void;
 }) {
+  const missed = new Set(
+    [...(rememberMissIds ?? [])].filter((id): id is string => typeof id === 'string' && id.length > 0),
+  );
+
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -76,18 +86,27 @@ export function RootIndex({
                 const id = rootId(root);
                 const locked = !isRootOpenable(id, entitled);
                 const owned = Boolean(completed?.has(id));
+                const kind = indexChipKind({ missed: missed.has(id), owned, locked });
                 const remember = recapDeckEntry(owned) === 'remember';
                 return (
                   <button
                     key={id}
                     type="button"
-                    className={`ww-ichip${locked ? ' lockchip' : ''}${owned ? ' is-done' : ''}`}
+                    className={`ww-ichip${locked ? ' lockchip' : ''}${
+                      kind === 'done' ? ' is-done' : ''
+                    }${kind === 'miss' ? ' is-miss' : ''}`}
                     style={paletteVars(palRgb(root), (PALETTES[root.pal] ?? PALETTES.green!).grad)}
                     onClick={() => onPick(id)}
-                    aria-label={remember ? `Remember ${root.root}` : root.root}
+                    aria-label={
+                      kind === 'miss'
+                        ? indexChipLabel(root.root, kind)
+                        : remember
+                          ? indexChipLabel(root.root, 'done')
+                          : root.root
+                    }
                   >
                     <div className="ir">
-                      {owned ? (
+                      {kind === 'done' ? (
                         <span className="ww-daily-mark" aria-hidden="true">
                           ✓
                         </span>

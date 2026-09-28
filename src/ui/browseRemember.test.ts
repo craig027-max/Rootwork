@@ -81,7 +81,7 @@ describe('Browse roots / See all / index is Remember — not a Bio → Geo dump'
     expect(deck).not.toContain('openRoot(pickId);');
     expect(index).toContain('completed?.has(id)');
     expect(index).toContain('is-done');
-    expect(index).toContain('Remember ${root.root}');
+    expect(index).toContain('indexChipLabel');
     expect(index).toContain('recapDeckEntry');
   });
 
@@ -91,10 +91,13 @@ describe('Browse roots / See all / index is Remember — not a Bio → Geo dump'
     expect(phone).toMatch(/\.ww-ichip\s*\{[^}]*display:\s*block/);
     expect(phone).toMatch(/\.ww-ichip\.is-done\s*\{[^}]*display:\s*block/);
     expect(phone).toMatch(/\.ww-ichip\.is-done \.ir\s*\{[^}]*display:\s*inline-flex/);
+    expect(phone).toMatch(/\.ww-ichip\.is-miss\s*\{[^}]*display:\s*block/);
     expect(phone).not.toMatch(/\.ww-index\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.ww-ichip\.is-done\s*\{[^}]*display:\s*none/);
+    expect(phone).not.toMatch(/\.ww-ichip\.is-miss\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.ww-ichip \.ww-daily-mark\s*\{[^}]*display:\s*none/);
     expect(css).toMatch(/\.ww-ichip\.is-done\s*\{/);
+    expect(css).toMatch(/\.ww-ichip\.is-miss\s*\{/);
   });
 
   it('does not dump Browse onto the first-run one-Play board', () => {

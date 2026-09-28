@@ -32,7 +32,7 @@ import {
   type AfterCorrectRecall,
 } from '../core/deckFlow';
 import { localDayKey } from '../core/daily';
-import { isOwnedRushMiss, todayRushRecap } from '../core/rushRecap';
+import { isOwnedRushMiss, listOwnedRushMissIds, todayRushRecap } from '../core/rushRecap';
 import { buildRecall, type RecallBeat } from '../core/recall';
 import {
   hearBeatChips,
@@ -578,6 +578,11 @@ export function Deck() {
         <RootIndex
           entitled={entitled}
           completed={completed}
+          rememberMissIds={listOwnedRushMissIds(
+            todayRushRecap(rushRecap, activeStudentId, day),
+            progress,
+            day,
+          )}
           onPick={(pickId) => {
             if (!allowNextRootTap(useWondralStore.getState().correctAdvance, listening)) return;
             const recap = recapOpenForId(pickId, completed);

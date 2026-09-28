@@ -25,7 +25,7 @@ import {
   todayMissRecap,
   type RushRecap,
 } from '../../core/rushRecap';
-import { samplePeekTap } from './samplePeek';
+import { missPeekSamples, samplePeekTap } from './samplePeek';
 import { keepGoingLabel } from './todayProgress';
 import type { DetailVM } from './DetailPanel';
 
@@ -66,7 +66,8 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  Complete Starter now matches — every root owned / Remember
  *  Bio / Your progress must not sit over Geo. Later progress
  *  now matches — Play Bene / Your progress / Ask a grown-up
- *  must not sit over Geo. */
+ *  must not sit over Geo. Progress peek chips now match —
+ *  Play Bene / Remember Bio / a fake ✓ must not sit over Geo. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -318,15 +319,22 @@ export function buildDetailVM(
 
   if (item.locked) {
     if (missHero && miss) {
+      const missSamples = missPeekSamples({
+        root: miss.name,
+        mean: missRoot?.mean,
+        also: miss.also,
+        alsoMean: miss.also ? ROOTS.find((r) => r.root === miss.also)?.mean : undefined,
+      });
       return {
         jewel: item.jewel,
         animKey: item.key,
         eyebrow: item.title,
         big: `Remember ${miss.name}`,
         lead: 'Ask a grown-up is just for fun.',
-        samples: teaser.map((r) => ({ root: r.root, mean: r.mean })),
-        sampleTap: samplePeekTap({ locked: true, sampleCount: teaser.length }),
-        moreCount: Math.max(0, item.total - teaser.length),
+        samples: missSamples,
+        sampleLines: missSamples.length > 0,
+        sampleTap: samplePeekTap({ missHero: true, sampleCount: missSamples.length }),
+        moreCount: 0,
         primary: { label: rememberMissCtaLabel(miss.name) },
         secondary: { label: '🔓 Ask a grown-up to unlock' },
         waiting: todayMissRecap(miss.name, miss.also),
@@ -362,10 +370,22 @@ export function buildDetailVM(
   // Complete Starter matches — every root owned / Remember Bio / the
   // ✓ recap on Geo must not sit over that same miss. Later progress
   // matches — Play Bene / Your progress / Ask a grown-up must not
-  // sit over that same miss.
+  // sit over that same miss. Peek chips now match — Play Bene /
+  // Remember Bio / a fake ✓ must not sit over that same miss.
+  const missSamples =
+    missHero && miss
+      ? missPeekSamples({
+          root: miss.name,
+          mean: missRoot?.mean,
+          also: miss.also,
+          alsoMean: miss.also ? ROOTS.find((r) => r.root === miss.also)?.mean : undefined,
+        })
+      : [];
   const peek = firstPlay
     ? []
-    : tierTilePreview(item.t, extra.completed, extra.entitled, { complete });
+    : missHero
+      ? missSamples
+      : tierTilePreview(item.t, extra.completed, extra.entitled, { complete });
   const sceneRoot = missRoot
     ? missRoot
     : firstPlay
@@ -398,22 +418,19 @@ export function buildDetailVM(
         : complete
           ? 'Tier complete'
           : `${item.total - item.done} roots to go`,
-    samples: peek.map((s) =>
-      missHero && miss && s.root === miss.name
-        ? { ...s, ok: false }
-        : complete
-          ? { ...s, ok: true }
-          : s,
-    ),
+    samples: missHero
+      ? missSamples
+      : peek.map((s) => (complete ? { ...s, ok: true } : s)),
     sampleLines: !firstPlay && peek.length > 0,
     samplesDone: complete && peek.length > 0 && !missHero,
     sampleTap: samplePeekTap({
       nextPlay: firstPlay,
+      missHero,
       complete,
       empty,
       sampleCount: peek.length,
     }),
-    moreCount: firstPlay ? 0 : Math.max(0, remaining),
+    moreCount: firstPlay || missHero ? 0 : Math.max(0, remaining),
     primary: {
       label: missHero && miss
         ? rememberMissCtaLabel(miss.name)
