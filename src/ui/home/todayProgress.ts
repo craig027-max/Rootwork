@@ -49,6 +49,8 @@
  * Geo. Progress peek chips now match — Play Bene / Remember
  * Bio / a fake ✓ must not sit over Geo. Browse / All Roots
  * now matches — 183 roots / Bio ✓ first must not sit over Geo.
+ * Deck strip / nav now matches — Starter / Card 02 / 183 must
+ * not sit over Geo.
  * Continue / Keep going / Rush CTAs stay as #68 left them when no
  * miss is waiting.
  *

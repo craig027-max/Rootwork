@@ -33,7 +33,8 @@ describe('Remember {root}: one-beat visit, then Home', () => {
     expect(deck).toContain('afterCorrectRecall(id, entitled, { entry: deckEntry })');
     expect(deck).toContain("deckEntry === 'remember'");
     expect(deck).toContain('Remember ${root.root}');
-    expect(deck).toContain('← Today');
+    expect(deck).toContain('deckBackLabel');
+    expect(deck).toContain('missed: missRemember');
     expect(deck).toContain('afterYesNextLabel(');
     expect(deck).toContain('rememberLeadLine');
     expect(deck).toContain('rememberHintLine');

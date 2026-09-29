@@ -297,7 +297,8 @@ export function listHeading(
  * must not sit over Geo. Progress peek chips now match —
  * Play Bene / Remember Bio / a fake ✓ must not sit over Geo.
  * Browse / All Roots now matches — 183 roots / Bio ✓ first
- * must not sit over Geo.
+ * must not sit over Geo. Deck strip / nav now matches —
+ * Starter / Card 02 / 183 must not sit over Geo.
  */
 export function rushMenuSub(
   opts: {

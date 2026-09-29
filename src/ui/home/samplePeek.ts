@@ -10,7 +10,9 @@
  * Path-done Rush miss: Scholar / Starter / Builder peeks are Missed
  * Geo — Play Bene / Remember Bio / a fake ✓ must not sit over that
  * same coral miss the title already named. Browse / All Roots now
- * matches — 183 roots / Bio ✓ first must not sit over Geo.
+ * matches — 183 roots / Bio ✓ first must not sit over Geo. Deck
+ * strip / nav now matches — Starter / Card 02 / 183 must not
+ * sit over Geo.
  */
 import type { MenuItem } from './menu';
 

@@ -1,10 +1,14 @@
+import { deckIndexAria, deckNavMeta } from './deckChrome';
+
 /**
  * Floating bottom navigation pill (ported from the design package deck). Prev /
  * current-label / next, plus Root Rush (🎯) and the index (☰). The centre label
  * also opens the index.
  *
  * After Hear/Yes on the next-Play path, Next and Rush hide so the one tap
- * is I know this or the quiz — same spirit as Home (#28–#30).
+ * is I know this or the quiz — same spirit as Home (#28–#30). A waiting
+ * Rush miss names Remember · Geo — Starter · 2 / 183 / All roots
+ * index must not sit over that same coral miss Browse already named.
  */
 export function DeckNav({
   rootLabel,
@@ -19,6 +23,8 @@ export function DeckNav({
   showRush = true,
   showNext = true,
   nextDisabled = false,
+  missed = false,
+  missName,
 }: {
   rootLabel: string;
   meaning: string;
@@ -35,19 +41,27 @@ export function DeckNav({
   showNext?: boolean;
   /** While a Hear/Yes clip is playing, Next stays visible but closed. */
   nextDisabled?: boolean;
+  /** Path-done Rush miss — nav meta is Remember, not Starter / 183. */
+  missed?: boolean;
+  missName?: string;
 }) {
+  const meta = deckNavMeta({ missed, missName, tierName, position, total });
+  const indexAria = deckIndexAria({ missed });
   return (
-    <nav className="ww-decknav" aria-label="Deck navigation">
+    <nav className={`ww-decknav${missed ? ' is-miss' : ''}`} aria-label="Deck navigation">
       <button type="button" className="ww-nav-btn" aria-label="Previous root" onClick={onPrev}>
         ‹
       </button>
-      <button type="button" className="ww-nav-cur" onClick={onIndex} title="Open index">
+      <button
+        type="button"
+        className={`ww-nav-cur${missed ? ' is-miss' : ''}`}
+        onClick={onIndex}
+        title="Open index"
+      >
         <span className="r">
           {rootLabel} <b>· {meaning}</b>
         </span>
-        <span className="meta">
-          {tierName} · {position} / {total}
-        </span>
+        <span className="meta">{meta}</span>
       </button>
       {showNext ? (
         <button
@@ -65,7 +79,7 @@ export function DeckNav({
           🎯
         </button>
       ) : null}
-      <button type="button" className="ww-nav-btn" aria-label="All roots index" onClick={onIndex}>
+      <button type="button" className="ww-nav-btn" aria-label={indexAria} onClick={onIndex}>
         ☰
       </button>
     </nav>
