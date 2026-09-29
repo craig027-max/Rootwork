@@ -31,8 +31,10 @@ function palRgb(root: Root): string {
  * A waiting Rush miss stays Missed Geo — the catalog must not paint a
  * fake ✓ over the same coral miss Home already named. Browse chrome
  * now matches — All Roots / 183 roots / Bio ✓ first must not sit
- * over Geo. Locked (paid) roots still appear but are dimmed — opening
- * one routes through the deck's existing upgrade guard.
+ * over Geo. Deck strip / nav now matches — Starter / Card 02 /
+ * 183 must not sit over that same miss. Locked (paid) roots still
+ * appear but are dimmed — opening one routes through the deck's
+ * existing upgrade guard.
  */
 export function RootIndex({
   entitled,

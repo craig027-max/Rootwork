@@ -55,6 +55,7 @@ import { Scene } from './Scene';
 import { SCENE_EMOJI } from './scenes';
 import { Badge } from './components/Badge';
 import { Button } from './components/Button';
+import { deckBackLabel, deckStripCount, deckStripTier } from './deck/deckChrome';
 import { DeckNav } from './deck/DeckNav';
 import { RootIndex } from './deck/RootIndex';
 import { splitForOpenWord, toggleOpenWord } from './wordSplit';
@@ -262,6 +263,14 @@ export function Deck() {
   if (remembering && missRememberLive) missRememberVisit.current = id;
   else if (!remembering || missRememberVisit.current !== id) missRememberVisit.current = null;
   const missRemember = remembering && (missRememberLive || missRememberVisit.current === id);
+  const backLabel = deckBackLabel({ remembering, missed: missRemember });
+  const stripTier = deckStripTier({ missed: missRemember, tier: root.t, tierName });
+  const stripCount = deckStripCount({
+    missed: missRemember,
+    missName: root.root,
+    position,
+    total: ROOTS.length,
+  });
 
   function go(dir: 1 | -1) {
     if (!allowManualStep(useWondralStore.getState().correctAdvance)) return;
@@ -341,20 +350,20 @@ export function Deck() {
           className={`ww-card2${remembering ? ' is-remember' : ''}`}
           style={paletteVars(p.c1rgb, p.grad)}
         >
-          <div className="ww-strip">
-            <button type="button" className="ww-deck-back" onClick={closeRoot}>
-              {remembering ? '← Today' : '← All roots'}
+          <div className={`ww-strip${missRemember ? ' is-miss' : ''}`}>
+            <button
+              type="button"
+              className={`ww-deck-back${missRemember ? ' is-miss' : ''}`}
+              onClick={closeRoot}
+            >
+              {backLabel}
             </button>
             <span className="badge2" aria-hidden="true">
               {emoji}
             </span>
             <span className="title">Wondral Words</span>
-            <span className="tier">
-              Tier {root.t} · {tierName}
-            </span>
-            <span className="count">
-              Card {String(position).padStart(2, '0')} / {ROOTS.length}
-            </span>
+            <span className={`tier${missRemember ? ' is-miss' : ''}`}>{stripTier}</span>
+            <span className={`count${missRemember ? ' is-miss' : ''}`}>{stripCount}</span>
           </div>
 
           <div className="ww-hero">
@@ -572,6 +581,8 @@ export function Deck() {
         showRush={nextTap.showRush}
         showNext={nextTap.showNextRoot}
         nextDisabled={listen.disableNextRoot}
+        missed={missRemember}
+        missName={root.root}
       />
 
       {indexOpen ? (

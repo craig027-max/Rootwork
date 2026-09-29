@@ -36,7 +36,8 @@
  * grown-up must not sit over Geo. Progress peek chips now
  * match — Play Bene / Remember Bio / a fake ✓ must not sit
  * over Geo. Browse / All Roots now matches — 183 roots /
- * Bio ✓ first must not sit over Geo.
+ * Bio ✓ first must not sit over Geo. Deck strip / nav now
+ * matches — Starter / Card 02 / 183 must not sit over Geo.
  * Change level must not put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),
