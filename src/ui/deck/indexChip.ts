@@ -70,3 +70,36 @@ export function indexRootsMissFirst<T>(
   }
   return miss.length === 0 ? [...roots] : [...miss, ...rest];
 }
+
+/** Section heading — Remember over a miss, Tier 1 — Starter once it's done. */
+export function indexTierHeading(opts: {
+  t: number;
+  name: string;
+  missNames?: readonly string[];
+}): string {
+  return cleanNames(opts.missNames)[0] ? 'Remember' : `Tier ${opts.t} — ${opts.name}`;
+}
+
+/** Section sub — Missed Geo, not Middle school · everyday roots over the same coral miss. */
+export function indexTierSub(opts: {
+  sub: string;
+  missNames?: readonly string[];
+}): string {
+  const names = cleanNames(opts.missNames);
+  if (names[0] && names[1]) return `Missed ${names[0]} · then ${names[1]}`;
+  if (names[0]) return `Missed ${names[0]}`;
+  return opts.sub;
+}
+
+/**
+ * Missed Geo's section leads Browse — Tier 1 — Starter must not sit
+ * over a later miss, and a Builder miss must not hide behind Starter.
+ */
+export function indexTiersMissFirst<T>(
+  sections: readonly T[],
+  hasMiss: (section: T) => boolean,
+): T[] {
+  const miss = sections.filter(hasMiss);
+  const rest = sections.filter((section) => !hasMiss(section));
+  return miss.length === 0 ? [...sections] : [...miss, ...rest];
+}

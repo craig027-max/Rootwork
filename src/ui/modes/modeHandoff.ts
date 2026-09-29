@@ -38,6 +38,9 @@
  * over Geo. Browse / All Roots now matches — 183 roots /
  * Bio ✓ first must not sit over Geo. Deck strip / nav now
  * matches — Starter / Card 02 / 183 must not sit over Geo.
+ * Browse sections now match — Tier 1 — Starter must not sit
+ * over Geo. Deck card / Prev now match — prove you know it /
+ * Geo · ? / Prev → Bio must not sit over Geo.
  * Change level must not put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),

@@ -686,6 +686,24 @@
   .ww-index-head.is-miss .sub {
     display: block;
   }
+  .ww-tier-sec.is-miss {
+    display: block;
+  }
+  .ww-tier-sec.is-miss .th,
+  .ww-tier-sec.is-miss .th.is-miss {
+    display: flex;
+  }
+  .ww-tier-sec.is-miss .th .n,
+  .ww-tier-sec.is-miss .th .s {
+    display: block;
+  }
+  .ww-caption.is-remember-miss,
+  .ww-eyebrow2.is-remember-miss {
+    display: block;
+  }
+  .ww-means.is-miss {
+    display: flex;
+  }
   .ww-strip.is-miss {
     display: flex;
   }
@@ -1766,8 +1784,19 @@ button.ww-schip:focus-visible {
   border-color: rgba(255, 206, 77, 0.42);
   background: rgba(10, 10, 26, 0.7);
 }
+.ww-caption.is-remember-miss {
+  color: #ff8a8f;
+  border-color: rgba(255, 138, 143, 0.42);
+  background: rgba(10, 10, 26, 0.7);
+}
 .ww-eyebrow2.is-remember {
   color: var(--jewel-amber);
+}
+.ww-eyebrow2.is-remember-miss {
+  color: #ff8a8f;
+}
+.ww-means.is-miss .alt {
+  color: #ff8a8f;
 }
 .ww-card2.is-remember .ww-deck-back {
   color: var(--jewel-amber);
@@ -2040,6 +2069,10 @@ button.ww-schip:focus-visible {
   font-weight: 800;
   font-size: 1.05rem;
 }
+.ww-tier-sec.is-miss .th .n,
+.ww-tier-sec .th.is-miss .n {
+  color: #ff8a8f;
+}
 .ww-tier-sec .th .s {
   font-family: var(--font-mono);
   font-size: 0.62rem;
@@ -2247,6 +2280,26 @@ button.ww-schip:focus-visible {
   /* Remember one-beat: named root + Home tap stay when eyebrow/lead hide.
      A Rush miss keeps the honest lead — You already own must not hide Geo. */
   .ww-caption.is-remember {
+    display: block;
+  }
+  .ww-caption.is-remember-miss {
+    display: block;
+  }
+  .ww-eyebrow2.is-remember-miss {
+    display: block;
+  }
+  .ww-means.is-miss {
+    display: flex;
+  }
+  .ww-tier-sec.is-miss {
+    display: block;
+  }
+  .ww-tier-sec.is-miss .th,
+  .ww-tier-sec.is-miss .th.is-miss {
+    display: flex;
+  }
+  .ww-tier-sec.is-miss .th .n,
+  .ww-tier-sec.is-miss .th .s {
     display: block;
   }
   .ww-lead2.is-remember-miss,

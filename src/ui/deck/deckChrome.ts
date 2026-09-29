@@ -50,3 +50,61 @@ export function deckNavMeta(opts: {
 export function deckIndexAria(opts: { missed?: boolean } = {}): string {
   return opts.missed ? 'Remember' : 'All roots index';
 }
+
+/** Scene caption — Missed Geo, not watch the scene / Remember Geo as a stale recap. */
+export function deckCaption(opts: {
+  emoji: string;
+  root: string;
+  mean: string;
+  alt: string;
+  remembering?: boolean;
+  missed?: boolean;
+  studying?: boolean;
+}): string {
+  const name = cleanName(opts.root);
+  if (opts.missed) return name ? `${opts.emoji} Missed ${name}` : `${opts.emoji} Missed`;
+  if (opts.remembering) return name ? `${opts.emoji} Remember ${name}` : `${opts.emoji} Remember`;
+  if (opts.studying) return `${opts.emoji} watch the scene`;
+  return `${opts.emoji} ${opts.mean} — ${opts.alt}`;
+}
+
+/** Card eyebrow — Missed Geo, not Latin Root / Remember Geo over the same miss. */
+export function deckEyebrow(opts: {
+  root: string;
+  lang: string;
+  remembering?: boolean;
+  missed?: boolean;
+}): string {
+  const name = cleanName(opts.root);
+  if (opts.missed) return name ? `Missed ${name}` : 'Missed';
+  if (opts.remembering) return name ? `Remember ${name}` : 'Remember';
+  return `${opts.lang} Root`;
+}
+
+/** Means gloss — you missed this in Rush, not prove you know it over Geo. */
+export function deckMeansAlt(opts: {
+  alt: string;
+  studying?: boolean;
+  missed?: boolean;
+}): string {
+  if (opts.missed) return 'you missed this in Rush';
+  if (opts.studying) return 'prove you know it';
+  return opts.alt;
+}
+
+/** Nav centre — Missed Geo, not Geo · ? over the same coral miss. */
+export function deckNavRoot(opts: { root: string; missed?: boolean }): string {
+  const name = cleanName(opts.root);
+  if (opts.missed) return name ? `Missed ${name}` : 'Missed';
+  return name;
+}
+
+/** Nav meaning — hide the studying ? so it cannot sit over Missed Geo. */
+export function deckNavMeaning(opts: { meaning: string; missed?: boolean }): string {
+  return opts.missed ? '' : opts.meaning;
+}
+
+/** Prev dumps Bio teach over Remember Geo — hide it on a Remember visit. */
+export function deckShowPrev(opts: { remembering?: boolean } = {}): boolean {
+  return !opts.remembering;
+}

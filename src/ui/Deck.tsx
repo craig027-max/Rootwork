@@ -55,7 +55,17 @@ import { Scene } from './Scene';
 import { SCENE_EMOJI } from './scenes';
 import { Badge } from './components/Badge';
 import { Button } from './components/Button';
-import { deckBackLabel, deckStripCount, deckStripTier } from './deck/deckChrome';
+import {
+  deckBackLabel,
+  deckCaption,
+  deckEyebrow,
+  deckMeansAlt,
+  deckNavMeaning,
+  deckNavRoot,
+  deckShowPrev,
+  deckStripCount,
+  deckStripTier,
+} from './deck/deckChrome';
 import { DeckNav } from './deck/DeckNav';
 import { RootIndex } from './deck/RootIndex';
 import { splitForOpenWord, toggleOpenWord } from './wordSplit';
@@ -224,7 +234,7 @@ export function Deck() {
   const done = completed.has(id);
   const position = ROOTS.findIndex((r) => rootId(r) === id) + 1;
   const tierName = TIERS[root.t - 1]?.n ?? 'Starter';
-  const lang = root.org.split(' ')[0];
+  const lang = root.org.split(' ')[0] ?? '';
   const emoji = SCENE_EMOJI[root.scene] ?? '🔤';
   const lesson = { recall, currentRootId: id, entry: deckEntry, correctAdvance };
   const winLine = winLineOnCard(lesson);
@@ -369,18 +379,35 @@ export function Deck() {
           <div className="ww-hero">
             <div className="ww-scene2">
               <Scene scene={root.scene} pal={p.pal} />
-              <span className={`ww-caption${remembering ? ' is-remember' : ''}`}>
-                {remembering
-                  ? `${emoji} Remember ${root.root}`
-                  : studying
-                    ? `${emoji} watch the scene`
-                    : `${emoji} ${root.mean} — ${root.alt}`}
+              <span
+                className={`ww-caption${remembering ? ' is-remember' : ''}${
+                  missRemember ? ' is-remember-miss' : ''
+                }`}
+              >
+                {deckCaption({
+                  emoji,
+                  root: root.root,
+                  mean: root.mean,
+                  alt: root.alt,
+                  remembering,
+                  missed: missRemember,
+                  studying,
+                })}
               </span>
             </div>
             <div className="ww-hero-text">
-              <span className={`ww-eyebrow2${remembering ? ' is-remember' : ''}`}>
+              <span
+                className={`ww-eyebrow2${remembering ? ' is-remember' : ''}${
+                  missRemember ? ' is-remember-miss' : ''
+                }`}
+              >
                 <span className="ww-eyebrow-dot" aria-hidden="true" />
-                {remembering ? `Remember ${root.root}` : `${lang} Root`}
+                {deckEyebrow({
+                  root: root.root,
+                  lang,
+                  remembering,
+                  missed: missRemember,
+                })}
               </span>
               <div className="ww-root">{root.root}</div>
               <div className="ww-pron">
@@ -423,12 +450,14 @@ export function Deck() {
                   <p className="ww-listen-line">{hearHold.line}</p>
                 </div>
               ) : null}
-              <div className="ww-means">
+              <div className={`ww-means${missRemember ? ' is-miss' : ''}`}>
                 <span className="arrow" aria-hidden="true">
                   →
                 </span>
                 <span className="word">{studying ? '?' : root.mean}</span>
-                <span className="alt">{studying ? 'prove you know it' : root.alt}</span>
+                <span className="alt">
+                  {deckMeansAlt({ alt: root.alt, studying, missed: missRemember })}
+                </span>
               </div>
               {studying ? (
                 <p className={`ww-lead2${missRemember ? ' is-remember-miss' : ''}`}>
@@ -569,8 +598,8 @@ export function Deck() {
       </div>
 
       <DeckNav
-        rootLabel={root.root}
-        meaning={studying ? '?' : root.mean}
+        rootLabel={deckNavRoot({ root: root.root, missed: missRemember })}
+        meaning={deckNavMeaning({ meaning: studying ? '?' : root.mean, missed: missRemember })}
         tierName={tierName}
         position={position}
         total={ROOTS.length}
@@ -580,6 +609,7 @@ export function Deck() {
         onIndex={() => setIndexOpen(true)}
         showRush={nextTap.showRush}
         showNext={nextTap.showNextRoot}
+        showPrev={deckShowPrev({ remembering })}
         nextDisabled={listen.disableNextRoot}
         missed={missRemember}
         missName={root.root}
