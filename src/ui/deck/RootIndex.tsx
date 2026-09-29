@@ -18,6 +18,9 @@ import {
   indexHeading,
   indexRootsMissFirst,
   indexSub,
+  indexTierHeading,
+  indexTiersMissFirst,
+  indexTierSub,
 } from './indexChip';
 
 function palRgb(root: Root): string {
@@ -32,9 +35,12 @@ function palRgb(root: Root): string {
  * fake ✓ over the same coral miss Home already named. Browse chrome
  * now matches — All Roots / 183 roots / Bio ✓ first must not sit
  * over Geo. Deck strip / nav now matches — Starter / Card 02 /
- * 183 must not sit over that same miss. Locked (paid) roots still
- * appear but are dimmed — opening one routes through the deck's
- * existing upgrade guard.
+ * 183 must not sit over that same miss. Browse sections now
+ * match — Tier 1 — Starter / everyday roots must not sit over
+ * Geo. Deck card / Prev now match — prove you know it /
+ * Geo · ? / Prev → Bio must not sit over that same miss.
+ * Locked (paid) roots still appear but are dimmed — opening
+ * one routes through the deck's existing upgrade guard.
  */
 export function RootIndex({
   entitled,
@@ -88,19 +94,27 @@ export function RootIndex({
           </button>
         </div>
 
-        {TIERS.map((tier, ti) => {
-          const tierRoots = indexRootsMissFirst(
-            rootsInTier((ti + 1) as 1 | 2 | 3 | 4 | 5),
-            missed,
-            rootId,
-          );
+        {indexTiersMissFirst(
+          TIERS.map((tier, ti) => {
+            const t = (ti + 1) as 1 | 2 | 3 | 4 | 5;
+            const tierRoots = indexRootsMissFirst(rootsInTier(t), missed, rootId);
+            const tierMissNames = tierRoots
+              .filter((root) => missed.has(rootId(root)))
+              .map((root) => root.root);
+            return { tier, t, tierRoots, tierMissNames };
+          }),
+          (section) => section.tierMissNames.length > 0,
+        ).map(({ tier, t, tierRoots, tierMissNames }) => {
+          const missSec = tierMissNames.length > 0;
           return (
-            <section className="ww-tier-sec" key={tier.n}>
-              <div className="th">
+            <section className={`ww-tier-sec${missSec ? ' is-miss' : ''}`} key={tier.n}>
+              <div className={`th${missSec ? ' is-miss' : ''}`}>
                 <span className="n">
-                  Tier {ti + 1} — {tier.n}
+                  {indexTierHeading({ t, name: tier.n, missNames: tierMissNames })}
                 </span>
-                <span className="s">{tier.sub}</span>
+                <span className="s">
+                  {indexTierSub({ sub: tier.sub, missNames: tierMissNames })}
+                </span>
                 <span className="line" />
               </div>
               <div className="ww-igrid">

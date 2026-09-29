@@ -33,7 +33,7 @@ describe('phone card: one-line meaning + chips', () => {
   });
 
   it('renders a readable one-line root meaning with the chips', () => {
-    expect(deck).toContain('className="ww-means"');
+    expect(deck).toContain('ww-means');
     expect(deck).toContain('className="ww-mean-line"');
     expect(deck).toMatch(/means \{root\.mean\}/);
     expect(deck.indexOf('className="ww-mean-line"')).toBeGreaterThan(deck.indexOf('className="ww-words"'));

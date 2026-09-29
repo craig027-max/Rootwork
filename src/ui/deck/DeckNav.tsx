@@ -9,6 +9,7 @@ import { deckIndexAria, deckNavMeta } from './deckChrome';
  * is I know this or the quiz — same spirit as Home (#28–#30). A waiting
  * Rush miss names Remember · Geo — Starter · 2 / 183 / All roots
  * index must not sit over that same coral miss Browse already named.
+ * Prev stays hidden on Remember so Bio teach cannot dump over Geo.
  */
 export function DeckNav({
   rootLabel,
@@ -22,6 +23,7 @@ export function DeckNav({
   onIndex,
   showRush = true,
   showNext = true,
+  showPrev = true,
   nextDisabled = false,
   missed = false,
   missName,
@@ -39,6 +41,8 @@ export function DeckNav({
   showRush?: boolean;
   /** After Hear/Yes, hide nav Next so it cannot dump the next root mid-listen. */
   showNext?: boolean;
+  /** Remember visit — hide Prev so Bio teach cannot dump over Geo. */
+  showPrev?: boolean;
   /** While a Hear/Yes clip is playing, Next stays visible but closed. */
   nextDisabled?: boolean;
   /** Path-done Rush miss — nav meta is Remember, not Starter / 183. */
@@ -49,9 +53,11 @@ export function DeckNav({
   const indexAria = deckIndexAria({ missed });
   return (
     <nav className={`ww-decknav${missed ? ' is-miss' : ''}`} aria-label="Deck navigation">
-      <button type="button" className="ww-nav-btn" aria-label="Previous root" onClick={onPrev}>
-        ‹
-      </button>
+      {showPrev ? (
+        <button type="button" className="ww-nav-btn" aria-label="Previous root" onClick={onPrev}>
+          ‹
+        </button>
+      ) : null}
       <button
         type="button"
         className={`ww-nav-cur${missed ? ' is-miss' : ''}`}
@@ -59,7 +65,8 @@ export function DeckNav({
         title="Open index"
       >
         <span className="r">
-          {rootLabel} <b>· {meaning}</b>
+          {rootLabel}
+          {meaning ? <b> · {meaning}</b> : null}
         </span>
         <span className="meta">{meta}</span>
       </button>

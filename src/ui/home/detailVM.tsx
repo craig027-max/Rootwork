@@ -71,6 +71,9 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  Browse / All Roots now matches — 183 roots / Bio ✓ first
  *  / a Scholar eyebrow must not sit over Geo. Deck strip /
  *  nav now matches — Starter / Card 02 / 183 must not sit
+ *  over Geo. Browse sections now match — Tier 1 — Starter
+ *  must not sit over Geo. Deck card / Prev now match —
+ *  prove you know it / Geo · ? / Prev → Bio must not sit
  *  over Geo. */
 export function buildDetailVM(
   item: MenuItem,
