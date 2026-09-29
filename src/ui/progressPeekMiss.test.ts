@@ -13,7 +13,14 @@ import {
   samplePeekLabel,
   samplePeekTap,
 } from './home/samplePeek';
-import { indexChipKind, indexChipLabel } from './deck/indexChip';
+import {
+  indexChipKind,
+  indexChipLabel,
+  indexChipMark,
+  indexHeading,
+  indexRootsMissFirst,
+  indexSub,
+} from './deck/indexChip';
 
 const detail = readFileSync(join(process.cwd(), 'src/ui/home/detailVM.tsx'), 'utf8');
 const peek = readFileSync(join(process.cwd(), 'src/ui/home/samplePeek.ts'), 'utf8');
@@ -239,6 +246,10 @@ describe('Progress peek after a miss is Remember — not Play Bene / Remember Bi
     expect(indexChipLabel(geo.root, 'done')).toBe(`Remember ${geo.root}`);
     expect(indexChipLabel(first.root, 'done')).toBe(`Remember ${first.root}`);
     expect(indexChipKind({ missed: true, owned: true })).not.toBe('done');
+    expect(indexHeading([geo.root])).toBe('Remember');
+    expect(indexSub([geo.root])).toBe(`Missed ${geo.root}`);
+    expect(indexChipMark('miss')).toBe('!');
+    expect(indexRootsMissFirst(starter, new Set([rootId(geo)]), rootId)[0]?.root).toBe(geo.root);
   });
 
   it('wires Home + Deck catalog — Missed Geo chips, not Play Bene / a fake ✓', () => {
@@ -253,10 +264,13 @@ describe('Progress peek after a miss is Remember — not Play Bene / Remember Bi
     expect(deck).toContain('listOwnedRushMissIds');
     expect(deck).toContain('rememberMissIds={listOwnedRushMissIds');
     expect(index).toContain('indexChipKind');
+    expect(index).toContain('indexHeading');
+    expect(index).toContain('indexRootsMissFirst');
     expect(index).toContain('kind === \'miss\'');
     expect(index).toContain('is-miss');
     expect(chip).toContain('if (opts.missed) return \'miss\'');
     expect(chip).toContain('Missed ${name}');
+    expect(chip).toContain("return cleanNames(missNames)[0] ? 'Remember' : 'All Roots'");
     expect(css).toMatch(/\.ww-ichip\.is-miss/);
     expect(css).toMatch(/\.ww-samples\.is-lines \.ww-schip\.is-miss/);
   });

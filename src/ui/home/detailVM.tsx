@@ -67,7 +67,9 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  Bio / Your progress must not sit over Geo. Later progress
  *  now matches — Play Bene / Your progress / Ask a grown-up
  *  must not sit over Geo. Progress peek chips now match —
- *  Play Bene / Remember Bio / a fake ✓ must not sit over Geo. */
+ *  Play Bene / Remember Bio / a fake ✓ must not sit over Geo.
+ *  Browse / All Roots now matches — 183 roots / Bio ✓ first
+ *  / a Scholar eyebrow must not sit over Geo. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -152,7 +154,7 @@ export function buildDetailVM(
       return {
         jewel: item.jewel,
         animKey: item.key,
-        eyebrow: 'Quiz Mode',
+        eyebrow: missHero ? 'Remember' : 'Quiz Mode',
         big: missHero && miss ? `Remember ${miss.name}` : 'Root Rush',
         lead: missHero
           ? 'Play again is just for fun.'
@@ -252,7 +254,7 @@ export function buildDetailVM(
     return {
       jewel: item.jewel,
       animKey: item.key,
-      eyebrow: 'Daily Challenge',
+      eyebrow: miss ? 'Remember' : 'Daily Challenge',
       big: miss ? `Remember ${miss.name}` : 'Daily',
       lead: doneLead
         ? doneLead
@@ -328,7 +330,7 @@ export function buildDetailVM(
       return {
         jewel: item.jewel,
         animKey: item.key,
-        eyebrow: item.title,
+        eyebrow: 'Remember',
         big: `Remember ${miss.name}`,
         lead: 'Ask a grown-up is just for fun.',
         samples: missSamples,
@@ -372,6 +374,8 @@ export function buildDetailVM(
   // matches — Play Bene / Your progress / Ask a grown-up must not
   // sit over that same miss. Peek chips now match — Play Bene /
   // Remember Bio / a fake ✓ must not sit over that same miss.
+  // Browse / the Scholar eyebrow now match — All Roots / Bio ✓
+  // / Tier 3 · Scholar must not sit over that same miss.
   const missSamples =
     missHero && miss
       ? missPeekSamples({
@@ -395,7 +399,7 @@ export function buildDetailVM(
   return {
     jewel: item.jewel,
     animKey: item.key,
-    eyebrow: item.title,
+    eyebrow: missHero ? 'Remember' : item.title,
     big: missHero && miss ? `Remember ${miss.name}` : name,
     lead: missHero
       ? complete

@@ -577,6 +577,9 @@
   .ww-samples.is-lines .ww-schip.is-miss.is-tap {
     display: flex;
   }
+  .ww-samples.is-lines .ww-schip.is-miss .ww-daily-mark.is-miss {
+    display: inline;
+  }
   .ww-daily-line.is-miss {
     display: flex;
   }
@@ -671,6 +674,17 @@
   }
   .ww-ichip .ww-daily-mark {
     display: inline;
+  }
+  .ww-ichip .ww-daily-mark.is-miss {
+    display: inline;
+  }
+  .ww-index-head,
+  .ww-index-head.is-miss {
+    display: flex;
+  }
+  .ww-index-head.is-miss h2,
+  .ww-index-head.is-miss .sub {
+    display: block;
   }
   .ww-profile.is-slim,
   .ww-profile.is-first {
@@ -824,6 +838,9 @@
   color: var(--success);
   font-weight: 800;
   font-size: 0.95em;
+}
+.ww-daily-mark.is-miss {
+  color: #ff8a8f;
 }
 .ww-daily-line.is-done b {
   color: var(--text-primary);
@@ -1955,6 +1972,9 @@ button.ww-schip:focus-visible {
   font-family: var(--font-game);
   font-weight: 900;
   font-size: 1.9rem;
+}
+.ww-index-head.is-miss h2 {
+  color: #ff8a8f;
 }
 .ww-index-head .sub {
   font-family: var(--font-mono);

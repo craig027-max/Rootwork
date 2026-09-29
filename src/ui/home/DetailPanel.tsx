@@ -138,6 +138,11 @@ export function DetailPanel({
                     ✓
                   </span>
                 ) : null}
+                {chipMiss ? (
+                  <span className="ww-daily-mark is-miss" aria-hidden="true">
+                    !
+                  </span>
+                ) : null}
                 <b>{s.root}</b>
                 <span>{s.mean}</span>
               </>

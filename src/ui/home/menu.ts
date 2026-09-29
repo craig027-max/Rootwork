@@ -296,6 +296,8 @@ export function listHeading(
  * Ask-a-grown-up) now matches — Play Bene / Your progress
  * must not sit over Geo. Progress peek chips now match —
  * Play Bene / Remember Bio / a fake ✓ must not sit over Geo.
+ * Browse / All Roots now matches — 183 roots / Bio ✓ first
+ * must not sit over Geo.
  */
 export function rushMenuSub(
   opts: {
