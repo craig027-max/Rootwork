@@ -74,7 +74,10 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  over Geo. Browse sections now match — Tier 1 — Starter
  *  must not sit over Geo. Deck card / Prev now match —
  *  prove you know it / Geo · ? / Prev → Bio must not sit
- *  over Geo. */
+ *  over Geo. Home list row titles now match — Tier 1 ·
+ *  Starter must not sit over Geo. Rush / Daily list
+ *  titles now match — Root Rush / Daily Challenge must
+ *  not sit over Geo. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
