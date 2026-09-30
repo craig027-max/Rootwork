@@ -301,7 +301,9 @@ export function listHeading(
  * Starter / Card 02 / 183 must not sit over Geo. Browse
  * sections now match — Tier 1 — Starter must not sit over
  * Geo. Deck card / Prev now match — prove you know it /
- * Geo · ? / Prev → Bio must not sit over Geo.
+ * Geo · ? / Prev → Bio must not sit over Geo. Home list
+ * row titles now match — Tier 1 · Starter must not sit
+ * over Geo when the sub already says Missed · remember.
  */
 export function rushMenuSub(
   opts: {
@@ -319,6 +321,16 @@ export function rushMenuSub(
   const learn = opts.learnName?.replace(/\s+/g, ' ').trim();
   if (learn) return opts.keepGoing ? `Keep going · ${learn}` : `Continue · ${learn}`;
   return 'Combo run · match roots to meanings';
+}
+
+/** List row title — Remember over a miss, Tier 1 · Starter once it's done. */
+export function tierMenuTitle(opts: {
+  t: number;
+  name: string;
+  missName?: string;
+}): string {
+  const miss = opts.missName?.replace(/\s+/g, ' ').trim();
+  return miss ? 'Remember' : `Tier ${opts.t} · ${opts.name}`;
 }
 
 /** Returning-dashboard Root Rush meta: letter + stars, plus combo once it exists. */
@@ -539,7 +551,7 @@ export function buildMenu(
       key: `tier-${t}`,
       icon: meta.icon,
       jewel: meta.jewel,
-      title: `Tier ${t} · ${tier.n}`,
+      title: tierMenuTitle({ t, name: tier.n, missName }),
       sub: missHere ? `Missed ${missName} · remember` : tier.sub,
       t,
       done,

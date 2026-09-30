@@ -380,7 +380,9 @@ export function buildDetailVM(
   // sit over that same miss. Peek chips now match — Play Bene /
   // Remember Bio / a fake ✓ must not sit over that same miss.
   // Browse / the Scholar eyebrow now match — All Roots / Bio ✓
-  // / Tier 3 · Scholar must not sit over that same miss.
+  // / Tier 3 · Scholar must not sit over that same miss. Home
+  // list row titles now match — Tier 1 · Starter must not sit
+  // over Geo when the sub already says Missed · remember.
   const missSamples =
     missHero && miss
       ? missPeekSamples({

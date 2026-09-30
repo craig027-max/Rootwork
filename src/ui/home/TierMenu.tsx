@@ -77,7 +77,7 @@ export function TierMenu({
         tabIndex={sel ? 0 : -1}
         className={`ww-menu-row${sel ? ' sel' : ''}${playNow ? ' play' : ''}${
           it.kind === 'mode' && it.preview && it.preview.length > 0 ? ' has-preview' : ''
-        }`}
+        }${it.kind === 'tier' && it.missName ? ' is-miss' : ''}`}
         style={jewelVarsOf(it.jewel)}
         onClick={() => {
           if (sel) onActivate(it);
@@ -91,7 +91,9 @@ export function TierMenu({
           <span className="t">
             {it.title}
             {it.kind === 'mode' && it.badge ? <span className="ww-tag">{it.badge}</span> : null}
-            {it.kind === 'tier' && it.t === 1 ? <span className="ww-tag">FREE</span> : null}
+            {it.kind === 'tier' && it.t === 1 && !it.missName ? (
+              <span className="ww-tag">FREE</span>
+            ) : null}
             {playNow ? <span className="ww-tag here">PLAY</span> : null}
             {it.kind === 'tier' && it.current && !playNow && !it.missName ? (
               <span className="ww-tag here">HERE</span>

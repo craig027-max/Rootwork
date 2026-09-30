@@ -40,7 +40,9 @@
  * matches — Starter / Card 02 / 183 must not sit over Geo.
  * Browse sections now match — Tier 1 — Starter must not sit
  * over Geo. Deck card / Prev now match — prove you know it /
- * Geo · ? / Prev → Bio must not sit over Geo.
+ * Geo · ? / Prev → Bio must not sit over Geo. Home list
+ * row titles now match — Tier 1 · Starter must not sit
+ * over Geo when the sub already says Missed · remember.
  * Change level must not put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),

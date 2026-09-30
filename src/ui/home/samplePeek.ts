@@ -15,6 +15,8 @@
  * sit over Geo. Browse sections now match — Tier 1 — Starter
  * must not sit over Geo. Deck card / Prev now match — prove
  * you know it / Geo · ? / Prev → Bio must not sit over Geo.
+ * Home list row titles now match — Tier 1 · Starter must
+ * not sit over Geo when the sub already says Missed · remember.
  */
 import type { MenuItem } from './menu';
 
