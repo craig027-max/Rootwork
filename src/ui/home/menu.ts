@@ -58,6 +58,8 @@ export interface ModeItem {
   previewResume?: boolean;
   /** Mid-run Daily: the next unanswered root (same "Next ·" language as tiers). */
   resumeName?: string;
+  /** Path-done Rush miss — Root Rush / Daily Challenge must not sit over Geo. */
+  missName?: string;
 }
 
 export interface TierItem {
@@ -304,6 +306,9 @@ export function listHeading(
  * Geo · ? / Prev → Bio must not sit over Geo. Home list
  * row titles now match — Tier 1 · Starter must not sit
  * over Geo when the sub already says Missed · remember.
+ * Rush / Daily list titles now match — Root Rush /
+ * Daily Challenge must not sit over Geo when the sub
+ * already says Missed · remember.
  */
 export function rushMenuSub(
   opts: {
@@ -331,6 +336,15 @@ export function tierMenuTitle(opts: {
 }): string {
   const miss = opts.missName?.replace(/\s+/g, ' ').trim();
   return miss ? 'Remember' : `Tier ${opts.t} · ${opts.name}`;
+}
+
+/** List row title — Remember over a miss, Root Rush / Daily Challenge once it's done. */
+export function modeMenuTitle(opts: {
+  name: string;
+  missName?: string;
+}): string {
+  const miss = opts.missName?.replace(/\s+/g, ' ').trim();
+  return miss ? 'Remember' : opts.name;
 }
 
 /** Returning-dashboard Root Rush meta: letter + stars, plus combo once it exists. */
@@ -389,6 +403,11 @@ export function isCompleteTier(item: MenuItem): boolean {
 /** Path-done Rush miss — any progress row names Remember, not Play / unlock chrome. */
 export function isMissProgressTier(item: MenuItem): boolean {
   return item.kind === 'tier' && Boolean(item.missName);
+}
+
+/** Path-done Rush miss — Rush / Daily rows name Remember, not quiz chrome. */
+export function isMissMode(item: MenuItem): boolean {
+  return item.kind === 'mode' && Boolean(item.missName);
 }
 
 /**
@@ -481,13 +500,14 @@ export function buildMenu(
 ): HomeMenu {
   const nextPlay =
     opts.nextPlay ?? isNextPlayHome(completed, entitled, { choseMode: opts.choseMode });
+  const missName = opts.rushMissName?.replace(/\s+/g, ' ').trim() || undefined;
   const modes: MenuItem[] = [
     {
       kind: 'mode',
       key: 'rush',
       icon: '🎯',
       jewel: 'fire',
-      title: 'Root Rush',
+      title: modeMenuTitle({ name: 'Root Rush', missName }),
       sub: rushMenuSub({
         dailyNextName: opts.dailyNextName,
         dailyDone: opts.dailyDone,
@@ -497,13 +517,14 @@ export function buildMenu(
       }),
       best: opts.rushMissName ? undefined : opts.rushBest,
       preview: opts.rushPreview && opts.rushPreview.length > 0 ? opts.rushPreview : undefined,
+      missName,
     },
     {
       kind: 'mode',
       key: 'daily',
       icon: '📅',
       jewel: 'gold',
-      title: 'Daily Challenge',
+      title: modeMenuTitle({ name: 'Daily Challenge', missName }),
       sub: opts.dailyDone
         ? dailyDoneMenuSub(opts.dailyPreview?.map((p) => p.root), {
             missName: opts.rushMissName,
@@ -534,10 +555,9 @@ export function buildMenu(
           opts.dailyPreview.length > 0,
       ),
       resumeName: opts.dailyNextName || undefined,
+      missName,
     },
   ];
-
-  const missName = opts.rushMissName?.replace(/\s+/g, ' ').trim() || undefined;
   const tiers: TierItem[] = TIERS.map((tier, i) => {
     const t = (i + 1) as TierNum;
     const meta = TIER_META[i]!;

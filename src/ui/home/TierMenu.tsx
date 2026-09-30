@@ -77,7 +77,7 @@ export function TierMenu({
         tabIndex={sel ? 0 : -1}
         className={`ww-menu-row${sel ? ' sel' : ''}${playNow ? ' play' : ''}${
           it.kind === 'mode' && it.preview && it.preview.length > 0 ? ' has-preview' : ''
-        }${it.kind === 'tier' && it.missName ? ' is-miss' : ''}`}
+        }${it.missName ? ' is-miss' : ''}`}
         style={jewelVarsOf(it.jewel)}
         onClick={() => {
           if (sel) onActivate(it);

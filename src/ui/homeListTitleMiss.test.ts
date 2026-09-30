@@ -211,7 +211,8 @@ describe('Home list after a miss is Remember — not Tier 1 · Starter over Geo'
     expect(menu).toContain("return miss ? 'Remember' : `Tier ${opts.t} · ${opts.name}`");
     expect(menu).toContain('title: tierMenuTitle({ t, name: tier.n, missName })');
     expect(menu).toContain('missHere ? `Missed ${missName} · remember`');
-    expect(tierMenu).toContain("it.kind === 'tier' && it.missName ? ' is-miss' : ''");
+    expect(tierMenu).toContain("it.missName ? ' is-miss' : ''");
+    expect(tierMenu).not.toContain("it.kind === 'tier' && it.missName ? ' is-miss' : ''");
     expect(tierMenu).toContain('it.kind === \'tier\' && it.t === 1 && !it.missName');
     expect(tierMenu).not.toContain('it.kind === \'tier\' && it.t === 1 ? <span className="ww-tag">FREE</span>');
     expect(css).toMatch(/\.ww-menu-row\.is-miss \.ww-menu-body \.t/);
