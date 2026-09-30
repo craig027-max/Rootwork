@@ -53,7 +53,9 @@
  * not sit over Geo. Browse sections now match — Tier 1 —
  * Starter must not sit over Geo. Deck card / Prev now match
  * — prove you know it / Geo · ? / Prev → Bio must not sit
- * over Geo.
+ * over Geo. Home list row titles now match — Tier 1 ·
+ * Starter must not sit over Geo when the sub already says
+ * Missed · remember.
  * Continue / Keep going / Rush CTAs stay as #68 left them when no
  * miss is waiting.
  *

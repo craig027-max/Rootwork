@@ -39,6 +39,8 @@ function palRgb(root: Root): string {
  * match — Tier 1 — Starter / everyday roots must not sit over
  * Geo. Deck card / Prev now match — prove you know it /
  * Geo · ? / Prev → Bio must not sit over that same miss.
+ * Home list row titles now match — Tier 1 · Starter must
+ * not sit over Geo when the sub already says Missed · remember.
  * Locked (paid) roots still appear but are dimmed — opening
  * one routes through the deck's existing upgrade guard.
  */
