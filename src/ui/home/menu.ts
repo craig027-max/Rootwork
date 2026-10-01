@@ -312,6 +312,8 @@ export function listHeading(
  * already says Missed · remember. Daily peek chips
  * now match — today's five ✓ / Chron / Photo / Aqua
  * must not sit over Geo under a Remember title.
+ * Rush peek chips now match — last-run Photo ✓ /
+ * Bio ✓ must not sit over Geo under that same title.
  */
 export function rushMenuSub(
   opts: {
@@ -523,7 +525,11 @@ export function buildMenu(
         keepGoing: opts.rushKeepGoing,
       }),
       best: opts.rushMissName ? undefined : opts.rushBest,
-      preview: opts.rushPreview && opts.rushPreview.length > 0 ? opts.rushPreview : undefined,
+      preview: missPreview.length > 0
+        ? missPreview
+        : opts.rushPreview && opts.rushPreview.length > 0
+          ? opts.rushPreview
+          : undefined,
       missName,
     },
     {

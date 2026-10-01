@@ -59,6 +59,8 @@
  * — Root Rush / Daily Challenge must not sit over Geo.
  * Daily peek chips now match — today's five ✓ / Chron /
  * Photo / Aqua must not sit over Geo under a Remember title.
+ * Rush peek chips now match — last-run Photo ✓ / Bio ✓
+ * must not sit over Geo under that same title.
  * Continue / Keep going / Rush CTAs stay as #68 left them when no
  * miss is waiting.
  *

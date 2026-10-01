@@ -79,7 +79,9 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  titles now match — Root Rush / Daily Challenge must
  *  not sit over Geo. Daily peek chips now match —
  *  today's five ✓ / Chron / Photo / Aqua must not sit
- *  over Geo under a Remember title. */
+ *  over Geo under a Remember title. Rush peek chips
+ *  now match — last-run Photo ✓ / Bio ✓ must not sit
+ *  over Geo under that same title. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -148,15 +150,20 @@ export function buildDetailVM(
       const learn = rushLearnReady(extra.completed, extra.entitled, missOpts);
       const learnRoot =
         learn?.rootId ? ROOTS_BY_ID[learn.rootId] : undefined;
-      const rushSamples = homeRushRecapPreview(extra.rushRecap, {
-        dailyResume: Boolean(continueDaily),
-      });
-      const rushMore = extra.rushRecap
-        ? Math.max(0, extra.rushRecap.roots.length - rushSamples.length)
-        : 0;
-      const rushReplay = played ? 'Play again 🎯' : 'Start the run 🎯';
       const missHero = Boolean(miss && !continueDaily);
       const missRoot = miss ? ROOTS_BY_ID[miss.id] : undefined;
+      const missSamples = missHero && miss ? missPeekForNames(miss.name, miss.also) : [];
+      const rushSamples = missHero
+        ? missSamples
+        : homeRushRecapPreview(extra.rushRecap, {
+            dailyResume: Boolean(continueDaily),
+          });
+      const rushMore = missHero
+        ? 0
+        : extra.rushRecap
+          ? Math.max(0, extra.rushRecap.roots.length - rushSamples.length)
+          : 0;
+      const rushReplay = played ? 'Play again 🎯' : 'Start the run 🎯';
       const recapLine =
         !missHero && recap
           ? ` Best so far — ${recap}${bestScore > 0 ? ' combo' : ''}.`
@@ -180,8 +187,15 @@ export function buildDetailVM(
           : undefined,
         samples: rushSamples,
         sampleLines: rushSamples.length > 0,
-        samplesDone: rushSamples.length > 0 && rushSamples.every((s) => peekChipDone({ ok: s.ok })),
-        sampleTap: samplePeekTap({ mode: 'rush', sampleCount: rushSamples.length }),
+        samplesDone:
+          !missHero &&
+          rushSamples.length > 0 &&
+          rushSamples.every((s) => peekChipDone({ ok: s.ok })),
+        sampleTap: samplePeekTap({
+          mode: 'rush',
+          missHero,
+          sampleCount: rushSamples.length,
+        }),
         moreCount: rushMore,
         // Mid-run: Play again stays; Continue Daily is the ghost.
         // Path-done miss: Remember Geo is the fat tap — Play again
