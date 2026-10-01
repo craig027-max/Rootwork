@@ -31,6 +31,7 @@ import {
   learnNextAction,
   type ModeCta,
 } from './modes/modeHandoff';
+import { samplePeekLabel } from './home/samplePeek';
 
 /**
  * Root Rush — the full-screen jewel-themed quiz overlay, ported from the design
@@ -46,7 +47,9 @@ import {
  * Play again still starts Rush, but it is not the fat tap over Geo on
  * result, Home, or start (Change level), and start / result titles
  * are Remember Geo — not Test your roots / Best so far / a giant
- * grade / NEW BEST over that same miss.
+ * grade / NEW BEST over that same miss. Start / result / Home
+ * peek chips now match — last-run Photo ✓ / Bio ✓ must not sit
+ * over Geo under that Remember title.
  * After Daily is banked and Today still names Continue / Keep going,
  * that tap is the start / result hero — Play again stays the ghost
  * and the grade stays.
@@ -337,7 +340,6 @@ export function RootRush() {
     })),
   ];
   const lastRush = liveRushRecap(rushRecap, studentId);
-  const startPeek = homeRushRecapPreview(lastRush, { dailyResume: dailyResumeQi != null });
   const rushStart = buildRushStart({
     ...stats,
     ...dailyResume,
@@ -345,6 +347,14 @@ export function RootRush() {
     completed,
     entitled,
   });
+  const startPeek = rushStart.missWaiting
+    ? (rushStart.peekChips ?? []).flatMap((s) => {
+        const catalog = ROOTS.find((r) => r.root === s.root);
+        return catalog
+          ? [{ id: rootId(catalog), root: s.root, mean: s.mean, ok: s.ok === true }]
+          : [];
+      })
+    : homeRushRecapPreview(lastRush, { dailyResume: dailyResumeQi != null });
 
   return (
     <div className="q-rush" style={accentStyle(accent)} role="dialog" aria-modal="true" aria-label="Root Rush">
@@ -454,17 +464,29 @@ export function RootRush() {
               <div className="q-daily-chips q-rush-recap q-rush-start-recap">
                 {startPeek.map((s) => {
                   const owned = completed.has(s.id);
+                  const chipMiss = s.ok === false || rushStart.missWaiting;
                   return (
                     <button
                       type="button"
-                      className={`q-daily-chip${s.ok ? ' is-done' : ' is-miss'}`}
+                      className={`q-daily-chip${s.ok && !chipMiss ? ' is-done' : ''}${
+                        chipMiss ? ' is-miss' : ''
+                      }`}
                       key={s.id}
                       onClick={() => openRecap(s.id)}
-                      aria-label={rushRecapChipLabel(s.root, owned, s.ok)}
+                      aria-label={
+                        chipMiss
+                          ? samplePeekLabel('remember', s.root, { ok: false })
+                          : rushRecapChipLabel(s.root, owned, s.ok)
+                      }
                     >
-                      {s.ok ? (
+                      {s.ok && !chipMiss ? (
                         <span className="q-done-mark" aria-hidden="true">
                           ✓
+                        </span>
+                      ) : null}
+                      {chipMiss ? (
+                        <span className="q-done-mark is-miss" aria-hidden="true">
+                          !
                         </span>
                       ) : null}
                       {s.root}
@@ -582,28 +604,49 @@ export function RootRush() {
               </div>
             ) : null}
             <div className="q-daily-chips q-rush-recap" style={{ marginTop: 22 }}>
-              {questions.map((item, i) => {
-                const id = rootId(item.root);
-                const owned = completed.has(id);
-                const hit = hits[i] === true;
-                return (
-                  <button
-                    type="button"
-                    className={`q-daily-chip${hit ? ' is-done' : ' is-miss'}`}
-                    key={`${item.root.root}-${i}`}
-                    onClick={() => openRecap(id)}
-                    aria-label={rushRecapChipLabel(item.root.root, owned, hit)}
-                  >
-                    {hit ? (
-                      <span className="q-done-mark" aria-hidden="true">
-                        ✓
-                      </span>
-                    ) : null}
-                    {item.root.root}
-                    <em>{item.root.mean}</em>
-                  </button>
-                );
-              })}
+              {rushNext.missWaiting && rushNext.recap
+                ? rushNext.recap.map((chip) => {
+                    const catalog = ROOTS.find((r) => r.root === chip.root);
+                    if (!catalog) return null;
+                    const id = rootId(catalog);
+                    return (
+                      <button
+                        type="button"
+                        className="q-daily-chip is-miss"
+                        key={catalog.root}
+                        onClick={() => openRecap(id)}
+                        aria-label={samplePeekLabel('remember', catalog.root, { ok: false })}
+                      >
+                        <span className="q-done-mark is-miss" aria-hidden="true">
+                          !
+                        </span>
+                        {catalog.root}
+                        <em>{chip.mean || catalog.mean}</em>
+                      </button>
+                    );
+                  })
+                : questions.map((item, i) => {
+                    const id = rootId(item.root);
+                    const owned = completed.has(id);
+                    const hit = hits[i] === true;
+                    return (
+                      <button
+                        type="button"
+                        className={`q-daily-chip${hit ? ' is-done' : ' is-miss'}`}
+                        key={`${item.root.root}-${i}`}
+                        onClick={() => openRecap(id)}
+                        aria-label={rushRecapChipLabel(item.root.root, owned, hit)}
+                      >
+                        {hit ? (
+                          <span className="q-done-mark" aria-hidden="true">
+                            ✓
+                          </span>
+                        ) : null}
+                        {item.root.root}
+                        <em>{item.root.mean}</em>
+                      </button>
+                    );
+                  })}
             </div>
             <div className="q-actions">
               {rushNext.dailyResume || rushNext.missWaiting || rushNext.learnWaiting ? (

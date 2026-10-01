@@ -55,7 +55,9 @@ function palOf(root: Root) {
  * ✓ must not sit over Geo. Home Daily now matches — Daily / DONE /
  * Done for today / the 🔥 streak must not sit over Geo. Daily peek
  * chips now match — today's five ✓ / Chron / Photo / Aqua must
- * not sit over Geo under a Remember title. Finishing banks Daily
+ * not sit over Geo under a Remember title. Rush peek chips now
+ * match — last-run Photo ✓ / Bio ✓ must not sit over Geo
+ * under that same title. Finishing banks Daily
  * XP; replays are free.
  */
 export function DailyChallenge() {

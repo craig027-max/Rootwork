@@ -49,6 +49,8 @@
  * Daily Challenge must not sit over Geo. Daily peek
  * chips now match — today's five ✓ / Chron / Photo /
  * Aqua must not sit over Geo under a Remember title.
+ * Rush peek chips now match — last-run Photo ✓ /
+ * Bio ✓ must not sit over Geo under that same title.
  * The five-are-done recap stays once the miss is Remembered.
  */
 

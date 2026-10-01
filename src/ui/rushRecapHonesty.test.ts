@@ -146,7 +146,7 @@ describe('Rush recap is honest — ✓ only on hits, not an all-done dump', () =
     expect(rush).toContain('rushMissLine');
     expect(rush).toContain('startPeek');
     expect(rush).toContain('q-rush-start-recap');
-    expect(rush).toContain("s.ok ? ' is-done' : ' is-miss'");
+    expect(rush).toContain("s.ok && !chipMiss ? ' is-done'");
     expect(rush).toContain("hit ? ' is-done' : ' is-miss'");
     expect(rush).toContain('rushRecapChipLabel(item.root.root, owned, hit)');
     expect(home).toContain('todayRushRecap');

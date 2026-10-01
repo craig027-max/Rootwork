@@ -47,6 +47,8 @@
  * Daily Challenge must not sit over Geo. Daily peek
  * chips now match — today's five ✓ / Chron / Photo /
  * Aqua must not sit over Geo under a Remember title.
+ * Rush peek chips now match — last-run Photo ✓ /
+ * Bio ✓ must not sit over Geo under that same title.
  * Change level must not put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),
@@ -330,6 +332,8 @@ export interface RushStartVM {
   heroSub: string | null;
   /** Path-done Rush miss — Remember Geo, not Test your roots. */
   title: string | null;
+  /** Path-done Rush miss — Missed Geo, not last-run Photo ✓ Bio ✓. */
+  peekChips: { root: string; mean: string; ok?: boolean }[] | null;
 }
 
 /** Rush start: Play again after a real run, with the same best recap as Home.
@@ -387,6 +391,7 @@ export function buildRushStart(
     learnWaiting: Boolean(learn),
     heroSub: miss ? 'Play again is just for fun.' : null,
     title: miss ? `Remember ${miss.name}` : null,
+    peekChips: miss ? missPeekForNames(miss.name, miss.also) : null,
   };
 }
 
@@ -404,6 +409,8 @@ export interface RushResultVM {
   title: string | null;
   /** Giant grade letter / NEW BEST — off while Remember is the hero. */
   celebrateGrade: boolean;
+  /** Path-done Rush miss — Missed Geo, not last-run Photo ✓ Bio ✓. */
+  recap: { root: string; mean: string; ok?: boolean }[] | null;
 }
 
 /**
@@ -444,6 +451,7 @@ export function buildRushResultNext(
       learnWaiting: false,
       title: null,
       celebrateGrade: true,
+      recap: null,
     };
   }
   const miss = rushMissRememberReady(completed, entitled, opts);
@@ -463,6 +471,7 @@ export function buildRushResultNext(
       learnWaiting: false,
       title: `Remember ${miss.name}`,
       celebrateGrade: false,
+      recap: missPeekForNames(miss.name, miss.also),
     };
   }
   const learn = rushLearnReady(completed, entitled, opts);
@@ -482,6 +491,7 @@ export function buildRushResultNext(
       learnWaiting: true,
       title: null,
       celebrateGrade: true,
+      recap: null,
     };
   }
   return {
@@ -494,5 +504,6 @@ export function buildRushResultNext(
     learnWaiting: false,
     title: null,
     celebrateGrade: true,
+    recap: null,
   };
 }
