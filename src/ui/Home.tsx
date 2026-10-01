@@ -149,6 +149,7 @@ export function Home() {
     rushPreview,
     dailyNextName: dailyNext?.root,
     rushMissName: missHero ? remember.name : undefined,
+    rushMissAlso: missHero ? rememberAlso : undefined,
     rushLearnName: learnHero ? learnHeroCta.rootName ?? learn.name : undefined,
     rushKeepGoing: Boolean(learnHero && today.pathDone),
     nextPlay,

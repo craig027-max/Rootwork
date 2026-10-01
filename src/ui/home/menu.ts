@@ -29,6 +29,7 @@ import {
 import { recapOpenForId, type DeckEntry } from '../../core/deckFlow';
 import { dailyDoneMenuSub, dailyNextSub } from '../../core/daily';
 import { gradeForPct, starsForPct } from '../../core/stats';
+import { missPeekForNames } from './samplePeek';
 
 /** Per-tier presentation: emoji chip + the PALETTES jewel key that themes the row. */
 export const TIER_META: { icon: string; jewel: string }[] = [
@@ -308,7 +309,9 @@ export function listHeading(
  * over Geo when the sub already says Missed · remember.
  * Rush / Daily list titles now match — Root Rush /
  * Daily Challenge must not sit over Geo when the sub
- * already says Missed · remember.
+ * already says Missed · remember. Daily peek chips
+ * now match — today's five ✓ / Chron / Photo / Aqua
+ * must not sit over Geo under a Remember title.
  */
 export function rushMenuSub(
   opts: {
@@ -490,6 +493,8 @@ export function buildMenu(
     dailyNextName?: string;
     /** Path-done Rush miss — Rush / Daily / HERE / Starter / Scholar name Remember. */
     rushMissName?: string;
+    /** Second waiting miss — Daily peek can name then Chron. */
+    rushMissAlso?: string;
     /** Daily banked + Today still names this learn — not a combo-only dump. */
     rushLearnName?: string;
     /** Today ✓ — extra play, not unfinished Continue. */
@@ -501,6 +506,8 @@ export function buildMenu(
   const nextPlay =
     opts.nextPlay ?? isNextPlayHome(completed, entitled, { choseMode: opts.choseMode });
   const missName = opts.rushMissName?.replace(/\s+/g, ' ').trim() || undefined;
+  const missAlso = opts.rushMissAlso?.replace(/\s+/g, ' ').trim() || undefined;
+  const missPreview = missName ? missPeekForNames(missName, missAlso) : [];
   const modes: MenuItem[] = [
     {
       kind: 'mode',
@@ -545,8 +552,13 @@ export function buildMenu(
           : opts.dailyStreak && opts.dailyStreak > 0
             ? `🔥 ${opts.dailyStreak}`
             : undefined,
-      preview: opts.dailyPreview,
-      previewDone: Boolean(opts.dailyDone && opts.dailyPreview && opts.dailyPreview.length > 0),
+      preview: missPreview.length > 0 ? missPreview : opts.dailyPreview,
+      previewDone: Boolean(
+        opts.dailyDone &&
+          !missName &&
+          opts.dailyPreview &&
+          opts.dailyPreview.length > 0,
+      ),
       previewResume: Boolean(
         !opts.dailyDone &&
           opts.dailyResumeQi != null &&

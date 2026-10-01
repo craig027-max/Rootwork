@@ -43,6 +43,10 @@
  * Geo · ? / Prev → Bio must not sit over Geo. Home list
  * row titles now match — Tier 1 · Starter must not sit
  * over Geo when the sub already says Missed · remember.
+ * Rush / Daily list titles now match — Root Rush /
+ * Daily Challenge must not sit over Geo. Daily peek
+ * chips now match — today's five ✓ / Chron / Photo /
+ * Aqua must not sit over Geo under a Remember title.
  * Change level must not put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),
@@ -57,6 +61,7 @@ import { continueDailyLabel, dailyDoneOverlaySub, dailyNextRowLabel } from '../.
 import { rememberMissCtaLabel, todayMissRecap } from '../../core/rushRecap';
 import { ROOTS, rootId, rootsInTier, type Root } from '../../data/roots';
 import { nextPlayRoot, rushBestLabel, tierPrimaryLabel } from '../home/menu';
+import { missPeekForNames } from '../home/samplePeek';
 
 export interface ModeCta {
   kind: 'learn' | 'home' | 'daily' | 'remember' | 'rush';
@@ -192,7 +197,7 @@ export interface DailyDoneVM {
   title: string | null;
   streakLine: string;
   sub: string;
-  recap: { root: string; mean: string }[];
+  recap: { root: string; mean: string; ok?: boolean }[];
   recapDone: boolean;
   primary: ModeCta;
   replayLabel: string;
@@ -283,8 +288,10 @@ export function buildDailyDone(
         : 'Done for today.',
     streakLine,
     sub: dailyDoneOverlaySub(opts.justFinished),
-    recap: opts.deal.map((r) => ({ root: r.root, mean: r.mean })),
-    recapDone: true,
+    recap: miss
+      ? missPeekForNames(miss.name, miss.also)
+      : opts.deal.map((r) => ({ root: r.root, mean: r.mean })),
+    recapDone: !miss,
     primary: dailyDonePrimary(opts.completed, opts.entitled, missOpts),
     replayLabel: 'Play again ›',
     homeLabel: 'Home',

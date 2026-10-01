@@ -17,7 +17,12 @@
  * you know it / Geo · ? / Prev → Bio must not sit over Geo.
  * Home list row titles now match — Tier 1 · Starter must
  * not sit over Geo when the sub already says Missed · remember.
+ * Rush / Daily list titles now match — Root Rush / Daily
+ * Challenge must not sit over Geo. Daily peek chips now
+ * match — today's five ✓ / Chron / Photo / Aqua must not
+ * sit over Geo under a Remember title.
  */
+import { ROOTS } from '../../data/roots';
 import type { MenuItem } from './menu';
 
 export type SamplePeekTap = 'remember' | 'daily' | 'continue' | 'play';
@@ -46,6 +51,19 @@ export function missPeekSamples(
     });
   }
   return out;
+}
+
+/** Same Missed Geo / then Chron chips, looked up from the catalog. */
+export function missPeekForNames(name?: string, also?: string): MissPeekSample[] {
+  const root = name?.replace(/\s+/g, ' ').trim();
+  if (!root) return [];
+  const alsoName = also?.replace(/\s+/g, ' ').trim();
+  return missPeekSamples({
+    root,
+    mean: ROOTS.find((r) => r.root === root)?.mean,
+    also: alsoName,
+    alsoMean: alsoName ? ROOTS.find((r) => r.root === alsoName)?.mean : undefined,
+  });
 }
 
 export function samplePeekTap(opts: {

@@ -235,6 +235,9 @@
   color: var(--success);
   font-weight: 800;
 }
+.q-done-mark.is-miss {
+  color: #ff8a8f;
+}
 .q-done-title {
   font-family: var(--font-game);
   font-weight: 800;

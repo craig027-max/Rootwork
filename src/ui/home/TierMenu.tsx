@@ -121,6 +121,11 @@ export function TierMenu({
                         ✓
                       </span>
                     ) : null}
+                    {lineMiss ? (
+                      <span className="ww-daily-mark is-miss" aria-hidden="true">
+                        !
+                      </span>
+                    ) : null}
                     <b>{p.root}</b>
                     <span>{p.mean}</span>
                   </span>

@@ -29,6 +29,7 @@ import {
   type ModeCta,
 } from './modes/modeHandoff';
 import { learnedRootToday, listRushMissRemember, rootLabel } from './home/todayProgress';
+import { samplePeekLabel } from './home/samplePeek';
 
 type Phase = 'start' | 'play' | 'result';
 
@@ -52,8 +53,10 @@ function palOf(root: Root) {
  * Keep going must not sit over Geo. Done title / Home Daily lead
  * match that same name — Done for today / Streak banked / the giant
  * ✓ must not sit over Geo. Home Daily now matches — Daily / DONE /
- * Done for today / the 🔥 streak must not sit over Geo. Finishing
- * banks Daily XP; replays are free.
+ * Done for today / the 🔥 streak must not sit over Geo. Daily peek
+ * chips now match — today's five ✓ / Chron / Photo / Aqua must
+ * not sit over Geo under a Remember title. Finishing banks Daily
+ * XP; replays are free.
  */
 export function DailyChallenge() {
   const entitled = useEntitledForDisplay();
@@ -419,23 +422,39 @@ export function DailyChallenge() {
               </div>
             ) : null}
             <div className="q-daily-chips" style={{ marginTop: 22 }}>
-              {deal.map((r) => (
-                <button
-                  type="button"
-                  className={`q-daily-chip${done.recapDone ? ' is-done' : ''}`}
-                  key={r.root}
-                  onClick={() => openRecap(r)}
-                  aria-label={dailyRecapChipLabel(r.root, completed.has(rootId(r)))}
-                >
-                  {done.recapDone ? (
-                    <span className="q-done-mark" aria-hidden="true">
-                      ✓
-                    </span>
-                  ) : null}
-                  {r.root}
-                  <em>{r.mean}</em>
-                </button>
-              ))}
+              {done.recap.map((chip) => {
+                const r = ROOTS.find((root) => root.root === chip.root);
+                if (!r) return null;
+                const chipMiss = chip.ok === false;
+                return (
+                  <button
+                    type="button"
+                    className={`q-daily-chip${done.recapDone && !chipMiss ? ' is-done' : ''}${
+                      chipMiss ? ' is-miss' : ''
+                    }`}
+                    key={r.root}
+                    onClick={() => openRecap(r)}
+                    aria-label={
+                      chipMiss
+                        ? samplePeekLabel('remember', r.root, { ok: false })
+                        : dailyRecapChipLabel(r.root, completed.has(rootId(r)))
+                    }
+                  >
+                    {done.recapDone && !chipMiss ? (
+                      <span className="q-done-mark" aria-hidden="true">
+                        ✓
+                      </span>
+                    ) : null}
+                    {chipMiss ? (
+                      <span className="q-done-mark is-miss" aria-hidden="true">
+                        !
+                      </span>
+                    ) : null}
+                    {r.root}
+                    <em>{chip.mean || r.mean}</em>
+                  </button>
+                );
+              })}
             </div>
             <div className="q-actions">
               <button
