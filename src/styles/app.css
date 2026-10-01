@@ -592,6 +592,9 @@
   .ww-daily-line.is-miss {
     display: flex;
   }
+  .ww-daily-line.is-miss .ww-daily-mark.is-miss {
+    display: inline;
+  }
   .ww-samples.is-lines .ww-schip.is-next {
     display: flex;
   }
@@ -2325,6 +2328,12 @@ button.ww-schip:focus-visible {
   }
   .ww-menu-row.is-miss .ww-menu-body .sub {
     display: block;
+  }
+  .ww-daily-line.is-miss {
+    display: flex;
+  }
+  .ww-daily-line.is-miss .ww-daily-mark.is-miss {
+    display: inline;
   }
   .ww-lead2.is-remember-miss,
   .ww-muted.is-remember-miss {

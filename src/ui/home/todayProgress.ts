@@ -55,7 +55,10 @@
  * — prove you know it / Geo · ? / Prev → Bio must not sit
  * over Geo. Home list row titles now match — Tier 1 ·
  * Starter must not sit over Geo when the sub already says
- * Missed · remember.
+ * Missed · remember. Rush / Daily list titles now match
+ * — Root Rush / Daily Challenge must not sit over Geo.
+ * Daily peek chips now match — today's five ✓ / Chron /
+ * Photo / Aqua must not sit over Geo under a Remember title.
  * Continue / Keep going / Rush CTAs stay as #68 left them when no
  * miss is waiting.
  *

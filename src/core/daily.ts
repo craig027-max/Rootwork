@@ -45,7 +45,11 @@
  * Geo · ? / Prev → Bio must not sit over Geo. Home list
  * row titles now match — Tier 1 · Starter must not sit
  * over Geo when the sub already says Missed · remember.
- * The five-are-done recap stays.
+ * Rush / Daily list titles now match — Root Rush /
+ * Daily Challenge must not sit over Geo. Daily peek
+ * chips now match — today's five ✓ / Chron / Photo /
+ * Aqua must not sit over Geo under a Remember title.
+ * The five-are-done recap stays once the miss is Remembered.
  */
 
 import type { Root } from '../data/roots';

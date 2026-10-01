@@ -25,7 +25,7 @@ import {
   todayMissRecap,
   type RushRecap,
 } from '../../core/rushRecap';
-import { missPeekSamples, samplePeekTap } from './samplePeek';
+import { missPeekForNames, missPeekSamples, samplePeekTap } from './samplePeek';
 import { keepGoingLabel } from './todayProgress';
 import type { DetailVM } from './DetailPanel';
 
@@ -77,7 +77,9 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  over Geo. Home list row titles now match — Tier 1 ·
  *  Starter must not sit over Geo. Rush / Daily list
  *  titles now match — Root Rush / Daily Challenge must
- *  not sit over Geo. */
+ *  not sit over Geo. Daily peek chips now match —
+ *  today's five ✓ / Chron / Photo / Aqua must not sit
+ *  over Geo under a Remember title. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -243,6 +245,7 @@ export function buildDetailVM(
     const miss = extra.dailyDone
       ? rushMissRememberReady(extra.completed, extra.entitled, missOpts)
       : null;
+    const missSamples = miss ? missPeekForNames(miss.name, miss.also) : [];
     const doneLead = extra.dailyDone
       ? dailyDoneLead(extra.streak, { missWaiting: Boolean(miss) })
       : null;
@@ -269,21 +272,24 @@ export function buildDetailVM(
         : dailyResume == null
           ? `Five fresh roots every day. See the animation, tap what it means, keep your streak.${streakLine}`
           : `${midLead}${streakLine}`,
-      samples: extra.dailyDone
-        ? dailySamples.map((s) => ({
-            ...s,
-            owned: ROOTS.some((r) => r.root === s.root && extra.completed.has(rootId(r))),
-          }))
-        : dailySamples,
+      samples: miss
+        ? missSamples
+        : extra.dailyDone
+          ? dailySamples.map((s) => ({
+              ...s,
+              owned: ROOTS.some((r) => r.root === s.root && extra.completed.has(rootId(r))),
+            }))
+          : dailySamples,
       sampleLines: true,
-      samplesDone: extra.dailyDone && dailySamples.length > 0,
+      samplesDone: extra.dailyDone && dailySamples.length > 0 && !miss,
       samplesNext: Boolean(dailyResume != null && !extra.dailyDone && dailySamples.length > 0),
       sampleTap: samplePeekTap({
         mode: 'daily',
         dailyDone: extra.dailyDone,
-        sampleCount: dailySamples.length,
+        missHero: Boolean(miss),
+        sampleCount: miss ? missSamples.length : dailySamples.length,
       }),
-      moreCount: Math.max(0, remainingAfterPeek),
+      moreCount: miss ? 0 : Math.max(0, remainingAfterPeek),
       primary: {
         label: extra.dailyDone
           ? doneHero && doneNext
