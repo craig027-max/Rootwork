@@ -246,7 +246,7 @@ describe('Home after a miss is Remember — not start / Geo · earth over Geo', 
     expect(phone).not.toMatch(/\.ww-panel-label \.s\.tap-hint\.is-miss\s*\{[^}]*display:\s*none/);
     expect(phone).toMatch(/\.ww-detail-scene-cap\.is-miss\s*\{[^}]*display:\s*inline-block/);
     expect(phone).not.toMatch(/\.ww-detail-scene-cap\.is-miss\s*\{[^}]*display:\s*none/);
-    const coarse = mediaBlock(css, 'pointer: coarse');
+    const coarse = mediaBlock(css, 'max-width: 860px), (pointer: coarse');
     expect(coarse).toMatch(/\.ww-panel-label \.s\.tap-hint\.is-miss\s*\{[^}]*display:\s*inline/);
     expect(coarse).not.toMatch(/\.ww-panel-label \.s\.tap-hint\.is-miss\s*\{[^}]*display:\s*none/);
   });
