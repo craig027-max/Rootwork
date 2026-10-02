@@ -55,9 +55,10 @@ function palOf(root: Root) {
  * ✓ must not sit over Geo. Home Daily now matches — Daily / DONE /
  * Done for today / the 🔥 streak must not sit over Geo. Daily peek
  * chips now match — today's five ✓ / Chron / Photo / Aqua must
- * not sit over Geo under a Remember title. Rush peek chips now
- * match — last-run Photo ✓ / Bio ✓ must not sit over Geo
- * under that same title. Finishing banks Daily
+ * not sit over Geo under a Remember title. Overlay eyebrows now
+ * match — Daily Challenge must not sit over Geo under that same
+ * title. Rush peek chips now match — last-run Photo ✓ / Bio ✓
+ * must not sit over Geo under that same title. Finishing banks Daily
  * XP; replays are free.
  */
 export function DailyChallenge() {
@@ -295,7 +296,7 @@ export function DailyChallenge() {
       style={{ '--qc': p.c1rgb, '--qgrad': p.grad } as CSSProperties}
       role="dialog"
       aria-modal="true"
-      aria-label="Daily Challenge"
+      aria-label={done.missWaiting && showDoneLanding ? 'Remember' : 'Daily Challenge'}
     >
       <button className="q-x" onClick={close} aria-label="Close daily">
         ✕
@@ -399,8 +400,8 @@ export function DailyChallenge() {
 
         {showDoneLanding ? (
           <div className="q-card q-result">
-            <div className="q-eyebrow">
-              <span className="dot" /> Daily Challenge
+            <div className={`q-eyebrow${done.missWaiting ? ' is-miss' : ''}`}>
+              <span className="dot" /> {done.eyebrow}
             </div>
             {done.celebrateDone ? (
               <div className="q-grade" aria-label="Daily complete">

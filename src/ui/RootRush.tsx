@@ -49,7 +49,9 @@ import { samplePeekLabel } from './home/samplePeek';
  * are Remember Geo — not Test your roots / Best so far / a giant
  * grade / NEW BEST over that same miss. Start / result / Home
  * peek chips now match — last-run Photo ✓ / Bio ✓ must not sit
- * over Geo under that Remember title.
+ * over Geo under that Remember title. Overlay eyebrows now
+ * match — Root Rush / Starter / Choose your level must not
+ * sit over Geo under that same title.
  * After Daily is banked and Today still names Continue / Keep going,
  * that tap is the start / result hero — Play again stays the ghost
  * and the grade stays.
@@ -355,14 +357,24 @@ export function RootRush() {
           : [];
       })
     : homeRushRecapPreview(lastRush, { dailyResume: dailyResumeQi != null });
+  const missDialog =
+    (phase === 'start' && rushStart.missWaiting) || (phase === 'result' && rushNext.missWaiting);
 
   return (
-    <div className="q-rush" style={accentStyle(accent)} role="dialog" aria-modal="true" aria-label="Root Rush">
+    <div
+      className="q-rush"
+      style={accentStyle(accent)}
+      role="dialog"
+      aria-modal="true"
+      aria-label={missDialog ? 'Remember' : 'Root Rush'}
+    >
       <button className="q-x" onClick={closeQuiz} aria-label="Close quiz">✕</button>
       <div className="q-stage">
         {phase === 'start' ? (
           <div className="q-card q-start">
-            <div className="q-eyebrow"><span className="dot" /> Root Rush</div>
+            <div className={`q-eyebrow${rushStart.missWaiting ? ' is-miss' : ''}`}>
+              <span className="dot" /> {rushStart.eyebrow}
+            </div>
             <h2 className={`q-title${rushStart.missWaiting ? ' is-miss' : ''}`}>
               {rushStart.title ? (
                 rushStart.title
@@ -380,24 +392,28 @@ export function RootRush() {
                 </>
               )}
             </p>
-            <div className="q-lvl-label">Choose your level</div>
-            <div className="q-chips">
-              {chips.map((c) =>
-                c.locked ? (
-                  <button key={c.label} className="q-chip locked" disabled aria-disabled="true" title="Unlock with Premium">
-                    🔒 {c.label}
-                  </button>
-                ) : (
-                  <button
-                    key={c.label}
-                    className={`q-chip${tier === c.t ? ' on' : ''}`}
-                    onClick={() => setTier(c.t)}
-                  >
-                    {c.label}
-                  </button>
-                ),
-              )}
-            </div>
+            {rushStart.pickLevel ? (
+              <>
+                <div className="q-lvl-label">Choose your level</div>
+                <div className="q-chips">
+                  {chips.map((c) =>
+                    c.locked ? (
+                      <button key={c.label} className="q-chip locked" disabled aria-disabled="true" title="Unlock with Premium">
+                        🔒 {c.label}
+                      </button>
+                    ) : (
+                      <button
+                        key={c.label}
+                        className={`q-chip${tier === c.t ? ' on' : ''}`}
+                        onClick={() => setTier(c.t)}
+                      >
+                        {c.label}
+                      </button>
+                    ),
+                  )}
+                </div>
+              </>
+            ) : null}
             {rushStart.missWaiting && rushStart.rememberMiss ? (
               <div className="q-actions q-start-actions q-rush-remember">
                 {rushStart.rememberPeek ? (
@@ -563,8 +579,8 @@ export function RootRush() {
 
         {phase === 'result' && result ? (
           <div className="q-card q-result">
-            <div className="q-eyebrow">
-              <span className="dot" /> {tier === 0 ? 'All tiers' : TIERS[tier - 1]?.n}
+            <div className={`q-eyebrow${rushNext.missWaiting ? ' is-miss' : ''}`}>
+              <span className="dot" /> {rushNext.eyebrow ?? (tier === 0 ? 'All tiers' : TIERS[tier - 1]?.n)}
             </div>
             {rushNext.celebrateGrade ? (
               <div className="q-grade" aria-label={`Grade ${result.grade}`}>
@@ -674,9 +690,11 @@ export function RootRush() {
                   </button>
                 </>
               )}
-              <button className="q-ghost" onClick={() => setPhase('start')}>
-                {rushNext.changeLabel}
-              </button>
+              {rushNext.changeLabel ? (
+                <button className="q-ghost" onClick={() => setPhase('start')}>
+                  {rushNext.changeLabel}
+                </button>
+              ) : null}
             </div>
           </div>
         ) : null}
