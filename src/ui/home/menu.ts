@@ -314,6 +314,9 @@ export function listHeading(
  * must not sit over Geo under a Remember title.
  * Rush peek chips now match — last-run Photo ✓ /
  * Bio ✓ must not sit over Geo under that same title.
+ * Overlay eyebrows now match — Root Rush /
+ * Daily Challenge / Starter / Choose your level
+ * must not sit over Geo under that same title.
  */
 export function rushMenuSub(
   opts: {

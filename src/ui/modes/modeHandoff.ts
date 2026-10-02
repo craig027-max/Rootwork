@@ -49,6 +49,9 @@
  * Aqua must not sit over Geo under a Remember title.
  * Rush peek chips now match — last-run Photo ✓ /
  * Bio ✓ must not sit over Geo under that same title.
+ * Overlay eyebrows now match — Root Rush /
+ * Daily Challenge / Starter / Choose your level
+ * must not sit over Geo under that same title.
  * Change level must not put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),
@@ -197,6 +200,8 @@ export function buildModeEmpty(
 export interface DailyDoneVM {
   /** Re-open after banking: name the done state. Just-finished keeps the ✓. */
   title: string | null;
+  /** Path-done Rush miss — Remember, not Daily Challenge over Geo. */
+  eyebrow: string;
   streakLine: string;
   sub: string;
   recap: { root: string; mean: string; ok?: boolean }[];
@@ -288,6 +293,7 @@ export function buildDailyDone(
       : opts.justFinished
         ? null
         : 'Done for today.',
+    eyebrow: miss ? 'Remember' : 'Daily Challenge',
     streakLine,
     sub: dailyDoneOverlaySub(opts.justFinished),
     recap: miss
@@ -332,6 +338,10 @@ export interface RushStartVM {
   heroSub: string | null;
   /** Path-done Rush miss — Remember Geo, not Test your roots. */
   title: string | null;
+  /** Path-done Rush miss — Remember, not Root Rush over Geo. */
+  eyebrow: string;
+  /** Level chips — off while Remember is the hero. Play again keeps the last tier. */
+  pickLevel: boolean;
   /** Path-done Rush miss — Missed Geo, not last-run Photo ✓ Bio ✓. */
   peekChips: { root: string; mean: string; ok?: boolean }[] | null;
 }
@@ -391,6 +401,8 @@ export function buildRushStart(
     learnWaiting: Boolean(learn),
     heroSub: miss ? 'Play again is just for fun.' : null,
     title: miss ? `Remember ${miss.name}` : null,
+    eyebrow: miss ? 'Remember' : 'Root Rush',
+    pickLevel: !miss,
     peekChips: miss ? missPeekForNames(miss.name, miss.also) : null,
   };
 }
@@ -398,7 +410,7 @@ export function buildRushStart(
 export interface RushResultVM {
   primary: ModeCta;
   replayLabel: string;
-  changeLabel: string;
+  changeLabel: string | null;
   peek: string | null;
   dailyResume: boolean;
   /** Owned miss is the fat tap — Play again stays ghost. */
@@ -407,6 +419,8 @@ export interface RushResultVM {
   learnWaiting: boolean;
   /** Path-done Rush miss — Remember Geo, not a nameless grade dump. */
   title: string | null;
+  /** Path-done Rush miss — Remember, not Starter / All tiers over Geo. */
+  eyebrow: string | null;
   /** Giant grade letter / NEW BEST — off while Remember is the hero. */
   celebrateGrade: boolean;
   /** Path-done Rush miss — Missed Geo, not last-run Photo ✓ Bio ✓. */
@@ -450,6 +464,7 @@ export function buildRushResultNext(
       missWaiting: false,
       learnWaiting: false,
       title: null,
+      eyebrow: null,
       celebrateGrade: true,
       recap: null,
     };
@@ -464,12 +479,13 @@ export function buildRushResultNext(
         rootName: miss.name,
       },
       replayLabel: 'Play again ›',
-      changeLabel: 'Change level',
+      changeLabel: null,
       peek: todayMissRecap(miss.name, miss.also),
       dailyResume: false,
       missWaiting: true,
       learnWaiting: false,
       title: `Remember ${miss.name}`,
+      eyebrow: 'Remember',
       celebrateGrade: false,
       recap: missPeekForNames(miss.name, miss.also),
     };
@@ -490,6 +506,7 @@ export function buildRushResultNext(
       missWaiting: false,
       learnWaiting: true,
       title: null,
+      eyebrow: null,
       celebrateGrade: true,
       recap: null,
     };
@@ -503,6 +520,7 @@ export function buildRushResultNext(
     missWaiting: false,
     learnWaiting: false,
     title: null,
+    eyebrow: null,
     celebrateGrade: true,
     recap: null,
   };
