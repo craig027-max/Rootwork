@@ -22,7 +22,13 @@
  * match — today's five ✓ / Chron / Photo / Aqua must not
  * sit over Geo under a Remember title. Rush peek chips
  * now match — last-run Photo ✓ / Bio ✓ must not sit
- * over Geo under that same title.
+ * over Geo under that same title. Overlay eyebrows
+ * now match — Root Rush / Daily Challenge / Starter
+ * / Choose your level must not sit over Geo. Home
+ * list hints / detail scene now match — tap again
+ * to start / Geo · earth / Choose what to play
+ * must not sit over Geo under that same Remember
+ * heading.
  */
 import { ROOTS } from '../../data/roots';
 import type { MenuItem } from './menu';

@@ -198,7 +198,7 @@ describe('Rush after a miss is Remember — not Play again over Geo', () => {
     expect(vm.waiting).toBe(todayMissRecap(geo.root));
     expect(vm.waitingMiss).toBe(true);
     expect(vm.heroCta).toBe(true);
-    expect(vm.scene?.caption).toBe(`${geo.root} · ${geo.mean}`);
+    expect(vm.scene?.caption).toBe(`Missed ${geo.root}`);
     expect(vm.primary.label).not.toMatch(/Play again|Keep going|Continue |Browse roots/);
     expect(homeSecondaryAction(rushRow, { rememberMissId: rootId(geo) })).toEqual({
       kind: 'rush',

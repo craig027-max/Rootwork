@@ -284,6 +284,26 @@ export function listHeading(
   return 'Jump back in';
 }
 
+/** Kid-facing list hint — Remember, not tap again to start over Geo. */
+export function listHint(opts: {
+  missWaiting?: boolean;
+  pointer?: 'keys' | 'tap';
+} = {}): string {
+  if (opts.missWaiting) {
+    return opts.pointer === 'tap'
+      ? 'Tap to preview · tap again to remember'
+      : '↑ ↓ to browse · Enter to remember';
+  }
+  return opts.pointer === 'tap'
+    ? 'Tap to preview · tap again to start'
+    : '↑ ↓ to browse · Enter to start';
+}
+
+/** Listbox name — Remember over a miss, Choose what to play once it's done. */
+export function listAria(opts: { missWaiting?: boolean } = {}): string {
+  return opts.missWaiting ? 'Remember' : 'Choose what to play';
+}
+
 /**
  * Rush menu row when Daily is mid-run — name the waiting root so Chron
  * is not only on the Daily tile. A path-done Rush miss names Remember
@@ -317,6 +337,10 @@ export function listHeading(
  * Overlay eyebrows now match — Root Rush /
  * Daily Challenge / Starter / Choose your level
  * must not sit over Geo under that same title.
+ * Home list hints / detail scene now match —
+ * tap again to start / Geo · earth / Choose
+ * what to play must not sit over Geo under
+ * that same Remember heading.
  */
 export function rushMenuSub(
   opts: {

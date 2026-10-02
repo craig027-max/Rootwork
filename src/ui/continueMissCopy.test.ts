@@ -115,7 +115,7 @@ describe('Continue after a miss is Remember — not Continue {learn} / Next · A
     expect(vm.waitingMiss).toBe(true);
     expect(vm.primary.label).toBe(rememberMissCtaLabel(geo.root));
     expect(vm.secondary?.label).toBe(keepGoingLabel(secondBuilder.root));
-    expect(vm.scene?.caption).toMatch(new RegExp(`^${geo.root}`));
+    expect(vm.scene?.caption).toBe(`Missed ${geo.root}`);
     expect(vm.scene?.caption).not.toMatch(new RegExp(`^${secondBuilder.root}`));
 
     const two = buildDetailVM(here, {

@@ -52,6 +52,10 @@
  * Overlay eyebrows now match — Root Rush /
  * Daily Challenge / Starter / Choose your level
  * must not sit over Geo under that same title.
+ * Home list hints / detail scene now match —
+ * tap again to start / Geo · earth / Choose what
+ * to play must not sit over Geo under that same
+ * Remember heading.
  * Change level must not put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),

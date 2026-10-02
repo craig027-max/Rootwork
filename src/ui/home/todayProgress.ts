@@ -63,7 +63,10 @@
  * must not sit over Geo under that same title. Overlay
  * eyebrows now match — Root Rush / Daily Challenge /
  * Starter / Choose your level must not sit over Geo
- * under that same title.
+ * under that same title. Home list hints / detail
+ * scene now match — tap again to start / Geo · earth
+ * / Choose what to play must not sit over Geo under
+ * that same Remember heading.
  * Continue / Keep going / Rush CTAs stay as #68 left them when no
  * miss is waiting.
  *
