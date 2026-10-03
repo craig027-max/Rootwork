@@ -29,6 +29,7 @@ import {
   buildRushResultNext,
   buildRushStart,
   learnNextAction,
+  overlayCloseLabel,
   type ModeCta,
 } from './modes/modeHandoff';
 import { samplePeekLabel } from './home/samplePeek';
@@ -51,7 +52,9 @@ import { samplePeekLabel } from './home/samplePeek';
  * peek chips now match — last-run Photo ✓ / Bio ✓ must not sit
  * over Geo under that Remember title. Overlay eyebrows now
  * match — Root Rush / Starter / Choose your level must not
- * sit over Geo under that same title.
+ * sit over Geo under that same title. Overlay close now
+ * matches — Close quiz must not sit over Geo under
+ * that same title.
  * After Daily is banked and Today still names Continue / Keep going,
  * that tap is the start / result hero — Play again stays the ghost
  * and the grade stays.
@@ -318,7 +321,7 @@ export function RootRush() {
     const empty = buildModeEmpty('rush', completed, entitled);
     return (
       <div className="q-rush" style={accentStyle(HERO_ACCENT)} role="dialog" aria-modal="true" aria-label="Root Rush">
-        <button className="q-x" onClick={closeQuiz} aria-label="Close quiz">✕</button>
+        <button className="q-x" onClick={closeQuiz} aria-label={overlayCloseLabel('rush')}>✕</button>
         <div className="q-stage">
           <div className="q-card q-empty">
             <div className="q-eyebrow"><span className="dot" /> Root Rush</div>
@@ -368,7 +371,19 @@ export function RootRush() {
       aria-modal="true"
       aria-label={missDialog ? 'Remember' : 'Root Rush'}
     >
-      <button className="q-x" onClick={closeQuiz} aria-label="Close quiz">✕</button>
+      <button
+        className={`q-x${missDialog ? ' is-miss' : ''}`}
+        onClick={closeQuiz}
+        aria-label={
+          phase === 'start'
+            ? rushStart.closeLabel
+            : phase === 'result'
+              ? rushNext.closeLabel
+              : overlayCloseLabel('rush')
+        }
+      >
+        ✕
+      </button>
       <div className="q-stage">
         {phase === 'start' ? (
           <div className="q-card q-start">
