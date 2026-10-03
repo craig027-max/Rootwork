@@ -2,7 +2,7 @@ import { useEffect, useRef, type KeyboardEvent } from 'react';
 import { PALETTES } from '../../data/roots';
 import { paletteVars } from '../components/styleVars';
 import { peekChipDone } from '../../core/rushRecap';
-import { tuckedSummary, type MenuItem, type TierItem } from './menu';
+import { listAria, tuckedSummary, type MenuItem, type TierItem } from './menu';
 
 function jewelVarsOf(jewel: string) {
   const p = PALETTES[jewel] ?? PALETTES.green!;
@@ -21,6 +21,7 @@ export function TierMenu({
   tucked = [],
   selectedIndex,
   nextPlay = false,
+  missWaiting = false,
   onSelect,
   onActivate,
 }: {
@@ -29,6 +30,8 @@ export function TierMenu({
   selectedIndex: number;
   /** Next-Play board: one fat Play row, PLAY pill, no progress bar. */
   nextPlay?: boolean;
+  /** Path-done Rush miss — listbox is Remember, not Choose what to play. */
+  missWaiting?: boolean;
   onSelect: (index: number) => void;
   onActivate: (item: MenuItem) => void;
 }) {
@@ -196,7 +199,7 @@ export function TierMenu({
   }
 
   return (
-    <div className="ww-menu" role="listbox" aria-label="Choose what to play" onKeyDown={onKeyDown}>
+    <div className="ww-menu" role="listbox" aria-label={listAria({ missWaiting })} onKeyDown={onKeyDown}>
       {items.map((it, i) => renderRow(it, i))}
       {tucked.length > 0 ? (
         <details className="ww-menu-more" ref={moreRef}>

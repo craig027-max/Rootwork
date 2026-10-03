@@ -73,7 +73,7 @@ export function DetailPanel({
       {vm.scene ? (
         <div className="ww-detail-scene" aria-hidden="true">
           <Scene scene={vm.scene.key} pal={vm.scene.pal} />
-          <span className="ww-detail-scene-cap">
+          <span className={`ww-detail-scene-cap${vm.waitingMiss ? ' is-miss' : ''}`}>
             {emoji} {vm.scene.caption}
           </span>
         </div>

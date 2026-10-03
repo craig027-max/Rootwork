@@ -29,13 +29,37 @@ import { missPeekForNames, missPeekSamples, samplePeekTap } from './samplePeek';
 import { keepGoingLabel } from './todayProgress';
 import type { DetailVM } from './DetailPanel';
 
-function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: string; caption: string }) {
+/** Preview scene caption — Missed Geo, not Geo · earth / Root Rush over Remember. */
+export function detailSceneCaption(opts: {
+  missed?: boolean;
+  root?: string;
+  mean?: string;
+  fallback: string;
+}): string {
+  const name = opts.root?.replace(/\s+/g, ' ').trim();
+  if (opts.missed && name) return `Missed ${name}`;
+  const mean = opts.mean?.replace(/\s+/g, ' ').trim();
+  if (name && mean) return `${name} · ${mean}`;
+  if (name) return name;
+  return opts.fallback;
+}
+
+function sceneFrom(
+  root: Root | undefined,
+  fallback: { key: string; palKey: string; caption: string },
+  opts: { missed?: boolean } = {},
+) {
   const palKey = root?.pal ?? fallback.palKey;
   const p = PALETTES[palKey] ?? PALETTES.green!;
   return {
     key: root?.scene ?? fallback.key,
     pal: p.pal,
-    caption: root ? `${root.root} · ${root.mean}` : fallback.caption,
+    caption: detailSceneCaption({
+      missed: opts.missed,
+      root: root?.root,
+      mean: root?.mean,
+      fallback: fallback.caption,
+    }),
   };
 }
 
@@ -84,7 +108,10 @@ function sceneFrom(root: Root | undefined, fallback: { key: string; palKey: stri
  *  over Geo under that same title. Overlay eyebrows
  *  now match — Root Rush / Daily Challenge / Starter
  *  / Choose your level must not sit over Geo under
- *  that same title. */
+ *  that same title. Home list hints / detail scene
+ *  now match — tap again to start / Geo · earth /
+ *  Choose what to play must not sit over Geo under
+ *  that same Remember heading. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {
@@ -229,7 +256,11 @@ export function buildDetailVM(
                   .join(' · ')
               : waiting,
         waitingMiss: missHero,
-        scene: sceneFrom(missRoot ?? learnRoot, { key: 'heat', palKey: 'fire', caption: 'Root Rush' }),
+        scene: sceneFrom(
+          missRoot ?? learnRoot,
+          { key: 'heat', palKey: 'fire', caption: 'Root Rush' },
+          { missed: missHero },
+        ),
         heroCta: Boolean(learn || missHero),
       };
     }
@@ -322,11 +353,15 @@ export function buildDetailVM(
         secondary: { label: doneHero ? 'Play again ›' : 'Browse roots' },
       waiting: miss ? todayMissRecap(miss.name, miss.also) : undefined,
       waitingMiss: Boolean(miss),
-      scene: sceneFrom(missRoot ?? nextLearnRoot ?? nextDaily ?? extra.dailyRoots[0], {
-        key: 'stars',
-        palKey: 'gold',
-        caption: 'Daily',
-      }),
+      scene: sceneFrom(
+        missRoot ?? nextLearnRoot ?? nextDaily ?? extra.dailyRoots[0],
+        {
+          key: 'stars',
+          palKey: 'gold',
+          caption: 'Daily',
+        },
+        { missed: Boolean(miss) },
+      ),
       // Mid-run: park Continue Daily · N of 5 under the next-root scene —
       // same one-tap Rush / Today already name, so Aqua is not buried.
       // Path-done miss parks Remember Geo the same way.
@@ -372,7 +407,7 @@ export function buildDetailVM(
         secondary: { label: '🔓 Ask a grown-up to unlock' },
         waiting: todayMissRecap(miss.name, miss.also),
         waitingMiss: true,
-        scene: sceneFrom(missRoot, { key: 'dna', palKey: item.jewel, caption: name }),
+        scene: sceneFrom(missRoot, { key: 'dna', palKey: item.jewel, caption: name }, { missed: true }),
         heroCta: true,
       };
     }
@@ -492,7 +527,7 @@ export function buildDetailVM(
         : undefined,
     waiting: missHero && miss ? todayMissRecap(miss.name, miss.also) : undefined,
     waitingMiss: missHero,
-    scene: sceneFrom(sceneRoot, { key: 'dna', palKey: item.jewel, caption: name }),
+    scene: sceneFrom(sceneRoot, { key: 'dna', palKey: item.jewel, caption: name }, { missed: missHero }),
     heroCta: firstPlay || resumeNow || missHero,
   };
 }

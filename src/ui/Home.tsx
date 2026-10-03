@@ -24,6 +24,7 @@ import {
   isResumeTier,
   isMissProgressTier,
   listHeading,
+  listHint,
   pickCurrentTier,
   rushBestLabel,
   tierPrimaryOpen,
@@ -323,8 +324,12 @@ export function Home() {
             </span>
             {nextPlay ? null : (
               <>
-                <span className="s kb-hint">↑ ↓ to browse · Enter to start</span>
-                <span className="s tap-hint">Tap to preview · tap again to start</span>
+                <span className={`s kb-hint${missHero ? ' is-miss' : ''}`}>
+                  {listHint({ missWaiting: missHero, pointer: 'keys' })}
+                </span>
+                <span className={`s tap-hint${missHero ? ' is-miss' : ''}`}>
+                  {listHint({ missWaiting: missHero, pointer: 'tap' })}
+                </span>
               </>
             )}
           </div>
@@ -333,6 +338,7 @@ export function Home() {
             tucked={tucked}
             selectedIndex={selectedIndex}
             nextPlay={nextPlay}
+            missWaiting={missHero}
             onSelect={setPicked}
             onActivate={onPrimary}
           />

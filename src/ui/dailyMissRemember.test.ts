@@ -200,7 +200,7 @@ describe('Daily after a miss is Remember — not Keep going / Play again over Ge
     expect(vm.waiting).toBe(todayMissRecap(geo.root));
     expect(vm.waitingMiss).toBe(true);
     expect(vm.heroCta).toBe(true);
-    expect(vm.scene?.caption).toBe(`${geo.root} · ${geo.mean}`);
+    expect(vm.scene?.caption).toBe(`Missed ${geo.root}`);
     expect(vm.primary.label).not.toMatch(/Play again|Keep going|Continue |Browse roots/);
     expect(homeSecondaryAction(dailyItem, {
       dailyDone: true,

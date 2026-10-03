@@ -131,7 +131,7 @@ describe('Scholar after a miss is Remember — not Play Bene / Your progress ove
     expect(vm.secondary?.label).toBe(`Play ${firstScholar.root} ›`);
     expect(vm.secondary?.label).not.toMatch(/See all|Ask a grown-up/i);
     expect(vm.heroCta).toBe(true);
-    expect(vm.scene?.caption).toMatch(new RegExp(`^${geo.root}`));
+    expect(vm.scene?.caption).toBe(`Missed ${geo.root}`);
     expect(vm.scene?.caption).not.toMatch(/^Bene/);
     expect(vm.locked).toBeFalsy();
 
@@ -167,7 +167,7 @@ describe('Scholar after a miss is Remember — not Play Bene / Your progress ove
     expect(masterVm.big).toBe(`Remember ${geo.root}`);
     expect(masterVm.primary.label).toBe(rememberMissCtaLabel(geo.root));
     expect(masterVm.secondary?.label).toBe(`Play ${firstMaster.root} ›`);
-    expect(masterVm.scene?.caption).toMatch(new RegExp(`^${geo.root}`));
+    expect(masterVm.scene?.caption).toBe(`Missed ${geo.root}`);
 
     const aiVm = buildDetailVM(aiRow, extraMiss);
     expect(aiVm.big).toBe(`Remember ${geo.root}`);
@@ -197,7 +197,7 @@ describe('Scholar after a miss is Remember — not Play Bene / Your progress ove
     expect(vm.primary.label).toBe(rememberMissCtaLabel(geo.root));
     expect(vm.secondary?.label).toMatch(/Ask a grown-up/);
     expect(vm.waitingMiss).toBe(true);
-    expect(vm.scene?.caption).toMatch(new RegExp(`^${geo.root}`));
+    expect(vm.scene?.caption).toBe(`Missed ${geo.root}`);
     expect(homeSecondaryAction(locked, { rememberMissId: rootId(geo) })).toEqual({
       kind: 'upgrade',
     });

@@ -123,7 +123,7 @@ describe('Starter after a miss is Remember — not every root owned / Remember B
     expect(vm.secondary?.label).toBe(`Remember ${first.root} ›`);
     expect(vm.secondary?.label).not.toMatch(/See all|every root/i);
     expect(vm.heroCta).toBe(true);
-    expect(vm.scene?.caption).toMatch(new RegExp(`^${geo.root}`));
+    expect(vm.scene?.caption).toBe(`Missed ${geo.root}`);
     expect(vm.scene?.caption).not.toMatch(/^Bio/);
     expect(vm.samples.map((s) => s.root)).toEqual([geo.root]);
     expect(vm.samples[0]?.ok).toBe(false);

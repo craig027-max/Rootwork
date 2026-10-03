@@ -13,7 +13,9 @@ import {
   isFirstVisit,
   isNextPlayHome,
   isResumeTier,
+  listAria,
   listHeading,
+  listHint,
   nextPlayRoot,
   pickCurrentTier,
   rushBestLabel,
@@ -412,6 +414,17 @@ describe('copy', () => {
     expect(listHeading(false, { missWaiting: true })).toBe('Remember');
     expect(listHeading(false, { pathDone: true, missWaiting: true })).toBe('Remember');
     expect(listHeading(true, { missWaiting: true })).toBe('Start playing');
+    expect(listHint({ missWaiting: true, pointer: 'tap' })).toBe(
+      'Tap to preview · tap again to remember',
+    );
+    expect(listHint({ missWaiting: true, pointer: 'keys' })).toBe(
+      '↑ ↓ to browse · Enter to remember',
+    );
+    expect(listHint({ pointer: 'tap' })).toBe('Tap to preview · tap again to start');
+    expect(listHint({ pointer: 'keys' })).toBe('↑ ↓ to browse · Enter to start');
+    expect(listAria({ missWaiting: true })).toBe('Remember');
+    expect(listAria({ missWaiting: true })).not.toMatch(/Choose what to play|start/i);
+    expect(listAria()).toBe('Choose what to play');
   });
 
   it('names the next root on the primary button — Play, not Continue, while Starter is open', () => {
