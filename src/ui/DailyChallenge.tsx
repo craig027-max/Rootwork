@@ -25,6 +25,7 @@ import {
   buildDailyDone,
   buildModeEmpty,
   learnNextAction,
+  overlayCloseLabel,
   rushMissRememberReady,
   type ModeCta,
 } from './modes/modeHandoff';
@@ -58,7 +59,9 @@ function palOf(root: Root) {
  * not sit over Geo under a Remember title. Overlay eyebrows now
  * match — Daily Challenge must not sit over Geo under that same
  * title. Rush peek chips now match — last-run Photo ✓ / Bio ✓
- * must not sit over Geo under that same title. Finishing banks Daily
+ * must not sit over Geo under that same title. Overlay close
+ * now matches — Close daily must not sit over Geo under
+ * that same title. Finishing banks Daily
  * XP; replays are free.
  */
 export function DailyChallenge() {
@@ -257,7 +260,7 @@ export function DailyChallenge() {
     const empty = buildModeEmpty('daily', completed, entitled);
     return (
       <div className="q-rush q-daily" role="dialog" aria-modal="true" aria-label="Daily Challenge">
-        <button className="q-x" onClick={close} aria-label="Close daily">
+        <button className="q-x" onClick={close} aria-label={overlayCloseLabel('daily')}>
           ✕
         </button>
         <div className="q-stage">
@@ -298,7 +301,11 @@ export function DailyChallenge() {
       aria-modal="true"
       aria-label={done.missWaiting && showDoneLanding ? 'Remember' : 'Daily Challenge'}
     >
-      <button className="q-x" onClick={close} aria-label="Close daily">
+      <button
+        className={`q-x${done.missWaiting && showDoneLanding ? ' is-miss' : ''}`}
+        onClick={close}
+        aria-label={done.missWaiting && showDoneLanding ? done.closeLabel : overlayCloseLabel('daily')}
+      >
         ✕
       </button>
       <div className="q-stage">

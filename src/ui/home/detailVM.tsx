@@ -111,7 +111,9 @@ function sceneFrom(
  *  that same title. Home list hints / detail scene
  *  now match — tap again to start / Geo · earth /
  *  Choose what to play must not sit over Geo under
- *  that same Remember heading. */
+ *  that same Remember heading. Overlay close now
+ *  matches — Close quiz / Close daily must not
+ *  sit over Geo under that same heading. */
 export function buildDetailVM(
   item: MenuItem,
   extra: {

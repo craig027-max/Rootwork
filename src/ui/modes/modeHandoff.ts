@@ -56,6 +56,9 @@
  * tap again to start / Geo · earth / Choose what
  * to play must not sit over Geo under that same
  * Remember heading.
+ * Overlay close now matches — Close quiz /
+ * Close daily must not sit over Geo under that
+ * same Remember heading.
  * Change level must not put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),
@@ -146,6 +149,19 @@ export function rushMissRememberReady(
 }
 
 /**
+ * Overlay ✕ after a path-done miss is Close remember — Close quiz /
+ * Close daily must not sit over Geo under a Remember heading.
+ * Continue Daily / unfinished Continue {learn} keep the mode close.
+ */
+export function overlayCloseLabel(
+  mode: 'rush' | 'daily',
+  miss = false,
+): string {
+  if (miss) return 'Close remember';
+  return mode === 'daily' ? 'Close daily' : 'Close quiz';
+}
+
+/**
  * Same Today-row mid-run line Home already uses. Junk / finished / fresh
  * start indexes peek nothing — Rush must not invent a Daily resume.
  */
@@ -213,6 +229,8 @@ export interface DailyDoneVM {
   primary: ModeCta;
   replayLabel: string;
   homeLabel: string;
+  /** Path-done Rush miss — Close remember, not Close daily over Geo. */
+  closeLabel: string;
   /** Path-done Rush miss — same recap Today / Rush already name. */
   peek: string | null;
   missWaiting: boolean;
@@ -307,6 +325,7 @@ export function buildDailyDone(
     primary: dailyDonePrimary(opts.completed, opts.entitled, missOpts),
     replayLabel: 'Play again ›',
     homeLabel: 'Home',
+    closeLabel: overlayCloseLabel('daily', Boolean(miss)),
     peek: miss ? todayMissRecap(miss.name, miss.also) : null,
     missWaiting: Boolean(miss),
     celebrateDone: !miss,
@@ -348,6 +367,8 @@ export interface RushStartVM {
   pickLevel: boolean;
   /** Path-done Rush miss — Missed Geo, not last-run Photo ✓ Bio ✓. */
   peekChips: { root: string; mean: string; ok?: boolean }[] | null;
+  /** Path-done Rush miss — Close remember, not Close quiz over Geo. */
+  closeLabel: string;
 }
 
 /** Rush start: Play again after a real run, with the same best recap as Home.
@@ -408,6 +429,7 @@ export function buildRushStart(
     eyebrow: miss ? 'Remember' : 'Root Rush',
     pickLevel: !miss,
     peekChips: miss ? missPeekForNames(miss.name, miss.also) : null,
+    closeLabel: overlayCloseLabel('rush', Boolean(miss)),
   };
 }
 
@@ -429,6 +451,8 @@ export interface RushResultVM {
   celebrateGrade: boolean;
   /** Path-done Rush miss — Missed Geo, not last-run Photo ✓ Bio ✓. */
   recap: { root: string; mean: string; ok?: boolean }[] | null;
+  /** Path-done Rush miss — Close remember, not Close quiz over Geo. */
+  closeLabel: string;
 }
 
 /**
@@ -471,6 +495,7 @@ export function buildRushResultNext(
       eyebrow: null,
       celebrateGrade: true,
       recap: null,
+      closeLabel: overlayCloseLabel('rush'),
     };
   }
   const miss = rushMissRememberReady(completed, entitled, opts);
@@ -492,6 +517,7 @@ export function buildRushResultNext(
       eyebrow: 'Remember',
       celebrateGrade: false,
       recap: missPeekForNames(miss.name, miss.also),
+      closeLabel: overlayCloseLabel('rush', true),
     };
   }
   const learn = rushLearnReady(completed, entitled, opts);
@@ -513,6 +539,7 @@ export function buildRushResultNext(
       eyebrow: null,
       celebrateGrade: true,
       recap: null,
+      closeLabel: overlayCloseLabel('rush'),
     };
   }
   return {
@@ -527,5 +554,6 @@ export function buildRushResultNext(
     eyebrow: null,
     celebrateGrade: true,
     recap: null,
+    closeLabel: overlayCloseLabel('rush'),
   };
 }

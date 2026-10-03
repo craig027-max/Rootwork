@@ -28,7 +28,9 @@
  * list hints / detail scene now match — tap again
  * to start / Geo · earth / Choose what to play
  * must not sit over Geo under that same Remember
- * heading.
+ * heading. Overlay close now matches — Close
+ * quiz / Close daily must not sit over Geo
+ * under that same heading.
  */
 import { ROOTS } from '../../data/roots';
 import type { MenuItem } from './menu';
