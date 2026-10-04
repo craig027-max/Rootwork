@@ -128,7 +128,8 @@ describe('Rush / Daily overlay close after a miss is Remember — not Close quiz
     expect(done.missWaiting).toBe(true);
     expect(done.closeLabel).toBe('Close remember');
     expect(done.closeLabel).not.toMatch(/quiz|daily/i);
-    expect(done.homeLabel).toBe('Home');
+    expect(done.homeLabel).toBe('← Remember');
+    expect(done.homeLabel).not.toMatch(/^Home$/i);
     expect(done.primary.label).toBe(rememberMissCtaLabel(geo.root));
 
     const just = buildDailyDone({
