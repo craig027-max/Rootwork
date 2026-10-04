@@ -61,8 +61,9 @@ function palOf(root: Root) {
  * title. Rush peek chips now match — last-run Photo ✓ / Bio ✓
  * must not sit over Geo under that same title. Overlay close
  * now matches — Close daily must not sit over Geo under
- * that same title. Finishing banks Daily
- * XP; replays are free.
+ * that same title. Daily Home ghost now matches —
+ * Home must not sit over Geo under that same title.
+ * Finishing banks Daily XP; replays are free.
  */
 export function DailyChallenge() {
   const entitled = useEntitledForDisplay();
@@ -476,7 +477,10 @@ export function DailyChallenge() {
               <button className="q-ghost" onClick={startRun}>
                 {done.replayLabel}
               </button>
-              <button className="q-ghost" onClick={close}>
+              <button
+                className={`q-ghost${done.missWaiting ? ' is-miss' : ''}`}
+                onClick={close}
+              >
                 {done.homeLabel}
               </button>
             </div>

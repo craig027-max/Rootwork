@@ -59,6 +59,8 @@
  * Overlay close now matches — Close quiz /
  * Close daily must not sit over Geo under that
  * same Remember heading.
+ * Daily Home ghost now matches — Home must
+ * not sit over Geo under that same heading.
  * Change level must not put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),
@@ -162,6 +164,17 @@ export function overlayCloseLabel(
 }
 
 /**
+ * Daily Home ghost after a path-done miss is ← Remember — Home
+ * must not sit over Geo under a Remember heading. Same dismiss
+ * chrome Deck already uses. Continue Daily / unfinished Continue
+ * {learn} keep Home. Rush never had this ghost.
+ */
+export function overlayHomeLabel(miss = false): string {
+  if (miss) return '← Remember';
+  return 'Home';
+}
+
+/**
  * Same Today-row mid-run line Home already uses. Junk / finished / fresh
  * start indexes peek nothing — Rush must not invent a Daily resume.
  */
@@ -228,6 +241,7 @@ export interface DailyDoneVM {
   recapDone: boolean;
   primary: ModeCta;
   replayLabel: string;
+  /** Path-done Rush miss — ← Remember, not Home over Geo. */
   homeLabel: string;
   /** Path-done Rush miss — Close remember, not Close daily over Geo. */
   closeLabel: string;
@@ -324,7 +338,7 @@ export function buildDailyDone(
     recapDone: !miss,
     primary: dailyDonePrimary(opts.completed, opts.entitled, missOpts),
     replayLabel: 'Play again ›',
-    homeLabel: 'Home',
+    homeLabel: overlayHomeLabel(Boolean(miss)),
     closeLabel: overlayCloseLabel('daily', Boolean(miss)),
     peek: miss ? todayMissRecap(miss.name, miss.also) : null,
     missWaiting: Boolean(miss),

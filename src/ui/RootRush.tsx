@@ -54,7 +54,8 @@ import { samplePeekLabel } from './home/samplePeek';
  * match — Root Rush / Starter / Choose your level must not
  * sit over Geo under that same title. Overlay close now
  * matches — Close quiz must not sit over Geo under
- * that same title.
+ * that same title. Daily Home ghost now matches —
+ * Home must not sit over Geo under that same title.
  * After Daily is banked and Today still names Continue / Keep going,
  * that tap is the start / result hero — Play again stays the ghost
  * and the grade stays.

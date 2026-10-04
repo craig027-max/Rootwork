@@ -343,6 +343,8 @@ export function listAria(opts: { missWaiting?: boolean } = {}): string {
  * that same Remember heading. Overlay close
  * now matches — Close quiz / Close daily
  * must not sit over Geo under that same heading.
+ * Daily Home ghost now matches — Home must
+ * not sit over Geo under that same heading.
  */
 export function rushMenuSub(
   opts: {

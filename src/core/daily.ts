@@ -59,6 +59,8 @@
  * Geo under that same Remember heading. Overlay
  * close now matches — Close quiz / Close daily
  * must not sit over Geo under that same heading.
+ * Daily Home ghost now matches — Home must not
+ * sit over Geo under that same heading.
  * The five-are-done recap stays once the miss is Remembered.
  */
 
