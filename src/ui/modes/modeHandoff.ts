@@ -61,7 +61,12 @@
  * same Remember heading.
  * Daily Home ghost now matches — Home must
  * not sit over Geo under that same heading.
- * Change level must not put Play again back over Geo.
+ * Rush start / result Home ghost now matches —
+ * Home → must not sit over Geo under that
+ * same heading. Deck Remember leave now
+ * matches — Home → must not sit over Geo
+ * after a miss tap. Change level must not
+ * put Play again back over Geo.
  *
  * After Daily is banked and a learn is still the Today hero (no miss),
  * Rush uses that same Continue {learn} / Keep going tap — Play again
@@ -164,10 +169,11 @@ export function overlayCloseLabel(
 }
 
 /**
- * Daily Home ghost after a path-done miss is ← Remember — Home
- * must not sit over Geo under a Remember heading. Same dismiss
- * chrome Deck already uses. Continue Daily / unfinished Continue
- * {learn} keep Home. Rush never had this ghost.
+ * Overlay / Remember leave after a path-done miss is ← Remember —
+ * Home / Home → must not sit over Geo under a Remember heading.
+ * Same dismiss chrome Daily + Deck already use. Continue Daily /
+ * unfinished Continue {learn} keep Home. Rush start / result now
+ * grow this ghost on a miss — Play again stays the replay ghost.
  */
 export function overlayHomeLabel(miss = false): string {
   if (miss) return '← Remember';
@@ -383,6 +389,8 @@ export interface RushStartVM {
   peekChips: { root: string; mean: string; ok?: boolean }[] | null;
   /** Path-done Rush miss — Close remember, not Close quiz over Geo. */
   closeLabel: string;
+  /** Path-done Rush miss — ← Remember, not Home → over Geo. */
+  homeLabel: string | null;
 }
 
 /** Rush start: Play again after a real run, with the same best recap as Home.
@@ -444,6 +452,7 @@ export function buildRushStart(
     pickLevel: !miss,
     peekChips: miss ? missPeekForNames(miss.name, miss.also) : null,
     closeLabel: overlayCloseLabel('rush', Boolean(miss)),
+    homeLabel: miss ? overlayHomeLabel(true) : null,
   };
 }
 
@@ -467,6 +476,8 @@ export interface RushResultVM {
   recap: { root: string; mean: string; ok?: boolean }[] | null;
   /** Path-done Rush miss — Close remember, not Close quiz over Geo. */
   closeLabel: string;
+  /** Path-done Rush miss — ← Remember, not Home → over Geo. */
+  homeLabel: string | null;
 }
 
 /**
@@ -510,6 +521,7 @@ export function buildRushResultNext(
       celebrateGrade: true,
       recap: null,
       closeLabel: overlayCloseLabel('rush'),
+      homeLabel: null,
     };
   }
   const miss = rushMissRememberReady(completed, entitled, opts);
@@ -532,6 +544,7 @@ export function buildRushResultNext(
       celebrateGrade: false,
       recap: missPeekForNames(miss.name, miss.also),
       closeLabel: overlayCloseLabel('rush', true),
+      homeLabel: overlayHomeLabel(true),
     };
   }
   const learn = rushLearnReady(completed, entitled, opts);
@@ -554,6 +567,7 @@ export function buildRushResultNext(
       celebrateGrade: true,
       recap: null,
       closeLabel: overlayCloseLabel('rush'),
+      homeLabel: null,
     };
   }
   return {
@@ -569,5 +583,6 @@ export function buildRushResultNext(
     celebrateGrade: true,
     recap: null,
     closeLabel: overlayCloseLabel('rush'),
+    homeLabel: null,
   };
 }

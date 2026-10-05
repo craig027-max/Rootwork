@@ -345,6 +345,8 @@ export function listAria(opts: { missWaiting?: boolean } = {}): string {
  * must not sit over Geo under that same heading.
  * Daily Home ghost now matches — Home must
  * not sit over Geo under that same heading.
+ * Rush / Deck Home now matches — Home → must
+ * not sit over Geo under that same heading.
  */
 export function rushMenuSub(
   opts: {

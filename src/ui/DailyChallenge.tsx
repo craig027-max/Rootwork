@@ -63,6 +63,8 @@ function palOf(root: Root) {
  * now matches — Close daily must not sit over Geo under
  * that same title. Daily Home ghost now matches —
  * Home must not sit over Geo under that same title.
+ * Rush / Deck Home now matches — Home → must not
+ * sit over Geo under that same title.
  * Finishing banks Daily XP; replays are free.
  */
 export function DailyChallenge() {

@@ -732,6 +732,14 @@
   .ww-deck-back.is-miss {
     display: inline;
   }
+  .ww-recall-teach.is-miss,
+  .ww-card2.is-remember .ww-recall-teach.is-miss {
+    display: flex;
+  }
+  .ww-recall-teach.is-miss .btn.is-miss,
+  .ww-card-actions .btn.is-miss {
+    display: block;
+  }
   .ww-nav-cur.is-miss,
   .ww-nav-cur.is-miss .meta {
     display: block;
@@ -1843,6 +1851,12 @@ button.ww-schip:focus-visible {
 .ww-card2.is-remember .ww-deck-back.is-miss {
   color: #ff8a8f;
 }
+.ww-recall-teach.is-miss .btn.is-miss,
+.ww-card-actions .btn.is-miss {
+  color: #ff8a8f;
+  border-color: rgba(255, 138, 143, 0.45);
+  background: rgba(255, 138, 143, 0.10);
+}
 .ww-caption {
   position: absolute;
   left: 50%;
@@ -2379,6 +2393,13 @@ button.ww-schip:focus-visible {
   .ww-recall-teach.is-remember,
   .ww-card2.is-remember .ww-recall-teach {
     display: flex;
+  }
+  .ww-recall-teach.is-miss {
+    display: flex;
+  }
+  .ww-recall-teach.is-miss .btn.is-miss,
+  .ww-card-actions .btn.is-miss {
+    display: block;
   }
   /* Nav is fixed; extra wrap padding was creating a 26px phantom scroll
      on iPhone SE after the card already cleared the footer. */

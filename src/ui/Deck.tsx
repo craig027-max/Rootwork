@@ -65,6 +65,7 @@ import {
   deckShowPrev,
   deckStripCount,
   deckStripTier,
+  rememberLeaveLabel,
 } from './deck/deckChrome';
 import { DeckNav } from './deck/DeckNav';
 import { RootIndex } from './deck/RootIndex';
@@ -527,15 +528,20 @@ export function Deck() {
                 })}
               </div>
               {quizRecall.picked !== null ? (
-                <div className={`ww-recall-teach${remembering ? ' is-remember' : ''}`}>
+                <div className={`ww-recall-teach${remembering ? ' is-remember' : ''}${missRemember ? ' is-miss' : ''}`}>
                   <p>
                     {remembering
                       ? rememberMissLine(root.root, root.mean)
                       : quizRecall.beat.teach}
                   </p>
                   {remembering ? (
-                    <Button onClick={closeRoot} block size="lg">
-                      Home →
+                    <Button
+                      onClick={closeRoot}
+                      block
+                      size="lg"
+                      className={missRemember ? 'is-miss' : ''}
+                    >
+                      {rememberLeaveLabel({ missed: missRemember })}
                     </Button>
                   ) : (
                     <Button onClick={startRecall}>Try again — you've got this</Button>
@@ -562,10 +568,12 @@ export function Deck() {
                 disabled={!allowWinNextTap(correctAdvance, listening)}
                 block
                 size="lg"
+                className={missRemember ? 'is-miss' : ''}
               >
                 {afterYesNextLabel(
                   correctAdvance?.dest ?? afterCorrectRecall(id, entitled, { entry: deckEntry }),
                   deckEntry,
+                  { missed: missRemember },
                 )}
               </Button>
             ) : quizRecall && quizRecall.picked === null ? (
