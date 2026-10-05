@@ -106,7 +106,7 @@ describe('Today Remember after Rush is honest — Missed Geo, not stale Bio', ()
     expect(deck).toContain("remembering ? ' is-remember' : ''");
     expect(deck).toContain('rememberMissLine(root.root, root.mean)');
     expect(deck).toContain('onClick={closeRoot}');
-    expect(deck).toContain('Home →');
+    expect(deck).toContain('rememberLeaveLabel');
     expect(deck).toContain('quizRecall.picked === null');
     expect(rememberMissLine(geo.root, geo.mean)).toBe(`Nope — ${geo.root} means ${geo.mean}.`);
   });

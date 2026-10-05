@@ -56,6 +56,8 @@ import { samplePeekLabel } from './home/samplePeek';
  * matches — Close quiz must not sit over Geo under
  * that same title. Daily Home ghost now matches —
  * Home must not sit over Geo under that same title.
+ * Rush Home ghost now matches — Home → must not
+ * sit over Geo under that same title.
  * After Daily is banked and Today still names Continue / Keep going,
  * that tap is the start / result hero — Play again stays the ghost
  * and the grade stays.
@@ -447,6 +449,11 @@ export function RootRush() {
                 <button type="button" className="q-ghost" onClick={startRun}>
                   {rushStart.goLabel}
                 </button>
+                {rushStart.homeLabel ? (
+                  <button type="button" className="q-ghost is-miss" onClick={closeQuiz}>
+                    {rushStart.homeLabel}
+                  </button>
+                ) : null}
               </div>
             ) : rushStart.learnWaiting && rushStart.continueLearn ? (
               <div className="q-actions q-start-actions q-rush-learn">
@@ -692,6 +699,11 @@ export function RootRush() {
                   <button className="q-ghost" onClick={startRun}>
                     {rushNext.replayLabel}
                   </button>
+                  {rushNext.homeLabel ? (
+                    <button type="button" className="q-ghost is-miss" onClick={closeQuiz}>
+                      {rushNext.homeLabel}
+                    </button>
+                  ) : null}
                 </>
               ) : (
                 <>

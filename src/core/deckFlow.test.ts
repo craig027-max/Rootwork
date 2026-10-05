@@ -116,6 +116,16 @@ describe('afterCorrectRecall', () => {
     expect(afterYesNextLabel({ kind: 'home', line: 'Yes — Bio means life.' }, 'remember')).toBe(
       'Home →',
     );
+    expect(
+      afterYesNextLabel({ kind: 'home', line: 'Yes — Geo means earth.' }, 'remember', {
+        missed: true,
+      }),
+    ).toBe('← Remember');
+    expect(
+      afterYesNextLabel({ kind: 'home', line: 'Yes — Geo means earth.' }, 'remember', {
+        missed: true,
+      }),
+    ).not.toMatch(/Home/);
     expect(afterYesNextLabel({ kind: 'next', id: geoId, line: 'Yes — Bio means life.' })).toBe(
       'Next →',
     );

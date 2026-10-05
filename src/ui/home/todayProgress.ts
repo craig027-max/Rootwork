@@ -71,6 +71,8 @@
  * sit over Geo under that same heading.
  * Daily Home ghost now matches — Home must
  * not sit over Geo under that same heading.
+ * Rush / Deck Home now matches — Home → must
+ * not sit over Geo under that same heading.
  * Continue / Keep going / Rush CTAs stay as #68 left them when no
  * miss is waiting.
  *

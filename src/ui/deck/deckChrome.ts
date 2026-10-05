@@ -11,6 +11,15 @@ export function deckBackLabel(opts: { remembering?: boolean; missed?: boolean } 
   return '← All roots';
 }
 
+/**
+ * Leave tap after Remember — ← Remember over a Rush miss, Home → on a
+ * stale recap. Same dismiss chrome Daily / Rush already use. Destination
+ * is still Home; Home → must not sit over Missed Geo.
+ */
+export function rememberLeaveLabel(opts: { missed?: boolean } = {}): string {
+  return opts.missed ? '← Remember' : 'Home →';
+}
+
 /** Strip pill — Remember, not Tier 1 · Starter over Geo. */
 export function deckStripTier(opts: {
   missed?: boolean;

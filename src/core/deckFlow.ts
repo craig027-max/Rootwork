@@ -438,8 +438,12 @@ export function allowWinNextTap(
 }
 
 /** Kid-facing label for the one tap that leaves the Yes hold. */
-export function afterYesNextLabel(dest: AfterCorrectRecall, entry?: DeckEntry): string {
-  if (entry === 'remember') return 'Home →';
+export function afterYesNextLabel(
+  dest: AfterCorrectRecall,
+  entry?: DeckEntry,
+  opts: { missed?: boolean } = {},
+): string {
+  if (entry === 'remember') return opts.missed ? '← Remember' : 'Home →';
   return dest.kind === 'next' ? 'Next →' : 'Done →';
 }
 
