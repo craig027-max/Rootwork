@@ -4,9 +4,12 @@ function cleanName(raw?: string): string {
   return raw?.replace(/\s+/g, ' ').trim() ?? '';
 }
 
-/** Back control — Remember over a miss, Today on a stale recap, All roots otherwise. */
-export function deckBackLabel(opts: { remembering?: boolean; missed?: boolean } = {}): string {
+/** Back control — Remember over a miss, Find on a school-word tap, Today on a stale recap. */
+export function deckBackLabel(
+  opts: { remembering?: boolean; missed?: boolean; finding?: boolean } = {},
+): string {
   if (opts.missed) return '← Remember';
+  if (opts.finding) return '← Find';
   if (opts.remembering) return '← Today';
   return '← All roots';
 }
@@ -20,44 +23,54 @@ export function rememberLeaveLabel(opts: { missed?: boolean } = {}): string {
   return opts.missed ? '← Remember' : 'Home →';
 }
 
-/** Strip pill — Remember, not Tier 1 · Starter over Geo. */
+/** Strip pill — Remember, not Tier 1 · Starter over Geo. Find over a school-word tap. */
 export function deckStripTier(opts: {
   missed?: boolean;
+  finding?: boolean;
   tier: number;
   tierName: string;
 }): string {
   if (opts.missed) return 'Remember';
+  if (opts.finding) return 'Find';
   return `Tier ${opts.tier} · ${opts.tierName}`;
 }
 
-/** Strip count — Missed Geo, not Card 02 / 183. */
+/** Strip count — Missed Geo, not Card 02 / 183. Biology on a find tap. */
 export function deckStripCount(opts: {
   missed?: boolean;
   missName?: string;
+  findWord?: string;
   position: number;
   total: number;
 }): string {
   const name = cleanName(opts.missName);
   if (opts.missed) return name ? `Missed ${name}` : 'Missed';
+  const word = cleanName(opts.findWord);
+  if (word) return word;
   return `Card ${String(opts.position).padStart(2, '0')} / ${opts.total}`;
 }
 
-/** Bottom-nav meta — Remember · Geo, not Starter · 2 / 183. */
+/** Bottom-nav meta — Remember · Geo, not Starter · 2 / 183. Find · Biology on a word tap. */
 export function deckNavMeta(opts: {
   missed?: boolean;
   missName?: string;
+  findWord?: string;
   tierName: string;
   position: number;
   total: number;
 }): string {
   const name = cleanName(opts.missName);
   if (opts.missed) return name ? `Remember · ${name}` : 'Remember';
+  const word = cleanName(opts.findWord);
+  if (word) return `Find · ${word}`;
   return `${opts.tierName} · ${opts.position} / ${opts.total}`;
 }
 
 /** ☰ aria — Remember, not All roots index over the same miss. */
-export function deckIndexAria(opts: { missed?: boolean } = {}): string {
-  return opts.missed ? 'Remember' : 'All roots index';
+export function deckIndexAria(opts: { missed?: boolean; finding?: boolean } = {}): string {
+  if (opts.missed) return 'Remember';
+  if (opts.finding) return 'Find';
+  return 'All roots index';
 }
 
 /** Scene caption — Missed Geo, not watch the scene / Remember Geo as a stale recap. */
@@ -69,9 +82,12 @@ export function deckCaption(opts: {
   remembering?: boolean;
   missed?: boolean;
   studying?: boolean;
+  findWord?: string;
 }): string {
   const name = cleanName(opts.root);
   if (opts.missed) return name ? `${opts.emoji} Missed ${name}` : `${opts.emoji} Missed`;
+  const word = cleanName(opts.findWord);
+  if (word) return `${opts.emoji} ${word}`;
   if (opts.remembering) return name ? `${opts.emoji} Remember ${name}` : `${opts.emoji} Remember`;
   if (opts.studying) return `${opts.emoji} watch the scene`;
   return `${opts.emoji} ${opts.mean} — ${opts.alt}`;
@@ -83,9 +99,12 @@ export function deckEyebrow(opts: {
   lang: string;
   remembering?: boolean;
   missed?: boolean;
+  findWord?: string;
 }): string {
   const name = cleanName(opts.root);
   if (opts.missed) return name ? `Missed ${name}` : 'Missed';
+  const word = cleanName(opts.findWord);
+  if (word) return `Find ${word}`;
   if (opts.remembering) return name ? `Remember ${name}` : 'Remember';
   return `${opts.lang} Root`;
 }
@@ -113,7 +132,7 @@ export function deckNavMeaning(opts: { meaning: string; missed?: boolean }): str
   return opts.missed ? '' : opts.meaning;
 }
 
-/** Prev dumps Bio teach over Remember Geo — hide it on a Remember visit. */
-export function deckShowPrev(opts: { remembering?: boolean } = {}): boolean {
-  return !opts.remembering;
+/** Prev dumps Bio teach over Remember Geo / Find Biology — hide it. */
+export function deckShowPrev(opts: { remembering?: boolean; finding?: boolean } = {}): boolean {
+  return !opts.remembering && !opts.finding;
 }

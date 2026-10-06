@@ -12,7 +12,7 @@ import {
   pickDailyRoots,
   liveDailyResumeQi,
 } from '../core/daily';
-import { recapOpenForId, recapOpenForRoot } from '../core/deckFlow';
+import { browseOpenForId, recapOpenForId, recapOpenForRoot } from '../core/deckFlow';
 import { homeRushRecapPreview, liveRushRecap, todayRushRecap } from '../core/rushRecap';
 import {
   buildMenu,
@@ -267,10 +267,10 @@ export function Home() {
     onRecap(tap.name);
   }
 
-  function onBrowsePick(id: string) {
-    const recap = recapOpenForId(id, completed);
+  function onBrowsePick(id: string, focusWord?: string) {
+    const recap = browseOpenForId(id, completed, focusWord);
     setIndexOpen(false);
-    if (recap) openRoot(recap.id, { entry: recap.entry });
+    if (recap) openRoot(recap.id, { entry: recap.entry, focusWord: recap.focusWord });
   }
 
   const vm = buildDetailVM(selected, {

@@ -27,6 +27,8 @@ export function DeckNav({
   nextDisabled = false,
   missed = false,
   missName,
+  finding = false,
+  findWord,
 }: {
   rootLabel: string;
   meaning: string;
@@ -48,9 +50,12 @@ export function DeckNav({
   /** Path-done Rush miss — nav meta is Remember, not Starter / 183. */
   missed?: boolean;
   missName?: string;
+  /** Browse school-word tap — nav meta is Find · Biology, not Card 01 / 183. */
+  finding?: boolean;
+  findWord?: string;
 }) {
-  const meta = deckNavMeta({ missed, missName, tierName, position, total });
-  const indexAria = deckIndexAria({ missed });
+  const meta = deckNavMeta({ missed, missName, findWord, tierName, position, total });
+  const indexAria = deckIndexAria({ missed, finding });
   return (
     <nav className={`ww-decknav${missed ? ' is-miss' : ''}`} aria-label="Deck navigation">
       {showPrev ? (

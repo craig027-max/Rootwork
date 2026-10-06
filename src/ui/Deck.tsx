@@ -23,7 +23,8 @@ import {
   holdHearAfterClip,
   isLessonStudying,
   isRecallEntry,
-  recapOpenForId,
+  browseOpenForId,
+  isFindEntry,
   rememberHintLine,
   rememberLeadLine,
   rememberMissLine,
@@ -69,7 +70,7 @@ import {
 } from './deck/deckChrome';
 import { DeckNav } from './deck/DeckNav';
 import { RootIndex } from './deck/RootIndex';
-import { splitForOpenWord, toggleOpenWord } from './wordSplit';
+import { openWordForFind, splitForOpenWord, toggleOpenWord } from './wordSplit';
 
 function palOf(root: Root) {
   return PALETTES[root.pal] ?? PALETTES.green!;
@@ -103,6 +104,7 @@ export function Deck() {
   const setView = useWondralStore((s) => s.setView);
   const requestUpgrade = useWondralStore((s) => s.requestUpgrade);
   const deckEntry = useWondralStore((s) => s.deckEntry);
+  const deckFocusWord = useWondralStore((s) => s.deckFocusWord);
   const correctAdvance = useWondralStore((s) => s.correctAdvance);
   const beginCorrectAdvance = useWondralStore((s) => s.beginCorrectAdvance);
   const entitled = useEntitledForDisplay();
@@ -138,13 +140,14 @@ export function Deck() {
   }
 
   useEffect(() => {
-    setOpenWord(null);
+    const opened = currentRootId ? ROOTS_BY_ID[currentRootId] : undefined;
+    setOpenWord(opened ? openWordForFind(opened.words, deckFocusWord) : null);
     hearGen.current += 1;
     setHearFinished(false);
     setListening(false);
     setListenKind(null);
     setHearBeat(0);
-  }, [currentRootId]);
+  }, [currentRootId, deckFocusWord]);
 
   useEffect(() => {
     if (!listening || listenKind !== 'hear' || !currentRootId) return;
@@ -265,6 +268,8 @@ export function Deck() {
   const quizRecall = recall && recall.rootId === id && !won ? recall : null;
   const openSplit = splitForOpenWord(root.words, openWord);
   const remembering = deckEntry === 'remember';
+  const finding = isFindEntry(deckEntry);
+  const findWord = finding ? openWordForFind(root.words, deckFocusWord) : null;
   const day = localDayKey();
   const missRememberLive =
     remembering &&
@@ -274,11 +279,12 @@ export function Deck() {
   if (remembering && missRememberLive) missRememberVisit.current = id;
   else if (!remembering || missRememberVisit.current !== id) missRememberVisit.current = null;
   const missRemember = remembering && (missRememberLive || missRememberVisit.current === id);
-  const backLabel = deckBackLabel({ remembering, missed: missRemember });
-  const stripTier = deckStripTier({ missed: missRemember, tier: root.t, tierName });
+  const backLabel = deckBackLabel({ remembering, missed: missRemember, finding });
+  const stripTier = deckStripTier({ missed: missRemember, finding, tier: root.t, tierName });
   const stripCount = deckStripCount({
     missed: missRemember,
     missName: root.root,
+    findWord: findWord ?? undefined,
     position,
     total: ROOTS.length,
   });
@@ -358,13 +364,13 @@ export function Deck() {
     <>
       <div className="ww-deck-wrap">
         <article
-          className={`ww-card2${remembering ? ' is-remember' : ''}`}
+          className={`ww-card2${remembering ? ' is-remember' : ''}${finding ? ' is-find' : ''}`}
           style={paletteVars(p.c1rgb, p.grad)}
         >
-          <div className={`ww-strip${missRemember ? ' is-miss' : ''}`}>
+          <div className={`ww-strip${missRemember ? ' is-miss' : ''}${finding ? ' is-find' : ''}`}>
             <button
               type="button"
-              className={`ww-deck-back${missRemember ? ' is-miss' : ''}`}
+              className={`ww-deck-back${missRemember ? ' is-miss' : ''}${finding ? ' is-find' : ''}`}
               onClick={closeRoot}
             >
               {backLabel}
@@ -373,8 +379,12 @@ export function Deck() {
               {emoji}
             </span>
             <span className="title">Wondral Words</span>
-            <span className={`tier${missRemember ? ' is-miss' : ''}`}>{stripTier}</span>
-            <span className={`count${missRemember ? ' is-miss' : ''}`}>{stripCount}</span>
+            <span className={`tier${missRemember ? ' is-miss' : ''}${finding ? ' is-find' : ''}`}>
+              {stripTier}
+            </span>
+            <span className={`count${missRemember ? ' is-miss' : ''}${finding ? ' is-find' : ''}`}>
+              {stripCount}
+            </span>
           </div>
 
           <div className="ww-hero">
@@ -393,6 +403,7 @@ export function Deck() {
                   remembering,
                   missed: missRemember,
                   studying,
+                  findWord: findWord ?? undefined,
                 })}
               </span>
             </div>
@@ -408,6 +419,7 @@ export function Deck() {
                   lang,
                   remembering,
                   missed: missRemember,
+                  findWord: findWord ?? undefined,
                 })}
               </span>
               <div className="ww-root">{root.root}</div>
@@ -480,7 +492,9 @@ export function Deck() {
                 {root.words.map((w) => (
                   <button
                     type="button"
-                    className={`ww-word${openWord === w.w ? ' is-open' : ''}`}
+                    className={`ww-word${openWord === w.w ? ' is-open' : ''}${
+                      finding && openWord === w.w ? ' is-find' : ''
+                    }`}
                     key={w.w}
                     title={`${w.b} — ${w.d}`}
                     aria-expanded={openWord === w.w}
@@ -617,10 +631,12 @@ export function Deck() {
         onIndex={() => setIndexOpen(true)}
         showRush={nextTap.showRush}
         showNext={nextTap.showNextRoot}
-        showPrev={deckShowPrev({ remembering })}
+        showPrev={deckShowPrev({ remembering, finding })}
         nextDisabled={listen.disableNextRoot}
         missed={missRemember}
         missName={root.root}
+        finding={finding}
+        findWord={findWord ?? undefined}
       />
 
       {indexOpen ? (
@@ -632,11 +648,11 @@ export function Deck() {
             progress,
             day,
           )}
-          onPick={(pickId) => {
+          onPick={(pickId, focusWord) => {
             if (!allowNextRootTap(useWondralStore.getState().correctAdvance, listening)) return;
-            const recap = recapOpenForId(pickId, completed);
+            const recap = browseOpenForId(pickId, completed, focusWord);
             setIndexOpen(false);
-            if (recap) openRoot(recap.id, { entry: recap.entry });
+            if (recap) openRoot(recap.id, { entry: recap.entry, focusWord: recap.focusWord });
           }}
           onClose={() => setIndexOpen(false)}
         />

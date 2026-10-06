@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ROOTS } from '../data/roots.data';
-import { splitForOpenWord, toggleOpenWord, wordPartSplit } from './wordSplit';
+import { openWordForFind, splitForOpenWord, toggleOpenWord, wordPartSplit } from './wordSplit';
 
 const bio = ROOTS.find((r) => r.root === 'Bio');
 if (!bio) throw new Error('missing Bio root');
@@ -40,5 +40,21 @@ describe('tapping a chip reveals the part-split', () => {
   it('tapping the open chip again hides the split', () => {
     expect(toggleOpenWord('Biology', 'Biology')).toBeNull();
     expect(splitForOpenWord(bio.words, null)).toBeNull();
+  });
+});
+
+describe('Browse find tap opens the school word', () => {
+  it('opens Biology from the chip hint — not a closed Bio card', () => {
+    expect(openWordForFind(bio.words, 'Biology')).toBe('Biology');
+    expect(openWordForFind(bio.words, '  biology  ')).toBe('Biology');
+    expect(splitForOpenWord(bio.words, openWordForFind(bio.words, 'Biology'))).toBe(
+      'bio (life) + -logy (study of)',
+    );
+  });
+
+  it('does not invent a word that is not on the card', () => {
+    expect(openWordForFind(bio.words, 'Photograph')).toBeNull();
+    expect(openWordForFind(bio.words, '')).toBeNull();
+    expect(openWordForFind(bio.words, null)).toBeNull();
   });
 });

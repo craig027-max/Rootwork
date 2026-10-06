@@ -143,12 +143,18 @@ export type AfterCorrectRecall =
  * How a card opens. `teach` is Play / Next / index (examples + I know this).
  * `recall` is the post-Yes next-tap — skip examples, stay in the quiz loop.
  * `remember` is Home's one-beat retention: named root, then Home — never Geo.
+ * `find` is Browse's school-word tap: open Biology on Bio, then Home — never Geo.
  */
-export type DeckEntry = 'teach' | 'recall' | 'remember';
+export type DeckEntry = 'teach' | 'recall' | 'remember' | 'find';
 
 /** Quiz-loop entries skip examples. Remember is one beat; recall continues. */
 export function isRecallEntry(entry: DeckEntry): boolean {
   return entry === 'recall' || entry === 'remember';
+}
+
+/** Browse school-word tap — look at the word, not a Remember quiz. */
+export function isFindEntry(entry: DeckEntry): boolean {
+  return entry === 'find';
 }
 
 /** In-flight Yes beat. Lives in the store so a remount cannot wipe it into examples. */
@@ -227,7 +233,7 @@ export function afterCorrectRecall(
 ): AfterCorrectRecall {
   const root = ROOTS_BY_ID[fromId];
   const line = root ? successLine(root) : 'Yes — you got it.';
-  if (opts?.entry === 'remember') {
+  if (opts?.entry === 'remember' || opts?.entry === 'find') {
     return { kind: 'home', line };
   }
   const next = neighborOpenable(fromId, 1, entitled);
@@ -274,6 +280,34 @@ export function recapOpenForId(
 ): { id: RootId; entry: DeckEntry } | null {
   if (!ROOTS_BY_ID[id]) return null;
   return { id, entry: recapDeckEntry(completed.has(id)) };
+}
+
+export interface BrowseOpen {
+  id: RootId;
+  entry: DeckEntry;
+  focusWord?: string;
+}
+
+/**
+ * Catalog tap. A school-word find opens that word (`find`) — Biology
+ * on Bio, then Home. Empty query / root / meaning hits stay Remember
+ * or teach so Browse cannot dump Bio → Geo.
+ */
+export function browseOpenForId(
+  id: string,
+  completed: ReadonlySet<string>,
+  focusWord?: string | null,
+): BrowseOpen | null {
+  const recap = recapOpenForId(id, completed);
+  if (!recap) return null;
+  const word = focusWord?.replace(/\s+/g, ' ').trim();
+  if (!word) return recap;
+  const root = ROOTS_BY_ID[recap.id];
+  const onCard = root?.words.some(
+    (item) => item.w.replace(/\s+/g, ' ').trim().toLowerCase() === word.toLowerCase(),
+  );
+  if (!onCard) return recap;
+  return { id: recap.id, entry: 'find', focusWord: word };
 }
 
 /** After the Yes line, the next card opens in recall — never teach/examples. */
@@ -353,11 +387,11 @@ export function afterHearNextTap(opts: {
   entry: DeckEntry;
   won: boolean;
 }): AfterHearNextTap {
-  const remember = opts.entry === 'remember';
+  const stay = opts.entry === 'remember' || opts.entry === 'find';
   const afterHear = opts.hearFinished || isRecallEntry(opts.entry);
   return {
-    showRush: !opts.nextPlay && !remember,
-    showNextRoot: !opts.won && !remember && !(opts.nextPlay && afterHear),
+    showRush: !opts.nextPlay && !stay,
+    showNextRoot: !opts.won && !stay && !(opts.nextPlay && afterHear),
   };
 }
 
@@ -444,6 +478,7 @@ export function afterYesNextLabel(
   opts: { missed?: boolean } = {},
 ): string {
   if (entry === 'remember') return opts.missed ? '← Remember' : 'Home →';
+  if (entry === 'find') return '← Find';
   return dest.kind === 'next' ? 'Next →' : 'Done →';
 }
 

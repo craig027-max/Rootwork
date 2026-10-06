@@ -59,7 +59,7 @@ describe('Browse roots / See all / index is Remember — not a Bio → Geo dump'
     expect(home).toContain('homeSecondaryAction');
     expect(home).toContain('setIndexOpen');
     expect(home).toContain('<RootIndex');
-    expect(home).toContain('recapOpenForId');
+    expect(home).toContain('browseOpenForId');
     expect(home).toContain('onBrowsePick');
     expect(home).not.toContain('const first = ROOTS[0]');
     expect(home).not.toContain('openRoot(rootId(first))');
@@ -76,7 +76,7 @@ describe('Browse roots / See all / index is Remember — not a Bio → Geo dump'
   });
 
   it('Deck index and Home catalog mark owned chips Remember', () => {
-    expect(deck).toContain('recapOpenForId');
+    expect(deck).toContain('browseOpenForId');
     expect(deck).toContain('completed={completed}');
     expect(deck).not.toContain('openRoot(pickId);');
     expect(index).toContain('completed?.has(id)');

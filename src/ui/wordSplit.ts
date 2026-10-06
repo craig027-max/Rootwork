@@ -19,3 +19,17 @@ export function splitForOpenWord(
   const word = words.find((w) => w.w === open);
   return word ? wordPartSplit(word) : null;
 }
+
+/**
+ * Browse find tap — open the school word they typed, not a closed chip
+ * they have to hunt for. Hint must already live on this card.
+ */
+export function openWordForFind(
+  words: ReadonlyArray<Pick<RootWord, 'w'>>,
+  hint?: string | null,
+): string | null {
+  const want = hint?.replace(/\s+/g, ' ').trim();
+  if (!want) return null;
+  const folded = want.toLowerCase();
+  return words.find((word) => word.w.replace(/\s+/g, ' ').trim().toLowerCase() === folded)?.w ?? null;
+}

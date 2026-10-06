@@ -305,11 +305,13 @@ interface WondralStore {
 
   // Root (flashcard) tracking.
   currentRootId: string | null;
-  /** How the current card opened. `recall` skips examples after Yes; `remember` is Home's one-beat visit. */
+  /** How the current card opened. `recall` skips examples after Yes; `remember` is Home's one-beat visit; `find` opens the school word. */
   deckEntry: DeckEntry;
+  /** School word a Browse find tap should open (Biology on Bio). */
+  deckFocusWord: string | null;
   /** In-flight Yes beat — survives a Deck remount so examples cannot flash back. */
   correctAdvance: CorrectAdvance | null;
-  openRoot: (id: string, opts?: { entry?: DeckEntry }) => void;
+  openRoot: (id: string, opts?: { entry?: DeckEntry; focusWord?: string | null }) => void;
   closeRoot: () => void;
   beginCorrectAdvance: (fromId: string, dest: AfterCorrectRecall) => void;
   clearCorrectAdvance: () => void;
@@ -412,6 +414,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       view: 'home',
       currentRootId: null,
       deckEntry: 'teach',
+      deckFocusWord: null,
       correctAdvance: null,
     });
   },
@@ -463,16 +466,24 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
 
   currentRootId: null,
   deckEntry: 'teach',
+  deckFocusWord: null,
   correctAdvance: null,
   openRoot: (id, opts) =>
     set({
       currentRootId: id,
       view: 'deck',
       deckEntry: deckEntryForOpen(opts),
+      deckFocusWord: opts?.focusWord?.replace(/\s+/g, ' ').trim() || null,
       correctAdvance: null,
     }),
   closeRoot: () =>
-    set({ currentRootId: null, view: 'home', deckEntry: 'teach', correctAdvance: null }),
+    set({
+      currentRootId: null,
+      view: 'home',
+      deckEntry: 'teach',
+      deckFocusWord: null,
+      correctAdvance: null,
+    }),
   beginCorrectAdvance: (fromId, dest) => set({ correctAdvance: { fromId, dest } }),
   clearCorrectAdvance: () => set({ correctAdvance: null }),
   progress: INITIAL_PROGRESS,

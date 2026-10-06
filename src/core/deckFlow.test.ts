@@ -14,7 +14,9 @@ import {
   allowManualStep,
   commitCorrectAdvance,
   decideCorrectAdvance,
+  browseOpenForId,
   deckEntryForOpen,
+  isFindEntry,
   recapDeckEntry,
   recapOpenForId,
   recapOpenForRoot,
@@ -148,6 +150,54 @@ describe('afterCorrectRecall', () => {
     expect(recapOpenForId(bioId, new Set())).toEqual({ id: bioId, entry: 'teach' });
     expect(recapOpenForId(geoId, new Set([bioId]))).toEqual({ id: geoId, entry: 'teach' });
     expect(recapOpenForId('no-such-root', new Set([bioId]))).toBeNull();
+  });
+
+  it('a school-word find tap opens Find — not Remember quiz / Bio → Geo', () => {
+    expect(browseOpenForId(bioId, new Set([bioId]), 'Biology')).toEqual({
+      id: bioId,
+      entry: 'find',
+      focusWord: 'Biology',
+    });
+    expect(browseOpenForId(bioId, new Set(), 'biology')).toEqual({
+      id: bioId,
+      entry: 'find',
+      focusWord: 'biology',
+    });
+    expect(browseOpenForId(bioId, new Set([bioId]))).toEqual({ id: bioId, entry: 'remember' });
+    expect(browseOpenForId(bioId, new Set([bioId]), 'life')).toEqual({
+      id: bioId,
+      entry: 'remember',
+    });
+    expect(browseOpenForId(bioId, new Set([bioId]), 'Photograph')).toEqual({
+      id: bioId,
+      entry: 'remember',
+    });
+    expect(afterCorrectRecall(bioId, false, { entry: 'find' })).toEqual({
+      kind: 'home',
+      line: 'Yes — Bio means life.',
+    });
+    expect(afterCorrectRecall(bioId, true, { entry: 'find' })).toEqual({
+      kind: 'home',
+      line: 'Yes — Bio means life.',
+    });
+    expect(afterYesNextLabel({ kind: 'home', line: 'Yes — Bio means life.' }, 'find')).toBe(
+      '← Find',
+    );
+    expect(
+      afterHearNextTap({ nextPlay: false, hearFinished: false, entry: 'find', won: false }),
+    ).toEqual({ showRush: false, showNextRoot: false });
+    expect(isFindEntry('find')).toBe(true);
+    expect(isFindEntry('remember')).toBe(false);
+    expect(isRecallEntry('find')).toBe(false);
+    expect(
+      showExampleWords({
+        recall: null,
+        currentRootId: bioId,
+        entry: 'find',
+        correctAdvance: null,
+      }),
+    ).toBe(true);
+    expect(deckEntryForOpen({ entry: 'find' })).toBe('find');
   });
 });
 
