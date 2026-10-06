@@ -704,6 +704,27 @@
   .ww-index-head.is-miss .sub {
     display: block;
   }
+  .ww-index-find {
+    display: flex;
+  }
+  .ww-index-q {
+    display: block;
+  }
+  .ww-index-clear {
+    display: inline-flex;
+  }
+  .ww-index-empty {
+    display: block;
+  }
+  .ww-index-empty .hint {
+    display: block;
+  }
+  .ww-ichip .ih {
+    display: block;
+  }
+  .ww-ichip.is-hit .ih {
+    display: block;
+  }
   .ww-tier-sec.is-miss {
     display: block;
   }
@@ -2078,6 +2099,7 @@ button.ww-schip:focus-visible {
 }
 .ww-index-head {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
   gap: 14px;
   margin-bottom: 8px;
@@ -2107,6 +2129,73 @@ button.ww-schip:focus-visible {
   color: var(--text-primary);
   font-size: 1.1rem;
   cursor: pointer;
+}
+.ww-index-find {
+  flex: 1 1 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 6px 0 2px;
+}
+.ww-index-q {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  appearance: none;
+  -webkit-appearance: none;
+}
+.ww-index-q::placeholder {
+  color: var(--text-muted);
+}
+.ww-index-q:focus {
+  outline: none;
+  border-color: rgba(52, 217, 240, 0.7);
+  box-shadow: var(--ring-focus);
+}
+.ww-index-clear {
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.ww-index-empty {
+  margin: 36px auto 12px;
+  max-width: 36ch;
+  text-align: center;
+}
+.ww-index-empty p {
+  font-family: var(--font-game);
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+.ww-index-empty .hint {
+  margin-top: 8px;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+.ww-ichip .ih {
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--spark);
 }
 .ww-tier-sec {
   margin-top: 30px;
@@ -2285,6 +2374,18 @@ button.ww-schip:focus-visible {
 }
 
 @media (max-height: 720px) {
+  .ww-index-find {
+    display: flex;
+  }
+  .ww-index-q {
+    display: block;
+  }
+  .ww-index-empty {
+    display: block;
+  }
+  .ww-ichip .ih {
+    display: block;
+  }
   .ww-lead2,
   .ww-eyebrow2 {
     display: none;

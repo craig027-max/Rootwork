@@ -1,11 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   ROOTS,
   ROOTS_BY_ID,
   TIERS,
   PALETTES,
   rootId,
-  rootsInTier,
   isRootOpenable,
   type Root,
 } from '../../data/roots';
@@ -22,6 +21,18 @@ import {
   indexTiersMissFirst,
   indexTierSub,
 } from './indexChip';
+import {
+  INDEX_SEARCH_PLACEHOLDER,
+  buildIndexBrowseSections,
+  cleanSearchQuery,
+  indexChipHint,
+  indexMatchCount,
+  indexRootMatch,
+  indexSearchEmptyHint,
+  indexSearchEscape,
+  indexSearchHeading,
+  indexSearchSub,
+} from './indexSearch';
 
 function palRgb(root: Root): string {
   return (PALETTES[root.pal] ?? PALETTES.green!).c1rgb;
@@ -43,6 +54,8 @@ function palRgb(root: Root): string {
  * not sit over Geo when the sub already says Missed · remember.
  * Locked (paid) roots still appear but are dimmed — opening
  * one routes through the deck's existing upgrade guard.
+ * Find matches a root, a meaning, or a school word (biology)
+ * so All Roots is not a 183-chip scroll.
  */
 export function RootIndex({
   entitled,
@@ -58,6 +71,9 @@ export function RootIndex({
   onPick: (id: string) => void;
   onClose: () => void;
 }) {
+  const [query, setQuery] = useState('');
+  const queryRef = useRef(query);
+  queryRef.current = query;
   const missIds = [...(rememberMissIds ?? [])].filter(
     (id): id is string => typeof id === 'string' && id.length > 0,
   );
@@ -65,13 +81,23 @@ export function RootIndex({
   const missNames = missIds
     .map((id) => ROOTS_BY_ID[id]?.root)
     .filter((name): name is string => Boolean(name));
-  const heading = indexHeading(missNames);
-  const sub = indexSub(missNames, { rootCount: ROOTS.length, tierCount: TIERS.length });
-  const missHero = missNames.length > 0;
+  const searching = Boolean(cleanSearchQuery(query));
+  const sections = buildIndexBrowseSections({ query, missed });
+  const matchCount = indexMatchCount(sections);
+  const heading = searching ? indexSearchHeading() : indexHeading(missNames);
+  const sub = searching
+    ? indexSearchSub(query, matchCount)
+    : indexSub(missNames, { rootCount: ROOTS.length, tierCount: TIERS.length });
+  const missHero = !searching && missNames.length > 0;
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key !== 'Escape') return;
+      if (indexSearchEscape(queryRef.current) === 'clear') {
+        setQuery('');
+        return;
+      }
+      onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -94,46 +120,71 @@ export function RootIndex({
           <button type="button" className="ww-index-x" aria-label="Close index" onClick={onClose}>
             ✕
           </button>
+          <div className="ww-index-find">
+            <input
+              id="ww-index-q"
+              className="ww-index-q"
+              type="search"
+              value={query}
+              placeholder={INDEX_SEARCH_PLACEHOLDER}
+              aria-label={INDEX_SEARCH_PLACEHOLDER}
+              autoComplete="off"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="search"
+              onChange={(e) => setQuery(e.target.value)}
+            />
+            {searching ? (
+              <button
+                type="button"
+                className="ww-index-clear"
+                aria-label="Clear search"
+                onClick={() => setQuery('')}
+              >
+                Clear
+              </button>
+            ) : null}
+          </div>
         </div>
 
-        {indexTiersMissFirst(
-          TIERS.map((tier, ti) => {
-            const t = (ti + 1) as 1 | 2 | 3 | 4 | 5;
-            const tierRoots = indexRootsMissFirst(rootsInTier(t), missed, rootId);
-            const tierMissNames = tierRoots
-              .filter((root) => missed.has(rootId(root)))
-              .map((root) => root.root);
-            return { tier, t, tierRoots, tierMissNames };
-          }),
-          (section) => section.tierMissNames.length > 0,
-        ).map(({ tier, t, tierRoots, tierMissNames }) => {
-          const missSec = tierMissNames.length > 0;
-          return (
-            <section className={`ww-tier-sec${missSec ? ' is-miss' : ''}`} key={tier.n}>
+        {searching && matchCount === 0 ? (
+          <div className="ww-index-empty" role="status">
+            <p>{indexSearchSub(query, 0)}</p>
+            <p className="hint">{indexSearchEmptyHint()}</p>
+          </div>
+        ) : null}
+
+        {indexTiersMissFirst(sections, (section) => section.missNames.length > 0).map(
+          ({ t, name, sub: tierSub, roots: tierRoots, missNames: tierMissNames }) => {
+            const missSec = !searching && tierMissNames.length > 0;
+            const shownRoots = indexRootsMissFirst(tierRoots, missed, rootId);
+            return (
+            <section className={`ww-tier-sec${missSec ? ' is-miss' : ''}`} key={name}>
               <div className={`th${missSec ? ' is-miss' : ''}`}>
                 <span className="n">
-                  {indexTierHeading({ t, name: tier.n, missNames: tierMissNames })}
+                  {indexTierHeading({ t, name, missNames: missSec ? tierMissNames : [] })}
                 </span>
                 <span className="s">
-                  {indexTierSub({ sub: tier.sub, missNames: tierMissNames })}
+                  {indexTierSub({ sub: tierSub, missNames: missSec ? tierMissNames : [] })}
                 </span>
                 <span className="line" />
               </div>
               <div className="ww-igrid">
-                {tierRoots.map((root) => {
+                {shownRoots.map((root) => {
                   const id = rootId(root);
                   const locked = !isRootOpenable(id, entitled);
                   const owned = Boolean(completed?.has(id));
                   const kind = indexChipKind({ missed: missed.has(id), owned, locked });
                   const remember = recapDeckEntry(owned) === 'remember';
                   const mark = indexChipMark(kind);
+                  const hint = indexChipHint(indexRootMatch(root, query));
                   return (
                     <button
                       key={id}
                       type="button"
                       className={`ww-ichip${locked ? ' lockchip' : ''}${
                         kind === 'done' ? ' is-done' : ''
-                      }${kind === 'miss' ? ' is-miss' : ''}`}
+                      }${kind === 'miss' ? ' is-miss' : ''}${hint ? ' is-hit' : ''}`}
                       style={paletteVars(palRgb(root), (PALETTES[root.pal] ?? PALETTES.green!).grad)}
                       onClick={() => onPick(id)}
                       aria-label={
@@ -156,13 +207,15 @@ export function RootIndex({
                         {root.root} {locked ? '🔒' : ''}
                       </div>
                       <div className="im">{root.mean}</div>
+                      {hint ? <div className="ih">{hint}</div> : null}
                     </button>
                   );
                 })}
               </div>
             </section>
-          );
-        })}
+            );
+          },
+        )}
       </div>
     </div>
   );
