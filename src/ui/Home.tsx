@@ -12,7 +12,7 @@ import {
   pickDailyRoots,
   liveDailyResumeQi,
 } from '../core/daily';
-import { browseOpenForId, recapOpenForId, recapOpenForRoot } from '../core/deckFlow';
+import { browseOpenForId, recapOpenForRoot } from '../core/deckFlow';
 import { homeRushRecapPreview, liveRushRecap, todayRushRecap } from '../core/rushRecap';
 import {
   buildMenu,
