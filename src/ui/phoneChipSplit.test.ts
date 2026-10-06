@@ -29,7 +29,7 @@ describe('phone card: tap chip for part-split', () => {
   it('keeps example chips on the teach card', () => {
     expect(deck).toContain('className="ww-words"');
     expect(deck).toContain('root.words.map');
-    expect(deck).toMatch(/className=\{`ww-word\$\{openWord === w\.w \? ' is-open' : ''\}`\}/);
+    expect(deck).toMatch(/className=\{`ww-word\$\{openWord === w\.w \? ' is-open' : ''\}/);
   });
 
   it('tapping a chip at phone width reveals the authored part-split', () => {

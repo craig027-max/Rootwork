@@ -753,6 +753,25 @@
   .ww-deck-back.is-miss {
     display: inline;
   }
+  .ww-strip.is-find {
+    display: flex;
+  }
+  .ww-strip.is-find .tier,
+  .ww-strip.is-find .count,
+  .ww-deck-back.is-find {
+    display: inline;
+  }
+  .ww-card2.is-find .ww-words {
+    display: flex;
+  }
+  .ww-card2.is-find .ww-word,
+  .ww-card2.is-find .ww-word.is-find {
+    display: flex;
+  }
+  .ww-card2.is-find .ww-word-split,
+  .ww-card2.is-find .ww-mean-line {
+    display: block;
+  }
   .ww-recall-teach.is-miss,
   .ww-card2.is-remember .ww-recall-teach.is-miss {
     display: flex;
@@ -1562,6 +1581,25 @@ button.ww-schip:focus-visible {
 }
 .ww-deck-back.is-miss {
   color: #ff8a8f;
+}
+.ww-strip.is-find .tier,
+.ww-strip .tier.is-find {
+  color: rgb(var(--spark-rgb));
+  border-color: rgba(var(--spark-rgb), 0.42);
+}
+.ww-strip.is-find .count,
+.ww-strip .count.is-find {
+  color: rgb(var(--spark-rgb));
+}
+.ww-deck-back.is-find {
+  color: rgb(var(--spark-rgb));
+}
+.ww-word.is-find {
+  box-shadow: 0 0 0 2px rgba(var(--spark-rgb), 0.28);
+}
+.ww-card2.is-find .ww-word-split {
+  white-space: normal;
+  overflow: visible;
 }
 .ww-hero {
   display: grid;
@@ -2486,6 +2524,25 @@ button.ww-schip:focus-visible {
     display: inline;
   }
   .ww-nav-cur.is-miss .meta {
+    display: block;
+  }
+  .ww-strip.is-find {
+    display: flex;
+  }
+  .ww-strip.is-find .tier,
+  .ww-strip.is-find .count,
+  .ww-deck-back.is-find {
+    display: inline;
+  }
+  .ww-card2.is-find .ww-words {
+    display: flex;
+  }
+  .ww-card2.is-find .ww-word,
+  .ww-card2.is-find .ww-word.is-find {
+    display: flex;
+  }
+  .ww-card2.is-find .ww-word-split,
+  .ww-card2.is-find .ww-mean-line {
     display: block;
   }
   .ww-card2.is-remember .ww-card-actions {

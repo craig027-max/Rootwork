@@ -8,6 +8,7 @@ import {
   cleanSearchQuery,
   filterIndexRoots,
   indexChipHint,
+  indexFocusWord,
   indexMatchCount,
   indexRootMatch,
   indexSearchEmptyHint,
@@ -47,6 +48,12 @@ describe('Browse find — a root, meaning, or word; not a 183-chip scroll', () =
     expect(indexChipHint(indexRootMatch(photo, 'photograph'))).toBe('Photograph');
     expect(indexChipHint(indexRootMatch(photo, 'photo'))).toBeNull();
     expect(indexChipHint(indexRootMatch(photo, 'light'))).toBeNull();
+    expect(indexFocusWord(indexRootMatch(photo, 'photograph'))).toBe('Photograph');
+    expect(indexFocusWord(indexRootMatch(photo, 'photosynthesis'))).toBe('Photosynthesis');
+    expect(indexFocusWord(indexRootMatch(bio, 'biology'))).toBe('Biology');
+    expect(indexFocusWord(indexRootMatch(bio, 'life'))).toBeNull();
+    expect(indexFocusWord(indexRootMatch(bio, 'BY-oh'))).toBeNull();
+    expect(indexFocusWord(indexRootMatch(bio, 'bio'))).toBeNull();
   });
 
   it('does not treat an empty query as a miss — the full catalog stays', () => {

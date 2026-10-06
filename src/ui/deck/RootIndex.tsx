@@ -26,6 +26,7 @@ import {
   buildIndexBrowseSections,
   cleanSearchQuery,
   indexChipHint,
+  indexFocusWord,
   indexMatchCount,
   indexRootMatch,
   indexSearchEmptyHint,
@@ -55,7 +56,8 @@ function palRgb(root: Root): string {
  * Locked (paid) roots still appear but are dimmed — opening
  * one routes through the deck's existing upgrade guard.
  * Find matches a root, a meaning, or a school word (biology)
- * so All Roots is not a 183-chip scroll.
+ * so All Roots is not a 183-chip scroll. A word tap opens that
+ * word on the card — Biology, not a closed chip / Remember quiz.
  */
 export function RootIndex({
   entitled,
@@ -68,7 +70,7 @@ export function RootIndex({
   completed?: ReadonlySet<string>;
   /** Today's unreviewed owned Rush misses — catalog chips stay Missed, not ✓. */
   rememberMissIds?: Iterable<string>;
-  onPick: (id: string) => void;
+  onPick: (id: string, focusWord?: string) => void;
   onClose: () => void;
 }) {
   const [query, setQuery] = useState('');
@@ -177,7 +179,9 @@ export function RootIndex({
                   const kind = indexChipKind({ missed: missed.has(id), owned, locked });
                   const remember = recapDeckEntry(owned) === 'remember';
                   const mark = indexChipMark(kind);
-                  const hint = indexChipHint(indexRootMatch(root, query));
+                  const match = indexRootMatch(root, query);
+                  const hint = indexChipHint(match);
+                  const focusWord = indexFocusWord(match);
                   return (
                     <button
                       key={id}
@@ -186,7 +190,7 @@ export function RootIndex({
                         kind === 'done' ? ' is-done' : ''
                       }${kind === 'miss' ? ' is-miss' : ''}${hint ? ' is-hit' : ''}`}
                       style={paletteVars(palRgb(root), (PALETTES[root.pal] ?? PALETTES.green!).grad)}
-                      onClick={() => onPick(id)}
+                      onClick={() => onPick(id, focusWord ?? undefined)}
                       aria-label={
                         kind === 'miss'
                           ? indexChipLabel(root.root, kind)

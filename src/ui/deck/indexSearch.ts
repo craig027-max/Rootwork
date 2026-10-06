@@ -71,6 +71,16 @@ export function indexChipHint(match: IndexMatch | null): string | null {
   return null;
 }
 
+/**
+ * The school word a find tap should open. Meaning / spoken-sound / root
+ * hits stay a closed card — only a word match has a chip to reveal.
+ */
+export function indexFocusWord(match: IndexMatch | null): string | null {
+  const hint = match?.hint?.replace(/\s+/g, ' ').trim();
+  if (!hint || match?.why !== 'word') return null;
+  return hint;
+}
+
 export function filterIndexRoots<T extends Root>(roots: readonly T[], query: string): T[] {
   if (!cleanSearchQuery(query)) return [...roots];
   return roots.filter((root) => indexRootMatch(root, query) != null);
