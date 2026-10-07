@@ -128,7 +128,9 @@ export function Deck() {
     [entitled],
   );
   const poolRef = useRef(pool);
-  poolRef.current = pool;
+  // Latest openable pool for the layout effect. An effect write would be stale
+  // for the same commit's recall build.
+  poolRef.current = pool; // eslint-disable-line react-hooks/refs -- latest pool for this commit
 
   function fireAdvance(dest: AfterCorrectRecall) {
     // Cut leftover Yes audio so Geo/Photo cannot speak over Bio.
@@ -141,6 +143,9 @@ export function Deck() {
 
   useEffect(() => {
     const opened = currentRootId ? ROOTS_BY_ID[currentRootId] : undefined;
+    // Card change resets the open word and the Hear beat. This is the reset,
+    // not a derived render value — a kid's tap still owns openWord until then.
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reset on root change
     setOpenWord(opened ? openWordForFind(opened.words, deckFocusWord) : null);
     hearGen.current += 1;
     setHearFinished(false);
@@ -170,6 +175,7 @@ export function Deck() {
   useLayoutEffect(() => {
     const opened = currentRootId ? ROOTS_BY_ID[currentRootId] : undefined;
     if (!opened || !currentRootId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clear recall when the card closes
       setRecall(null);
       return;
     }
@@ -275,10 +281,13 @@ export function Deck() {
     remembering &&
     isOwnedRushMiss(id, todayRushRecap(rushRecap, activeStudentId, day), progress, day);
   // Hold the miss lead for this visit — a correct tap stamps review and
-  // must not flip the card to You already own over Geo.
+  // must not flip the card to You already own over Geo. The ref is the visit
+  // latch; state would re-render the card mid-answer.
+  /* eslint-disable react-hooks/refs -- visit latch, read on this render */
   if (remembering && missRememberLive) missRememberVisit.current = id;
   else if (!remembering || missRememberVisit.current !== id) missRememberVisit.current = null;
   const missRemember = remembering && (missRememberLive || missRememberVisit.current === id);
+  /* eslint-enable react-hooks/refs */
   const backLabel = deckBackLabel({ remembering, missed: missRemember, finding });
   const stripTier = deckStripTier({ missed: missRemember, finding, tier: root.t, tierName });
   const stripCount = deckStripCount({
