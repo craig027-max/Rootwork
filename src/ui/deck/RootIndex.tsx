@@ -75,7 +75,9 @@ export function RootIndex({
 }) {
   const [query, setQuery] = useState('');
   const queryRef = useRef(query);
-  queryRef.current = query;
+  // Escape reads the query from a stable listener. The ref has to match this
+  // render so a typed letter is cleared before the effect re-subscribes.
+  queryRef.current = query; // eslint-disable-line react-hooks/refs -- latest query for Escape
   const missIds = [...(rememberMissIds ?? [])].filter(
     (id): id is string => typeof id === 'string' && id.length > 0,
   );

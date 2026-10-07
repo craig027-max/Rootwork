@@ -3,6 +3,10 @@
  * example word. Empty query keeps the catalog as All Roots / Remember.
  * A typed query hides empty tiers and ranks Photo above a buried
  * "photograph" hit so kids do not scroll 183 chips to find one word.
+ *
+ * Definitions and breakdowns stay out. They are sentences: "as in a
+ * photo" opened Capture, and compacting "Large, or" into "largeor"
+ * invented a Geo hit on Xenon / Suburb / Metamorphosis.
  */
 import {
   ROOTS,
@@ -27,10 +31,20 @@ function compact(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '');
 }
 
+/**
+ * Match one short field. Compact only a single token so "BY-oh" matches
+ * "by oh" and "Biology" matches "Bio-logy". A gloss with a space stays
+ * words — compacting "Large, or" yields "largeor", which contains "geo".
+ */
 function fieldHas(field: string, query: string): boolean {
   if (!query) return false;
-  const folded = field.toLowerCase();
+  const folded = field
+    .toLowerCase()
+    .replace(/[·•]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
   if (folded.includes(query)) return true;
+  if (folded.includes(' ')) return false;
   const tight = compact(query);
   return tight.length > 0 && compact(field).includes(tight);
 }
@@ -45,20 +59,24 @@ export interface IndexMatch {
 
 /**
  * Why this root matches the query. Empty query matches everything as a
- * catalog row (no hint). Origin / lead stay out — Greek / HTML would
- * light up half the deck.
+ * catalog row (no hint). Origin / lead / definitions / breakdowns stay
+ * out — a sentence that mentions photo is not the Photo card.
+ * One or two letters are a root-name typeahead (A → Aqua, or → Ortho).
+ * They must not light every chip that merely contains those letters
+ * (Port / Form for "or").
  */
 export function indexRootMatch(root: Root, query: string): IndexMatch | null {
   const q = cleanSearchQuery(query);
   if (!q) return { why: 'root' };
+  if (q.length < 3) {
+    return compact(root.root).startsWith(compact(q)) ? { why: 'root' } : null;
+  }
   if (fieldHas(root.root, q)) return { why: 'root' };
   if (fieldHas(root.mean, q)) return { why: 'mean' };
   if (fieldHas(root.alt, q)) return { why: 'alt' };
   if (fieldHas(root.say, q)) return { why: 'say', hint: root.say };
   for (const word of root.words) {
-    if (fieldHas(word.w, q) || fieldHas(word.d, q) || fieldHas(word.b, q)) {
-      return { why: 'word', hint: word.w };
-    }
+    if (fieldHas(word.w, q)) return { why: 'word', hint: word.w };
   }
   return null;
 }

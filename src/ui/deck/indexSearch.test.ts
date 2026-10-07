@@ -120,4 +120,78 @@ describe('Browse find — a root, meaning, or word; not a 183-chip scroll', () =
     expect(photoHit.map((r) => r.root)).not.toContain(aqua.root);
     expect(ROOTS.length).toBe(183);
   });
+
+  it('finds Bio-logy and BY-oh without opening a definition that merely mentions the letters', () => {
+    expect(indexRootMatch(bio, 'Bio-logy')).toEqual({ why: 'word', hint: 'Biology' });
+    expect(indexRootMatch(bio, 'BY-oh')).toEqual({ why: 'say', hint: bio.say });
+    expect(indexRootMatch(bio, 'living things')?.why).toBe('alt');
+    expect(indexFocusWord(indexRootMatch(bio, 'Bio-logy'))).toBe('Biology');
+  });
+
+  it('does not turn photo / geo / port / far into Capture, Xenon, or important', () => {
+    const cap = ROOTS.find((r) => r.root === 'Cap')!;
+    const xeno = ROOTS.find((r) => r.root === 'Xeno')!;
+    const macro = ROOTS.find((r) => r.root === 'Macro')!;
+    const urb = ROOTS.find((r) => r.root === 'Urb')!;
+    const morph = ROOTS.find((r) => r.root === 'Morph')!;
+    const min = ROOTS.find((r) => r.root === 'Min')!;
+    const vit = ROOTS.find((r) => r.root === 'Vit')!;
+    const sign = ROOTS.find((r) => r.root === 'Sign')!;
+    const tele = ROOTS.find((r) => r.root === 'Tele')!;
+
+    expect(indexRootMatch(cap, 'photo')).toBeNull();
+    expect(indexFocusWord(indexRootMatch(cap, 'photo'))).toBeNull();
+    expect(indexRootMatch(xeno, 'geo')).toBeNull();
+    expect(indexRootMatch(macro, 'geo')).toBeNull();
+    expect(indexRootMatch(urb, 'geo')).toBeNull();
+    expect(indexRootMatch(morph, 'geo')).toBeNull();
+    expect(indexRootMatch(bio, 'far')).toBeNull();
+    expect(indexRootMatch(min, 'port')).toBeNull();
+    expect(indexRootMatch(vit, 'port')).toBeNull();
+    expect(indexRootMatch(sign, 'port')).toBeNull();
+
+    const photoHits = filterIndexRoots(ROOTS, 'photo').map((r) => r.root);
+    expect(photoHits).toContain('Photo');
+    expect(photoHits).not.toContain('Cap');
+
+    const geoHits = filterIndexRoots(ROOTS, 'geo').map((r) => r.root);
+    expect(geoHits).toContain('Geo');
+    expect(geoHits).not.toContain('Xeno');
+    expect(geoHits).not.toContain('Macro');
+    expect(geoHits).not.toContain('Urb');
+    expect(geoHits).not.toContain('Morph');
+
+    const portHits = filterIndexRoots(ROOTS, 'port').map((r) => r.root);
+    expect(portHits).toContain('Port');
+    expect(portHits).not.toContain('Min');
+    expect(portHits).not.toContain('Vit');
+    expect(portHits).not.toContain('Sign');
+    expect(indexRootMatch(tele, 'far')?.why).toBe('mean');
+    expect(filterIndexRoots(ROOTS, 'water').map((r) => r.root)).toEqual(
+      expect.arrayContaining(['Aqua', 'Hydro']),
+    );
+    expect(ROOTS.length).toBe(183);
+  });
+
+  it('treats one or two letters as a root-name typeahead, not every chip that contains them', () => {
+    const aHits = filterIndexRoots(ROOTS, 'a').map((r) => r.root);
+    expect(aHits).toContain('Aqua');
+    expect(aHits).not.toContain('Bio');
+    expect(aHits).not.toContain('Photo');
+    expect(aHits.length).toBeGreaterThan(0);
+    expect(aHits.length).toBeLessThan(40);
+    expect(aHits.every((name) => name.toLowerCase().startsWith('a'))).toBe(true);
+
+    const orHits = filterIndexRoots(ROOTS, 'or').map((r) => r.root);
+    expect(orHits).toContain('Ortho');
+    expect(orHits).not.toContain('Port');
+    expect(orHits).not.toContain('Form');
+    expect(orHits.every((name) => name.toLowerCase().startsWith('or'))).toBe(true);
+
+    const biHits = filterIndexRoots(ROOTS, 'bi').map((r) => r.root);
+    expect(biHits).toEqual(expect.arrayContaining(['Bio', 'Bi']));
+    expect(biHits).not.toContain('Bene');
+    expect(biHits.every((name) => name.toLowerCase().startsWith('bi'))).toBe(true);
+    expect(ROOTS.length).toBe(183);
+  });
 });
