@@ -32,6 +32,7 @@ import {
   winLineOnCard,
   type AfterCorrectRecall,
 } from '../core/deckFlow';
+import { buildWordRecall } from '../core/wordRecall';
 import { localDayKey } from '../core/daily';
 import { isOwnedRushMiss, listOwnedRushMissIds, todayRushRecap } from '../core/rushRecap';
 import { buildRecall, type RecallBeat } from '../core/recall';
@@ -71,6 +72,18 @@ import {
 import { DeckNav } from './deck/DeckNav';
 import { RootIndex } from './deck/RootIndex';
 import { openWordForFind, splitForOpenWord, toggleOpenWord } from './wordSplit';
+import {
+  findAlsoNote,
+  findAlsoTapLabel,
+  findBackOpensIndex,
+  findHintLine,
+  findKnowLabel,
+  findLeadLine,
+  findMeanLine,
+  findMissLine,
+  otherRootsForWord,
+  wordDefForOpen,
+} from './wordFind';
 
 function palOf(root: Root) {
   return PALETTES[root.pal] ?? PALETTES.green!;
@@ -136,6 +149,11 @@ export function Deck() {
     // Cut leftover Yes audio so Geo/Photo cannot speak over Bio.
     if (isClipPlaying()) stopSpeaking();
     useWondralStore.getState().clearCorrectAdvance();
+    if (findBackOpensIndex(isFindEntry(useWondralStore.getState().deckEntry))) {
+      setRecall(null);
+      setIndexOpen(true);
+      return;
+    }
     const next = commitCorrectAdvance(dest);
     if (next.kind === 'open') useWondralStore.getState().openRoot(next.id, { entry: next.entry });
     else useWondralStore.getState().closeRoot();
@@ -276,6 +294,9 @@ export function Deck() {
   const remembering = deckEntry === 'remember';
   const finding = isFindEntry(deckEntry);
   const findWord = finding ? openWordForFind(root.words, deckFocusWord) : null;
+  const findDef = finding ? wordDefForOpen(root.words, findWord) : null;
+  const findSplit = findWord ? splitForOpenWord(root.words, findWord) : null;
+  const alsoRoots = findWord ? otherRootsForWord(findWord, id) : [];
   const day = localDayKey();
   const missRememberLive =
     remembering &&
@@ -297,6 +318,14 @@ export function Deck() {
     position,
     total: ROOTS.length,
   });
+
+  function onDeckBack() {
+    if (findBackOpensIndex(finding)) {
+      setIndexOpen(true);
+      return;
+    }
+    closeRoot();
+  }
 
   function go(dir: 1 | -1) {
     if (!allowManualStep(useWondralStore.getState().correctAdvance)) return;
@@ -340,8 +369,18 @@ export function Deck() {
 
   function startRecall() {
     if (listen.disableKnowThis) return;
+    const wordBeat =
+      finding && findWord && findDef
+        ? buildWordRecall({
+            word: findWord,
+            def: findDef,
+            split: findSplit ?? '',
+            pool,
+            choices: 3,
+          })
+        : buildRecall({ root: card, pool, choices: 3 });
     setRecall({
-      beat: buildRecall({ root: card, pool, choices: 3 }),
+      beat: wordBeat,
       picked: null,
       win: null,
       rootId: id,
@@ -355,10 +394,15 @@ export function Deck() {
       // Don't setRecall(null) — that parked kids on a ✓ Learned card
       // hunting for Next. Quiet Yes line stays on this card until Next;
       // that tap opens neighborOpenable(+1) as recall so Geo never
-      // flashes the examples screen.
-      completeRoot(id, { celebrate: false });
+      // flashes the examples screen. A find visit must not stamp Bio
+      // learned just because they proved Biology.
+      if (!finding) completeRoot(id, { celebrate: false });
       dismissCelebration();
-      const dest = afterCorrectRecall(id, entitled, { entry: deckEntry });
+      const dest = afterCorrectRecall(id, entitled, {
+        entry: deckEntry,
+        findWord: findWord ?? undefined,
+        findDef: findDef ?? undefined,
+      });
       beginCorrectAdvance(id, dest);
       setRecall({ beat: recall.beat, picked: idx, win: dest.line, rootId: id });
       // User gesture — play the baked Yes line now. Missing clip: silent.
@@ -380,7 +424,7 @@ export function Deck() {
             <button
               type="button"
               className={`ww-deck-back${missRemember ? ' is-miss' : ''}${finding ? ' is-find' : ''}`}
-              onClick={closeRoot}
+              onClick={onDeckBack}
             >
               {backLabel}
             </button>
@@ -481,7 +525,11 @@ export function Deck() {
                   {deckMeansAlt({ alt: root.alt, studying, missed: missRemember })}
                 </span>
               </div>
-              {studying ? (
+              {finding && findWord ? (
+                <p className="ww-lead2 is-find">
+                  {findLeadLine(findWord, findSplit ?? openSplit ?? '')}
+                </p>
+              ) : studying ? (
                 <p className={`ww-lead2${missRemember ? ' is-remember-miss' : ''}`}>
                   {remembering
                     ? rememberLeadLine(root.root, { missed: missRemember })
@@ -525,9 +573,38 @@ export function Deck() {
                   {openSplit}
                 </p>
               ) : null}
-              {/* Phone chips hide per-word glosses; keep one readable root meaning. */}
-              <p className="ww-mean-line">
-                <strong>{root.root}</strong> means {root.mean}
+              {finding && findDef ? <p className="ww-word-def">{findDef}</p> : null}
+              {finding && alsoRoots.length > 0 ? (
+                <div className="ww-word-also">
+                  {alsoRoots.map((half) =>
+                    isRootOpenable(half.id, entitled) ? (
+                      <button
+                        key={half.id}
+                        type="button"
+                        className="ww-word-also-tap"
+                        onClick={() =>
+                          openRoot(half.id, { entry: 'find', focusWord: findWord })
+                        }
+                      >
+                        {findAlsoTapLabel(half.root)}
+                      </button>
+                    ) : (
+                      <span key={half.id} className="ww-word-also-note">
+                        {findAlsoNote(half.root, half.mean)}
+                      </span>
+                    ),
+                  )}
+                </div>
+              ) : null}
+              {/* Phone chips hide per-word glosses; find names the school word. */}
+              <p className={`ww-mean-line${finding ? ' is-find' : ''}`}>
+                {finding && findWord && findDef ? (
+                  findMeanLine(findWord, findDef)
+                ) : (
+                  <>
+                    <strong>{root.root}</strong> means {root.mean}
+                  </>
+                )}
               </p>
             </div>
           ) : null}
@@ -555,7 +632,9 @@ export function Deck() {
                   <p>
                     {remembering
                       ? rememberMissLine(root.root, root.mean)
-                      : quizRecall.beat.teach}
+                      : finding && findWord && findDef
+                        ? findMissLine(findWord, findDef)
+                        : quizRecall.beat.teach}
                   </p>
                   {remembering ? (
                     <Button
@@ -600,12 +679,14 @@ export function Deck() {
                 )}
               </Button>
             ) : quizRecall && quizRecall.picked === null ? (
-              <span className={`ww-muted${missRemember ? ' is-remember-miss' : ''}`}>
+              <span className={`ww-muted${missRemember ? ' is-remember-miss' : ''}${finding ? ' is-find' : ''}`}>
                 {remembering
                   ? rememberHintLine(root.root, { missed: missRemember })
-                  : "One tap. No shame if you miss — we'll show you."}
+                  : finding && findWord
+                    ? findHintLine(findWord)
+                    : "One tap. No shame if you miss — we'll show you."}
               </span>
-            ) : done && !remembering ? (
+            ) : done && !remembering && !finding ? (
               <Badge variant="solid" jewel="jade">
                 ✓ Learned
               </Badge>
@@ -616,7 +697,7 @@ export function Deck() {
                 block={!nextTap.showNextRoot}
                 size={!nextTap.showNextRoot ? 'lg' : 'md'}
               >
-                I know this ✓
+                {finding ? findKnowLabel() : 'I know this ✓'}
               </Button>
             )}
             {won || !nextTap.showNextRoot ? null : (

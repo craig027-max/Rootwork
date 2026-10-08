@@ -180,6 +180,20 @@ describe('afterCorrectRecall', () => {
       kind: 'home',
       line: 'Yes — Bio means life.',
     });
+    expect(
+      afterCorrectRecall(bioId, false, {
+        entry: 'find',
+        findWord: 'Biology',
+        findDef: bio.words.find((w) => w.w === 'Biology')!.d,
+      }).line,
+    ).toMatch(/^Yes — Biology\./);
+    expect(
+      afterCorrectRecall(bioId, false, {
+        entry: 'find',
+        findWord: 'Biology',
+        findDef: bio.words.find((w) => w.w === 'Biology')!.d,
+      }).line,
+    ).not.toMatch(/Bio means life/);
     expect(afterYesNextLabel({ kind: 'home', line: 'Yes — Bio means life.' }, 'find')).toBe(
       '← Find',
     );

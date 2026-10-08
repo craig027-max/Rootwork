@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
+import { useWondralStore } from '../../app/store';
 import {
   ROOTS,
   ROOTS_BY_ID,
@@ -73,7 +74,8 @@ export function RootIndex({
   onPick: (id: string, focusWord?: string) => void;
   onClose: () => void;
 }) {
-  const [query, setQuery] = useState('');
+  const query = useWondralStore((s) => s.browseQuery);
+  const setBrowseQuery = useWondralStore((s) => s.setBrowseQuery);
   const queryRef = useRef(query);
   // Escape reads the query from a stable listener. The ref has to match this
   // render so a typed letter is cleared before the effect re-subscribes.
@@ -98,14 +100,14 @@ export function RootIndex({
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
       if (indexSearchEscape(queryRef.current) === 'clear') {
-        setQuery('');
+        setBrowseQuery('');
         return;
       }
       onClose();
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  }, [onClose, setBrowseQuery]);
 
   return (
     <div
@@ -136,14 +138,14 @@ export function RootIndex({
               autoCorrect="off"
               spellCheck={false}
               enterKeyHint="search"
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => setBrowseQuery(e.target.value)}
             />
             {searching ? (
               <button
                 type="button"
                 className="ww-index-clear"
                 aria-label="Clear search"
-                onClick={() => setQuery('')}
+                onClick={() => setBrowseQuery('')}
               >
                 Clear
               </button>

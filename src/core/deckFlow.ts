@@ -9,6 +9,7 @@
 import { ROOTS, ROOTS_BY_ID, neighborOpenable, rootId, type Root, type RootId } from '../data/roots';
 import type { HearBeatChip } from './hearBeats';
 import { speakablePronunciation } from './speak';
+import { shortWordDef } from './wordDef';
 
 /** Quiet pause so a kid can read the one-line win before the next card. */
 export const SUCCESS_BEAT_MS = 900;
@@ -180,6 +181,16 @@ export function successLine(root: Root): string {
   return `Yes — ${root.root} means ${root.mean}.`;
 }
 
+/** Find Yes — Biology, not Bio means life over the school word. */
+export function findSuccessLine(word: string, def: string): string {
+  const name = word.replace(/\s+/g, ' ').trim();
+  const gloss = shortWordDef(def);
+  if (!name && !gloss) return 'Yes — you got it.';
+  if (!name) return `Yes — ${gloss}.`;
+  if (!gloss) return `Yes — ${name}.`;
+  return `Yes — ${name}. ${gloss}`;
+}
+
 /**
  * After a Remember miss — the meaning, then Home. Not a Try-again dump
  * that pretends the one-beat visit is a quiz they must pass.
@@ -229,11 +240,16 @@ export function allDoneLine(): string {
 export function afterCorrectRecall(
   fromId: RootId,
   entitled: boolean,
-  opts?: { entry?: DeckEntry },
+  opts?: { entry?: DeckEntry; findWord?: string; findDef?: string },
 ): AfterCorrectRecall {
   const root = ROOTS_BY_ID[fromId];
   const line = root ? successLine(root) : 'Yes — you got it.';
-  if (opts?.entry === 'remember' || opts?.entry === 'find') {
+  if (opts?.entry === 'find') {
+    const word = opts.findWord?.replace(/\s+/g, ' ').trim();
+    const def = opts.findDef?.replace(/\s+/g, ' ').trim();
+    return { kind: 'home', line: word && def ? findSuccessLine(word, def) : line };
+  }
+  if (opts?.entry === 'remember') {
     return { kind: 'home', line };
   }
   const next = neighborOpenable(fromId, 1, entitled);
