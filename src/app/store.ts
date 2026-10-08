@@ -309,6 +309,9 @@ interface WondralStore {
   deckEntry: DeckEntry;
   /** School word a Browse find tap should open (Biology on Bio). */
   deckFocusWord: string | null;
+  /** Live Browse find query — ← Find must not dump Home and lose biology. */
+  browseQuery: string;
+  setBrowseQuery: (q: string) => void;
   /** In-flight Yes beat — survives a Deck remount so examples cannot flash back. */
   correctAdvance: CorrectAdvance | null;
   openRoot: (id: string, opts?: { entry?: DeckEntry; focusWord?: string | null }) => void;
@@ -415,6 +418,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       currentRootId: null,
       deckEntry: 'teach',
       deckFocusWord: null,
+      browseQuery: '',
       correctAdvance: null,
     });
   },
@@ -467,14 +471,20 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   currentRootId: null,
   deckEntry: 'teach',
   deckFocusWord: null,
+  browseQuery: '',
+  setBrowseQuery: (q) => set({ browseQuery: q }),
   correctAdvance: null,
   openRoot: (id, opts) =>
-    set({
-      currentRootId: id,
-      view: 'deck',
-      deckEntry: deckEntryForOpen(opts),
-      deckFocusWord: opts?.focusWord?.replace(/\s+/g, ' ').trim() || null,
-      correctAdvance: null,
+    set((s) => {
+      const entry = deckEntryForOpen(opts);
+      return {
+        currentRootId: id,
+        view: 'deck',
+        deckEntry: entry,
+        deckFocusWord: opts?.focusWord?.replace(/\s+/g, ' ').trim() || null,
+        browseQuery: entry === 'find' ? s.browseQuery : '',
+        correctAdvance: null,
+      };
     }),
   closeRoot: () =>
     set({
@@ -482,6 +492,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       view: 'home',
       deckEntry: 'teach',
       deckFocusWord: null,
+      browseQuery: '',
       correctAdvance: null,
     }),
   beginCorrectAdvance: (fromId, dest) => set({ correctAdvance: { fromId, dest } }),

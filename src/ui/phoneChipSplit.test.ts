@@ -59,7 +59,7 @@ describe('phone card: tap chip for part-split', () => {
   });
 
   it('keeps the #26 meaning line and does not hide it', () => {
-    expect(deck).toContain('className="ww-mean-line"');
+    expect(deck).toMatch(/className=\{`ww-mean-line/);
     expect(deck).toMatch(/means \{root\.mean\}/);
     const phone = mediaBlock(css, 'max-width: 820px');
     expect(phone).toMatch(/\.ww-mean-line\s*\{[^}]*display:\s*block/);
