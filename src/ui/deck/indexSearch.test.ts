@@ -16,6 +16,7 @@ import {
   indexSearchHeading,
   indexSearchSub,
   rankIndexMatches,
+  wordFormHas,
 } from './indexSearch';
 
 const bio = ROOTS.find((r) => r.root === 'Bio')!;
@@ -89,7 +90,31 @@ describe('Browse find — a root, meaning, or word; not a 183-chip scroll', () =
     const empty = buildIndexBrowseSections({ query: 'xyzzyqq' });
     expect(empty).toEqual([]);
     expect(indexMatchCount(empty)).toBe(0);
-    expect(indexSearchSub('xyzzyqq', 0)).toBe('No roots match xyzzyqq');
+    expect(indexSearchSub('xyzzyqq', 0)).toBe("We don't have xyzzyqq.");
+    expect(indexSearchSub('xyzzyqq', 0)).not.toMatch(/No roots match/i);
+    expect(indexSearchSub('dinosaur', 0)).toBe("We don't have dinosaur.");
+  });
+
+  it('finds Biology from biologist — a school-word form is not an empty miss', () => {
+    expect(wordFormHas('Biology', 'biologist')).toBe(true);
+    expect(wordFormHas('Photograph', 'photographer')).toBe(true);
+    expect(wordFormHas('Geology', 'geological')).toBe(true);
+    expect(wordFormHas('Telephone', 'telephones')).toBe(true);
+    expect(wordFormHas('Biology', 'portable')).toBe(false);
+    expect(wordFormHas('Port', 'portable')).toBe(false);
+
+    expect(indexRootMatch(bio, 'biologist')).toEqual({ why: 'word', hint: 'Biology' });
+    expect(indexFocusWord(indexRootMatch(bio, 'biologist'))).toBe('Biology');
+    expect(indexChipHint(indexRootMatch(bio, 'biologist'))).toBe('Biology');
+    expect(indexRootMatch(photo, 'photographer')?.hint).toBe('Photograph');
+    expect(indexRootMatch(geo, 'geological')?.hint).toBe('Geology');
+    expect(indexRootMatch(geo, 'geologist')?.hint).toBe('Geology');
+
+    const biologist = buildIndexBrowseSections({ query: 'biologist' });
+    expect(indexMatchCount(biologist)).toBeGreaterThanOrEqual(1);
+    expect(biologist.some((s) => s.roots.some((r) => r.root === 'Bio'))).toBe(true);
+    expect(indexSearchSub('biologist', indexMatchCount(biologist))).toMatch(/match/);
+    expect(indexSearchSub('biologist', indexMatchCount(biologist))).not.toMatch(/don't have|No roots match/i);
   });
 
   it('empty query is still All Roots / Remember — Find is only after they type', () => {
@@ -104,7 +129,8 @@ describe('Browse find — a root, meaning, or word; not a 183-chip scroll', () =
       `${ROOTS.length} roots · ${TIERS.length} tiers`,
     );
     expect(indexSearchSub('', ROOTS.length)).toBe(`${ROOTS.length} roots · ${TIERS.length} tiers`);
-    expect(indexSearchEmptyHint()).toMatch(/biology/i);
+    expect(indexSearchEmptyHint()).toMatch(/word we teach \(biology\)/i);
+    expect(indexSearchEmptyHint()).not.toMatch(/No roots match/i);
     expect(INDEX_SEARCH_PLACEHOLDER).toMatch(/root.*word/i);
   });
 
