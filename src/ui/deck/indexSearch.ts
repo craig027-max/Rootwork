@@ -4,9 +4,11 @@
  * A typed query hides empty tiers and ranks Photo above a buried
  * "photograph" hit so kids do not scroll 183 chips to find one word.
  *
- * Definitions and breakdowns stay out. They are sentences: "as in a
- * photo" opened Capture, and compacting "Large, or" into "largeor"
- * invented a Geo hit on Xenon / Suburb / Metamorphosis.
+ * School-word forms count (biologist → Biology). A true miss says we
+ * don't have that word — not that no root matched, as if they searched
+ * wrong. Definitions and breakdowns stay out. They are sentences:
+ * "as in a photo" opened Capture, and compacting "Large, or" into
+ * "largeor" invented a Geo hit on Xenon / Suburb / Metamorphosis.
  */
 import {
   ROOTS,
@@ -29,6 +31,68 @@ export function cleanSearchQuery(raw: string): string {
 
 function compact(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, '');
+}
+
+/**
+ * Kid-typed endings on a school word. Combining forms (phone / graph /
+ * logy / meter) stay out — those would light every -phone card.
+ */
+const WORD_FORM_SUFFIXES = [
+  'ically',
+  'ical',
+  'ation',
+  'ition',
+  'sion',
+  'tion',
+  'ment',
+  'ness',
+  'able',
+  'ible',
+  'ists',
+  'ous',
+  'ist',
+  'ism',
+  'ing',
+  'ers',
+  'ies',
+  'ied',
+  'ier',
+  'est',
+  'er',
+  'ed',
+  'ly',
+  'es',
+  's',
+  'ic',
+  'al',
+  'y',
+] as const;
+
+const MIN_WORD_STEM = 5;
+
+function stemsOf(value: string): string[] {
+  const tight = compact(value);
+  if (tight.length < MIN_WORD_STEM) return tight ? [tight] : [];
+  const stems = new Set<string>([tight]);
+  for (const suf of WORD_FORM_SUFFIXES) {
+    if (tight.length - suf.length >= MIN_WORD_STEM && tight.endsWith(suf)) {
+      stems.add(tight.slice(0, -suf.length));
+    }
+  }
+  return [...stems];
+}
+
+/**
+ * Biology ↔ biologist, Photograph ↔ photographer. Short stems stay
+ * out so portable cannot invent Port, and definitions stay unread.
+ */
+export function wordFormHas(word: string, query: string): boolean {
+  const q = compact(query);
+  const w = compact(word);
+  if (q.length < MIN_WORD_STEM || w.length < MIN_WORD_STEM) return false;
+  if (q === w) return true;
+  const wordStems = stemsOf(w);
+  return stemsOf(q).some((stem) => stem.length >= MIN_WORD_STEM && wordStems.includes(stem));
 }
 
 /**
@@ -76,7 +140,7 @@ export function indexRootMatch(root: Root, query: string): IndexMatch | null {
   if (fieldHas(root.alt, q)) return { why: 'alt' };
   if (fieldHas(root.say, q)) return { why: 'say', hint: root.say };
   for (const word of root.words) {
-    if (fieldHas(word.w, q)) return { why: 'word', hint: word.w };
+    if (fieldHas(word.w, q) || wordFormHas(word.w, q)) return { why: 'word', hint: word.w };
   }
   return null;
 }
@@ -115,7 +179,7 @@ function matchScore(root: Root, query: string): number {
   if (fieldHas(root.root, q)) return 60;
   if (fieldHas(root.mean, q)) return 50;
   if (fieldHas(root.alt, q)) return 40;
-  if (root.words.some((word) => fieldHas(word.w, q))) return 30;
+  if (root.words.some((word) => fieldHas(word.w, q) || wordFormHas(word.w, q))) return 30;
   if (fieldHas(root.say, q)) return 20;
   return 10;
 }
@@ -191,13 +255,13 @@ export function indexSearchSub(query: string, matchCount: number): string {
   if (!q) return `${ROOTS.length} roots · ${TIERS.length} tiers`;
   if (matchCount <= 0) {
     const shown = query.replace(/\s+/g, ' ').trim() || q;
-    return `No roots match ${shown}`;
+    return `We don't have ${shown}.`;
   }
   return matchCount === 1 ? '1 match' : `${matchCount} matches`;
 }
 
 export function indexSearchEmptyHint(): string {
-  return 'Try a root (Bio), a meaning (life), or a word (biology).';
+  return 'Try a root (Bio), a meaning (life), or a word we teach (biology).';
 }
 
 /** Esc clears a live query first so it does not dump them out of Browse. */
