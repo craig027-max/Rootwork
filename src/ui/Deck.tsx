@@ -61,7 +61,9 @@ import {
   deckBackLabel,
   deckCaption,
   deckEyebrow,
+  deckFindTitle,
   deckMeansAlt,
+  deckMeansWord,
   deckNavMeaning,
   deckNavRoot,
   deckShowPrev,
@@ -475,7 +477,9 @@ export function Deck() {
                   findWord: findWord ?? undefined,
                 })}
               </span>
-              <div className="ww-root">{root.root}</div>
+              <div className={`ww-root${finding ? ' is-find' : ''}`}>
+                {deckFindTitle({ root: root.root, findWord: findWord ?? undefined })}
+              </div>
               <div className="ww-pron">
                 <button
                   type="button"
@@ -516,13 +520,26 @@ export function Deck() {
                   <p className="ww-listen-line">{hearHold.line}</p>
                 </div>
               ) : null}
-              <div className={`ww-means${missRemember ? ' is-miss' : ''}`}>
+              <div className={`ww-means${missRemember ? ' is-miss' : ''}${finding ? ' is-find' : ''}`}>
                 <span className="arrow" aria-hidden="true">
                   →
                 </span>
-                <span className="word">{studying ? '?' : root.mean}</span>
+                <span className="word">
+                  {deckMeansWord({
+                    mean: root.mean,
+                    studying,
+                    findWord: findWord ?? undefined,
+                    findDef: findDef ?? undefined,
+                  })}
+                </span>
                 <span className="alt">
-                  {deckMeansAlt({ alt: root.alt, studying, missed: missRemember })}
+                  {deckMeansAlt({
+                    alt: root.alt,
+                    studying,
+                    missed: missRemember,
+                    findWord: findWord ?? undefined,
+                    findRoot: finding ? root.root : undefined,
+                  })}
                 </span>
               </div>
               {finding && findWord ? (
@@ -710,8 +727,18 @@ export function Deck() {
       </div>
 
       <DeckNav
-        rootLabel={deckNavRoot({ root: root.root, missed: missRemember })}
-        meaning={deckNavMeaning({ meaning: studying ? '?' : root.mean, missed: missRemember })}
+        rootLabel={deckNavRoot({
+          root: root.root,
+          missed: missRemember,
+          findWord: findWord ?? undefined,
+        })}
+        meaning={deckNavMeaning({
+          meaning: studying ? '?' : root.mean,
+          missed: missRemember,
+          findWord: findWord ?? undefined,
+          findDef: findDef ?? undefined,
+          studying,
+        })}
         tierName={tierName}
         position={position}
         total={ROOTS.length}

@@ -778,6 +778,16 @@
   .ww-card2.is-find .ww-word-also {
     display: flex;
   }
+  .ww-root.is-find {
+    display: block;
+  }
+  .ww-means.is-find {
+    display: flex;
+  }
+  .ww-nav-cur.is-find,
+  .ww-nav-cur.is-find .meta {
+    display: block;
+  }
   .ww-recall-teach.is-miss,
   .ww-card2.is-remember .ww-recall-teach.is-miss {
     display: flex;
@@ -1648,6 +1658,21 @@ button.ww-schip:focus-visible {
   white-space: normal;
   overflow: visible;
 }
+.ww-root.is-find {
+  font-size: clamp(1.55rem, 4.4vw, 3.1rem);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  max-width: 16ch;
+  overflow-wrap: anywhere;
+}
+.ww-means.is-find .word {
+  font-size: clamp(1.05rem, 2.6vw, 1.7rem);
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.ww-nav-cur.is-find .r {
+  overflow-wrap: anywhere;
+}
 .ww-hero {
   display: grid;
   grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
@@ -2432,6 +2457,12 @@ button.ww-schip:focus-visible {
   .ww-card2.is-find .ww-lead2.is-find {
     display: block;
   }
+  .ww-root.is-find {
+    display: block;
+  }
+  .ww-means.is-find {
+    display: flex;
+  }
   /* Tap reveal: authored part-split (`b`) — not a title tooltip. */
   .ww-word-split {
     display: block;
@@ -2609,6 +2640,16 @@ button.ww-schip:focus-visible {
   }
   .ww-card2.is-find .ww-word-also {
     display: flex;
+  }
+  .ww-root.is-find {
+    display: block;
+  }
+  .ww-means.is-find {
+    display: flex;
+  }
+  .ww-nav-cur.is-find,
+  .ww-nav-cur.is-find .meta {
+    display: block;
   }
   .ww-card2.is-remember .ww-card-actions {
     display: flex;

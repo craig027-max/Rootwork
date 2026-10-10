@@ -1,7 +1,31 @@
-/** Deck strip / nav after a miss — not Tier 1 · Starter / Card 02 / 183. */
+import { shortWordDef } from '../../core/wordDef';
+
+/** Deck strip / nav after a miss — not Tier 1 · Starter / Card 02 / 183.
+ *  Find leftover: title / means / nav name the school word, not Bio / life. */
 
 function cleanName(raw?: string): string {
   return raw?.replace(/\s+/g, ' ').trim() ?? '';
+}
+
+/** Hero title — Biology, not Bio over a school-word tap. */
+export function deckFindTitle(opts: { root: string; findWord?: string }): string {
+  const word = cleanName(opts.findWord);
+  if (word) return word;
+  return cleanName(opts.root);
+}
+
+/** Means word — the school-word gloss, not life over Biology. */
+export function deckMeansWord(opts: {
+  mean: string;
+  studying?: boolean;
+  findWord?: string;
+  findDef?: string;
+}): string {
+  if (opts.studying) return '?';
+  const word = cleanName(opts.findWord);
+  const def = cleanName(opts.findDef);
+  if (word && def) return shortWordDef(def);
+  return opts.mean;
 }
 
 /** Back control — Remember over a miss, Find on a school-word tap, Today on a stale recap. */
@@ -109,27 +133,53 @@ export function deckEyebrow(opts: {
   return `${opts.lang} Root`;
 }
 
-/** Means gloss — you missed this in Rush, not prove you know it over Geo. */
+/** Means gloss — you missed this in Rush, not prove you know it over Geo.
+ *  Find names the root half (from Bio) — not living things over Biology. */
 export function deckMeansAlt(opts: {
   alt: string;
   studying?: boolean;
   missed?: boolean;
+  findWord?: string;
+  findRoot?: string;
 }): string {
   if (opts.missed) return 'you missed this in Rush';
+  const word = cleanName(opts.findWord);
+  if (word) {
+    if (opts.studying) return 'what this word means';
+    const root = cleanName(opts.findRoot);
+    return root ? `from ${root}` : 'the school word';
+  }
   if (opts.studying) return 'prove you know it';
   return opts.alt;
 }
 
-/** Nav centre — Missed Geo, not Geo · ? over the same coral miss. */
-export function deckNavRoot(opts: { root: string; missed?: boolean }): string {
+/** Nav centre — Missed Geo, not Geo · ? over the same coral miss.
+ *  Find names Biology, not Bio · life over the school word. */
+export function deckNavRoot(opts: { root: string; missed?: boolean; findWord?: string }): string {
   const name = cleanName(opts.root);
   if (opts.missed) return name ? `Missed ${name}` : 'Missed';
+  const word = cleanName(opts.findWord);
+  if (word) return word;
   return name;
 }
 
-/** Nav meaning — hide the studying ? so it cannot sit over Missed Geo. */
-export function deckNavMeaning(opts: { meaning: string; missed?: boolean }): string {
-  return opts.missed ? '' : opts.meaning;
+/** Nav meaning — hide the studying ? so it cannot sit over Missed Geo.
+ *  Find uses the school-word gloss — not life over Biology. */
+export function deckNavMeaning(opts: {
+  meaning: string;
+  missed?: boolean;
+  findWord?: string;
+  findDef?: string;
+  studying?: boolean;
+}): string {
+  if (opts.missed) return '';
+  const word = cleanName(opts.findWord);
+  if (word) {
+    if (opts.studying) return '';
+    const def = cleanName(opts.findDef);
+    return def ? shortWordDef(def) : '';
+  }
+  return opts.meaning;
 }
 
 /** Prev dumps Bio teach over Remember Geo / Find Biology — hide it. */
