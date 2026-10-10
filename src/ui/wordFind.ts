@@ -1,6 +1,7 @@
 /**
- * Browse find leftover after #98 / #99: the school word is open, so teach
- * that word — not "Bio means life" over Biology.
+ * Browse find leftover after #98 / #99 / #100: the school word is open, so
+ * teach that word — not "Bio means life" over Biology. Title / means / nav
+ * leftover: Biology and its gloss, not Bio / life sitting over the word.
  *
  * Definitions and other-half roots are authored catalog fields. Do not
  * invent a split or a meaning.

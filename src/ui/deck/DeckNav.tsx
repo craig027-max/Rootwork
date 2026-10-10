@@ -10,6 +10,8 @@ import { deckIndexAria, deckNavMeta } from './deckChrome';
  * Rush miss names Remember · Geo — Starter · 2 / 183 / All roots
  * index must not sit over that same coral miss Browse already named.
  * Prev stays hidden on Remember so Bio teach cannot dump over Geo.
+ * Find names Biology in the centre — Bio · life must not sit over the
+ * school word they typed.
  */
 export function DeckNav({
   rootLabel,
@@ -65,7 +67,7 @@ export function DeckNav({
       ) : null}
       <button
         type="button"
-        className={`ww-nav-cur${missed ? ' is-miss' : ''}`}
+        className={`ww-nav-cur${missed ? ' is-miss' : ''}${finding ? ' is-find' : ''}`}
         onClick={onIndex}
         title="Open index"
       >
