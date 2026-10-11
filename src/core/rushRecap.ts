@@ -180,6 +180,33 @@ export function rushMissLine(rootName: string, mean: string): string {
   return `Nope — ${name} means ${spokenMean}.`;
 }
 
+/**
+ * After a correct gloss tap — the school word, not Bio means life
+ * over Biology. Points stay on the same line.
+ */
+export function rushGlossHoldLine(
+  word: string,
+  gloss: string,
+  points: number,
+  mult: number,
+): string {
+  const name = word.replace(/\s+/g, ' ').trim();
+  const spoken = gloss.replace(/\s+/g, ' ').trim();
+  const pts = Number.isFinite(points) ? Math.max(0, Math.round(points)) : 0;
+  const combo = Number.isFinite(mult) && mult > 1 ? ` · ${mult}× combo` : '';
+  const score = `+${pts.toLocaleString('en-US')}${combo}`;
+  if (!name || !spoken) return score;
+  return `Yes — ${name}. ${spoken}. ${score}`;
+}
+
+/** After a gloss miss — the school word's authored def, not the root. */
+export function rushGlossMissLine(word: string, gloss: string): string {
+  const name = word.replace(/\s+/g, ' ').trim();
+  const spoken = gloss.replace(/\s+/g, ' ').trim();
+  if (!name || !spoken) return 'Nope — try the next one.';
+  return `Nope — ${name}: ${spoken}.`;
+}
+
 /** Kid-facing aria on a Rush result / Home peek chip. */
 export function rushRecapChipLabel(
   rootName: string,

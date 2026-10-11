@@ -5,7 +5,7 @@
  * so a find visit cannot quiz Bio / life over the word they typed.
  */
 import { ROOTS, type Root } from '../data/roots';
-import { canon, sampleUnique } from './distractors';
+import { pickWordDefDistractors } from './distractors';
 import { shortWordDef } from './wordDef';
 import type { RecallBeat } from './recall';
 import { shuffleWith } from './daily';
@@ -17,38 +17,6 @@ export interface BuildWordRecallInput {
   pool: readonly Root[];
   rng?: () => number;
   choices?: 2 | 3;
-}
-
-function collectWordDefs(pools: readonly (readonly Root[])[], skipWord: string): string[] {
-  const skip = skipWord.replace(/\s+/g, ' ').trim().toLowerCase();
-  const out: string[] = [];
-  const seen = new Set<string>();
-  for (const pool of pools) {
-    for (const root of pool) {
-      for (const item of root.words) {
-        const name = item.w.replace(/\s+/g, ' ').trim().toLowerCase();
-        if (name === skip) continue;
-        const gloss = shortWordDef(item.d);
-        if (!gloss) continue;
-        const key = canon(gloss);
-        if (seen.has(key)) continue;
-        seen.add(key);
-        out.push(gloss);
-      }
-    }
-  }
-  return out;
-}
-
-export function pickWordDefDistractors(
-  word: string,
-  correct: string,
-  pools: readonly (readonly Root[])[],
-  n: number,
-  rng: () => number = Math.random,
-): string[] {
-  const labels = collectWordDefs(pools, word);
-  return sampleUnique([labels], n, [correct], rng);
 }
 
 /** One beat: what the found school word means. Authored defs only. */

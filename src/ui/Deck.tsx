@@ -218,7 +218,13 @@ export function Deck() {
         prev && prev.rootId === currentRootId
           ? prev
           : {
-              beat: buildRecall({ root: opened, pool: poolRef.current, choices: 3 }),
+              beat: buildRecall({
+                root: opened,
+                pool: poolRef.current,
+                choices: 3,
+                // Remember names the root. A Geography gloss would sit over Geo.
+                kinds: deckEntry === 'remember' ? ['mean', 'word'] : undefined,
+              }),
               picked: null,
               win: null,
               rootId: currentRootId,
@@ -400,16 +406,22 @@ export function Deck() {
       // learned just because they proved Biology.
       if (!finding) completeRoot(id, { celebrate: false });
       dismissCelebration();
+      const glossBeat = recall.beat.kind === 'gloss';
       const dest = afterCorrectRecall(id, entitled, {
         entry: deckEntry,
         findWord: findWord ?? undefined,
         findDef: findDef ?? undefined,
+        glossWord: glossBeat ? recall.beat.word : undefined,
+        glossDef: glossBeat ? recall.beat.gloss : undefined,
       });
       beginCorrectAdvance(id, dest);
       setRecall({ beat: recall.beat, picked: idx, win: dest.line, rootId: id });
-      // User gesture — play the baked Yes line now. Missing clip: silent.
-      speakYes(card.root, card.mean);
-      watchCurrentClip(true, 'yes');
+      // Root Yes clip says "Bio means life". A gloss beat's line is the
+      // school word — don't speak the other sentence over it.
+      if (!glossBeat) {
+        speakYes(card.root, card.mean);
+        watchCurrentClip(true, 'yes');
+      }
       return;
     }
     setRecall({ ...recall, picked: idx });
@@ -550,7 +562,7 @@ export function Deck() {
                 <p className={`ww-lead2${missRemember ? ' is-remember-miss' : ''}`}>
                   {remembering
                     ? rememberLeadLine(root.root, { missed: missRemember })
-                    : `Look at the scene. Then tap what ${root.root} means — or which word it builds.`}
+                    : `Look at the scene. Then tap what ${root.root} means, which word it builds, or what that word means.`}
                 </p>
               ) : (
                 /* `lead` is static, authored curriculum content (only our own <b>
@@ -628,10 +640,13 @@ export function Deck() {
 
           {quizRecall ? (
             <div className="ww-recall">
-              <div className="ww-recall-ask">{quizRecall.beat.ask}</div>
+              <div className={`ww-recall-ask${quizRecall.beat.kind === 'gloss' ? ' is-gloss' : ''}`}>
+                {quizRecall.beat.ask}
+              </div>
               <div className="ww-recall-opts">
                 {quizRecall.beat.opts.map((o, idx) => {
                   let cls = 'ww-recall-opt';
+                  if (quizRecall.beat.kind === 'gloss') cls += ' is-gloss';
                   if (quizRecall.picked !== null) {
                     cls += ' done';
                     if (idx === quizRecall.picked && !o.ok) cls += ' wrong';
@@ -676,7 +691,18 @@ export function Deck() {
               role="status"
               aria-live="polite"
             >
-              <p className={listen.yesNow ? 'is-now' : undefined}>{winLine}</p>
+              <p
+                className={
+                  [
+                    listen.yesNow ? 'is-now' : undefined,
+                    recall?.beat.kind === 'gloss' ? 'is-gloss' : undefined,
+                  ]
+                    .filter(Boolean)
+                    .join(' ') || undefined
+                }
+              >
+                {winLine}
+              </p>
             </div>
           ) : null}
 

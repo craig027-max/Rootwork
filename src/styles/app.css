@@ -1454,6 +1454,15 @@ button.ww-schip:focus-visible {
   color: var(--text-muted);
   margin-bottom: 8px;
 }
+.ww-recall-ask.is-gloss {
+  font-family: var(--font-display);
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-secondary);
+  line-height: 1.35;
+}
 .ww-recall-opts {
   display: grid;
   gap: 8px;
@@ -1505,6 +1514,14 @@ button.ww-schip:focus-visible {
 .ww-recall-opt.wrong:hover {
   border-color: rgba(239, 68, 68, 0.55);
   background: rgba(239, 68, 68, 0.1);
+}
+.ww-recall-opt.is-gloss {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 0.98rem;
+  line-height: 1.35;
+  letter-spacing: 0;
+  white-space: normal;
 }
 .ww-recall-teach {
   margin-top: 14px;
@@ -1853,6 +1870,13 @@ button.ww-schip:focus-visible {
   font-weight: 700;
   font-size: 1.05rem;
   color: rgb(var(--spark-rgb));
+}
+.ww-recall-win p.is-gloss {
+  font-family: var(--font-display);
+  font-weight: 650;
+  font-size: 1.05rem;
+  line-height: 1.35;
+  letter-spacing: 0;
 }
 /* Yes clip: one beat on the existing win line — spark + bold + live glow. */
 .ww-recall-win.is-now {
