@@ -7,6 +7,7 @@ import {
   wordContainsRoot,
 } from './distractors';
 import { buildRushQuestion } from './rush';
+import { quizGloss } from './wordDef';
 
 const form = ROOTS.find((r) => r.root === 'Form')!;
 const bio = ROOTS.find((r) => r.root === 'Bio')!;
@@ -102,6 +103,36 @@ describe('buildRushQuestion', () => {
         expect(junk.has(w), `seed ${seed} served ${w} for Form`).toBe(false);
         expect(wordContainsRoot(w, 'Form')).toBe(false);
       }
+    }
+  });
+
+  it('asks what a school word means, and the big type is that word', () => {
+    const glosses = new Set<string>();
+    for (const root of ROOTS) {
+      for (const word of root.words) {
+        const gloss = quizGloss(word.d);
+        if (gloss) glosses.add(gloss);
+      }
+    }
+    const q = buildRushQuestion({
+      root: bio,
+      scoped: tier1,
+      all: tier1,
+      type: 'gloss',
+      rng: mulberry32(8),
+    });
+    expect(q.type).toBe('gloss');
+    expect(q.ask).toBe(`What does ${q.glossWord} mean?`);
+    expect(q.big).toBe(q.glossWord);
+    expect(q.big).not.toBe('Bio');
+    expect(q.sub).toBe('from Bio · life');
+    expect(q.say).toBeUndefined();
+    expect(q.opts.filter((o) => o.ok)).toHaveLength(1);
+    expect(q.opts.find((o) => o.ok)?.label).toBe(q.gloss);
+    expect(q.opts.length).toBe(4);
+    for (const opt of q.opts) {
+      expect(glosses.has(opt.label)).toBe(true);
+      expect(opt.label).not.toBe('life');
     }
   });
 

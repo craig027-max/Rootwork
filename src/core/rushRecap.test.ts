@@ -7,6 +7,8 @@ import {
   liveRushRecap,
   parseRushRecap,
   peekChipDone,
+  rushGlossHoldLine,
+  rushGlossMissLine,
   rushHoldLine,
   rushMissLine,
   rememberMissCtaLabel,
@@ -105,6 +107,19 @@ describe('rushHoldLine + rushMissLine + rushRecapChipLabel', () => {
     expect(rushMissLine('Chron', 'time')).toBe('Nope — Chron means time.');
     expect(rushMissLine('Bio', 'life')).toBe('Nope — Bio means life.');
     expect(rushMissLine('', '')).toBe('Nope — try the next one.');
+    expect(rushGlossHoldLine('Biology', 'The science of living things', 100, 1)).toBe(
+      'Yes — Biology. The science of living things. +100',
+    );
+    expect(rushGlossHoldLine('Biology', 'The science of living things', 200, 2)).toBe(
+      'Yes — Biology. The science of living things. +200 · 2× combo',
+    );
+    expect(rushGlossHoldLine('Biology', 'The science of living things', 100, 1)).not.toMatch(
+      /Bio means life/,
+    );
+    expect(rushGlossMissLine('Biology', 'The science of living things')).toBe(
+      'Nope — Biology: The science of living things.',
+    );
+    expect(rushGlossMissLine('', '')).toBe('Nope — try the next one.');
   });
 
   it('names Remember vs Meet vs Missed on a result chip', () => {

@@ -97,6 +97,20 @@ describe('afterCorrectRecall', () => {
     });
   });
 
+  it('names the school word on a gloss Yes and still opens the next root', () => {
+    const biology = bio.words.find((w) => w.w === 'Biology')!;
+    expect(
+      afterCorrectRecall(bioId, false, { glossWord: 'Biology', glossDef: biology.d }),
+    ).toEqual({
+      kind: 'next',
+      id: geoId,
+      line: 'Yes — Biology. The science of living things',
+    });
+    expect(
+      afterCorrectRecall(bioId, false, { glossWord: 'Biology', glossDef: biology.d }).line,
+    ).not.toMatch(/Bio means life/);
+  });
+
   it('success line is one kid-safe sentence', () => {
     expect(successLine(bio)).toBe('Yes — Bio means life.');
     expect(successLine(bio).toLowerCase()).not.toMatch(/wrong|fail|shame|stupid|nope|loser/);

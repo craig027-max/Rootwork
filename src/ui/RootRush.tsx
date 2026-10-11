@@ -15,6 +15,8 @@ import { recapDeckEntry } from '../core/deckFlow';
 import {
   homeRushRecapPreview,
   liveRushRecap,
+  rushGlossHoldLine,
+  rushGlossMissLine,
   rushHoldLine,
   rushMissLine,
   rushRecapChipLabel,
@@ -552,7 +554,7 @@ export function RootRush() {
             <div className="q-prog">
               <span style={{ width: `${(qi / questions.length) * 100}%` }} />
             </div>
-            <div className="q-ask">{q.ask}</div>
+            <div className={`q-ask${q.type === 'gloss' ? ' is-gloss' : ''}`}>{q.ask}</div>
             <div className="q-scene">
               <Scene
                 scene={q.root.scene}
@@ -560,13 +562,20 @@ export function RootRush() {
               />
             </div>
             <div className="q-prompt">
-              <div className="q-big">{q.big}</div>
+              <div
+                className={`q-big${q.type === 'gloss' ? ' is-gloss' : ''}${
+                  q.type === 'gloss' && q.big.length >= 14 ? ' is-long' : ''
+                }`}
+              >
+                {q.big}
+              </div>
               {q.say ? <div className="q-say">{q.say}</div> : null}
               {q.sub ? <div className="q-psub">{q.sub}</div> : null}
             </div>
             <div className="q-options">
               {q.opts.map((o, idx) => {
                 let cls = 'q-opt';
+                if (q.type === 'gloss') cls += ' is-gloss';
                 if (answered) {
                   cls += ' done';
                   if (o.ok) cls += ' correct';
@@ -582,14 +591,18 @@ export function RootRush() {
             </div>
             <div className="q-foot">
               {answered && answeredCorrect ? (
-                <span className="q-fb good">
-                  {rushHoldLine(q.root.root, q.root.mean, 100 * mult, mult)}
+                <span className={`q-fb good${q.type === 'gloss' ? ' is-gloss' : ''}`}>
+                  {q.type === 'gloss' && q.glossWord && q.gloss
+                    ? rushGlossHoldLine(q.glossWord, q.gloss, 100 * mult, mult)
+                    : rushHoldLine(q.root.root, q.root.mean, 100 * mult, mult)}
                 </span>
               ) : null}
               {answered && !answeredCorrect ? (
                 <>
-                  <span className="q-fb bad">
-                    {rushMissLine(q.root.root, q.root.mean)}
+                  <span className={`q-fb bad${q.type === 'gloss' ? ' is-gloss' : ''}`}>
+                    {q.type === 'gloss' && q.glossWord && q.gloss
+                      ? rushGlossMissLine(q.glossWord, q.gloss)
+                      : rushMissLine(q.root.root, q.root.mean)}
                   </span>
                   <button className="q-next" onClick={advance}>
                     {isLast ? 'See results ›' : 'Next ›'}

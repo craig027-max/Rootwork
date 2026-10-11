@@ -8,6 +8,7 @@
 
 import type { Root } from '../data/roots';
 import { shuffleWith } from './daily';
+import { quizGloss } from './wordDef';
 
 /** Near-identical meanings that must never appear as rival tiles. */
 const SYNONYM_GROUPS: string[][] = [
@@ -219,6 +220,48 @@ export function pickMeaningDistractors(
     set.filter((r) => r.root !== target.root).map((r) => r.mean),
   );
   return sampleUnique(meanPools, n, [target.mean], rng);
+}
+
+function collectWordDefs(
+  pools: readonly (readonly Root[])[],
+  skipWord: string,
+  maxLen: number,
+): string[] {
+  const skip = skipWord.replace(/\s+/g, ' ').trim().toLowerCase();
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const pool of pools) {
+    for (const root of pool) {
+      for (const item of root.words) {
+        const name = item.w.replace(/\s+/g, ' ').trim().toLowerCase();
+        if (name === skip) continue;
+        const gloss = quizGloss(item.d, maxLen);
+        if (!gloss) continue;
+        const key = canon(gloss);
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push(gloss);
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * Wrong options for "what does this school word mean?" — other authored
+ * definitions only. `maxLen` defaults to no cap so Find can still use a
+ * long correct gloss's siblings; gloss beats pass the tile cap.
+ */
+export function pickWordDefDistractors(
+  word: string,
+  correct: string,
+  pools: readonly (readonly Root[])[],
+  n: number,
+  rng: () => number = Math.random,
+  maxLen = Number.POSITIVE_INFINITY,
+): string[] {
+  const labels = collectWordDefs(pools, word, maxLen);
+  return sampleUnique([labels], n, [correct], rng);
 }
 
 /** Wrong options for "which root carries this meaning?". */

@@ -4,9 +4,10 @@
 
 import type { Root } from '../data/roots';
 import { shuffleWith } from './daily';
-import { pickMeaningDistractors, pickRootDistractors, pickWordDistractors } from './distractors';
+import { canon, pickMeaningDistractors, pickRootDistractors, pickWordDefDistractors, pickWordDistractors } from './distractors';
+import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
 
-export type RushQuestionType = 'mean' | 'root' | 'word';
+export type RushQuestionType = 'mean' | 'root' | 'word' | 'gloss';
 
 export interface RushOption {
   label: string;
@@ -21,9 +22,12 @@ export interface RushQuestion {
   say?: string;
   sub?: string;
   opts: RushOption[];
+  /** School word, when type is gloss. `big` is this word — not the root. */
+  glossWord?: string;
+  gloss?: string;
 }
 
-const TYPES: readonly RushQuestionType[] = ['mean', 'root', 'word'];
+const TYPES: readonly RushQuestionType[] = ['mean', 'root', 'word', 'gloss'];
 
 function rndOf<T>(arr: readonly T[], rng: () => number): T {
   return arr[Math.floor(rng() * arr.length)]!;
@@ -66,6 +70,34 @@ export function buildRushQuestion(input: BuildRushQuestionInput): RushQuestion {
     };
   }
 
+  if (type === 'gloss') {
+    const picks = d.words.flatMap((item) => {
+      const gloss = quizGloss(item.d);
+      const word = item.w.replace(/\s+/g, ' ').trim();
+      if (!gloss || !word || canon(gloss) === canon(d.mean)) return [];
+      return [{ word, gloss }];
+    });
+    if (picks.length > 0) {
+      const picked = rndOf(picks, rng);
+      const distract = pickWordDefDistractors(picked.word, picked.gloss, pools, 3, rng, GLOSS_TILE_MAX);
+      if (distract.length >= 1) {
+        return {
+          root: d,
+          type,
+          ask: `What does ${picked.word} mean?`,
+          big: picked.word,
+          sub: `from ${d.root} · ${d.mean}`,
+          glossWord: picked.word,
+          gloss: picked.gloss,
+          opts: shuffleWith(
+            [{ label: picked.gloss, ok: true }, ...distract.map((label) => ({ label, ok: false }))],
+            rng,
+          ),
+        };
+      }
+    }
+  }
+
   if (type === 'root') {
     const distract = pickRootDistractors(d, pools, 3, rng);
     return {
@@ -85,7 +117,7 @@ export function buildRushQuestion(input: BuildRushQuestionInput): RushQuestion {
   const distract = pickWordDistractors(d, pools, correctWord, 3, rng);
   return {
     root: d,
-    type,
+    type: 'word',
     ask: 'Which word is built from this root?',
     big: d.root,
     say: d.say,

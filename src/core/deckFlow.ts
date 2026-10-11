@@ -240,15 +240,26 @@ export function allDoneLine(): string {
 export function afterCorrectRecall(
   fromId: RootId,
   entitled: boolean,
-  opts?: { entry?: DeckEntry; findWord?: string; findDef?: string },
+  opts?: {
+    entry?: DeckEntry;
+    findWord?: string;
+    findDef?: string;
+    /** School-word beat — Yes names that word, and still opens the next root. */
+    glossWord?: string;
+    glossDef?: string;
+  },
 ): AfterCorrectRecall {
   const root = ROOTS_BY_ID[fromId];
-  const line = root ? successLine(root) : 'Yes — you got it.';
+  const rootLine = root ? successLine(root) : 'Yes — you got it.';
+  const glossWord = opts?.glossWord?.replace(/\s+/g, ' ').trim();
+  const glossDef = opts?.glossDef?.replace(/\s+/g, ' ').trim();
+  const glossLine = glossWord && glossDef ? findSuccessLine(glossWord, glossDef) : null;
   if (opts?.entry === 'find') {
     const word = opts.findWord?.replace(/\s+/g, ' ').trim();
     const def = opts.findDef?.replace(/\s+/g, ' ').trim();
-    return { kind: 'home', line: word && def ? findSuccessLine(word, def) : line };
+    return { kind: 'home', line: word && def ? findSuccessLine(word, def) : rootLine };
   }
+  const line = glossLine ?? rootLine;
   if (opts?.entry === 'remember') {
     return { kind: 'home', line };
   }
