@@ -8,6 +8,8 @@ import {
   parseRushRecap,
   peekChipDone,
   rushGlossHoldLine,
+  rushPartHoldLine,
+  rushPartMissLine,
   rushGlossMissLine,
   rushHoldLine,
   rushMissLine,
@@ -120,6 +122,17 @@ describe('rushHoldLine + rushMissLine + rushRecapChipLabel', () => {
       'Nope — Biology: The science of living things.',
     );
     expect(rushGlossMissLine('', '')).toBe('Nope — try the next one.');
+    expect(rushPartHoldLine('-logy', 'study of', 100, 1)).toBe(
+      'Yes — -logy means study of. +100',
+    );
+    expect(rushPartHoldLine('-logy', 'study of', 200, 2)).toBe(
+      'Yes — -logy means study of. +200 · 2× combo',
+    );
+    expect(rushPartHoldLine('-logy', 'study of', 100, 1)).not.toMatch(/Bio means life/);
+    expect(rushPartMissLine('-logy', 'study of', 'Biology')).toBe(
+      'Nope — in Biology, -logy means study of.',
+    );
+    expect(rushPartMissLine('-logy', 'study of', 'Biology')).not.toMatch(/Bio means life/);
   });
 
   it('names Remember vs Meet vs Missed on a result chip', () => {

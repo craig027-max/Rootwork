@@ -20,6 +20,7 @@ import {
 import { buildRecall, type RecallBeat } from '../core/recall';
 import { Scene } from './Scene';
 import { findSuccessLine, recapDeckEntry } from '../core/deckFlow';
+import { partYesLine } from '../core/wordParts';
 import { todayRushRecap } from '../core/rushRecap';
 import {
   buildDailyDone,
@@ -356,19 +357,36 @@ export function DailyChallenge() {
             <div className="q-scene">
               <Scene scene={root.scene} pal={p.pal} />
             </div>
-            <div className={`q-ask${beat.kind === 'gloss' ? ' is-gloss' : ''}`}>{beat.ask}</div>
+            <div
+              className={`q-ask${beat.kind === 'gloss' ? ' is-gloss' : ''}${
+                beat.kind === 'part' ? ' is-part' : ''
+              }`}
+            >
+              {beat.ask}
+            </div>
             <div className="q-prompt">
               <div
                 className={`q-big${beat.kind === 'gloss' ? ' is-gloss' : ''}${
-                  beat.kind === 'gloss' && (beat.word?.length ?? 0) >= 14 ? ' is-long' : ''
+                  beat.kind === 'part' ? ' is-part' : ''
+                }${
+                  (beat.kind === 'gloss' && (beat.word?.length ?? 0) >= 14) ||
+                  (beat.kind === 'part' && (beat.part?.length ?? 0) >= 9)
+                    ? ' is-long'
+                    : ''
                 }`}
               >
-                {beat.kind === 'gloss' && beat.word ? beat.word : root.root}
+                {beat.kind === 'gloss' && beat.word
+                  ? beat.word
+                  : beat.kind === 'part' && beat.part
+                    ? beat.part
+                    : root.root}
               </div>
               {beat.kind === 'gloss' ? (
                 <div className="q-psub">
                   from {root.root} · {root.mean}
                 </div>
+              ) : beat.kind === 'part' && beat.word ? (
+                <div className="q-psub">in {beat.word}</div>
               ) : (
                 <>
                   <div className="q-say">{root.say}</div>
@@ -398,9 +416,11 @@ export function DailyChallenge() {
                 <>
                   <div className="q-hold">
                     <span className={`q-fb good${beat.kind === 'gloss' ? ' is-gloss' : ''}`}>
-                      {beat.kind === 'gloss' && beat.word && beat.gloss
-                        ? findSuccessLine(beat.word, beat.gloss)
-                        : dailyHoldLine(root.root, root.mean)}
+                      {beat.kind === 'part' && beat.part && beat.partMean
+                        ? partYesLine(beat.part, beat.partMean)
+                        : beat.kind === 'gloss' && beat.word && beat.gloss
+                          ? findSuccessLine(beat.word, beat.gloss)
+                          : dailyHoldLine(root.root, root.mean)}
                     </span>
                     {nextHold ? (
                       <span className="q-fb q-next-peek">

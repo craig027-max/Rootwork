@@ -407,18 +407,21 @@ export function Deck() {
       if (!finding) completeRoot(id, { celebrate: false });
       dismissCelebration();
       const glossBeat = recall.beat.kind === 'gloss';
+      const partBeat = recall.beat.kind === 'part';
       const dest = afterCorrectRecall(id, entitled, {
         entry: deckEntry,
         findWord: findWord ?? undefined,
         findDef: findDef ?? undefined,
         glossWord: glossBeat ? recall.beat.word : undefined,
         glossDef: glossBeat ? recall.beat.gloss : undefined,
+        part: partBeat ? recall.beat.part : undefined,
+        partMean: partBeat ? recall.beat.partMean : undefined,
       });
       beginCorrectAdvance(id, dest);
       setRecall({ beat: recall.beat, picked: idx, win: dest.line, rootId: id });
-      // Root Yes clip says "Bio means life". A gloss beat's line is the
-      // school word — don't speak the other sentence over it.
-      if (!glossBeat) {
+      // Root Yes clip says "Bio means life". A gloss or part beat's line
+      // is the school word or the other piece — don't speak the root over it.
+      if (!glossBeat && !partBeat) {
         speakYes(card.root, card.mean);
         watchCurrentClip(true, 'yes');
       }
@@ -640,7 +643,11 @@ export function Deck() {
 
           {quizRecall ? (
             <div className="ww-recall">
-              <div className={`ww-recall-ask${quizRecall.beat.kind === 'gloss' ? ' is-gloss' : ''}`}>
+              <div
+                className={`ww-recall-ask${quizRecall.beat.kind === 'gloss' ? ' is-gloss' : ''}${
+                  quizRecall.beat.kind === 'part' ? ' is-part' : ''
+                }`}
+              >
                 {quizRecall.beat.ask}
               </div>
               <div className="ww-recall-opts">

@@ -111,6 +111,19 @@ describe('afterCorrectRecall', () => {
     ).not.toMatch(/Bio means life/);
   });
 
+  it('names the other piece on a part Yes and still opens the next root', () => {
+    expect(
+      afterCorrectRecall(bioId, false, { part: '-logy', partMean: 'study of' }),
+    ).toEqual({
+      kind: 'next',
+      id: geoId,
+      line: 'Yes — -logy means study of.',
+    });
+    expect(
+      afterCorrectRecall(bioId, false, { part: '-logy', partMean: 'study of' }).line,
+    ).not.toMatch(/Bio means life/);
+  });
+
   it('success line is one kid-safe sentence', () => {
     expect(successLine(bio)).toBe('Yes — Bio means life.');
     expect(successLine(bio).toLowerCase()).not.toMatch(/wrong|fail|shame|stupid|nope|loser/);
