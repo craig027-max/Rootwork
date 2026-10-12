@@ -1455,7 +1455,8 @@ button.ww-schip:focus-visible {
   margin-bottom: 8px;
 }
 .ww-recall-ask.is-gloss,
-.ww-recall-ask.is-part {
+.ww-recall-ask.is-part,
+.ww-recall-ask.is-build {
   font-family: var(--font-display);
   font-size: 1.02rem;
   font-weight: 600;
@@ -1872,12 +1873,14 @@ button.ww-schip:focus-visible {
   font-size: 1.05rem;
   color: rgb(var(--spark-rgb));
 }
-.ww-recall-win p.is-gloss {
+.ww-recall-win p.is-gloss,
+.ww-recall-win p.is-build {
   font-family: var(--font-display);
   font-weight: 650;
   font-size: 1.05rem;
   line-height: 1.35;
   letter-spacing: 0;
+  overflow-wrap: anywhere;
 }
 /* Yes clip: one beat on the existing win line — spark + bold + live glow. */
 .ww-recall-win.is-now {

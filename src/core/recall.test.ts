@@ -5,7 +5,13 @@ import { wordContainsRoot } from './distractors';
 import { buildRecall } from './recall';
 import { quizGloss } from './wordDef';
 import { canon } from './distractors';
-import { otherPartsForRoot, parseWordSplit, partMeanLabels, usablePartMean } from './wordParts';
+import {
+  buildPicksForRoot,
+  otherPartsForRoot,
+  parseWordSplit,
+  partMeanLabels,
+  usablePartMean,
+} from './wordParts';
 
 const bio = ROOTS.find((r) => r.root === 'Bio')!;
 const geo = ROOTS.find((r) => r.root === 'Geo')!;
@@ -133,6 +139,7 @@ describe('buildRecall', () => {
       });
       expect(beat.kind).not.toBe('gloss');
       expect(beat.kind).not.toBe('part');
+      expect(beat.kind).not.toBe('build');
       expect(beat.ask).not.toMatch(/Geography|Geology|Geothermal/);
       expect(beat.ask).not.toMatch(/what does -graphy mean/i);
     }
@@ -220,6 +227,65 @@ describe('buildRecall', () => {
         expect(seen.has(key), `${root.root}: ${opt.label}`).toBe(false);
         seen.add(key);
       }
+    }
+  });
+
+  it('asks which word the pieces build — siblings, not a word from another root', () => {
+    const onCard = new Set(bio.words.map((w) => w.w));
+    const beat = buildRecall({
+      root: bio,
+      pool,
+      kind: 'build',
+      rng: () => 0,
+      choices: 3,
+    });
+    expect(beat.kind).toBe('build');
+    expect(beat.word).toBe('Biology');
+    expect(beat.split).toBe('bio (life) + -logy (study of)');
+    expect(beat.ask).toBe('Which word is built from bio (life) + -logy (study of)?');
+    expect(beat.ask).not.toMatch(/What does Biology mean/);
+    expect(beat.opts.filter((o) => o.ok)).toHaveLength(1);
+    expect(beat.opts.find((o) => o.ok)?.label).toBe('Biology');
+    expect(beat.opts.map((o) => o.label).sort()).toEqual([
+      'Biodegradable',
+      'Biography',
+      'Biology',
+    ]);
+    for (const opt of beat.opts) expect(onCard.has(opt.label)).toBe(true);
+    expect(beat.opts.some((o) => o.label === 'Geography')).toBe(false);
+    expect(beat.teach).toBe('Biology is built from bio (life) + -logy (study of).');
+    expect(beat.teach).not.toMatch(/Bio means life/);
+  });
+
+  it('builds a pieces question for every root that has one, and falls back otherwise', () => {
+    for (const root of ROOTS) {
+      const beat = buildRecall({
+        root,
+        pool: ROOTS,
+        kind: 'build',
+        rng: mulberry32(root.root.length + root.t),
+        choices: 3,
+      });
+      const picks = buildPicksForRoot(root);
+      if (picks.length === 0) {
+        expect(beat.kind, root.root).not.toBe('build');
+        continue;
+      }
+      expect(beat.kind, root.root).toBe('build');
+      const onCard = new Set(root.words.map((w) => w.w));
+      expect(onCard.has(beat.word ?? ''), root.root).toBe(true);
+      expect(beat.ask, root.root).toBe(`Which word is built from ${beat.split}?`);
+      expect(beat.ask.toLowerCase(), root.root).not.toContain((beat.word ?? '').toLowerCase());
+      expect(beat.opts.filter((o) => o.ok), root.root).toHaveLength(1);
+      expect(beat.opts.find((o) => o.ok)?.label, root.root).toBe(beat.word);
+      const seen = new Set<string>();
+      for (const opt of beat.opts) {
+        expect(onCard.has(opt.label), `${root.root}: ${opt.label}`).toBe(true);
+        expect(seen.has(opt.label.toLowerCase()), opt.label).toBe(false);
+        seen.add(opt.label.toLowerCase());
+        if (!opt.ok) expect(opt.label).not.toBe(beat.word);
+      }
+      expect(beat.teach, root.root).not.toContain(`${root.root} means`);
     }
   });
 

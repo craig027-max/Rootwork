@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { ROOTS } from '../data/roots';
 import {
+  buildAsk,
+  buildBig,
+  buildMissLine,
+  buildPicksForRoot,
+  buildTeach,
+  buildYesLine,
   otherPartsForRoot,
   parseWordSplit,
   partAsk,
@@ -88,5 +94,44 @@ describe('other part of a school word', () => {
     expect(labels).not.toContain('of');
     expect(labels).not.toContain('do');
     expect(new Set(labels.map((l) => l.toLowerCase())).size).toBe(labels.length);
+  });
+});
+
+describe('buildPicksForRoot', () => {
+  it('asks which Bio word the pieces build, and the other tiles are its siblings', () => {
+    const picks = buildPicksForRoot(bio);
+    const biology = picks.find((p) => p.word === 'Biology');
+    expect(biology?.split).toBe('bio (life) + -logy (study of)');
+    expect(biology?.siblings.sort()).toEqual(['Biodegradable', 'Biography']);
+    expect(buildAsk(biology!.split)).toBe(
+      'Which word is built from bio (life) + -logy (study of)?',
+    );
+    expect(buildBig(biology!.split)).toBe('bio + -logy');
+    expect(buildBig(biology!.split)).not.toBe('Biology');
+    expect(buildBig(biology!.split)).not.toBe('Bio');
+    expect(buildTeach('Biology', biology!.split)).toBe(
+      'Biology is built from bio (life) + -logy (study of).',
+    );
+    expect(buildYesLine('Biology', biology!.split)).toBe(
+      'Yes — Biology. Built from bio (life) + -logy (study of).',
+    );
+    expect(buildYesLine('Biology', biology!.split)).not.toMatch(/Bio means life/);
+    expect(buildMissLine('Biology', biology!.split)).toBe(
+      'Nope — bio (life) + -logy (study of) builds Biology.',
+    );
+  });
+
+  it('keeps the answer out of the split, and siblings off other roots', () => {
+    for (const root of ROOTS) {
+      const onCard = new Set(root.words.map((w) => w.w.toLowerCase()));
+      for (const pick of buildPicksForRoot(root)) {
+        expect(pick.split.toLowerCase().includes(pick.word.toLowerCase()), pick.word).toBe(false);
+        expect(pick.siblings.length, pick.word).toBeGreaterThan(0);
+        expect(pick.siblings).not.toContain(pick.word);
+        for (const sibling of pick.siblings) {
+          expect(onCard.has(sibling.toLowerCase()), `${root.root}: ${sibling}`).toBe(true);
+        }
+      }
+    }
   });
 });

@@ -10,7 +10,7 @@ import { ROOTS, ROOTS_BY_ID, neighborOpenable, rootId, type Root, type RootId } 
 import type { HearBeatChip } from './hearBeats';
 import { speakablePronunciation } from './speak';
 import { shortWordDef } from './wordDef';
-import { partYesLine } from './wordParts';
+import { buildYesLine, partYesLine } from './wordParts';
 
 /** Quiet pause so a kid can read the one-line win before the next card. */
 export const SUCCESS_BEAT_MS = 900;
@@ -251,6 +251,9 @@ export function afterCorrectRecall(
     /** Other-piece beat — Yes names that piece, not the root. */
     part?: string;
     partMean?: string;
+    /** Pieces beat — Yes names the school word those pieces build. */
+    buildWord?: string;
+    buildSplit?: string;
   },
 ): AfterCorrectRecall {
   const root = ROOTS_BY_ID[fromId];
@@ -261,12 +264,15 @@ export function afterCorrectRecall(
   const partName = opts?.part?.replace(/\s+/g, ' ').trim();
   const partSpoken = opts?.partMean?.replace(/\s+/g, ' ').trim();
   const partLine = partName && partSpoken ? partYesLine(partName, partSpoken) : null;
+  const builtWord = opts?.buildWord?.replace(/\s+/g, ' ').trim();
+  const builtSplit = opts?.buildSplit?.replace(/\s+/g, ' ').trim();
+  const builtLine = builtWord && builtSplit ? buildYesLine(builtWord, builtSplit) : null;
   if (opts?.entry === 'find') {
     const word = opts.findWord?.replace(/\s+/g, ' ').trim();
     const def = opts.findDef?.replace(/\s+/g, ' ').trim();
     return { kind: 'home', line: word && def ? findSuccessLine(word, def) : rootLine };
   }
-  const line = partLine ?? glossLine ?? rootLine;
+  const line = partLine ?? glossLine ?? builtLine ?? rootLine;
   if (opts?.entry === 'remember') {
     return { kind: 'home', line };
   }

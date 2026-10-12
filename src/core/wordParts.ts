@@ -139,3 +139,78 @@ export function partMissLine(letters: string, mean: string, word?: string): stri
   if (name) return `Nope — in ${name}, ${part} means ${spoken}.`;
   return `Nope — ${part} means ${spoken}.`;
 }
+
+export interface BuildPick {
+  word: string;
+  split: string;
+  /** Other words on this card. A different split, so only one tile is right. */
+  siblings: string[];
+}
+
+/**
+ * Which school word these pieces build. Wrong tiles are the other words
+ * on the same card — not Geography next to Biology, which a kid can
+ * answer by spotting "bio" and ignoring -logy.
+ */
+export function buildPicksForRoot(root: Root): BuildPick[] {
+  const items = root.words.flatMap((item) => {
+    const word = item.w.replace(/\s+/g, ' ').trim();
+    const split = item.b.replace(/\s+/g, ' ').trim();
+    if (!word || !split) return [];
+    if (split.toLowerCase().includes(word.toLowerCase())) return [];
+    return [{ word, split }];
+  });
+  const out: BuildPick[] = [];
+  for (const item of items) {
+    const siblings: string[] = [];
+    const seen = new Set<string>();
+    for (const other of items) {
+      if (other.word.toLowerCase() === item.word.toLowerCase()) continue;
+      if (other.split.toLowerCase() === item.split.toLowerCase()) continue;
+      const key = other.word.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      siblings.push(other.word);
+    }
+    if (siblings.length < 1) continue;
+    out.push({ word: item.word, split: item.split, siblings });
+  }
+  return out;
+}
+
+/** Giant type: the pieces, not the school word and not the root name. */
+export function buildBig(split: string): string {
+  const letters = parseWordSplit(split)
+    .map((piece) => piece.letters)
+    .filter(Boolean);
+  if (letters.length >= 2) return letters.join(' + ');
+  return split.replace(/\s+/g, ' ').trim();
+}
+
+export function buildAsk(split: string): string {
+  const parts = split.replace(/\s+/g, ' ').trim();
+  if (!parts) return 'Which word do these pieces build?';
+  return `Which word is built from ${parts}?`;
+}
+
+export function buildTeach(word: string, split: string): string {
+  const name = word.replace(/\s+/g, ' ').trim();
+  const parts = split.replace(/\s+/g, ' ').trim();
+  if (name && parts) return `${name} is built from ${parts}.`;
+  return name || parts || 'That word is built from these pieces.';
+}
+
+export function buildYesLine(word: string, split: string): string {
+  const name = word.replace(/\s+/g, ' ').trim();
+  const parts = split.replace(/\s+/g, ' ').trim();
+  if (!name) return 'Yes — you got it.';
+  if (!parts) return `Yes — ${name}.`;
+  return `Yes — ${name}. Built from ${parts}.`;
+}
+
+export function buildMissLine(word: string, split: string): string {
+  const name = word.replace(/\s+/g, ' ').trim();
+  const parts = split.replace(/\s+/g, ' ').trim();
+  if (!name || !parts) return 'Nope — try the next one.';
+  return `Nope — ${parts} builds ${name}.`;
+}

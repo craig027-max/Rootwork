@@ -20,7 +20,7 @@ import {
 import { buildRecall, type RecallBeat } from '../core/recall';
 import { Scene } from './Scene';
 import { findSuccessLine, recapDeckEntry } from '../core/deckFlow';
-import { partYesLine } from '../core/wordParts';
+import { buildBig, buildYesLine, partYesLine } from '../core/wordParts';
 import { todayRushRecap } from '../core/rushRecap';
 import {
   buildDailyDone,
@@ -360,7 +360,7 @@ export function DailyChallenge() {
             <div
               className={`q-ask${beat.kind === 'gloss' ? ' is-gloss' : ''}${
                 beat.kind === 'part' ? ' is-part' : ''
-              }`}
+              }${beat.kind === 'build' ? ' is-build' : ''}`}
             >
               {beat.ask}
             </div>
@@ -368,9 +368,10 @@ export function DailyChallenge() {
               <div
                 className={`q-big${beat.kind === 'gloss' ? ' is-gloss' : ''}${
                   beat.kind === 'part' ? ' is-part' : ''
-                }${
+                }${beat.kind === 'build' ? ' is-build' : ''}${
                   (beat.kind === 'gloss' && (beat.word?.length ?? 0) >= 14) ||
-                  (beat.kind === 'part' && (beat.part?.length ?? 0) >= 9)
+                  (beat.kind === 'part' && (beat.part?.length ?? 0) >= 9) ||
+                  (beat.kind === 'build' && buildBig(beat.split ?? '').length >= 14)
                     ? ' is-long'
                     : ''
                 }`}
@@ -379,7 +380,9 @@ export function DailyChallenge() {
                   ? beat.word
                   : beat.kind === 'part' && beat.part
                     ? beat.part
-                    : root.root}
+                    : beat.kind === 'build' && beat.split
+                      ? buildBig(beat.split)
+                      : root.root}
               </div>
               {beat.kind === 'gloss' ? (
                 <div className="q-psub">
@@ -387,7 +390,7 @@ export function DailyChallenge() {
                 </div>
               ) : beat.kind === 'part' && beat.word ? (
                 <div className="q-psub">in {beat.word}</div>
-              ) : (
+              ) : beat.kind === 'build' ? null : (
                 <>
                   <div className="q-say">{root.say}</div>
                   <div className="q-psub">from {root.org}</div>
@@ -415,12 +418,18 @@ export function DailyChallenge() {
               {answered && answeredCorrect ? (
                 <>
                   <div className="q-hold">
-                    <span className={`q-fb good${beat.kind === 'gloss' ? ' is-gloss' : ''}`}>
+                    <span
+                      className={`q-fb good${beat.kind === 'gloss' ? ' is-gloss' : ''}${
+                        beat.kind === 'build' ? ' is-build' : ''
+                      }`}
+                    >
                       {beat.kind === 'part' && beat.part && beat.partMean
                         ? partYesLine(beat.part, beat.partMean)
                         : beat.kind === 'gloss' && beat.word && beat.gloss
                           ? findSuccessLine(beat.word, beat.gloss)
-                          : dailyHoldLine(root.root, root.mean)}
+                          : beat.kind === 'build' && beat.word && beat.split
+                            ? buildYesLine(beat.word, beat.split)
+                            : dailyHoldLine(root.root, root.mean)}
                     </span>
                     {nextHold ? (
                       <span className="q-fb q-next-peek">

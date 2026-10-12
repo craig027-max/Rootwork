@@ -18,7 +18,7 @@
 
 import { ROOTS_BY_ID } from '../data/roots';
 import { localDayKey } from './daily';
-import { partMissLine, partYesLine } from './wordParts';
+import { buildMissLine, buildYesLine, partMissLine, partYesLine } from './wordParts';
 
 /** Home Rush tile peeks this many of the last run — the result still lists all. */
 export const RUSH_RECAP_PREVIEW_COUNT = 4;
@@ -219,6 +219,31 @@ export function rushPartHoldLine(
 /** After an other-part miss — that piece, not the root. */
 export function rushPartMissLine(part: string, mean: string, word?: string): string {
   return partMissLine(part, mean, word);
+}
+
+/**
+ * After a correct pieces tap — the school word those pieces build,
+ * not Bio means life over Biology. Points stay on the same line.
+ */
+export function rushBuildHoldLine(
+  word: string,
+  split: string,
+  points: number,
+  mult: number,
+): string {
+  const yes = buildYesLine(word, split);
+  const pts = Number.isFinite(points) ? Math.max(0, Math.round(points)) : 0;
+  const combo = Number.isFinite(mult) && mult > 1 ? ` · ${mult}× combo` : '';
+  const score = `+${pts.toLocaleString('en-US')}${combo}`;
+  const name = word.replace(/\s+/g, ' ').trim();
+  const parts = split.replace(/\s+/g, ' ').trim();
+  if (!name || !parts) return score;
+  return `${yes} ${score}`;
+}
+
+/** After a pieces miss — that school word, not the root. */
+export function rushBuildMissLine(word: string, split: string): string {
+  return buildMissLine(word, split);
 }
 
 /** After a gloss miss — the school word's authored def, not the root. */
