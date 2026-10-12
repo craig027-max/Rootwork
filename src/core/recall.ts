@@ -8,10 +8,11 @@
 
 import { ROOTS, type Root } from '../data/roots';
 import { shuffleWith } from './daily';
-import { canon, pickMeaningDistractors, pickWordDefDistractors, pickWordDistractors } from './distractors';
+import { canon, pickMeaningDistractors, pickWordDefDistractors, pickWordDistractors, sampleUnique } from './distractors';
 import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
+import { otherPartsForRoot, partAsk, partMeanLabels, partTeach } from './wordParts';
 
-export type RecallKind = 'mean' | 'word' | 'gloss';
+export type RecallKind = 'mean' | 'word' | 'gloss' | 'part';
 
 export interface RecallOption {
   label: string;
@@ -25,10 +26,14 @@ export interface RecallBeat {
   opts: RecallOption[];
   /** Shown after a miss — names the answer, never scolds. */
   teach: string;
-  /** School word, when kind is gloss. */
+  /** School word, when kind is gloss or part. */
   word?: string;
   /** Authored short def for that word. */
   gloss?: string;
+  /** Other piece letters, when kind is part. */
+  part?: string;
+  /** Authored meaning of that piece. */
+  partMean?: string;
 }
 
 export interface BuildRecallInput {
@@ -38,7 +43,7 @@ export interface BuildRecallInput {
   kind?: RecallKind;
   /**
    * Kinds the coin-flip may deal. Remember stays mean | word — a named
-   * Geo visit must not ask what Geography means.
+   * Geo visit must not ask what Geography means, or what -graphy means.
    */
   kinds?: readonly RecallKind[];
   rng?: () => number;
@@ -46,7 +51,7 @@ export interface BuildRecallInput {
   choices?: 2 | 3;
 }
 
-const ALL_KINDS: readonly RecallKind[] = ['mean', 'word', 'gloss'];
+const ALL_KINDS: readonly RecallKind[] = ['mean', 'word', 'gloss', 'part'];
 
 interface GlossPick {
   word: string;
@@ -68,6 +73,38 @@ function glossPicks(root: Root): GlossPick[] {
     });
   }
   return out;
+}
+
+function buildPartRecall(
+  root: Root,
+  pool: readonly Root[],
+  rng: () => number,
+  want: number,
+): RecallBeat | null {
+  const picks = otherPartsForRoot(root);
+  if (picks.length === 0) return null;
+  const picked = picks[Math.floor(rng() * picks.length)]!;
+  const distractCount = Math.max(1, Math.min(want - 1, 2));
+  const distract = sampleUnique(
+    [partMeanLabels(pool), partMeanLabels(ROOTS)],
+    distractCount,
+    [picked.mean, root.mean],
+    rng,
+  );
+  if (distract.length < 1) return null;
+  const opts = shuffleWith(
+    [{ label: picked.mean, ok: true }, ...distract.map((label) => ({ label, ok: false }))],
+    rng,
+  );
+  return {
+    kind: 'part',
+    ask: partAsk(picked.word, picked.letters),
+    opts,
+    teach: partTeach(picked.word, picked.letters, picked.mean, picked.split),
+    word: picked.word,
+    part: picked.letters,
+    partMean: picked.mean,
+  };
 }
 
 function buildGlossRecall(
@@ -121,6 +158,11 @@ export function buildRecall(input: BuildRecallInput): RecallBeat {
   const others = pool.filter((r) => r.root !== root.root);
   const distractCount = Math.max(1, Math.min(want - 1, 2));
   const pools = [others, ROOTS];
+
+  if (kind === 'part') {
+    const part = buildPartRecall(root, pool, rng, want);
+    if (part) return part;
+  }
 
   if (kind === 'gloss') {
     const gloss = buildGlossRecall(root, pool, rng, want);

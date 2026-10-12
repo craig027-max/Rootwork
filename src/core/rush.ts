@@ -4,10 +4,11 @@
 
 import type { Root } from '../data/roots';
 import { shuffleWith } from './daily';
-import { canon, pickMeaningDistractors, pickRootDistractors, pickWordDefDistractors, pickWordDistractors } from './distractors';
+import { canon, pickMeaningDistractors, pickRootDistractors, pickWordDefDistractors, pickWordDistractors, sampleUnique } from './distractors';
 import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
+import { otherPartsForRoot, partAsk, partMeanLabels } from './wordParts';
 
-export type RushQuestionType = 'mean' | 'root' | 'word' | 'gloss';
+export type RushQuestionType = 'mean' | 'root' | 'word' | 'gloss' | 'part';
 
 export interface RushOption {
   label: string;
@@ -25,9 +26,14 @@ export interface RushQuestion {
   /** School word, when type is gloss. `big` is this word — not the root. */
   glossWord?: string;
   gloss?: string;
+  /** Other piece, when type is part. `big` is this piece — not the root. */
+  part?: string;
+  partMean?: string;
+  /** School word that piece sits in. */
+  partWord?: string;
 }
 
-const TYPES: readonly RushQuestionType[] = ['mean', 'root', 'word', 'gloss'];
+const TYPES: readonly RushQuestionType[] = ['mean', 'root', 'word', 'gloss', 'part'];
 
 function rndOf<T>(arr: readonly T[], rng: () => number): T {
   return arr[Math.floor(rng() * arr.length)]!;
@@ -53,6 +59,35 @@ export function buildRushQuestion(input: BuildRushQuestionInput): RushQuestion {
   const rng = input.rng ?? Math.random;
   const type: RushQuestionType = input.type ?? rndOf(TYPES, rng);
   const pools = [scoped, all];
+
+  if (type === 'part') {
+    const picks = otherPartsForRoot(d);
+    if (picks.length > 0) {
+      const picked = rndOf(picks, rng);
+      const distract = sampleUnique(
+        [partMeanLabels(scoped), partMeanLabels(all)],
+        3,
+        [picked.mean, d.mean],
+        rng,
+      );
+      if (distract.length >= 1) {
+        return {
+          root: d,
+          type,
+          ask: partAsk(picked.word, picked.letters),
+          big: picked.letters,
+          sub: `in ${picked.word}`,
+          part: picked.letters,
+          partMean: picked.mean,
+          partWord: picked.word,
+          opts: shuffleWith(
+            [{ label: picked.mean, ok: true }, ...distract.map((label) => ({ label, ok: false }))],
+            rng,
+          ),
+        };
+      }
+    }
+  }
 
   if (type === 'mean') {
     const distract = pickMeaningDistractors(d, pools, 3, rng);

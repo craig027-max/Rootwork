@@ -8,6 +8,7 @@ import {
 } from './distractors';
 import { buildRushQuestion } from './rush';
 import { quizGloss } from './wordDef';
+import { otherPartsForRoot, partMeanLabels } from './wordParts';
 
 const form = ROOTS.find((r) => r.root === 'Form')!;
 const bio = ROOTS.find((r) => r.root === 'Bio')!;
@@ -134,6 +135,50 @@ describe('buildRushQuestion', () => {
       expect(glosses.has(opt.label)).toBe(true);
       expect(opt.label).not.toBe('life');
     }
+  });
+
+  it('asks what the other piece means, and the big type is that piece', () => {
+    const means = new Set(partMeanLabels(ROOTS));
+    const q = buildRushQuestion({
+      root: bio,
+      scoped: tier1,
+      all: tier1,
+      type: 'part',
+      rng: mulberry32(12),
+    });
+    expect(q.type).toBe('part');
+    expect(q.ask).toBe(`In ${q.partWord}, what does ${q.part} mean?`);
+    expect(q.ask).not.toMatch(/What does Biology mean/);
+    expect(q.big).toBe(q.part);
+    expect(q.big).not.toBe('Bio');
+    expect(q.sub).toBe(`in ${q.partWord}`);
+    expect(q.say).toBeUndefined();
+    expect(q.opts.filter((o) => o.ok)).toHaveLength(1);
+    expect(q.opts.find((o) => o.ok)?.label).toBe(q.partMean);
+    expect(q.opts.find((o) => o.ok)?.label).not.toBe('life');
+    expect(q.opts.length).toBe(4);
+    const authored = otherPartsForRoot(bio).find(
+      (p) => p.word === q.partWord && p.letters === q.part,
+    );
+    expect(authored?.mean).toBe(q.partMean);
+    for (const opt of q.opts) {
+      expect(means.has(opt.label)).toBe(true);
+      expect(opt.label).not.toBe(bio.mean);
+    }
+  });
+
+  it('still builds an other-part question when the scoped pool is only Bio', () => {
+    const q = buildRushQuestion({
+      root: bio,
+      scoped: [bio],
+      all: tier1,
+      type: 'part',
+      rng: mulberry32(13),
+    });
+    expect(q.type).toBe('part');
+    expect(q.opts.length).toBeGreaterThanOrEqual(2);
+    expect(q.opts.filter((o) => o.ok)).toHaveLength(1);
+    expect(q.big).not.toBe(bio.root);
   });
 
   it('still builds four tiles when the scoped pool is tiny, topping up from all', () => {

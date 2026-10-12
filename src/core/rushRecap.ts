@@ -18,6 +18,7 @@
 
 import { ROOTS_BY_ID } from '../data/roots';
 import { localDayKey } from './daily';
+import { partMissLine, partYesLine } from './wordParts';
 
 /** Home Rush tile peeks this many of the last run — the result still lists all. */
 export const RUSH_RECAP_PREVIEW_COUNT = 4;
@@ -197,6 +198,27 @@ export function rushGlossHoldLine(
   const score = `+${pts.toLocaleString('en-US')}${combo}`;
   if (!name || !spoken) return score;
   return `Yes — ${name}. ${spoken}. ${score}`;
+}
+
+/**
+ * After a correct other-part tap — the piece, not Bio means life
+ * over -logy. Points stay on the same line.
+ */
+export function rushPartHoldLine(
+  part: string,
+  mean: string,
+  points: number,
+  mult: number,
+): string {
+  const yes = partYesLine(part, mean);
+  const pts = Number.isFinite(points) ? Math.max(0, Math.round(points)) : 0;
+  const combo = Number.isFinite(mult) && mult > 1 ? ` · ${mult}× combo` : '';
+  return `${yes} +${pts.toLocaleString('en-US')}${combo}`;
+}
+
+/** After an other-part miss — that piece, not the root. */
+export function rushPartMissLine(part: string, mean: string, word?: string): string {
+  return partMissLine(part, mean, word);
 }
 
 /** After a gloss miss — the school word's authored def, not the root. */

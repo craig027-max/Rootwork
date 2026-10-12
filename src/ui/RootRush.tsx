@@ -19,6 +19,8 @@ import {
   rushGlossMissLine,
   rushHoldLine,
   rushMissLine,
+  rushPartHoldLine,
+  rushPartMissLine,
   rushRecapChipLabel,
   rushRecapFromRun,
   todayRushRecap,
@@ -554,7 +556,13 @@ export function RootRush() {
             <div className="q-prog">
               <span style={{ width: `${(qi / questions.length) * 100}%` }} />
             </div>
-            <div className={`q-ask${q.type === 'gloss' ? ' is-gloss' : ''}`}>{q.ask}</div>
+            <div
+              className={`q-ask${q.type === 'gloss' ? ' is-gloss' : ''}${
+                q.type === 'part' ? ' is-part' : ''
+              }`}
+            >
+              {q.ask}
+            </div>
             <div className="q-scene">
               <Scene
                 scene={q.root.scene}
@@ -564,7 +572,12 @@ export function RootRush() {
             <div className="q-prompt">
               <div
                 className={`q-big${q.type === 'gloss' ? ' is-gloss' : ''}${
-                  q.type === 'gloss' && q.big.length >= 14 ? ' is-long' : ''
+                  q.type === 'part' ? ' is-part' : ''
+                }${
+                  (q.type === 'gloss' && q.big.length >= 14) ||
+                  (q.type === 'part' && q.big.length >= 9)
+                    ? ' is-long'
+                    : ''
                 }`}
               >
                 {q.big}
@@ -592,17 +605,21 @@ export function RootRush() {
             <div className="q-foot">
               {answered && answeredCorrect ? (
                 <span className={`q-fb good${q.type === 'gloss' ? ' is-gloss' : ''}`}>
-                  {q.type === 'gloss' && q.glossWord && q.gloss
-                    ? rushGlossHoldLine(q.glossWord, q.gloss, 100 * mult, mult)
-                    : rushHoldLine(q.root.root, q.root.mean, 100 * mult, mult)}
+                  {q.type === 'part' && q.part && q.partMean
+                    ? rushPartHoldLine(q.part, q.partMean, 100 * mult, mult)
+                    : q.type === 'gloss' && q.glossWord && q.gloss
+                      ? rushGlossHoldLine(q.glossWord, q.gloss, 100 * mult, mult)
+                      : rushHoldLine(q.root.root, q.root.mean, 100 * mult, mult)}
                 </span>
               ) : null}
               {answered && !answeredCorrect ? (
                 <>
                   <span className={`q-fb bad${q.type === 'gloss' ? ' is-gloss' : ''}`}>
-                    {q.type === 'gloss' && q.glossWord && q.gloss
-                      ? rushGlossMissLine(q.glossWord, q.gloss)
-                      : rushMissLine(q.root.root, q.root.mean)}
+                    {q.type === 'part' && q.part && q.partMean
+                      ? rushPartMissLine(q.part, q.partMean, q.partWord)
+                      : q.type === 'gloss' && q.glossWord && q.gloss
+                        ? rushGlossMissLine(q.glossWord, q.gloss)
+                        : rushMissLine(q.root.root, q.root.mean)}
                   </span>
                   <button className="q-next" onClick={advance}>
                     {isLast ? 'See results ›' : 'Next ›'}

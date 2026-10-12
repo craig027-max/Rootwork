@@ -4,6 +4,8 @@ import { mulberry32 } from './daily';
 import { wordContainsRoot } from './distractors';
 import { buildRecall } from './recall';
 import { quizGloss } from './wordDef';
+import { canon } from './distractors';
+import { otherPartsForRoot, parseWordSplit, partMeanLabels, usablePartMean } from './wordParts';
 
 const bio = ROOTS.find((r) => r.root === 'Bio')!;
 const geo = ROOTS.find((r) => r.root === 'Geo')!;
@@ -130,7 +132,94 @@ describe('buildRecall', () => {
         kinds: ['mean', 'word'],
       });
       expect(beat.kind).not.toBe('gloss');
+      expect(beat.kind).not.toBe('part');
       expect(beat.ask).not.toMatch(/Geography|Geology|Geothermal/);
+      expect(beat.ask).not.toMatch(/what does -graphy mean/i);
+    }
+  });
+
+  it('asks what the other piece means — not the school word, and not the root', () => {
+    const means = new Set(partMeanLabels(ROOTS));
+    const biology = bio.words.find((w) => w.w === 'Biology')!;
+    const logy = buildRecall({
+      root: bio,
+      pool,
+      kind: 'part',
+      rng: () => 0,
+      choices: 3,
+    });
+    expect(logy.word).toBe('Biology');
+    expect(logy.part).toBe('-logy');
+    expect(logy.partMean).toBe('study of');
+    expect(logy.ask).toBe('In Biology, what does -logy mean?');
+    expect(logy.teach).toContain('bio (life) + -logy (study of)');
+    for (let seed = 0; seed < 12; seed++) {
+      const beat = buildRecall({
+        root: bio,
+        pool,
+        kind: 'part',
+        rng: mulberry32(seed),
+        choices: 3,
+      });
+      expect(beat.kind).toBe('part');
+      expect(beat.ask).toBe(`In ${beat.word}, what does ${beat.part} mean?`);
+      expect(beat.ask).not.toMatch(/What does Biology mean/);
+      expect(beat.ask).not.toMatch(/what does this root mean/i);
+      expect(beat.opts.filter((o) => o.ok)).toHaveLength(1);
+      expect(beat.opts).toHaveLength(3);
+      const correct = beat.opts.find((o) => o.ok)!;
+      expect(correct.label).toBe(beat.partMean);
+      expect(correct.label).not.toBe(bio.mean);
+      expect(correct.label).not.toBe(quizGloss(biology.d));
+      const authored = otherPartsForRoot(bio).find(
+        (p) => p.word === beat.word && p.letters === beat.part,
+      );
+      expect(authored?.mean).toBe(beat.partMean);
+      for (const opt of beat.opts) {
+        expect(means.has(opt.label)).toBe(true);
+        expect(opt.label).not.toBe(bio.mean);
+        expect(opt.label.toLowerCase()).not.toMatch(/chair|spoon|sock|pizza/);
+      }
+      expect(beat.teach).toContain(`${beat.part} means ${beat.partMean}`);
+      expect(beat.teach).not.toMatch(/Bio means life/);
+      expect(beat.teach.toLowerCase()).not.toMatch(/wrong|nope|fail|shame/);
+    }
+  });
+
+  it('builds an other-part beat for every root that has one, and falls back otherwise', () => {
+    const means = new Set<string>();
+    for (const root of ROOTS) {
+      for (const word of root.words) {
+        for (const piece of parseWordSplit(word.b)) {
+          const mean = usablePartMean(piece.mean);
+          if (mean) means.add(mean);
+        }
+      }
+    }
+    for (const root of ROOTS) {
+      const beat = buildRecall({
+        root,
+        pool: ROOTS,
+        kind: 'part',
+        rng: mulberry32(root.root.length + root.t),
+        choices: 3,
+      });
+      const parts = otherPartsForRoot(root);
+      if (parts.length === 0) {
+        expect(beat.kind, root.root).not.toBe('part');
+        continue;
+      }
+      expect(beat.kind, root.root).toBe('part');
+      expect(beat.ask, root.root).toBe(`In ${beat.word}, what does ${beat.part} mean?`);
+      expect(beat.opts.filter((o) => o.ok), root.root).toHaveLength(1);
+      expect(beat.opts.find((o) => o.ok)?.label, root.root).not.toBe(root.mean);
+      const seen = new Set<string>();
+      for (const opt of beat.opts) {
+        expect(means.has(opt.label), `${root.root}: ${opt.label}`).toBe(true);
+        const key = canon(opt.label);
+        expect(seen.has(key), `${root.root}: ${opt.label}`).toBe(false);
+        seen.add(key);
+      }
     }
   });
 

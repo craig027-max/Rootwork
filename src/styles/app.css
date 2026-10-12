@@ -1454,7 +1454,8 @@ button.ww-schip:focus-visible {
   color: var(--text-muted);
   margin-bottom: 8px;
 }
-.ww-recall-ask.is-gloss {
+.ww-recall-ask.is-gloss,
+.ww-recall-ask.is-part {
   font-family: var(--font-display);
   font-size: 1.02rem;
   font-weight: 600;
