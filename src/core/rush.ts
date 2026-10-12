@@ -6,9 +6,9 @@ import type { Root } from '../data/roots';
 import { shuffleWith } from './daily';
 import { canon, pickMeaningDistractors, pickRootDistractors, pickWordDefDistractors, pickWordDistractors, sampleUnique } from './distractors';
 import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
-import { otherPartsForRoot, partAsk, partMeanLabels } from './wordParts';
+import { buildAsk, buildBig, buildPicksForRoot, otherPartsForRoot, partAsk, partMeanLabels } from './wordParts';
 
-export type RushQuestionType = 'mean' | 'root' | 'word' | 'gloss' | 'part';
+export type RushQuestionType = 'mean' | 'root' | 'word' | 'gloss' | 'part' | 'build';
 
 export interface RushOption {
   label: string;
@@ -31,9 +31,12 @@ export interface RushQuestion {
   partMean?: string;
   /** School word that piece sits in. */
   partWord?: string;
+  /** School word the pieces build. `big` is the pieces — not this word. */
+  buildWord?: string;
+  buildSplit?: string;
 }
 
-const TYPES: readonly RushQuestionType[] = ['mean', 'root', 'word', 'gloss', 'part'];
+const TYPES: readonly RushQuestionType[] = ['mean', 'root', 'word', 'gloss', 'part', 'build'];
 
 function rndOf<T>(arr: readonly T[], rng: () => number): T {
   return arr[Math.floor(rng() * arr.length)]!;
@@ -59,6 +62,28 @@ export function buildRushQuestion(input: BuildRushQuestionInput): RushQuestion {
   const rng = input.rng ?? Math.random;
   const type: RushQuestionType = input.type ?? rndOf(TYPES, rng);
   const pools = [scoped, all];
+
+  if (type === 'build') {
+    const picks = buildPicksForRoot(d);
+    if (picks.length > 0) {
+      const picked = rndOf(picks, rng);
+      const distract = shuffleWith(picked.siblings, rng).slice(0, 2);
+      if (distract.length >= 1) {
+        return {
+          root: d,
+          type,
+          ask: buildAsk(picked.split),
+          big: buildBig(picked.split),
+          buildWord: picked.word,
+          buildSplit: picked.split,
+          opts: shuffleWith(
+            [{ label: picked.word, ok: true }, ...distract.map((label) => ({ label, ok: false }))],
+            rng,
+          ),
+        };
+      }
+    }
+  }
 
   if (type === 'part') {
     const picks = otherPartsForRoot(d);

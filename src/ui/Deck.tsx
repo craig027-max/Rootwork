@@ -408,6 +408,7 @@ export function Deck() {
       dismissCelebration();
       const glossBeat = recall.beat.kind === 'gloss';
       const partBeat = recall.beat.kind === 'part';
+      const buildBeat = recall.beat.kind === 'build';
       const dest = afterCorrectRecall(id, entitled, {
         entry: deckEntry,
         findWord: findWord ?? undefined,
@@ -416,12 +417,14 @@ export function Deck() {
         glossDef: glossBeat ? recall.beat.gloss : undefined,
         part: partBeat ? recall.beat.part : undefined,
         partMean: partBeat ? recall.beat.partMean : undefined,
+        buildWord: buildBeat ? recall.beat.word : undefined,
+        buildSplit: buildBeat ? recall.beat.split : undefined,
       });
       beginCorrectAdvance(id, dest);
       setRecall({ beat: recall.beat, picked: idx, win: dest.line, rootId: id });
-      // Root Yes clip says "Bio means life". A gloss or part beat's line
-      // is the school word or the other piece — don't speak the root over it.
-      if (!glossBeat && !partBeat) {
+      // Root Yes clip says "Bio means life". A gloss, part, or pieces
+      // beat names the school word or the other piece — don't speak the root over it.
+      if (!glossBeat && !partBeat && !buildBeat) {
         speakYes(card.root, card.mean);
         watchCurrentClip(true, 'yes');
       }
@@ -565,7 +568,7 @@ export function Deck() {
                 <p className={`ww-lead2${missRemember ? ' is-remember-miss' : ''}`}>
                   {remembering
                     ? rememberLeadLine(root.root, { missed: missRemember })
-                    : `Look at the scene. Then tap what ${root.root} means, which word it builds, or what that word means.`}
+                    : `Look at the scene. Then tap what ${root.root} means, which word its pieces build, or what that word means.`}
                 </p>
               ) : (
                 /* `lead` is static, authored curriculum content (only our own <b>
@@ -646,7 +649,7 @@ export function Deck() {
               <div
                 className={`ww-recall-ask${quizRecall.beat.kind === 'gloss' ? ' is-gloss' : ''}${
                   quizRecall.beat.kind === 'part' ? ' is-part' : ''
-                }`}
+                }${quizRecall.beat.kind === 'build' ? ' is-build' : ''}`}
               >
                 {quizRecall.beat.ask}
               </div>
@@ -703,6 +706,7 @@ export function Deck() {
                   [
                     listen.yesNow ? 'is-now' : undefined,
                     recall?.beat.kind === 'gloss' ? 'is-gloss' : undefined,
+                    recall?.beat.kind === 'build' ? 'is-build' : undefined,
                   ]
                     .filter(Boolean)
                     .join(' ') || undefined

@@ -8,7 +8,7 @@ import {
 } from './distractors';
 import { buildRushQuestion } from './rush';
 import { quizGloss } from './wordDef';
-import { otherPartsForRoot, partMeanLabels } from './wordParts';
+import { buildBig, buildPicksForRoot, otherPartsForRoot, partMeanLabels } from './wordParts';
 
 const form = ROOTS.find((r) => r.root === 'Form')!;
 const bio = ROOTS.find((r) => r.root === 'Bio')!;
@@ -179,6 +179,42 @@ describe('buildRushQuestion', () => {
     expect(q.opts.length).toBeGreaterThanOrEqual(2);
     expect(q.opts.filter((o) => o.ok)).toHaveLength(1);
     expect(q.big).not.toBe(bio.root);
+  });
+
+  it('asks which word the pieces build, and the big type is the pieces', () => {
+    const q = buildRushQuestion({
+      root: bio,
+      scoped: tier1,
+      all: tier1,
+      type: 'build',
+      rng: () => 0,
+    });
+    expect(q.type).toBe('build');
+    expect(q.buildWord).toBe('Biology');
+    expect(q.ask).toBe('Which word is built from bio (life) + -logy (study of)?');
+    expect(q.big).toBe('bio + -logy');
+    expect(q.big).toBe(buildBig(q.buildSplit!));
+    expect(q.big).not.toBe('Bio');
+    expect(q.big).not.toBe('Biology');
+    expect(q.say).toBeUndefined();
+    expect(q.opts.map((o) => o.label).sort()).toEqual(['Biodegradable', 'Biography', 'Biology']);
+    expect(q.opts.find((o) => o.ok)?.label).toBe('Biology');
+    expect(q.opts.some((o) => o.label === 'Geography')).toBe(false);
+  });
+
+  it('builds a pieces question from the card alone when the pool is only Bio', () => {
+    const q = buildRushQuestion({
+      root: bio,
+      scoped: [bio],
+      all: [bio],
+      type: 'build',
+      rng: mulberry32(14),
+    });
+    expect(q.type).toBe('build');
+    const onCard = new Set(bio.words.map((w) => w.w));
+    expect(q.opts.length).toBe(3);
+    for (const opt of q.opts) expect(onCard.has(opt.label)).toBe(true);
+    expect(buildPicksForRoot(bio).some((p) => p.word === q.buildWord)).toBe(true);
   });
 
   it('still builds four tiles when the scoped pool is tiny, topping up from all', () => {
