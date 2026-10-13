@@ -20,7 +20,7 @@ import {
 import { buildRecall, type RecallBeat } from '../core/recall';
 import { Scene } from './Scene';
 import { findSuccessLine, recapDeckEntry } from '../core/deckFlow';
-import { buildBig, buildYesLine, partYesLine } from '../core/wordParts';
+import { buildBig, buildYesLine, partYesLine, wordYesLine } from '../core/wordParts';
 import { todayRushRecap } from '../core/rushRecap';
 import {
   buildDailyDone,
@@ -421,7 +421,7 @@ export function DailyChallenge() {
                     <span
                       className={`q-fb good${beat.kind === 'gloss' ? ' is-gloss' : ''}${
                         beat.kind === 'build' ? ' is-build' : ''
-                      }`}
+                      }${beat.kind === 'word' ? ' is-word' : ''}`}
                     >
                       {beat.kind === 'part' && beat.part && beat.partMean
                         ? partYesLine(beat.part, beat.partMean)
@@ -429,7 +429,9 @@ export function DailyChallenge() {
                           ? findSuccessLine(beat.word, beat.gloss)
                           : beat.kind === 'build' && beat.word && beat.split
                             ? buildYesLine(beat.word, beat.split)
-                            : dailyHoldLine(root.root, root.mean)}
+                            : beat.kind === 'word' && beat.word
+                              ? wordYesLine(beat.word, beat.split)
+                              : dailyHoldLine(root.root, root.mean)}
                     </span>
                     {nextHold ? (
                       <span className="q-fb q-next-peek">

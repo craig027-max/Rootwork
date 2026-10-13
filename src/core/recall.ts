@@ -34,7 +34,7 @@ export interface RecallBeat {
   opts: RecallOption[];
   /** Shown after a miss — names the answer, never scolds. */
   teach: string;
-  /** School word, when kind is gloss or part. */
+  /** School word, when kind is gloss, part, word, or build. */
   word?: string;
   /** Authored short def for that word. */
   gloss?: string;
@@ -211,7 +211,9 @@ export function buildRecall(input: BuildRecallInput): RecallBeat {
   }
 
   if (kind === 'word') {
-    const correct = root.words[Math.floor(rng() * root.words.length)]?.w ?? root.root;
+    const item = root.words[Math.floor(rng() * root.words.length)];
+    const correct = item?.w.replace(/\s+/g, ' ').trim() || root.root;
+    const split = item?.b.replace(/\s+/g, ' ').trim() || '';
     const distract = pickWordDistractors(root, pools, correct, distractCount, rng);
     const opts = shuffleWith(
       [{ label: correct, ok: true }, ...distract.map((label) => ({ label, ok: false }))],
@@ -221,7 +223,9 @@ export function buildRecall(input: BuildRecallInput): RecallBeat {
       kind,
       ask: 'Which word is built from this root?',
       opts,
-      teach: `${correct} is built from ${root.root} — it means “${root.mean}.”`,
+      teach: split ? buildTeach(correct, split) : `${correct} is built from ${root.root}.`,
+      word: correct,
+      split: split || undefined,
     };
   }
 

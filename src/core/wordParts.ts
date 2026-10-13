@@ -214,3 +214,24 @@ export function buildMissLine(word: string, split: string): string {
   if (!name || !parts) return 'Nope — try the next one.';
   return `Nope — ${parts} builds ${name}.`;
 }
+
+/**
+ * Which-word beat — the school word they were asked to pick.
+ * "Bio means life" is the root hint, not the answer.
+ */
+export function wordYesLine(word: string, split?: string): string {
+  const name = word.replace(/\s+/g, ' ').trim();
+  const parts = split?.replace(/\s+/g, ' ').trim() ?? '';
+  if (!name) return 'Yes — you got it.';
+  if (!parts) return `Yes — ${name}.`;
+  return buildYesLine(name, parts);
+}
+
+/** Miss on that same beat — the right word first, then how it is built. */
+export function wordMissLine(word: string, split?: string): string {
+  const name = word.replace(/\s+/g, ' ').trim();
+  const parts = split?.replace(/\s+/g, ' ').trim() ?? '';
+  if (!name) return 'Nope — try the next one.';
+  if (!parts) return `Nope — ${name}.`;
+  return `Nope — ${name}. Built from ${parts}.`;
+}

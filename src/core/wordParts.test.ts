@@ -7,6 +7,8 @@ import {
   buildPicksForRoot,
   buildTeach,
   buildYesLine,
+  wordMissLine,
+  wordYesLine,
   otherPartsForRoot,
   parseWordSplit,
   partAsk,
@@ -119,6 +121,16 @@ describe('buildPicksForRoot', () => {
     expect(buildMissLine('Biology', biology!.split)).toBe(
       'Nope — bio (life) + -logy (study of) builds Biology.',
     );
+    expect(wordYesLine('Biology', biology!.split)).toBe(
+      'Yes — Biology. Built from bio (life) + -logy (study of).',
+    );
+    expect(wordYesLine('Biology', biology!.split)).not.toMatch(/Bio means life/);
+    expect(wordMissLine('Biology', biology!.split)).toBe(
+      'Nope — Biology. Built from bio (life) + -logy (study of).',
+    );
+    expect(wordMissLine('Biology', biology!.split)).not.toMatch(/Bio means life/);
+    expect(wordYesLine('Biology')).toBe('Yes — Biology.');
+    expect(wordMissLine('')).toBe('Nope — try the next one.');
   });
 
   it('keeps the answer out of the split, and siblings off other roots', () => {
