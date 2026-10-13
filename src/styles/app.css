@@ -781,7 +781,15 @@
   .ww-root.is-find {
     display: block;
   }
+  .ww-root.is-gloss,
+  .ww-root.is-part,
+  .ww-root.is-build {
+    display: block;
+  }
   .ww-means.is-find {
+    display: flex;
+  }
+  .ww-means.is-quiz {
     display: flex;
   }
   .ww-nav-cur.is-find,
@@ -1684,6 +1692,26 @@ button.ww-schip:focus-visible {
   max-width: 16ch;
   overflow-wrap: anywhere;
 }
+.ww-root.is-gloss,
+.ww-root.is-part,
+.ww-root.is-build {
+  font-size: clamp(1.35rem, 4.2vw, 2.6rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  max-width: 18ch;
+  overflow-wrap: anywhere;
+}
+.ww-root.is-gloss.is-long,
+.ww-root.is-build.is-long {
+  font-size: clamp(1.05rem, 3.4vw, 1.7rem);
+}
+.ww-root.is-part.is-long {
+  font-size: clamp(1.1rem, 3.6vw, 1.85rem);
+}
+.ww-means.is-quiz .word,
+.ww-means.is-quiz .alt {
+  overflow-wrap: anywhere;
+}
 .ww-means.is-find .word {
   font-size: clamp(1.05rem, 2.6vw, 1.7rem);
   line-height: 1.15;
@@ -2489,7 +2517,15 @@ button.ww-schip:focus-visible {
   .ww-root.is-find {
     display: block;
   }
+  .ww-root.is-gloss,
+  .ww-root.is-part,
+  .ww-root.is-build {
+    display: block;
+  }
   .ww-means.is-find {
+    display: flex;
+  }
+  .ww-means.is-quiz {
     display: flex;
   }
   /* Tap reveal: authored part-split (`b`) — not a title tooltip. */
@@ -2673,7 +2709,15 @@ button.ww-schip:focus-visible {
   .ww-root.is-find {
     display: block;
   }
+  .ww-root.is-gloss,
+  .ww-root.is-part,
+  .ww-root.is-build {
+    display: block;
+  }
   .ww-means.is-find {
+    display: flex;
+  }
+  .ww-means.is-quiz {
     display: flex;
   }
   .ww-nav-cur.is-find,

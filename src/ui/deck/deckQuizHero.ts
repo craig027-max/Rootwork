@@ -1,0 +1,90 @@
+/**
+ * Study quiz hero — the giant name is the thing being asked.
+ *
+ * Daily and Rush already put Biology, -logy, or bio + -logy in the big
+ * type. Study was still painting Bio over those questions. Meaning and
+ * which-word stay on the root: those questions are about Bio.
+ */
+import { buildBig } from '../../core/wordParts';
+
+export interface DeckQuizHero {
+  title: string;
+  /** Extra classes on `.ww-root` — is-gloss / is-part / is-build, plus is-long. */
+  titleClass: string;
+  /** Hidden answer. Never the school-word gloss or the piece meaning. */
+  means: string;
+  alt: string;
+}
+
+export interface DeckQuizHeroInput {
+  root: string;
+  mean: string;
+  kind?: string | null;
+  word?: string | null;
+  part?: string | null;
+  split?: string | null;
+}
+
+function clean(raw?: string | null): string {
+  return raw?.replace(/\s+/g, ' ').trim() ?? '';
+}
+
+function titleClass(kind: 'gloss' | 'part' | 'build', long: boolean): string {
+  return long ? `is-${kind} is-long` : `is-${kind}`;
+}
+
+/**
+ * Hero for a gloss / part / build beat. Null keeps the root name — mean,
+ * which-word, Remember, and the teach card before I know this.
+ */
+export function deckQuizHero(input: DeckQuizHeroInput): DeckQuizHero | null {
+  const root = clean(input.root);
+  const mean = clean(input.mean);
+  const word = clean(input.word);
+  const part = clean(input.part);
+  const split = clean(input.split);
+
+  if (input.kind === 'gloss') {
+    if (!word) return null;
+    const hint = root && mean ? `from ${root} · ${mean}` : root ? `from ${root}` : 'this word';
+    return {
+      title: word,
+      titleClass: titleClass('gloss', word.length >= 14),
+      means: '?',
+      alt: hint,
+    };
+  }
+
+  if (input.kind === 'part') {
+    if (!part) return null;
+    return {
+      title: part,
+      titleClass: titleClass('part', part.length >= 9),
+      means: '?',
+      alt: word ? `in ${word}` : 'the other piece',
+    };
+  }
+
+  if (input.kind === 'build') {
+    const pieces = buildBig(split);
+    if (!pieces) return null;
+    return {
+      title: pieces,
+      titleClass: titleClass('build', pieces.length >= 14),
+      means: '?',
+      alt: 'which word',
+    };
+  }
+
+  return null;
+}
+
+/**
+ * Instruction before a question, and on meaning / which-word beats.
+ * A gloss, piece, or pieces beat hides this — the ask names Biology,
+ * and this sentence would put "what Bio means" over that word.
+ */
+export function deckStudyLead(rootName: string): string {
+  const name = clean(rootName) || 'this root';
+  return `Look at the scene. Then tap what ${name} means, which word its pieces build, or what that word means.`;
+}

@@ -37,6 +37,7 @@ import { localDayKey } from '../core/daily';
 import { isOwnedRushMiss, listOwnedRushMissIds, todayRushRecap } from '../core/rushRecap';
 import { buildRecall, type RecallBeat } from '../core/recall';
 import { wordMissLine } from '../core/wordParts';
+import { deckQuizHero, deckStudyLead } from './deck/deckQuizHero';
 import {
   hearBeatChips,
   hearBeatIndex,
@@ -302,6 +303,17 @@ export function Deck() {
   const openSplit = splitForOpenWord(root.words, openWord);
   const remembering = deckEntry === 'remember';
   const finding = isFindEntry(deckEntry);
+  const cardRecall = recall && recall.rootId === id ? recall : null;
+  const quizHero = finding
+    ? null
+    : deckQuizHero({
+        root: root.root,
+        mean: root.mean,
+        kind: cardRecall?.beat.kind,
+        word: cardRecall?.beat.word,
+        part: cardRecall?.beat.part,
+        split: cardRecall?.beat.split,
+      });
   const findWord = finding ? openWordForFind(root.words, deckFocusWord) : null;
   const findDef = finding ? wordDefForOpen(root.words, findWord) : null;
   const findSplit = findWord ? splitForOpenWord(root.words, findWord) : null;
@@ -499,28 +511,34 @@ export function Deck() {
                   findWord: findWord ?? undefined,
                 })}
               </span>
-              <div className={`ww-root${finding ? ' is-find' : ''}`}>
-                {deckFindTitle({ root: root.root, findWord: findWord ?? undefined })}
+              <div
+                className={`ww-root${finding ? ' is-find' : ''}${quizHero ? ` ${quizHero.titleClass}` : ''}`}
+              >
+                {quizHero
+                  ? quizHero.title
+                  : deckFindTitle({ root: root.root, findWord: findWord ?? undefined })}
               </div>
-              <div className="ww-pron">
-                <button
-                  type="button"
-                  className={`ww-hear${listen.hearActive ? ' is-listening' : ''}`}
-                  aria-label={`Hear ${root.root}`}
-                  aria-pressed={listen.hearActive}
-                  onClick={onHear}
-                >
-                  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-                    <path
-                      fill="currentColor"
-                      d="M4 9v6h4l5 4V5L8 9H4zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM16 6.3a7 7 0 0 1 0 11.4v-2.2a5 5 0 0 0 0-7z"
-                    />
-                  </svg>
-                </button>
-                <span>
-                  {root.say} &nbsp;·&nbsp; <span className="origin">from {root.org}</span>
-                </span>
-              </div>
+              {quizHero ? null : (
+                <div className="ww-pron">
+                  <button
+                    type="button"
+                    className={`ww-hear${listen.hearActive ? ' is-listening' : ''}`}
+                    aria-label={`Hear ${root.root}`}
+                    aria-pressed={listen.hearActive}
+                    onClick={onHear}
+                  >
+                    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+                      <path
+                        fill="currentColor"
+                        d="M4 9v6h4l5 4V5L8 9H4zm13.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM16 6.3a7 7 0 0 1 0 11.4v-2.2a5 5 0 0 0 0-7z"
+                      />
+                    </svg>
+                  </button>
+                  <span>
+                    {root.say} &nbsp;·&nbsp; <span className="origin">from {root.org}</span>
+                  </span>
+                </div>
+              )}
               {listen.line ? (
                 <div className="ww-listen" role="status" aria-live="polite">
                   <p className="ww-listen-line">{listen.line}</p>
@@ -542,39 +560,43 @@ export function Deck() {
                   <p className="ww-listen-line">{hearHold.line}</p>
                 </div>
               ) : null}
-              <div className={`ww-means${missRemember ? ' is-miss' : ''}${finding ? ' is-find' : ''}`}>
+              <div className={`ww-means${missRemember ? ' is-miss' : ''}${finding ? ' is-find' : ''}${quizHero ? ' is-quiz' : ''}`}>
                 <span className="arrow" aria-hidden="true">
                   →
                 </span>
                 <span className="word">
-                  {deckMeansWord({
-                    mean: root.mean,
-                    studying,
-                    findWord: findWord ?? undefined,
-                    findDef: findDef ?? undefined,
-                  })}
+                  {quizHero
+                    ? quizHero.means
+                    : deckMeansWord({
+                        mean: root.mean,
+                        studying,
+                        findWord: findWord ?? undefined,
+                        findDef: findDef ?? undefined,
+                      })}
                 </span>
                 <span className="alt">
-                  {deckMeansAlt({
-                    alt: root.alt,
-                    studying,
-                    missed: missRemember,
-                    findWord: findWord ?? undefined,
-                    findRoot: finding ? root.root : undefined,
-                  })}
+                  {quizHero
+                    ? quizHero.alt
+                    : deckMeansAlt({
+                        alt: root.alt,
+                        studying,
+                        missed: missRemember,
+                        findWord: findWord ?? undefined,
+                        findRoot: finding ? root.root : undefined,
+                      })}
                 </span>
               </div>
               {finding && findWord ? (
                 <p className="ww-lead2 is-find">
                   {findLeadLine(findWord, findSplit ?? openSplit ?? '')}
                 </p>
-              ) : studying ? (
+              ) : studying && !quizHero ? (
                 <p className={`ww-lead2${missRemember ? ' is-remember-miss' : ''}`}>
                   {remembering
                     ? rememberLeadLine(root.root, { missed: missRemember })
-                    : `Look at the scene. Then tap what ${root.root} means, which word its pieces build, or what that word means.`}
+                    : deckStudyLead(root.root)}
                 </p>
-              ) : (
+              ) : quizHero ? null : (
                 /* `lead` is static, authored curriculum content (only our own <b>
                     tags in roots.data.ts) — never user input, so no XSS surface. */
                 <p className="ww-lead2" dangerouslySetInnerHTML={{ __html: root.lead }} />
