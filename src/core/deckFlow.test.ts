@@ -130,6 +130,38 @@ describe('afterCorrectRecall', () => {
     ).not.toMatch(/Bio means life/);
   });
 
+  it('names the school word on a which-word Yes and still opens the next root', () => {
+    expect(
+      afterCorrectRecall(bioId, false, {
+        word: 'Biology',
+        wordSplit: 'bio (life) + -logy (study of)',
+      }),
+    ).toEqual({
+      kind: 'next',
+      id: geoId,
+      line: 'Yes — Biology. Built from bio (life) + -logy (study of).',
+    });
+    expect(
+      afterCorrectRecall(bioId, false, {
+        word: 'Biology',
+        wordSplit: 'bio (life) + -logy (study of)',
+      }).line,
+    ).not.toMatch(/Bio means life/);
+  });
+
+  it('Remember which-word Yes names the school word, then Home', () => {
+    expect(
+      afterCorrectRecall(bioId, false, {
+        entry: 'remember',
+        word: 'Biology',
+        wordSplit: 'bio (life) + -logy (study of)',
+      }),
+    ).toEqual({
+      kind: 'home',
+      line: 'Yes — Biology. Built from bio (life) + -logy (study of).',
+    });
+  });
+
   it('names the other piece on a part Yes and still opens the next root', () => {
     expect(
       afterCorrectRecall(bioId, false, { part: '-logy', partMean: 'study of' }),

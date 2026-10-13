@@ -15,6 +15,8 @@ import {
   rushGlossMissLine,
   rushHoldLine,
   rushMissLine,
+  rushWordHoldLine,
+  rushWordMissLine,
   rememberMissCtaLabel,
   rushRecapChipLabel,
   rushRecapFromRun,
@@ -148,6 +150,20 @@ describe('rushHoldLine + rushMissLine + rushRecapChipLabel', () => {
       'Nope — bio (life) + -logy (study of) builds Biology.',
     );
     expect(rushBuildMissLine('', '')).toBe('Nope — try the next one.');
+    expect(rushWordHoldLine('Biology', 'bio (life) + -logy (study of)', 100, 1)).toBe(
+      'Yes — Biology. Built from bio (life) + -logy (study of). +100',
+    );
+    expect(rushWordHoldLine('Biology', 'bio (life) + -logy (study of)', 200, 2)).toBe(
+      'Yes — Biology. Built from bio (life) + -logy (study of). +200 · 2× combo',
+    );
+    expect(rushWordHoldLine('Biology', 'bio (life) + -logy (study of)', 100, 1)).not.toMatch(
+      /Bio means life/,
+    );
+    expect(rushWordMissLine('Biology', 'bio (life) + -logy (study of)')).toBe(
+      'Nope — Biology. Built from bio (life) + -logy (study of).',
+    );
+    expect(rushWordMissLine('Biology', 'bio (life) + -logy (study of)')).not.toMatch(/Bio means life/);
+    expect(rushWordMissLine('')).toBe('Nope — try the next one.');
   });
 
   it('names Remember vs Meet vs Missed on a result chip', () => {

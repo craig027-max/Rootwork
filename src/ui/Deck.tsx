@@ -36,6 +36,7 @@ import { buildWordRecall } from '../core/wordRecall';
 import { localDayKey } from '../core/daily';
 import { isOwnedRushMiss, listOwnedRushMissIds, todayRushRecap } from '../core/rushRecap';
 import { buildRecall, type RecallBeat } from '../core/recall';
+import { wordMissLine } from '../core/wordParts';
 import {
   hearBeatChips,
   hearBeatIndex,
@@ -409,6 +410,7 @@ export function Deck() {
       const glossBeat = recall.beat.kind === 'gloss';
       const partBeat = recall.beat.kind === 'part';
       const buildBeat = recall.beat.kind === 'build';
+      const wordBeat = recall.beat.kind === 'word';
       const dest = afterCorrectRecall(id, entitled, {
         entry: deckEntry,
         findWord: findWord ?? undefined,
@@ -419,12 +421,14 @@ export function Deck() {
         partMean: partBeat ? recall.beat.partMean : undefined,
         buildWord: buildBeat ? recall.beat.word : undefined,
         buildSplit: buildBeat ? recall.beat.split : undefined,
+        word: wordBeat ? recall.beat.word : undefined,
+        wordSplit: wordBeat ? recall.beat.split : undefined,
       });
       beginCorrectAdvance(id, dest);
       setRecall({ beat: recall.beat, picked: idx, win: dest.line, rootId: id });
-      // Root Yes clip says "Bio means life". A gloss, part, or pieces
-      // beat names the school word or the other piece — don't speak the root over it.
-      if (!glossBeat && !partBeat && !buildBeat) {
+      // Root Yes clip says "Bio means life". A gloss, part, pieces,
+      // or which-word beat names the school word — don't speak the root over it.
+      if (!glossBeat && !partBeat && !buildBeat && !wordBeat) {
         speakYes(card.root, card.mean);
         watchCurrentClip(true, 'yes');
       }
@@ -673,7 +677,9 @@ export function Deck() {
                 <div className={`ww-recall-teach${remembering ? ' is-remember' : ''}${missRemember ? ' is-miss' : ''}`}>
                   <p>
                     {remembering
-                      ? rememberMissLine(root.root, root.mean)
+                      ? quizRecall.beat.kind === 'word' && quizRecall.beat.word
+                        ? wordMissLine(quizRecall.beat.word, quizRecall.beat.split)
+                        : rememberMissLine(root.root, root.mean)
                       : finding && findWord && findDef
                         ? findMissLine(findWord, findDef)
                         : quizRecall.beat.teach}
@@ -707,6 +713,7 @@ export function Deck() {
                     listen.yesNow ? 'is-now' : undefined,
                     recall?.beat.kind === 'gloss' ? 'is-gloss' : undefined,
                     recall?.beat.kind === 'build' ? 'is-build' : undefined,
+                    recall?.beat.kind === 'word' ? 'is-word' : undefined,
                   ]
                     .filter(Boolean)
                     .join(' ') || undefined

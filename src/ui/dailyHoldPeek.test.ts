@@ -39,6 +39,8 @@ describe('Daily hold: peek the next root, then Next — Home lands on that peek'
     expect(daily).toContain('q-hold');
     expect(daily).toContain('afterDailyNextLabel(isLast)');
     expect(daily).toContain('dailyHoldLine(root.root, root.mean)');
+    expect(daily).toContain('wordYesLine(beat.word, beat.split)');
+    expect(daily).toContain("beat.kind === 'word' && beat.word");
     expect(daily).toContain('learnNextAction');
     expect(daily).toContain('learnedToday');
     expect(daily).toContain('dailyHoldKeepGoingLine');

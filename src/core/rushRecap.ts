@@ -18,7 +18,7 @@
 
 import { ROOTS_BY_ID } from '../data/roots';
 import { localDayKey } from './daily';
-import { buildMissLine, buildYesLine, partMissLine, partYesLine } from './wordParts';
+import { buildMissLine, buildYesLine, partMissLine, partYesLine, wordMissLine, wordYesLine } from './wordParts';
 
 /** Home Rush tile peeks this many of the last run — the result still lists all. */
 export const RUSH_RECAP_PREVIEW_COUNT = 4;
@@ -244,6 +244,30 @@ export function rushBuildHoldLine(
 /** After a pieces miss — that school word, not the root. */
 export function rushBuildMissLine(word: string, split: string): string {
   return buildMissLine(word, split);
+}
+
+/**
+ * After a correct which-word tap — the school word, not Bio means life.
+ * Points stay on the same line.
+ */
+export function rushWordHoldLine(
+  word: string,
+  split: string,
+  points: number,
+  mult: number,
+): string {
+  const yes = wordYesLine(word, split);
+  const pts = Number.isFinite(points) ? Math.max(0, Math.round(points)) : 0;
+  const combo = Number.isFinite(mult) && mult > 1 ? ` · ${mult}× combo` : '';
+  const score = `+${pts.toLocaleString('en-US')}${combo}`;
+  const name = word.replace(/\s+/g, ' ').trim();
+  if (!name) return score;
+  return `${yes} ${score}`;
+}
+
+/** After a which-word miss — that school word, not the root. */
+export function rushWordMissLine(word: string, split?: string): string {
+  return wordMissLine(word, split);
 }
 
 /** After a gloss miss — the school word's authored def, not the root. */

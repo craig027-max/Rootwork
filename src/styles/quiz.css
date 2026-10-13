@@ -225,7 +225,8 @@
 .q-fb.good { color: var(--accent-green); overflow-wrap: anywhere; }
 .q-fb.bad { color: var(--accent-red); }
 .q-fb.is-gloss,
-.q-fb.is-build {
+.q-fb.is-build,
+.q-fb.is-word {
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 1rem;
@@ -248,6 +249,8 @@
   line-height: 1.45;
   color: var(--text-secondary);
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .q-daily-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 22px; }
 .q-rush-recap {

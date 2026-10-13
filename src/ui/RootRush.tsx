@@ -24,6 +24,8 @@ import {
   rushPartHoldLine,
   rushPartMissLine,
   rushRecapChipLabel,
+  rushWordHoldLine,
+  rushWordMissLine,
   rushRecapFromRun,
   todayRushRecap,
 } from '../core/rushRecap';
@@ -70,7 +72,8 @@ import { samplePeekLabel } from './home/samplePeek';
  *
  * A correct tap names the meaning (Yes — Chron means time) then keeps
  * the combo auto-advance. A miss names it too (Nope — Chron means time)
- * so the Next dump is not label-only. Result + start recap this run as
+ * so the Next dump is not label-only. A which-word tap names that school
+ * word (Yes — Biology. Built from …), not Bio means life. Result + start recap this run as
  * Remember chips — hits keep ✓, misses stay Missed. Owned roots hold
  * meaning then Home, never Bio → Geo. A correct owned hit banks today's
  * Remember the same way Daily already does.
@@ -610,7 +613,7 @@ export function RootRush() {
                 <span
                   className={`q-fb good${q.type === 'gloss' ? ' is-gloss' : ''}${
                     q.type === 'build' ? ' is-build' : ''
-                  }`}
+                  }${q.type === 'word' ? ' is-word' : ''}`}
                 >
                   {q.type === 'part' && q.part && q.partMean
                     ? rushPartHoldLine(q.part, q.partMean, 100 * mult, mult)
@@ -618,7 +621,9 @@ export function RootRush() {
                       ? rushGlossHoldLine(q.glossWord, q.gloss, 100 * mult, mult)
                       : q.type === 'build' && q.buildWord && q.buildSplit
                         ? rushBuildHoldLine(q.buildWord, q.buildSplit, 100 * mult, mult)
-                        : rushHoldLine(q.root.root, q.root.mean, 100 * mult, mult)}
+                        : q.type === 'word' && q.word
+                          ? rushWordHoldLine(q.word, q.wordSplit ?? '', 100 * mult, mult)
+                          : rushHoldLine(q.root.root, q.root.mean, 100 * mult, mult)}
                 </span>
               ) : null}
               {answered && !answeredCorrect ? (
@@ -626,7 +631,7 @@ export function RootRush() {
                   <span
                     className={`q-fb bad${q.type === 'gloss' ? ' is-gloss' : ''}${
                       q.type === 'build' ? ' is-build' : ''
-                    }`}
+                    }${q.type === 'word' ? ' is-word' : ''}`}
                   >
                     {q.type === 'part' && q.part && q.partMean
                       ? rushPartMissLine(q.part, q.partMean, q.partWord)
@@ -634,7 +639,9 @@ export function RootRush() {
                         ? rushGlossMissLine(q.glossWord, q.gloss)
                         : q.type === 'build' && q.buildWord && q.buildSplit
                           ? rushBuildMissLine(q.buildWord, q.buildSplit)
-                          : rushMissLine(q.root.root, q.root.mean)}
+                          : q.type === 'word' && q.word
+                            ? rushWordMissLine(q.word, q.wordSplit)
+                            : rushMissLine(q.root.root, q.root.mean)}
                   </span>
                   <button className="q-next" onClick={advance}>
                     {isLast ? 'See results ›' : 'Next ›'}

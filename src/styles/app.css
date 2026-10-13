@@ -1874,7 +1874,8 @@ button.ww-schip:focus-visible {
   color: rgb(var(--spark-rgb));
 }
 .ww-recall-win p.is-gloss,
-.ww-recall-win p.is-build {
+.ww-recall-win p.is-build,
+.ww-recall-win p.is-word {
   font-family: var(--font-display);
   font-weight: 650;
   font-size: 1.05rem;

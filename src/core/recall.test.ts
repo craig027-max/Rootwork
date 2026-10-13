@@ -35,6 +35,12 @@ describe('buildRecall', () => {
     const correct = beat.opts.find((o) => o.ok)!.label;
     expect(bio.words.map((w) => w.w)).toContain(correct);
     expect(beat.opts.filter((o) => o.ok)).toHaveLength(1);
+    expect(beat.word).toBe(correct);
+    const authored = bio.words.find((w) => w.w === correct);
+    expect(beat.split).toBe(authored?.b);
+    expect(beat.teach).toBe(`${correct} is built from ${authored?.b}.`);
+    expect(beat.teach).not.toMatch(/Bio means life/);
+    expect(beat.ask).toBe('Which word is built from this root?');
   });
 
   it('does not put the correct meaning on a rival tile', () => {

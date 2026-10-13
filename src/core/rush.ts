@@ -34,6 +34,9 @@ export interface RushQuestion {
   /** School word the pieces build. `big` is the pieces — not this word. */
   buildWord?: string;
   buildSplit?: string;
+  /** School word this root builds, when type is word. `big` stays the root. */
+  word?: string;
+  wordSplit?: string;
 }
 
 const TYPES: readonly RushQuestionType[] = ['mean', 'root', 'word', 'gloss', 'part', 'build'];
@@ -173,7 +176,9 @@ export function buildRushQuestion(input: BuildRushQuestionInput): RushQuestion {
     };
   }
 
-  const correctWord = rndOf(d.words, rng).w;
+  const pickedWord = rndOf(d.words, rng);
+  const correctWord = pickedWord.w.replace(/\s+/g, ' ').trim();
+  const wordSplit = pickedWord.b.replace(/\s+/g, ' ').trim();
   const distract = pickWordDistractors(d, pools, correctWord, 3, rng);
   return {
     root: d,
@@ -182,6 +187,8 @@ export function buildRushQuestion(input: BuildRushQuestionInput): RushQuestion {
     big: d.root,
     say: d.say,
     sub: `means “${d.mean}”`,
+    word: correctWord,
+    wordSplit: wordSplit || undefined,
     opts: shuffleWith(
       [{ label: correctWord, ok: true }, ...distract.map((label) => ({ label, ok: false }))],
       rng,

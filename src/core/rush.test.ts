@@ -77,9 +77,14 @@ describe('buildRushQuestion', () => {
       rng: mulberry32(4),
     });
     expect(q.ask.toLowerCase()).toContain('word');
+    expect(q.big).toBe(form.root);
     expect(q.opts.filter((o) => o.ok)).toHaveLength(1);
     const correct = q.opts.find((o) => o.ok)!.label;
+    expect(q.word).toBe(correct);
     expect(formWords.has(correct)).toBe(true);
+    const authored = form.words.find((w) => w.w === correct);
+    expect(q.wordSplit).toBe(authored?.b.replace(/\s+/g, ' ').trim());
+    expect(q.big).not.toBe(correct);
     for (const o of q.opts) {
       expect(curriculumWords.has(o.label)).toBe(true);
       if (!o.ok) {
