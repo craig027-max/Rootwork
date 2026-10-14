@@ -42,10 +42,9 @@ describe('Study quiz hero names the thing being asked', () => {
     });
     expect(hero?.title).toBe('Biology');
     expect(hero?.title).not.toBe(bio.root);
-    expect(hero?.means).toBe('?');
-    expect(hero?.means).not.toBe(gloss);
-    expect(hero?.alt).toBe(`from ${bio.root} · ${bio.mean}`);
-    expect(hero?.alt).not.toContain(gloss);
+    expect(hero?.hint).toBe(`from ${bio.root} · ${bio.mean}`);
+    expect(hero?.hint).not.toBe('?');
+    expect(hero?.hint).not.toContain(gloss);
     expect(hero?.titleClass).toBe('is-gloss');
   });
 
@@ -60,10 +59,9 @@ describe('Study quiz hero names the thing being asked', () => {
     expect(hero?.title).toBe('-logy');
     expect(hero?.title).not.toBe(bio.root);
     expect(hero?.title).not.toBe('study of');
-    expect(hero?.means).toBe('?');
-    expect(hero?.means).not.toBe('study of');
-    expect(hero?.alt).toBe('in Biology');
-    expect(hero?.alt).not.toContain('study of');
+    expect(hero?.hint).toBe('in Biology');
+    expect(hero?.hint).not.toBe('?');
+    expect(hero?.hint).not.toContain('study of');
     expect(hero?.titleClass).toBe('is-part');
   });
 
@@ -78,8 +76,9 @@ describe('Study quiz hero names the thing being asked', () => {
     expect(hero?.title).toBe('bio + -logy');
     expect(hero?.title).not.toBe(bio.root);
     expect(hero?.title).not.toBe('Biology');
-    expect(hero?.means).toBe('?');
-    expect(hero?.alt).toBe('which word');
+    expect(hero?.hint).toBe('');
+    expect(hero?.hint).not.toBe('?');
+    expect(hero?.hint).not.toBe('which word');
     expect(hero?.titleClass).toBe('is-build');
   });
 
@@ -146,9 +145,9 @@ describe('Study quiz hero names the thing being asked', () => {
         const title = word.w.replace(/\s+/g, ' ').trim();
         expect(hero?.title, word.w).toBe(title);
         if (title !== root.root) expect(hero?.title, word.w).not.toBe(root.root);
-        expect(hero?.means, word.w).toBe('?');
-        expect(hero?.means, word.w).not.toBe(spoken);
-        expect(hero?.alt, word.w).not.toContain(spoken);
+        expect(hero?.hint, word.w).not.toBe('?');
+        expect(hero?.hint, word.w).not.toBe(spoken);
+        expect(hero?.hint, word.w).not.toContain(spoken);
       }
       for (const part of otherPartsForRoot(root)) {
         const hero = deckQuizHero({
@@ -160,9 +159,9 @@ describe('Study quiz hero names the thing being asked', () => {
         });
         expect(hero?.title, part.word).toBe(part.letters);
         expect(hero?.title, part.word).not.toBe(part.mean);
-        expect(hero?.means, part.word).not.toBe(part.mean);
-        expect(hero?.alt, part.word).toBe(`in ${part.word}`);
-        expect(hero?.alt, part.word).not.toBe(part.mean);
+        expect(hero?.hint, part.word).toBe(`in ${part.word}`);
+        expect(hero?.hint, part.word).not.toBe(part.mean);
+        expect(hero?.hint, part.word).not.toBe('?');
       }
       for (const pick of buildPicksForRoot(root)) {
         const hero = deckQuizHero({
@@ -175,6 +174,7 @@ describe('Study quiz hero names the thing being asked', () => {
         expect(hero?.title, pick.split).toBe(buildBig(pick.split));
         expect(hero?.title, pick.word).not.toBe(pick.word);
         expect(hero?.title, pick.word).not.toBe(root.root);
+        expect(hero?.hint, pick.word).toBe('');
       }
     }
   });
@@ -183,8 +183,9 @@ describe('Study quiz hero names the thing being asked', () => {
     expect(deck).toContain('deckQuizHero');
     expect(deck).toContain('deckStudyLead');
     expect(deck).toContain('quizHero.title');
-    expect(deck).toContain('quizHero.means');
-    expect(deck).toContain('quizHero.alt');
+    expect(deck).toContain('quizHero.hint');
+    expect(deck).not.toContain('quizHero.means');
+    expect(deck).not.toContain('quizHero.alt');
     expect(deck).toContain('const quizHero = finding');
     expect(deck).toContain(': deckQuizHero({');
     expect(deck).toContain("kinds: deckEntry === 'remember' ? ['mean', 'word'] : undefined");
@@ -212,6 +213,8 @@ describe('Study quiz hero names the thing being asked', () => {
       expect(block).not.toMatch(/\.ww-nav-cur\.is-quiz\s*\{[^}]*display:\s*none/);
       expect(block).not.toMatch(/\.ww-caption\.is-quiz\s*\{[^}]*display:\s*none/);
     }
+    expect(short).toMatch(/\.ww-eyebrow2\.is-quiz\s*\{[^}]*display:\s*inline-flex/);
+    expect(short).not.toMatch(/\.ww-eyebrow2\.is-quiz\s*\{[^}]*display:\s*none/);
   });
 });
 

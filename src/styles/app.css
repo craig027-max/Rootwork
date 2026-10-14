@@ -1530,6 +1530,15 @@ button.ww-schip:focus-visible {
   border-color: rgba(239, 68, 68, 0.55);
   background: rgba(239, 68, 68, 0.1);
 }
+.ww-recall-opt.correct,
+.ww-recall-opt.correct:hover {
+  border-color: rgba(34, 197, 94, 0.6);
+  background: rgba(34, 197, 94, 0.14);
+}
+.ww-recall-opt.correct .k {
+  border-color: rgba(34, 197, 94, 0.6);
+  color: var(--accent-green);
+}
 .ww-recall-opt.is-gloss {
   font-family: var(--font-display);
   font-weight: 500;
@@ -1544,6 +1553,7 @@ button.ww-schip:focus-visible {
   flex-direction: column;
   align-items: flex-start;
   gap: 12px;
+  scroll-margin-bottom: 120px;
 }
 .ww-recall-teach p {
   margin: 0;
@@ -1713,9 +1723,13 @@ button.ww-schip:focus-visible {
 .ww-root.is-part.is-long {
   font-size: clamp(1.1rem, 3.6vw, 1.85rem);
 }
-.ww-means.is-quiz .word,
+.ww-means.is-quiz {
+  margin-top: 4px;
+}
 .ww-means.is-quiz .alt {
   overflow-wrap: anywhere;
+  font-size: 0.95rem;
+  line-height: 1.35;
 }
 .ww-means.is-find .word {
   font-size: clamp(1.05rem, 2.6vw, 1.7rem);
@@ -2607,6 +2621,11 @@ button.ww-schip:focus-visible {
   .ww-lead2,
   .ww-eyebrow2 {
     display: none;
+  }
+  /* The quiz label (This word / Other piece / These pieces) stays.
+     A short phone was hiding it with every other eyebrow. */
+  .ww-eyebrow2.is-quiz {
+    display: inline-flex;
   }
   .ww-mean-line {
     display: block;

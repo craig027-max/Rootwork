@@ -177,6 +177,11 @@ export function Deck() {
   }, [currentRootId, deckFocusWord]);
 
   useEffect(() => {
+    if (recall?.picked == null || recall.win) return;
+    document.querySelector('.ww-recall-teach')?.scrollIntoView({ block: 'end' });
+  }, [recall?.picked, recall?.win]);
+
+  useEffect(() => {
     if (!listening || listenKind !== 'hear' || !currentRootId) return;
     const opened = ROOTS_BY_ID[currentRootId];
     if (!opened) return;
@@ -388,6 +393,13 @@ export function Deck() {
     watchCurrentClip(true, 'hear');
   }
 
+  function retryRecall() {
+    setRecall((cur) => {
+      if (!cur || cur.rootId !== id || cur.win) return cur;
+      return { ...cur, picked: null };
+    });
+  }
+
   function startRecall() {
     if (listen.disableKnowThis) return;
     const wordBeat =
@@ -562,32 +574,36 @@ export function Deck() {
                   <p className="ww-listen-line">{hearHold.line}</p>
                 </div>
               ) : null}
-              <div className={`ww-means${missRemember ? ' is-miss' : ''}${finding ? ' is-find' : ''}${quizHero ? ' is-quiz' : ''}`}>
-                <span className="arrow" aria-hidden="true">
-                  →
-                </span>
-                <span className="word">
-                  {quizHero
-                    ? quizHero.means
-                    : deckMeansWord({
-                        mean: root.mean,
-                        studying,
-                        findWord: findWord ?? undefined,
-                        findDef: findDef ?? undefined,
-                      })}
-                </span>
-                <span className="alt">
-                  {quizHero
-                    ? quizHero.alt
-                    : deckMeansAlt({
-                        alt: root.alt,
-                        studying,
-                        missed: missRemember,
-                        findWord: findWord ?? undefined,
-                        findRoot: finding ? root.root : undefined,
-                      })}
-                </span>
-              </div>
+              {quizHero ? (
+                quizHero.hint ? (
+                  <div className="ww-means is-quiz">
+                    <span className="alt">{quizHero.hint}</span>
+                  </div>
+                ) : null
+              ) : (
+                <div className={`ww-means${missRemember ? ' is-miss' : ''}${finding ? ' is-find' : ''}`}>
+                  <span className="arrow" aria-hidden="true">
+                    →
+                  </span>
+                  <span className="word">
+                    {deckMeansWord({
+                      mean: root.mean,
+                      studying,
+                      findWord: findWord ?? undefined,
+                      findDef: findDef ?? undefined,
+                    })}
+                  </span>
+                  <span className="alt">
+                    {deckMeansAlt({
+                      alt: root.alt,
+                      studying,
+                      missed: missRemember,
+                      findWord: findWord ?? undefined,
+                      findRoot: finding ? root.root : undefined,
+                    })}
+                  </span>
+                </div>
+              )}
               {finding && findWord ? (
                 <p className="ww-lead2 is-find">
                   {findLeadLine(findWord, findSplit ?? openSplit ?? '')}
@@ -687,7 +703,8 @@ export function Deck() {
                   if (quizRecall.beat.kind === 'gloss') cls += ' is-gloss';
                   if (quizRecall.picked !== null) {
                     cls += ' done';
-                    if (idx === quizRecall.picked && !o.ok) cls += ' wrong';
+                    if (o.ok) cls += ' correct';
+                    else if (idx === quizRecall.picked) cls += ' wrong';
                   }
                   return (
                     <button key={o.label} type="button" className={cls} onClick={() => pickRecall(idx)}>
@@ -718,7 +735,7 @@ export function Deck() {
                       {rememberLeaveLabel({ missed: missRemember })}
                     </Button>
                   ) : (
-                    <Button onClick={startRecall}>Try again — you've got this</Button>
+                    <Button onClick={retryRecall}>Try again — you've got this</Button>
                   )}
                 </div>
               ) : null}
@@ -771,7 +788,7 @@ export function Deck() {
                     ? findHintLine(findWord)
                     : "One tap. No shame if you miss — we'll show you."}
               </span>
-            ) : done && !remembering && !finding ? (
+            ) : quizRecall ? null : done && !remembering && !finding ? (
               <Badge variant="solid" jewel="jade">
                 ✓ Learned
               </Badge>
@@ -785,7 +802,7 @@ export function Deck() {
                 {finding ? findKnowLabel() : 'I know this ✓'}
               </Button>
             )}
-            {won || !nextTap.showNextRoot ? null : (
+            {won || !nextTap.showNextRoot || (quizRecall && quizRecall.picked !== null) ? null : (
               <Button variant="ghost" onClick={() => go(1)} disabled={listen.disableNextRoot}>
                 Next root →
               </Button>
