@@ -16,7 +16,9 @@ describe('after Hear: one next tap, no Rush dump', () => {
     expect(deck).toContain('showRush={nextTap.showRush}');
     expect(deck).toContain('showNext={nextTap.showNextRoot}');
     expect(deck).toContain('nextDisabled={listen.disableNextRoot}');
-    expect(deck).toContain('won || !nextTap.showNextRoot ? null');
+    expect(deck).toContain(
+      'won || !nextTap.showNextRoot || (quizRecall && quizRecall.picked !== null) ? null',
+    );
   });
 
   it('does not invent smash-together Hear copy — Hear/Yes strings stay sequential', () => {

@@ -43,6 +43,7 @@ function palOf(root: Root) {
 /**
  * Daily Challenge — five openable roots for today's local date. Kid-fast:
  * scene on screen, one-beat recall, retry on a miss (teach, don't shame).
+ * Try again asks that same question again — not a different word.
  * A correct tap holds the meaning until Next — no 800ms dump onto Photo —
  * and peeks the next root (Next · Aqua · water) so Next is not unnamed.
  * Leaving mid-run persists the next unanswered root so Home can say
@@ -225,8 +226,7 @@ export function DailyChallenge() {
   }
 
   function retry() {
-    if (!root) return;
-    dealBeat(root);
+    setPicked(null);
   }
 
   function advance() {
@@ -419,7 +419,7 @@ export function DailyChallenge() {
                 if (beat.kind === 'gloss') cls += ' is-gloss';
                 if (answered) {
                   cls += ' done';
-                  if (o.ok && answeredCorrect) cls += ' correct';
+                  if (o.ok) cls += ' correct';
                   else if (idx === picked && !o.ok) cls += ' wrong';
                 }
                 return (

@@ -14,9 +14,11 @@ export interface DeckQuizHero {
   title: string;
   /** Extra classes on `.ww-root` — is-gloss / is-part / is-build, plus is-long. */
   titleClass: string;
-  /** Hidden answer. Never the school-word gloss or the piece meaning. */
-  means: string;
-  alt: string;
+  /**
+   * Quiet line under the name. Never a glowing "?" and never the answer.
+   * Empty on a pieces question — the ask already says which word.
+   */
+  hint: string;
 }
 
 export interface DeckQuizHeroInput {
@@ -76,8 +78,7 @@ export function deckQuizHero(input: DeckQuizHeroInput): DeckQuizHero | null {
       kind: 'gloss',
       title: word,
       titleClass: titleClass('gloss', word.length >= 14),
-      means: '?',
-      alt: hint,
+      hint,
     };
   }
 
@@ -87,8 +88,7 @@ export function deckQuizHero(input: DeckQuizHeroInput): DeckQuizHero | null {
       kind: 'part',
       title: part,
       titleClass: titleClass('part', part.length >= 9),
-      means: '?',
-      alt: word ? `in ${word}` : 'the other piece',
+      hint: word ? `in ${word}` : 'the other piece',
     };
   }
 
@@ -99,8 +99,7 @@ export function deckQuizHero(input: DeckQuizHeroInput): DeckQuizHero | null {
       kind: 'build',
       title: pieces,
       titleClass: titleClass('build', pieces.length >= 14),
-      means: '?',
-      alt: 'which word',
+      hint: '',
     };
   }
 

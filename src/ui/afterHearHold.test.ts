@@ -38,7 +38,9 @@ describe('after Hear clip: hold spoken-sound + meaning, one next tap', () => {
     expect(deck).toContain('I know this ✓');
     expect(deck).toContain('showRush={nextTap.showRush}');
     expect(deck).toContain('showNext={nextTap.showNextRoot}');
-    expect(deck).toContain('won || !nextTap.showNextRoot ? null');
+    expect(deck).toContain(
+      'won || !nextTap.showNextRoot || (quizRecall && quizRecall.picked !== null) ? null',
+    );
     expect(nav).toContain('showRush');
     expect(nav).toContain('showNext');
   });
