@@ -7,7 +7,10 @@
  */
 import { buildBig } from '../../core/wordParts';
 
+export type DeckQuizKind = 'gloss' | 'part' | 'build';
+
 export interface DeckQuizHero {
+  kind: DeckQuizKind;
   title: string;
   /** Extra classes on `.ww-root` — is-gloss / is-part / is-build, plus is-long. */
   titleClass: string;
@@ -29,8 +32,30 @@ function clean(raw?: string | null): string {
   return raw?.replace(/\s+/g, ' ').trim() ?? '';
 }
 
-function titleClass(kind: 'gloss' | 'part' | 'build', long: boolean): string {
+function titleClass(kind: DeckQuizKind, long: boolean): string {
   return long ? `is-${kind} is-long` : `is-${kind}`;
+}
+
+/** Label above the giant name — the thing being asked, not "Greek Root". */
+export function deckQuizEyebrow(kind: DeckQuizKind): string {
+  if (kind === 'part') return 'Other piece';
+  if (kind === 'build') return 'These pieces';
+  return 'This word';
+}
+
+/**
+ * Corner name on Daily. A gloss, piece, or pieces question names that
+ * thing. A meaning or which-word question stays on the root.
+ */
+export function questionHudName(input: DeckQuizHeroInput): {
+  name: string;
+  quiz: boolean;
+  long: boolean;
+} {
+  const root = clean(input.root);
+  const hero = deckQuizHero(input);
+  if (!hero) return { name: root || 'this root', quiz: false, long: false };
+  return { name: hero.title, quiz: true, long: hero.titleClass.includes('is-long') };
 }
 
 /**
@@ -48,6 +73,7 @@ export function deckQuizHero(input: DeckQuizHeroInput): DeckQuizHero | null {
     if (!word) return null;
     const hint = root && mean ? `from ${root} · ${mean}` : root ? `from ${root}` : 'this word';
     return {
+      kind: 'gloss',
       title: word,
       titleClass: titleClass('gloss', word.length >= 14),
       means: '?',
@@ -58,6 +84,7 @@ export function deckQuizHero(input: DeckQuizHeroInput): DeckQuizHero | null {
   if (input.kind === 'part') {
     if (!part) return null;
     return {
+      kind: 'part',
       title: part,
       titleClass: titleClass('part', part.length >= 9),
       means: '?',
@@ -69,6 +96,7 @@ export function deckQuizHero(input: DeckQuizHeroInput): DeckQuizHero | null {
     const pieces = buildBig(split);
     if (!pieces) return null;
     return {
+      kind: 'build',
       title: pieces,
       titleClass: titleClass('build', pieces.length >= 14),
       means: '?',

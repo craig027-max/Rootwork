@@ -21,6 +21,7 @@ import { buildRecall, type RecallBeat } from '../core/recall';
 import { Scene } from './Scene';
 import { findSuccessLine, recapDeckEntry } from '../core/deckFlow';
 import { buildBig, buildYesLine, partYesLine, wordYesLine } from '../core/wordParts';
+import { questionHudName } from './deck/deckQuizHero';
 import { todayRushRecap } from '../core/rushRecap';
 import {
   buildDailyDone,
@@ -106,6 +107,17 @@ export function DailyChallenge() {
   const bankedRef = useRef(false);
 
   const root = deal[qi];
+  const playHud =
+    root && beat
+      ? questionHudName({
+          root: root.root,
+          mean: root.mean,
+          kind: beat.kind,
+          word: beat.word,
+          part: beat.part,
+          split: beat.split,
+        })
+      : null;
   const resumeRoot = resumeQi != null ? deal[resumeQi] : undefined;
   const answered = picked !== null;
   const answeredCorrect = answered && beat ? (beat.opts[picked!]?.ok ?? false) : false;
@@ -349,7 +361,11 @@ export function DailyChallenge() {
                 {qi + 1} / {deal.length}
               </span>
               <span className="q-combo">Daily</span>
-              <span className="q-score">{root.root}</span>
+              <span
+                className={`q-score${playHud?.quiz ? ' is-quiz' : ''}${playHud?.long ? ' is-long' : ''}`}
+              >
+                {playHud?.name ?? root.root}
+              </span>
             </div>
             <div className="q-prog">
               <span style={{ width: `${(qi / deal.length) * 100}%` }} />
