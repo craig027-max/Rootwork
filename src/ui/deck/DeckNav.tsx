@@ -11,7 +11,8 @@ import { deckIndexAria, deckNavMeta } from './deckChrome';
  * index must not sit over that same coral miss Browse already named.
  * Prev stays hidden on Remember so Bio teach cannot dump over Geo.
  * Find names Biology in the centre — Bio · life must not sit over the
- * school word they typed.
+ * school word they typed. A gloss, piece, or pieces question names
+ * that thing — Bio · ? must not sit under Biology.
  */
 export function DeckNav({
   rootLabel,
@@ -31,6 +32,8 @@ export function DeckNav({
   missName,
   finding = false,
   findWord,
+  quizzing = false,
+  quizLong = false,
 }: {
   rootLabel: string;
   meaning: string;
@@ -55,6 +58,9 @@ export function DeckNav({
   /** Browse school-word tap — nav meta is Find · Biology, not Card 01 / 183. */
   finding?: boolean;
   findWord?: string;
+  /** Gloss / piece / pieces — centre is that name, and it must fit the pill. */
+  quizzing?: boolean;
+  quizLong?: boolean;
 }) {
   const meta = deckNavMeta({ missed, missName, findWord, tierName, position, total });
   const indexAria = deckIndexAria({ missed, finding });
@@ -67,7 +73,9 @@ export function DeckNav({
       ) : null}
       <button
         type="button"
-        className={`ww-nav-cur${missed ? ' is-miss' : ''}${finding ? ' is-find' : ''}`}
+        className={`ww-nav-cur${missed ? ' is-miss' : ''}${finding ? ' is-find' : ''}${
+          quizzing ? ' is-quiz' : ''
+        }${quizLong ? ' is-long' : ''}`}
         onClick={onIndex}
         title="Open index"
       >

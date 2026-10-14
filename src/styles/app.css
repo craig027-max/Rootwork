@@ -792,6 +792,11 @@
   .ww-means.is-quiz {
     display: flex;
   }
+  .ww-nav-cur.is-quiz,
+  .ww-nav-cur.is-quiz .r,
+  .ww-caption.is-quiz {
+    display: block;
+  }
   .ww-nav-cur.is-find,
   .ww-nav-cur.is-find .meta {
     display: block;
@@ -1720,6 +1725,22 @@ button.ww-schip:focus-visible {
 .ww-nav-cur.is-find .r {
   overflow-wrap: anywhere;
 }
+.ww-nav-cur.is-quiz .r {
+  display: block;
+  max-width: 14ch;
+  margin: 0 auto;
+  overflow-wrap: anywhere;
+  line-height: 1.05;
+}
+.ww-nav-cur.is-quiz.is-long .r {
+  font-size: 0.72rem;
+  max-width: 16ch;
+}
+.ww-caption.is-quiz {
+  letter-spacing: 0.04em;
+  text-transform: none;
+  font-size: 0.68rem;
+}
 .ww-hero {
   display: grid;
   grid-template-columns: minmax(0, 0.92fr) minmax(0, 1.08fr);
@@ -2528,6 +2549,11 @@ button.ww-schip:focus-visible {
   .ww-means.is-quiz {
     display: flex;
   }
+  .ww-nav-cur.is-quiz,
+  .ww-nav-cur.is-quiz .r,
+  .ww-caption.is-quiz {
+    display: block;
+  }
   /* Tap reveal: authored part-split (`b`) — not a title tooltip. */
   .ww-word-split {
     display: block;
@@ -2719,6 +2745,11 @@ button.ww-schip:focus-visible {
   }
   .ww-means.is-quiz {
     display: flex;
+  }
+  .ww-nav-cur.is-quiz,
+  .ww-nav-cur.is-quiz .r,
+  .ww-caption.is-quiz {
+    display: block;
   }
   .ww-nav-cur.is-find,
   .ww-nav-cur.is-find .meta {

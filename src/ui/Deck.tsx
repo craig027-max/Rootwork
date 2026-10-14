@@ -482,7 +482,7 @@ export function Deck() {
               <span
                 className={`ww-caption${remembering ? ' is-remember' : ''}${
                   missRemember ? ' is-remember-miss' : ''
-                }`}
+                }${quizHero ? ' is-quiz' : ''}`}
               >
                 {deckCaption({
                   emoji,
@@ -493,6 +493,7 @@ export function Deck() {
                   missed: missRemember,
                   studying,
                   findWord: findWord ?? undefined,
+                  quizTitle: quizHero?.title,
                 })}
               </span>
             </div>
@@ -500,7 +501,7 @@ export function Deck() {
               <span
                 className={`ww-eyebrow2${remembering ? ' is-remember' : ''}${
                   missRemember ? ' is-remember-miss' : ''
-                }`}
+                }${quizHero ? ' is-quiz' : ''}`}
               >
                 <span className="ww-eyebrow-dot" aria-hidden="true" />
                 {deckEyebrow({
@@ -509,6 +510,7 @@ export function Deck() {
                   remembering,
                   missed: missRemember,
                   findWord: findWord ?? undefined,
+                  quizKind: quizHero?.kind,
                 })}
               </span>
               <div
@@ -797,6 +799,7 @@ export function Deck() {
           root: root.root,
           missed: missRemember,
           findWord: findWord ?? undefined,
+          quizTitle: quizHero?.title,
         })}
         meaning={deckNavMeaning({
           meaning: studying ? '?' : root.mean,
@@ -804,6 +807,7 @@ export function Deck() {
           findWord: findWord ?? undefined,
           findDef: findDef ?? undefined,
           studying,
+          quizTitle: quizHero?.title,
         })}
         tierName={tierName}
         position={position}
@@ -820,6 +824,8 @@ export function Deck() {
         missName={root.root}
         finding={finding}
         findWord={findWord ?? undefined}
+        quizzing={Boolean(quizHero)}
+        quizLong={Boolean(quizHero?.titleClass.includes('is-long'))}
       />
 
       {indexOpen ? (

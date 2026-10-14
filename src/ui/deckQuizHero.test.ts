@@ -5,10 +5,13 @@ import { ROOTS } from '../data/roots';
 import { canon } from '../core/distractors';
 import { quizGloss } from '../core/wordDef';
 import { buildBig, buildPicksForRoot, otherPartsForRoot } from '../core/wordParts';
-import { deckQuizHero, deckStudyLead } from './deck/deckQuizHero';
+import { deckQuizEyebrow, deckQuizHero, deckStudyLead, questionHudName } from './deck/deckQuizHero';
+import { deckCaption, deckEyebrow, deckNavMeaning, deckNavRoot } from './deck/deckChrome';
 
 const deck = readFileSync(join(process.cwd(), 'src/ui/Deck.tsx'), 'utf8');
+const daily = readFileSync(join(process.cwd(), 'src/ui/DailyChallenge.tsx'), 'utf8');
 const css = readFileSync(join(process.cwd(), 'src/styles/app.css'), 'utf8');
+const quizCss = readFileSync(join(process.cwd(), 'src/styles/quiz.css'), 'utf8');
 
 function mediaBlock(source: string, query: string): string {
   const start = source.indexOf(`@media (${query})`);
@@ -202,8 +205,190 @@ describe('Study quiz hero names the thing being asked', () => {
     for (const block of [phone, card, short]) {
       expect(block).toMatch(/\.ww-root\.is-gloss,\s*\.ww-root\.is-part,\s*\.ww-root\.is-build\s*\{[^}]*display:\s*block/);
       expect(block).toMatch(/\.ww-means\.is-quiz\s*\{[^}]*display:\s*flex/);
+      expect(block).toMatch(/\.ww-nav-cur\.is-quiz/);
+      expect(block).toMatch(/\.ww-caption\.is-quiz\s*\{[^}]*display:\s*block/);
       expect(block).not.toMatch(/\.ww-root\.is-gloss\s*\{[^}]*display:\s*none/);
       expect(block).not.toMatch(/\.ww-means\.is-quiz\s*\{[^}]*display:\s*none/);
+      expect(block).not.toMatch(/\.ww-nav-cur\.is-quiz\s*\{[^}]*display:\s*none/);
+      expect(block).not.toMatch(/\.ww-caption\.is-quiz\s*\{[^}]*display:\s*none/);
+    }
+  });
+});
+
+describe('Study and Daily chrome name the thing being asked', () => {
+  it('names Biology in the nav, caption, and eyebrow — not Bio · ? / Greek Root / watch the scene', () => {
+    const hero = deckQuizHero({
+      root: bio.root,
+      mean: bio.mean,
+      kind: 'gloss',
+      word: 'Biology',
+    });
+    expect(hero?.kind).toBe('gloss');
+    expect(deckQuizEyebrow('gloss')).toBe('This word');
+    expect(deckNavRoot({ root: bio.root, quizTitle: hero?.title })).toBe('Biology');
+    expect(deckNavRoot({ root: bio.root, quizTitle: hero?.title })).not.toBe(bio.root);
+    expect(deckNavMeaning({ meaning: '?', studying: true, quizTitle: hero?.title })).toBe('');
+    expect(deckNavMeaning({ meaning: bio.mean, quizTitle: hero?.title })).not.toBe(bio.mean);
+    expect(deckEyebrow({ root: bio.root, lang: 'Greek', quizKind: 'gloss' })).toBe('This word');
+    expect(deckEyebrow({ root: bio.root, lang: 'Greek', quizKind: 'gloss' })).not.toMatch(/Greek Root/);
+    expect(
+      deckCaption({
+        emoji: '🧬',
+        root: bio.root,
+        mean: bio.mean,
+        alt: bio.alt,
+        studying: true,
+        quizTitle: hero?.title,
+      }),
+    ).toBe('🧬 Biology');
+    expect(
+      deckCaption({
+        emoji: '🧬',
+        root: bio.root,
+        mean: bio.mean,
+        alt: bio.alt,
+        studying: true,
+        quizTitle: hero?.title,
+      }),
+    ).not.toMatch(/watch the scene/);
+  });
+
+  it('names the piece and the pieces — and a root question stays on Bio', () => {
+    expect(deckQuizEyebrow('part')).toBe('Other piece');
+    expect(deckQuizEyebrow('build')).toBe('These pieces');
+    expect(deckNavRoot({ root: bio.root, quizTitle: '-logy' })).toBe('-logy');
+    expect(deckNavRoot({ root: bio.root, quizTitle: 'bio + -logy' })).toBe('bio + -logy');
+    expect(deckEyebrow({ root: bio.root, lang: 'Greek', quizKind: 'part' })).toBe('Other piece');
+    expect(deckEyebrow({ root: bio.root, lang: 'Greek', quizKind: 'build' })).toBe('These pieces');
+    expect(deckNavRoot({ root: bio.root })).toBe(bio.root);
+    expect(deckNavMeaning({ meaning: '?', studying: true })).toBe('?');
+    expect(deckEyebrow({ root: bio.root, lang: 'Greek' })).toBe('Greek Root');
+    expect(
+      deckCaption({
+        emoji: '🧬',
+        root: bio.root,
+        mean: bio.mean,
+        alt: bio.alt,
+        studying: true,
+      }),
+    ).toBe('🧬 watch the scene');
+  });
+
+  it('lets Remember and Find win over a quiz title', () => {
+    expect(deckNavRoot({ root: 'Geo', missed: true, quizTitle: 'Geography' })).toBe('Missed Geo');
+    expect(deckNavRoot({ root: bio.root, findWord: 'Biology', quizTitle: '-logy' })).toBe('Biology');
+    expect(deckEyebrow({ root: 'Geo', lang: 'Greek', missed: true, quizKind: 'gloss' })).toBe(
+      'Missed Geo',
+    );
+    expect(
+      deckEyebrow({ root: bio.root, lang: 'Greek', findWord: 'Biology', quizKind: 'part' }),
+    ).toBe('Find Biology');
+    expect(
+      deckCaption({
+        emoji: '🌍',
+        root: 'Geo',
+        mean: 'earth',
+        alt: 'land',
+        missed: true,
+        quizTitle: 'Geography',
+      }),
+    ).toBe('🌍 Missed Geo');
+    expect(deckNavMeaning({ meaning: 'earth', missed: true, quizTitle: 'Geography' })).toBe('');
+  });
+
+  it('names every catalog gloss, piece, and build in the nav and caption', () => {
+    for (const root of ROOTS) {
+      for (const word of root.words) {
+        const spoken = quizGloss(word.d);
+        if (!spoken || canon(spoken) === canon(root.mean)) continue;
+        const title = word.w.replace(/\s+/g, ' ').trim();
+        expect(deckNavRoot({ root: root.root, quizTitle: title }), word.w).toBe(title);
+        if (title !== root.root) {
+          expect(deckNavRoot({ root: root.root, quizTitle: title }), word.w).not.toBe(root.root);
+        }
+        expect(deckNavMeaning({ meaning: root.mean, quizTitle: title }), word.w).not.toBe(root.mean);
+        expect(
+          deckCaption({
+            emoji: '🔤',
+            root: root.root,
+            mean: root.mean,
+            alt: root.alt,
+            studying: true,
+            quizTitle: title,
+          }),
+          word.w,
+        ).toBe(`🔤 ${title}`);
+      }
+      for (const part of otherPartsForRoot(root)) {
+        expect(deckNavRoot({ root: root.root, quizTitle: part.letters }), part.word).toBe(part.letters);
+        expect(deckEyebrow({ root: root.root, lang: 'Greek', quizKind: 'part' }), part.word).toBe(
+          'Other piece',
+        );
+        expect(deckEyebrow({ root: root.root, lang: 'Greek', quizKind: 'part' }), part.word).not.toBe(
+          part.mean,
+        );
+      }
+      for (const pick of buildPicksForRoot(root)) {
+        const pieces = buildBig(pick.split);
+        expect(deckNavRoot({ root: root.root, quizTitle: pieces }), pick.word).toBe(pieces);
+        expect(deckNavRoot({ root: root.root, quizTitle: pieces }), pick.word).not.toBe(pick.word);
+        expect(deckNavRoot({ root: root.root, quizTitle: pieces }), pick.word).not.toBe(root.root);
+      }
+    }
+  });
+
+  it('wires Study nav, caption, and eyebrow to the quiz hero', () => {
+    expect(deck).toContain('quizTitle: quizHero?.title');
+    expect(deck).toContain('quizKind: quizHero?.kind');
+    expect(deck).toContain('quizzing={Boolean(quizHero)}');
+    expect(deck).toContain("quizHero ? ' is-quiz' : ''");
+    expect(css).toMatch(/\.ww-nav-cur\.is-quiz \.r\s*\{[^}]*overflow-wrap:\s*anywhere/);
+    expect(css).toMatch(/\.ww-nav-cur\.is-quiz\.is-long \.r/);
+    expect(css).toMatch(/\.ww-caption\.is-quiz\s*\{[^}]*text-transform:\s*none/);
+  });
+
+  it('names Biology in the Daily corner — a meaning question stays on Bio', () => {
+    const glossHud = questionHudName({
+      root: bio.root,
+      mean: bio.mean,
+      kind: 'gloss',
+      word: 'Biology',
+    });
+    expect(glossHud.name).toBe('Biology');
+    expect(glossHud.name).not.toBe(bio.root);
+    expect(glossHud.quiz).toBe(true);
+    const partHud = questionHudName({
+      root: bio.root,
+      mean: bio.mean,
+      kind: 'part',
+      word: 'Biology',
+      part: '-logy',
+    });
+    expect(partHud.name).toBe('-logy');
+    expect(partHud.name).not.toBe('study of');
+    const buildHud = questionHudName({
+      root: bio.root,
+      mean: bio.mean,
+      kind: 'build',
+      split: biology.b,
+    });
+    expect(buildHud.name).toBe(buildBig(biology.b));
+    expect(buildHud.name).not.toBe('Biology');
+    expect(questionHudName({ root: bio.root, mean: bio.mean, kind: 'mean' }).name).toBe(bio.root);
+    expect(questionHudName({ root: bio.root, mean: bio.mean, kind: 'word', word: 'Biology' }).name).toBe(
+      bio.root,
+    );
+    expect(questionHudName({ root: bio.root, mean: bio.mean, kind: 'gloss' }).name).toBe(bio.root);
+    expect(daily).toContain('questionHudName');
+    expect(daily).toContain('playHud?.name');
+    expect(daily).toContain("playHud?.quiz ? ' is-quiz' : ''");
+    expect(quizCss).toMatch(/\.q-score\.is-quiz\s*\{[^}]*text-transform:\s*none/);
+    expect(quizCss).toMatch(/\.q-score\.is-quiz\s*\{[^}]*overflow-wrap:\s*anywhere/);
+    expect(quizCss).toMatch(/\.q-daily \.q-play \.q-hud\s*\{[^}]*padding-right:\s*40px/);
+    for (const query of ['max-width: 560px', 'max-height: 860px', 'max-height: 720px']) {
+      const block = mediaBlock(quizCss, query);
+      expect(block, query).toMatch(/\.q-score\.is-quiz\s*\{[^}]*display:\s*block/);
+      expect(block, query).not.toMatch(/\.q-score\.is-quiz\s*\{[^}]*display:\s*none/);
     }
   });
 });

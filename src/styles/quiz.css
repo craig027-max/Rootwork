@@ -150,6 +150,22 @@
 .q-combo { color: var(--text-muted); transition: color var(--dur-fast); }
 .q-combo.live { color: var(--accent-amber); text-shadow: 0 0 16px rgba(245,158,11,0.5); }
 .q-score { font-family: var(--font-game); font-weight: 800; font-size: 1rem; color: var(--text-primary); letter-spacing: 0; }
+.q-score.is-quiz {
+  text-transform: none;
+  font-size: 0.82rem;
+  line-height: 1.1;
+  text-align: right;
+  max-width: 42%;
+  overflow-wrap: anywhere;
+}
+/* The close control sits on the card's top-right on a phone. A school
+   word or piece name must stay to the left of that circle. */
+@media (max-width: 760px) {
+  .q-daily .q-play .q-hud {
+    padding-right: 40px;
+  }
+}
+.q-score.is-quiz.is-long { font-size: 0.72rem; }
 .q-prog { height: 4px; border-radius: 4px; background: rgba(255,255,255,0.08); margin: 14px 0 4px; overflow: hidden; }
 .q-prog span { display: block; height: 100%; background: var(--qgrad); transition: width var(--dur-med) var(--ease-snap); }
 .q-ask { font-family: var(--font-mono); font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-top: 12px; }
@@ -363,6 +379,7 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-prompt { padding: 8px 0 10px; }
   .q-ask { margin-top: 8px; }
   .q-hud { flex-wrap: wrap; gap: 6px 10px; }
+  .q-score.is-quiz { display: block; max-width: 46%; }
   .q-foot { flex-wrap: wrap; min-height: 44px; }
   .q-fb.good { display: block; }
   .q-fb.bad { display: block; }
@@ -476,6 +493,7 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   }
   .q-opt { min-height: 44px; padding: 10px 12px; }
   .q-opt .q-lbl { font-size: 1rem; }
+  .q-score.is-quiz { display: block; }
 }
 
 @media (max-height: 720px) {
@@ -513,6 +531,7 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-daily-chip.is-miss { display: inline-flex; }
   .q-fb.bad { display: block; }
   .q-result .q-fb.good { display: block; }
+  .q-score.is-quiz { display: block; }
 }
 
 @media (hover: none) {

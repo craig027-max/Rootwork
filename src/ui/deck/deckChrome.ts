@@ -1,4 +1,5 @@
 import { shortWordDef } from '../../core/wordDef';
+import { deckQuizEyebrow, type DeckQuizKind } from './deckQuizHero';
 
 /** Deck strip / nav after a miss — not Tier 1 · Starter / Card 02 / 183.
  *  Find leftover: title / means / nav name the school word, not Bio / life. */
@@ -107,12 +108,16 @@ export function deckCaption(opts: {
   missed?: boolean;
   studying?: boolean;
   findWord?: string;
+  /** Gloss / piece / pieces question — name that thing, not "watch the scene". */
+  quizTitle?: string;
 }): string {
   const name = cleanName(opts.root);
   if (opts.missed) return name ? `${opts.emoji} Missed ${name}` : `${opts.emoji} Missed`;
   const word = cleanName(opts.findWord);
   if (word) return `${opts.emoji} ${word}`;
   if (opts.remembering) return name ? `${opts.emoji} Remember ${name}` : `${opts.emoji} Remember`;
+  const asked = cleanName(opts.quizTitle);
+  if (asked) return `${opts.emoji} ${asked}`;
   if (opts.studying) return `${opts.emoji} watch the scene`;
   return `${opts.emoji} ${opts.mean} — ${opts.alt}`;
 }
@@ -124,12 +129,15 @@ export function deckEyebrow(opts: {
   remembering?: boolean;
   missed?: boolean;
   findWord?: string;
+  /** Gloss / piece / pieces — not "Greek Root" over Biology. */
+  quizKind?: DeckQuizKind;
 }): string {
   const name = cleanName(opts.root);
   if (opts.missed) return name ? `Missed ${name}` : 'Missed';
   const word = cleanName(opts.findWord);
   if (word) return `Find ${word}`;
   if (opts.remembering) return name ? `Remember ${name}` : 'Remember';
+  if (opts.quizKind) return deckQuizEyebrow(opts.quizKind);
   return `${opts.lang} Root`;
 }
 
@@ -155,11 +163,19 @@ export function deckMeansAlt(opts: {
 
 /** Nav centre — Missed Geo, not Geo · ? over the same coral miss.
  *  Find names Biology, not Bio · life over the school word. */
-export function deckNavRoot(opts: { root: string; missed?: boolean; findWord?: string }): string {
+export function deckNavRoot(opts: {
+  root: string;
+  missed?: boolean;
+  findWord?: string;
+  /** Gloss / piece / pieces — Biology, not Bio · ? under that question. */
+  quizTitle?: string;
+}): string {
   const name = cleanName(opts.root);
   if (opts.missed) return name ? `Missed ${name}` : 'Missed';
   const word = cleanName(opts.findWord);
   if (word) return word;
+  const asked = cleanName(opts.quizTitle);
+  if (asked) return asked;
   return name;
 }
 
@@ -171,6 +187,8 @@ export function deckNavMeaning(opts: {
   findWord?: string;
   findDef?: string;
   studying?: boolean;
+  /** Gloss / piece / pieces — don't hang ? or life under Biology. */
+  quizTitle?: string;
 }): string {
   if (opts.missed) return '';
   const word = cleanName(opts.findWord);
@@ -179,6 +197,7 @@ export function deckNavMeaning(opts: {
     const def = cleanName(opts.findDef);
     return def ? shortWordDef(def) : '';
   }
+  if (cleanName(opts.quizTitle)) return '';
   return opts.meaning;
 }
 
