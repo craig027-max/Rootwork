@@ -4,7 +4,9 @@ import { describe, expect, it } from 'vitest';
 
 const deck = readFileSync(join(process.cwd(), 'src/ui/Deck.tsx'), 'utf8');
 const daily = readFileSync(join(process.cwd(), 'src/ui/DailyChallenge.tsx'), 'utf8');
+const rush = readFileSync(join(process.cwd(), 'src/ui/RootRush.tsx'), 'utf8');
 const css = readFileSync(join(process.cwd(), 'src/styles/app.css'), 'utf8');
+const quizCss = readFileSync(join(process.cwd(), 'src/styles/quiz.css'), 'utf8');
 
 describe('A miss retries the question they just missed', () => {
   it('Study Try again clears the pick on that beat — it does not deal a new one', () => {
@@ -36,6 +38,27 @@ describe('A miss retries the question they just missed', () => {
     expect(daily).toContain('Try again ›');
     expect(daily).toContain('dealBeat(first)');
     expect(daily).toContain('dealBeat(n)');
+  });
+
+  it('Rush Try again stays on that question — the first miss still counts', () => {
+    expect(rush).toContain('rushAnswerKind(hitsRef.current[qi] === false, ok)');
+    expect(rush).toContain("kind === 'practice-hit' || kind === 'practice-miss'");
+    expect(rush).toContain('if (kind === \'score-hit\')');
+    expect(rush).toMatch(/function retry\(\) \{\s*if \(phase !== 'play' \|\| picked === null \|\| answeredCorrect\) return;\s*setPicked\(null\);\s*\}/);
+    expect(rush).toContain('onClick={retry}');
+    expect(rush).toContain('{RUSH_RETRY_LABEL}');
+    expect(rush).toContain('hits[qi] === false');
+    expect(rush).toContain('rushPracticeYesLine');
+    expect(rush).toContain('if (answeredCorrect) advance()');
+    expect(rush).toContain('else retry()');
+    expect(rush).not.toMatch(/onClick=\{advance\}>\s*\{isLast \? 'See results ›' : 'Next ›'\}/);
+    const phone = quizCss.slice(quizCss.indexOf('@media (max-width: 560px)'));
+    expect(phone).toMatch(/\.q-rush \.q-play \.q-next\s*\{[^}]*display:\s*block/);
+    expect(phone).toMatch(/\.q-rush \.q-play \.q-next\s*\{[^}]*width:\s*100%/);
+    expect(phone).not.toMatch(/\.q-rush \.q-play \.q-next\s*\{[^}]*display:\s*none/);
+    const short = quizCss.slice(quizCss.indexOf('@media (max-height: 720px)'));
+    expect(short).toMatch(/\.q-rush \.q-play \.q-next\s*\{[^}]*display:\s*block/);
+    expect(short).not.toMatch(/\.q-rush \.q-play \.q-next\s*\{[^}]*display:\s*none/);
   });
 
   it('paints the right Study tile green, including on a phone', () => {

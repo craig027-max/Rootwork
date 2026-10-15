@@ -171,8 +171,9 @@ export function rushHoldLine(
 }
 
 /**
- * After a miss — the meaning, then Next. Not a label-only dump
- * ("Nope — it's time") that hides the root they just missed.
+ * After a miss — the meaning, then Try again on that same question.
+ * Not a label-only dump ("Nope — it's time") that hides the root
+ * they just missed, and not a jump to the next word.
  */
 export function rushMissLine(rootName: string, mean: string): string {
   const name = rootName.replace(/\s+/g, ' ').trim();
@@ -268,6 +269,61 @@ export function rushWordHoldLine(
 /** After a which-word miss — that school word, not the root. */
 export function rushWordMissLine(word: string, split?: string): string {
   return wordMissLine(word, split);
+}
+
+/**
+ * First tap is the grade. A later tap on that same miss does not add
+ * points, does not rebuild the combo, and does not flip the miss.
+ */
+export type RushAnswerKind = 'score-hit' | 'score-miss' | 'practice-hit' | 'practice-miss';
+
+export function rushAnswerKind(alreadyMissed: boolean, ok: boolean): RushAnswerKind {
+  if (alreadyMissed) return ok ? 'practice-hit' : 'practice-miss';
+  return ok ? 'score-hit' : 'score-miss';
+}
+
+/** Miss foot — stay on this question. Not Next onto a different word. */
+export const RUSH_RETRY_LABEL = 'Try again ›';
+
+/**
+ * Yes after they get a missed question on a later tap. Same sentence as
+ * a scored hit, with no +points — the first miss already counted.
+ */
+export function rushPracticeHoldLine(rootName: string, mean: string): string {
+  const name = rootName.replace(/\s+/g, ' ').trim();
+  const spokenMean = mean.replace(/\s+/g, ' ').trim();
+  if (!name || !spokenMean) return 'Yes — you got it.';
+  return `Yes — ${name} means ${spokenMean}.`;
+}
+
+export function rushPracticeYesLine(input: {
+  type: string;
+  rootName: string;
+  mean: string;
+  glossWord?: string;
+  gloss?: string;
+  part?: string;
+  partMean?: string;
+  buildWord?: string;
+  buildSplit?: string;
+  word?: string;
+  wordSplit?: string;
+}): string {
+  if (input.type === 'part' && input.part && input.partMean) {
+    return partYesLine(input.part, input.partMean);
+  }
+  if (input.type === 'gloss' && input.glossWord && input.gloss) {
+    const name = input.glossWord.replace(/\s+/g, ' ').trim();
+    const spoken = input.gloss.replace(/\s+/g, ' ').trim();
+    if (name && spoken) return `Yes — ${name}. ${spoken}.`;
+  }
+  if (input.type === 'build' && input.buildWord && input.buildSplit) {
+    return buildYesLine(input.buildWord, input.buildSplit);
+  }
+  if (input.type === 'word' && input.word) {
+    return wordYesLine(input.word, input.wordSplit);
+  }
+  return rushPracticeHoldLine(input.rootName, input.mean);
 }
 
 /** After a gloss miss — the school word's authored def, not the root. */

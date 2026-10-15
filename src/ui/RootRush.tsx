@@ -21,6 +21,9 @@ import {
   rushGlossMissLine,
   rushHoldLine,
   rushMissLine,
+  rushAnswerKind,
+  rushPracticeYesLine,
+  RUSH_RETRY_LABEL,
   rushPartHoldLine,
   rushPartMissLine,
   rushRecapChipLabel,
@@ -72,7 +75,9 @@ import { samplePeekLabel } from './home/samplePeek';
  *
  * A correct tap names the meaning (Yes — Chron means time) then keeps
  * the combo auto-advance. A miss names it too (Nope — Chron means time)
- * so the Next dump is not label-only. A which-word tap names that school
+ * and Try again asks that same question — not Next onto a different
+ * word. A later correct tap names it without points; the first miss
+ * still counts. A which-word tap names that school
  * word (Yes — Biology. Built from …), not Bio means life. Result + start recap this run as
  * Remember chips — hits keep ✓, misses stay Missed. Owned roots hold
  * meaning then Home, never Bio → Geo. A correct owned hit banks today's
@@ -231,15 +236,18 @@ export function RootRush() {
 
   function answer(idx: number) {
     if (picked !== null || phase !== 'play' || !q) return;
-    setPicked(idx);
     const ok = q.opts[idx]?.ok ?? false;
+    const kind = rushAnswerKind(hitsRef.current[qi] === false, ok);
+    setPicked(idx);
+    // A later tap on a miss stays practice: no points, no combo, miss stays.
+    if (kind === 'practice-hit' || kind === 'practice-miss') return;
     setHits((prev) => {
       const next = prev.slice();
       next[qi] = ok;
       hitsRef.current = next;
       return next;
     });
-    if (ok) {
+    if (kind === 'score-hit') {
       const nextStreak = streak + 1;
       const m = Math.min(MAX_MULT, Math.max(1, nextStreak));
       setStreak(nextStreak);
@@ -250,6 +258,11 @@ export function RootRush() {
     } else {
       setStreak(0);
     }
+  }
+
+  function retry() {
+    if (phase !== 'play' || picked === null || answeredCorrect) return;
+    setPicked(null);
   }
 
   function advance() {
@@ -288,7 +301,8 @@ export function RootRush() {
       }
     } else if (picked !== null && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
-      advance();
+      if (answeredCorrect) advance();
+      else retry();
     }
   }
 
@@ -303,12 +317,17 @@ export function RootRush() {
 
   // Auto-advance after a correct answer so kids aren't clicking Next on every
   // question. 1600ms is long enough to read Yes — {root} means {meaning}.
-  // Wrong answers keep the explicit Next button so the correct answer can
-  // be read. Enter/Space still skips ahead early.
+  // A miss stays on this question (Try again). Enter/Space retries it.
+  // A later correct tap auto-advances the same way, without adding points.
   useEffect(() => {
     if (phase !== 'play' || picked === null || !answeredCorrect) return;
     const t = window.setTimeout(() => advanceRef.current(), AUTO_ADVANCE_MS);
     return () => window.clearTimeout(t);
+  }, [phase, picked, qi, answeredCorrect]);
+
+  useEffect(() => {
+    if (phase !== 'play' || picked === null || answeredCorrect) return;
+    document.querySelector('.q-play .q-next')?.scrollIntoView({ block: 'nearest' });
   }, [phase, picked, qi, answeredCorrect]);
 
   // Keyboard play: 1–4 answers, Enter/Space advances, Escape closes.
@@ -615,15 +634,29 @@ export function RootRush() {
                     q.type === 'build' ? ' is-build' : ''
                   }${q.type === 'word' ? ' is-word' : ''}`}
                 >
-                  {q.type === 'part' && q.part && q.partMean
-                    ? rushPartHoldLine(q.part, q.partMean, 100 * mult, mult)
-                    : q.type === 'gloss' && q.glossWord && q.gloss
-                      ? rushGlossHoldLine(q.glossWord, q.gloss, 100 * mult, mult)
-                      : q.type === 'build' && q.buildWord && q.buildSplit
-                        ? rushBuildHoldLine(q.buildWord, q.buildSplit, 100 * mult, mult)
-                        : q.type === 'word' && q.word
-                          ? rushWordHoldLine(q.word, q.wordSplit ?? '', 100 * mult, mult)
-                          : rushHoldLine(q.root.root, q.root.mean, 100 * mult, mult)}
+                  {hits[qi] === false
+                    ? rushPracticeYesLine({
+                        type: q.type,
+                        rootName: q.root.root,
+                        mean: q.root.mean,
+                        glossWord: q.glossWord,
+                        gloss: q.gloss,
+                        part: q.part,
+                        partMean: q.partMean,
+                        buildWord: q.buildWord,
+                        buildSplit: q.buildSplit,
+                        word: q.word,
+                        wordSplit: q.wordSplit,
+                      })
+                    : q.type === 'part' && q.part && q.partMean
+                      ? rushPartHoldLine(q.part, q.partMean, 100 * mult, mult)
+                      : q.type === 'gloss' && q.glossWord && q.gloss
+                        ? rushGlossHoldLine(q.glossWord, q.gloss, 100 * mult, mult)
+                        : q.type === 'build' && q.buildWord && q.buildSplit
+                          ? rushBuildHoldLine(q.buildWord, q.buildSplit, 100 * mult, mult)
+                          : q.type === 'word' && q.word
+                            ? rushWordHoldLine(q.word, q.wordSplit ?? '', 100 * mult, mult)
+                            : rushHoldLine(q.root.root, q.root.mean, 100 * mult, mult)}
                 </span>
               ) : null}
               {answered && !answeredCorrect ? (
@@ -643,8 +676,8 @@ export function RootRush() {
                             ? rushWordMissLine(q.word, q.wordSplit)
                             : rushMissLine(q.root.root, q.root.mean)}
                   </span>
-                  <button className="q-next" onClick={advance}>
-                    {isLast ? 'See results ›' : 'Next ›'}
+                  <button className="q-next" onClick={retry}>
+                    {RUSH_RETRY_LABEL}
                   </button>
                 </>
               ) : null}
