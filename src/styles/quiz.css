@@ -149,6 +149,7 @@
 .q-count { color: var(--text-muted); }
 .q-combo { color: var(--text-muted); transition: color var(--dur-fast); }
 .q-combo.live { color: var(--accent-amber); text-shadow: 0 0 16px rgba(245,158,11,0.5); }
+.q-combo.is-practice { color: #ff8a8f; text-shadow: none; }
 .q-score { font-family: var(--font-game); font-weight: 800; font-size: 1rem; color: var(--text-primary); letter-spacing: 0; }
 .q-score.is-quiz {
   text-transform: none;

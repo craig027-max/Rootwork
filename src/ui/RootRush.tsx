@@ -22,7 +22,9 @@ import {
   rushHoldLine,
   rushMissLine,
   rushAnswerKind,
+  rushComboLabel,
   rushPracticeYesLine,
+  rushResultTallyLabel,
   RUSH_RETRY_LABEL,
   rushPartHoldLine,
   rushPartMissLine,
@@ -77,8 +79,11 @@ import { samplePeekLabel } from './home/samplePeek';
  * the combo auto-advance. A miss names it too (Nope — Chron means time)
  * and Try again asks that same question — not Next onto a different
  * word. A later correct tap names it without points; the first miss
- * still counts. A which-word tap names that school
- * word (Yes — Biology. Built from …), not Bio means life. Result + start recap this run as
+ * still counts. The combo slot says Streak reset or No points on that
+ * miss — not Combo ready over a tap that will not score. The result
+ * tally says first try once any miss is on the board. A which-word
+ * tap names that school word (Yes — Biology. Built from …), not Bio
+ * means life. Result + start recap this run as
  * Remember chips — hits keep ✓, misses stay Missed. Owned roots hold
  * meaning then Home, never Bio → Geo. A correct owned hit banks today's
  * Remember the same way Daily already does.
@@ -133,6 +138,10 @@ export function RootRush() {
   const [newBestScore, setNewBestScore] = useState(false);
   const [hits, setHits] = useState<boolean[]>([]);
   const hitsRef = useRef<boolean[]>([]);
+  /** This miss broke a visible 🔥 streak. Cleared when the question changes. */
+  const [comboBroke, setComboBroke] = useState(false);
+  /** Try again already cleared this miss. A later miss on it is not a new streak break. */
+  const [retriedMiss, setRetriedMiss] = useState(false);
   const recordedRunRef = useRef(-1); // runSeed of the last banked run
 
   // Every root the learner may open (Tier 1 free; all once entitled) — the
@@ -231,6 +240,8 @@ export function RootRush() {
     setNewBestScore(false);
     setHits([]);
     hitsRef.current = [];
+    setComboBroke(false);
+    setRetriedMiss(false);
     setPhase('play');
   }
 
@@ -256,17 +267,21 @@ export function RootRush() {
       setCorrectCount((x) => x + 1);
       rememberRushHit(rootId(q.root));
     } else {
+      if (streak >= 2) setComboBroke(true);
       setStreak(0);
     }
   }
 
   function retry() {
     if (phase !== 'play' || picked === null || answeredCorrect) return;
+    setRetriedMiss(true);
     setPicked(null);
   }
 
   function advance() {
     if (phase !== 'play' || picked === null) return;
+    setComboBroke(false);
+    setRetriedMiss(false);
     if (!isLast) {
       setPicked(null);
       setQi((x) => x + 1);
@@ -572,8 +587,19 @@ export function RootRush() {
               <span className="q-count">
                 Q {qi + 1} / {questions.length}
               </span>
-              <span className={`q-combo${streak >= 2 ? ' live' : ''}`}>
-                {streak >= 2 ? `🔥 ${streak} streak · ${mult}×` : 'Combo ready'}
+              <span
+                className={`q-combo${
+                  hits[qi] === false ? ' is-practice' : streak >= 2 ? ' live' : ''
+                }`}
+              >
+                {rushComboLabel({
+                  streak,
+                  mult,
+                  missed: hits[qi] === false,
+                  showingMiss: picked !== null && !answeredCorrect,
+                  streakBroke: comboBroke,
+                  retried: retriedMiss,
+                })}
               </span>
               <span className="q-score">{score.toLocaleString()}</span>
             </div>
@@ -711,7 +737,7 @@ export function RootRush() {
                 <b>
                   {correctCount}/{questions.length}
                 </b>
-                <span>correct</span>
+                <span>{rushResultTallyLabel(hits.some((ok) => ok === false))}</span>
               </div>
               <div>
                 <b>{maxStreak}×</b>

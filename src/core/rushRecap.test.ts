@@ -16,6 +16,8 @@ import {
   rushHoldLine,
   rushMissLine,
   rushAnswerKind,
+  rushComboLabel,
+  rushResultTallyLabel,
   rushPracticeHoldLine,
   rushPracticeYesLine,
   RUSH_RETRY_LABEL,
@@ -230,6 +232,34 @@ describe('rushHoldLine + rushMissLine + rushRecapChipLabel', () => {
         gloss: 'The science of living things',
       }),
     ).not.toMatch(/Bio means life|\+/);
+  });
+
+  it('a missed question does not say Combo ready, and the result tally says first try', () => {
+    const fresh = { missed: false, showingMiss: false, streakBroke: false, retried: false };
+    expect(rushComboLabel({ ...fresh, streak: 0, mult: 1 })).toBe('Combo ready');
+    expect(rushComboLabel({ ...fresh, streak: 1, mult: 1 })).toBe('Combo ready');
+    expect(rushComboLabel({ ...fresh, streak: 4, mult: 4 })).toBe('🔥 4 streak · 4×');
+
+    const missed = { missed: true, streak: 0, mult: 1 };
+    expect(
+      rushComboLabel({ ...missed, showingMiss: true, streakBroke: false, retried: false }),
+    ).toBe('No points');
+    expect(
+      rushComboLabel({ ...missed, showingMiss: true, streakBroke: true, retried: false }),
+    ).toBe('Streak reset');
+    expect(
+      rushComboLabel({ ...missed, showingMiss: false, streakBroke: true, retried: true }),
+    ).toBe('No points');
+    expect(
+      rushComboLabel({ ...missed, showingMiss: true, streakBroke: true, retried: true }),
+    ).toBe('No points');
+    expect(
+      rushComboLabel({ ...missed, showingMiss: false, streakBroke: true, retried: true }),
+    ).not.toMatch(/Combo ready|🔥/);
+
+    expect(rushResultTallyLabel(false)).toBe('correct');
+    expect(rushResultTallyLabel(true)).toBe('first try');
+    expect(rushResultTallyLabel(true)).not.toBe('correct');
   });
 
   it('names Remember vs Meet vs Missed on a result chip', () => {
