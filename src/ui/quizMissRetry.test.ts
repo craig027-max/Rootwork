@@ -44,7 +44,17 @@ describe('A miss retries the question they just missed', () => {
     expect(rush).toContain('rushAnswerKind(hitsRef.current[qi] === false, ok)');
     expect(rush).toContain("kind === 'practice-hit' || kind === 'practice-miss'");
     expect(rush).toContain('if (kind === \'score-hit\')');
-    expect(rush).toMatch(/function retry\(\) \{\s*if \(phase !== 'play' \|\| picked === null \|\| answeredCorrect\) return;\s*setPicked\(null\);\s*\}/);
+    expect(rush).toMatch(
+      /function retry\(\) \{\s*if \(phase !== 'play' \|\| picked === null \|\| answeredCorrect\) return;\s*setRetriedMiss\(true\);\s*setPicked\(null\);\s*\}/,
+    );
+    expect(rush).toContain('rushComboLabel({');
+    expect(rush).toContain('missed: hits[qi] === false');
+    expect(rush).toContain('if (streak >= 2) setComboBroke(true)');
+    expect(rush).toContain('rushResultTallyLabel(hits.some((ok) => ok === false))');
+    expect(rush).toContain("hits[qi] === false ? ' is-practice'");
+    expect(rush).not.toMatch(/streak >= 2 \? `🔥 \$\{streak\} streak/);
+    expect(quizCss).toMatch(/\.q-combo\.is-practice\s*\{[^}]*color:\s*#ff8a8f/);
+    expect(quizCss).not.toMatch(/\.q-combo\.is-practice\s*\{[^}]*display:\s*none/);
     expect(rush).toContain('onClick={retry}');
     expect(rush).toContain('{RUSH_RETRY_LABEL}');
     expect(rush).toContain('hits[qi] === false');

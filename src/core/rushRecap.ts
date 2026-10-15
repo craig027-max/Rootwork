@@ -286,6 +286,42 @@ export function rushAnswerKind(alreadyMissed: boolean, ok: boolean): RushAnswerK
 export const RUSH_RETRY_LABEL = 'Try again ›';
 
 /**
+ * Combo slot during play. A missed question does not score, so it must
+ * not say Combo ready over the retry. A visible 🔥 streak says Streak
+ * reset on that first miss line. Try again, and the later yes, say No
+ * points. A fresh question still says Combo ready, or the live streak.
+ */
+export function rushComboLabel(state: {
+  streak: number;
+  mult: number;
+  /** This question's first tap was a miss. */
+  missed: boolean;
+  /** The miss line is up — not the cleared retry, and not the later yes. */
+  showingMiss: boolean;
+  /** That miss broke a visible streak (2 or more). */
+  streakBroke: boolean;
+  /** They already tapped Try again on this question. */
+  retried: boolean;
+}): string {
+  if (state.missed) {
+    if (state.streakBroke && state.showingMiss && !state.retried) return 'Streak reset';
+    return 'No points';
+  }
+  const streak = Number.isFinite(state.streak) ? state.streak : 0;
+  const mult = Number.isFinite(state.mult) ? state.mult : 1;
+  if (streak >= 2) return `🔥 ${streak} streak · ${mult}×`;
+  return 'Combo ready';
+}
+
+/**
+ * Result tally caption. Once a miss is on the board, the count is the
+ * first tap — not "correct" over retries that added nothing.
+ */
+export function rushResultTallyLabel(missedAny: boolean): string {
+  return missedAny ? 'first try' : 'correct';
+}
+
+/**
  * Yes after they get a missed question on a later tap. Same sentence as
  * a scored hit, with no +points — the first miss already counted.
  */
