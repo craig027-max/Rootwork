@@ -15,6 +15,10 @@ import {
   rushGlossMissLine,
   rushHoldLine,
   rushMissLine,
+  rushAnswerKind,
+  rushPracticeHoldLine,
+  rushPracticeYesLine,
+  RUSH_RETRY_LABEL,
   rushWordHoldLine,
   rushWordMissLine,
   rememberMissCtaLabel,
@@ -164,6 +168,68 @@ describe('rushHoldLine + rushMissLine + rushRecapChipLabel', () => {
     );
     expect(rushWordMissLine('Biology', 'bio (life) + -logy (study of)')).not.toMatch(/Bio means life/);
     expect(rushWordMissLine('')).toBe('Nope — try the next one.');
+  });
+
+  it('a later tap on a miss does not score, and the yes line has no points', () => {
+    expect(rushAnswerKind(false, true)).toBe('score-hit');
+    expect(rushAnswerKind(false, false)).toBe('score-miss');
+    expect(rushAnswerKind(true, true)).toBe('practice-hit');
+    expect(rushAnswerKind(true, false)).toBe('practice-miss');
+    expect(RUSH_RETRY_LABEL).toBe('Try again ›');
+    expect(RUSH_RETRY_LABEL).not.toMatch(/Next|See results/);
+
+    expect(rushPracticeHoldLine('Bio', 'life')).toBe('Yes — Bio means life.');
+    expect(rushPracticeHoldLine('Bio', 'life')).not.toMatch(/\+|combo|points/i);
+    expect(rushPracticeHoldLine('', '')).toBe('Yes — you got it.');
+
+    expect(
+      rushPracticeYesLine({
+        type: 'gloss',
+        rootName: 'Bio',
+        mean: 'life',
+        glossWord: 'Biology',
+        gloss: 'The science of living things',
+      }),
+    ).toBe('Yes — Biology. The science of living things.');
+    expect(
+      rushPracticeYesLine({
+        type: 'part',
+        rootName: 'Bio',
+        mean: 'life',
+        part: '-logy',
+        partMean: 'study of',
+      }),
+    ).toBe('Yes — -logy means study of.');
+    expect(
+      rushPracticeYesLine({
+        type: 'build',
+        rootName: 'Bio',
+        mean: 'life',
+        buildWord: 'Biology',
+        buildSplit: 'bio (life) + -logy (study of)',
+      }),
+    ).toBe('Yes — Biology. Built from bio (life) + -logy (study of).');
+    expect(
+      rushPracticeYesLine({
+        type: 'word',
+        rootName: 'Bio',
+        mean: 'life',
+        word: 'Biology',
+        wordSplit: 'bio (life) + -logy (study of)',
+      }),
+    ).toBe('Yes — Biology. Built from bio (life) + -logy (study of).');
+    expect(
+      rushPracticeYesLine({ type: 'mean', rootName: 'Bio', mean: 'life' }),
+    ).toBe('Yes — Bio means life.');
+    expect(
+      rushPracticeYesLine({
+        type: 'gloss',
+        rootName: 'Bio',
+        mean: 'life',
+        glossWord: 'Biology',
+        gloss: 'The science of living things',
+      }),
+    ).not.toMatch(/Bio means life|\+/);
   });
 
   it('names Remember vs Meet vs Missed on a result chip', () => {
