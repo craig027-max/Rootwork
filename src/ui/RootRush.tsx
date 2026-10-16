@@ -28,6 +28,7 @@ import {
   RUSH_RETRY_LABEL,
   rushPartHoldLine,
   rushPartMissLine,
+  rushAskedChip,
   rushRecapChipLabel,
   rushWordHoldLine,
   rushWordMissLine,
@@ -83,7 +84,9 @@ import { samplePeekLabel } from './home/samplePeek';
  * miss — not Combo ready over a tap that will not score. The result
  * tally says first try once any miss is on the board. A which-word
  * tap names that school word (Yes — Biology. Built from …), not Bio
- * means life. Result + start recap this run as
+ * means life. The result list names that same thing — Biography,
+ * not Bio / life — while a Remember miss still names the root.
+ * Result + start recap this run as
  * Remember chips — hits keep ✓, misses stay Missed. Owned roots hold
  * meaning then Home, never Bio → Geo. A correct owned hit banks today's
  * Remember the same way Daily already does.
@@ -779,21 +782,24 @@ export function RootRush() {
                     const id = rootId(item.root);
                     const owned = completed.has(id);
                     const hit = hits[i] === true;
+                    const asked = rushAskedChip(item);
                     return (
                       <button
                         type="button"
-                        className={`q-daily-chip${hit ? ' is-done' : ' is-miss'}`}
+                        className={`q-daily-chip${hit ? ' is-done' : ' is-miss'}${
+                          asked.title.length >= 14 ? ' is-long' : ''
+                        }`}
                         key={`${item.root.root}-${i}`}
                         onClick={() => openRecap(id)}
-                        aria-label={rushRecapChipLabel(item.root.root, owned, hit)}
+                        aria-label={rushRecapChipLabel(asked.title, owned, hit)}
                       >
                         {hit ? (
                           <span className="q-done-mark" aria-hidden="true">
                             ✓
                           </span>
                         ) : null}
-                        {item.root.root}
-                        <em>{item.root.mean}</em>
+                        {asked.title}
+                        {asked.sub ? <em>{asked.sub}</em> : null}
                       </button>
                     );
                   })}
