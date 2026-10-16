@@ -18,7 +18,7 @@
 
 import { ROOTS_BY_ID } from '../data/roots';
 import { localDayKey } from './daily';
-import { buildMissLine, buildYesLine, partMissLine, partYesLine, wordMissLine, wordYesLine } from './wordParts';
+import { buildBig, buildMissLine, buildYesLine, partMissLine, partYesLine, wordMissLine, wordYesLine } from './wordParts';
 
 /** Home Rush tile peeks this many of the last run — the result still lists all. */
 export const RUSH_RECAP_PREVIEW_COUNT = 4;
@@ -368,6 +368,63 @@ export function rushGlossMissLine(word: string, gloss: string): string {
   const spoken = gloss.replace(/\s+/g, ' ').trim();
   if (!name || !spoken) return 'Nope — try the next one.';
   return `Nope — ${name}: ${spoken}.`;
+}
+
+/** Visible name on one Rush result chip — the thing that question asked. */
+export interface RushAskedChip {
+  title: string;
+  sub: string;
+}
+
+function cleanAsked(raw?: string): string {
+  return raw?.replace(/\s+/g, ' ').trim() ?? '';
+}
+
+/**
+ * Rush result list names the question, not the root over a school word.
+ * Biography / its gloss, -logy / study of, Biology / bio + -logy.
+ * A meaning or which-root question stays Bio / life — that was the ask.
+ * Home and Remember peeks stay on the root; this is only the round's list.
+ */
+export function rushAskedChip(q: {
+  type: string;
+  root: { root: string; mean: string };
+  glossWord?: string;
+  gloss?: string;
+  part?: string;
+  partMean?: string;
+  buildWord?: string;
+  buildSplit?: string;
+  word?: string;
+}): RushAskedChip {
+  const root = cleanAsked(q.root.root);
+  const mean = cleanAsked(q.root.mean);
+  const fallback: RushAskedChip = { title: root || 'this root', sub: mean };
+
+  if (q.type === 'gloss') {
+    const word = cleanAsked(q.glossWord);
+    const gloss = cleanAsked(q.gloss);
+    if (!word) return fallback;
+    return { title: word, sub: gloss || (root ? `from ${root}` : '') };
+  }
+  if (q.type === 'part') {
+    const part = cleanAsked(q.part);
+    const partMean = cleanAsked(q.partMean);
+    if (!part) return fallback;
+    return { title: part, sub: partMean || 'the other piece' };
+  }
+  if (q.type === 'build') {
+    const word = cleanAsked(q.buildWord);
+    const pieces = buildBig(cleanAsked(q.buildSplit));
+    if (!word) return fallback;
+    return { title: word, sub: pieces || (root ? `from ${root}` : '') };
+  }
+  if (q.type === 'word') {
+    const word = cleanAsked(q.word);
+    if (!word) return fallback;
+    return { title: word, sub: root ? `from ${root}` : '' };
+  }
+  return fallback;
 }
 
 /** Kid-facing aria on a Rush result / Home peek chip. */

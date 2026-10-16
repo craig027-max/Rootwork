@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { ROOTS, firstRoot, rootId, rootsInTier } from '../data/roots';
+import { buildRushQuestion } from './rush';
+import { buildBig, buildPicksForRoot, otherPartsForRoot } from './wordParts';
+import { quizGloss } from './wordDef';
+import { canon } from './distractors';
 import {
   RUSH_RECAP_PREVIEW_COUNT,
   homeRushRecapPreview,
@@ -24,6 +28,7 @@ import {
   rushWordHoldLine,
   rushWordMissLine,
   rememberMissCtaLabel,
+  rushAskedChip,
   rushRecapChipLabel,
   rushRecapFromRun,
   rushRecapPreview,
@@ -260,6 +265,166 @@ describe('rushHoldLine + rushMissLine + rushRecapChipLabel', () => {
     expect(rushResultTallyLabel(false)).toBe('correct');
     expect(rushResultTallyLabel(true)).toBe('first try');
     expect(rushResultTallyLabel(true)).not.toBe('correct');
+  });
+
+  it('names the asked thing on a result chip — not Bio / life over Biography', () => {
+    const bio = first;
+    const gloss = rushAskedChip({
+      type: 'gloss',
+      root: bio,
+      glossWord: 'Biography',
+      gloss: "The true written story of a real person's life",
+    });
+    expect(gloss).toEqual({
+      title: 'Biography',
+      sub: "The true written story of a real person's life",
+    });
+    expect(gloss.title).not.toBe(bio.root);
+    expect(gloss.sub).not.toBe(bio.mean);
+
+    const part = rushAskedChip({
+      type: 'part',
+      root: bio,
+      part: '-logy',
+      partMean: 'study of',
+    });
+    expect(part).toEqual({ title: '-logy', sub: 'study of' });
+    expect(part.title).not.toBe(bio.root);
+    expect(part.sub).not.toBe(bio.mean);
+
+    const build = rushAskedChip({
+      type: 'build',
+      root: bio,
+      buildWord: 'Biology',
+      buildSplit: 'bio (life) + -logy (study of)',
+    });
+    expect(build).toEqual({ title: 'Biology', sub: 'bio + -logy' });
+    expect(build.title).not.toBe(bio.root);
+    expect(build.sub).not.toBe(bio.mean);
+    expect(build.sub).toBe(buildBig('bio (life) + -logy (study of)'));
+
+    const word = rushAskedChip({
+      type: 'word',
+      root: bio,
+      word: 'Biology',
+    });
+    expect(word).toEqual({ title: 'Biology', sub: 'from Bio' });
+    expect(word.sub).not.toBe(bio.mean);
+
+    expect(rushAskedChip({ type: 'mean', root: bio })).toEqual({
+      title: bio.root,
+      sub: bio.mean,
+    });
+    expect(rushAskedChip({ type: 'root', root: bio })).toEqual({
+      title: bio.root,
+      sub: bio.mean,
+    });
+    expect(rushAskedChip({ type: 'gloss', root: bio })).toEqual({
+      title: bio.root,
+      sub: bio.mean,
+    });
+    expect(rushAskedChip({ type: 'word', root: { root: '  Bio  ', mean: 'life' }, word: '  Biology  ' })).toEqual({
+      title: 'Biology',
+      sub: 'from Bio',
+    });
+  });
+
+  it('names every catalog gloss, piece, pieces, and which-word on the result chip', () => {
+    const rng = () => 0;
+    for (const root of ROOTS) {
+      const glossQ = buildRushQuestion({
+        root,
+        scoped: ROOTS,
+        all: ROOTS,
+        type: 'gloss',
+        rng,
+      });
+      if (glossQ.type === 'gloss' && glossQ.glossWord) {
+        const chip = rushAskedChip(glossQ);
+        expect(chip.title, root.root).toBe(glossQ.glossWord);
+        if (glossQ.glossWord !== root.root) expect(chip.title, root.root).not.toBe(root.root);
+        expect(chip.sub, glossQ.glossWord).toBe(glossQ.gloss);
+        if (glossQ.gloss && glossQ.gloss !== root.mean) {
+          expect(chip.sub, glossQ.glossWord).not.toBe(root.mean);
+        }
+      }
+      const partQ = buildRushQuestion({
+        root,
+        scoped: ROOTS,
+        all: ROOTS,
+        type: 'part',
+        rng,
+      });
+      if (partQ.type === 'part' && partQ.part) {
+        const chip = rushAskedChip(partQ);
+        expect(chip.title, partQ.part).toBe(partQ.part);
+        expect(chip.sub, partQ.part).toBe(partQ.partMean);
+        if (partQ.part !== root.root) expect(chip.title, partQ.part).not.toBe(root.root);
+      }
+      const buildQ = buildRushQuestion({
+        root,
+        scoped: ROOTS,
+        all: ROOTS,
+        type: 'build',
+        rng,
+      });
+      if (buildQ.type === 'build' && buildQ.buildWord && buildQ.buildSplit) {
+        const chip = rushAskedChip(buildQ);
+        expect(chip.title, buildQ.buildWord).toBe(buildQ.buildWord);
+        expect(chip.sub, buildQ.buildWord).toBe(buildBig(buildQ.buildSplit));
+        if (buildQ.buildWord !== root.root) expect(chip.title, buildQ.buildWord).not.toBe(root.root);
+        expect(chip.sub, buildQ.buildWord).not.toBe(root.mean);
+      }
+      const wordQ = buildRushQuestion({
+        root,
+        scoped: ROOTS,
+        all: ROOTS,
+        type: 'word',
+        rng,
+      });
+      if (wordQ.word && wordQ.word !== root.root) {
+        const chip = rushAskedChip(wordQ);
+        expect(chip.title, wordQ.word).toBe(wordQ.word);
+        expect(chip.title, wordQ.word).not.toBe(root.root);
+        expect(chip.sub, wordQ.word).toBe(`from ${root.root}`);
+        expect(chip.sub, wordQ.word).not.toBe(root.mean);
+      }
+      const meanQ = buildRushQuestion({
+        root,
+        scoped: ROOTS,
+        all: ROOTS,
+        type: 'mean',
+        rng,
+      });
+      expect(rushAskedChip(meanQ)).toEqual({ title: root.root, sub: root.mean });
+    }
+    for (const root of ROOTS) {
+      for (const word of root.words) {
+        const spoken = quizGloss(word.d);
+        if (!spoken || canon(spoken) === canon(root.mean)) continue;
+        const title = word.w.replace(/\s+/g, ' ').trim();
+        if (!title || title === root.root) continue;
+        expect(rushAskedChip({ type: 'gloss', root, glossWord: title, gloss: spoken }).title, title).toBe(
+          title,
+        );
+      }
+      for (const part of otherPartsForRoot(root)) {
+        expect(rushAskedChip({ type: 'part', root, part: part.letters, partMean: part.mean }).title).toBe(
+          part.letters,
+        );
+      }
+      for (const pick of buildPicksForRoot(root)) {
+        const chip = rushAskedChip({
+          type: 'build',
+          root,
+          buildWord: pick.word,
+          buildSplit: pick.split,
+        });
+        expect(chip.title, pick.word).toBe(pick.word);
+        expect(chip.sub, pick.word).toBe(buildBig(pick.split));
+        expect(chip.title, pick.word).not.toBe(root.root);
+      }
+    }
   });
 
   it('names Remember vs Meet vs Missed on a result chip', () => {

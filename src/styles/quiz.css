@@ -274,6 +274,15 @@
   justify-content: center;
   text-align: left;
 }
+.q-rush-recap .q-daily-chip {
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.q-rush-recap .q-daily-chip.is-long {
+  font-size: 0.78rem;
+}
 .q-daily-chip {
   font-family: var(--font-game);
   font-weight: 700;
@@ -416,6 +425,9 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-rush-recap .q-daily-chip {
     display: inline-flex;
   }
+  .q-rush-recap .q-daily-chip.is-long {
+    display: inline-flex;
+  }
   .q-daily-chip.is-miss {
     display: inline-flex;
   }
@@ -531,6 +543,7 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-start-actions .q-ghost { display: block; }
   .q-rush-recap { display: flex; }
   .q-rush-recap .q-daily-chip { display: inline-flex; }
+  .q-rush-recap .q-daily-chip.is-long { display: inline-flex; }
   .q-daily-chip.is-miss { display: inline-flex; }
   .q-fb.bad { display: block; }
   .q-rush .q-play .q-next { display: block; }
