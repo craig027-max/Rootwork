@@ -427,6 +427,35 @@ export function rushAskedChip(q: {
   return fallback;
 }
 
+/**
+ * Daily uses the same names as Rush. A gloss, piece, pieces, or which-word
+ * beat names that thing. A meaning beat stays on the root.
+ */
+export function recallAskedChip(
+  root: { root: string; mean: string },
+  beat: {
+    kind: string;
+    word?: string;
+    gloss?: string;
+    part?: string;
+    partMean?: string;
+    split?: string;
+  },
+): RushAskedChip {
+  const kind = beat.kind;
+  return rushAskedChip({
+    type: kind,
+    root,
+    glossWord: kind === 'gloss' ? beat.word : undefined,
+    gloss: kind === 'gloss' ? beat.gloss : undefined,
+    part: kind === 'part' ? beat.part : undefined,
+    partMean: kind === 'part' ? beat.partMean : undefined,
+    buildWord: kind === 'build' ? beat.word : undefined,
+    buildSplit: kind === 'build' ? beat.split : undefined,
+    word: kind === 'word' ? beat.word : undefined,
+  });
+}
+
 /** Kid-facing aria on a Rush result / Home peek chip. */
 export function rushRecapChipLabel(
   rootName: string,

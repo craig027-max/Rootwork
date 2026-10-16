@@ -22,7 +22,10 @@ import {
   dailySeed,
   dailyTilePreview,
   localDayKey,
+  layoutDailyAsked,
+  normalizeDailyAsked,
   parseDailyRun,
+  stampDailyAsked,
   pickDailyRoots,
   resolveBootResume,
   liveDailyResumeQi,
@@ -256,6 +259,66 @@ describe('Daily mid-run resume + hold meaning', () => {
     expect(parseDailyRun({ day: today, qi: 1.5 })).toBeNull();
     expect(parseDailyRun(null)).toBeNull();
     expect(parseDailyRun('{"qi":2}')).toBeNull();
+    expect(parseDailyRun({ day: today, studentId: null, qi: 1, asked: 'nope' })).toEqual({
+      day: today,
+      studentId: null,
+      qi: 1,
+    });
+    const biography = {
+      root: 'Bio',
+      title: 'Biography',
+      sub: "The true written story of a real person's life",
+    };
+    expect(
+      parseDailyRun({
+        day: today,
+        studentId: 'kid-a',
+        qi: 5,
+        asked: [biography, { title: 'Photo', sub: 'light' }, { root: '  ', title: 'Nope', sub: '' }],
+      })?.asked,
+    ).toEqual([biography, null, null]);
+    const finished = {
+      day: today,
+      studentId: 'kid-a',
+      qi: 5,
+      asked: [biography, { root: 'Geo', title: 'Geo', sub: 'earth' }],
+    };
+    expect(parseDailyRun(finished)).toEqual(finished);
+    expect(resumeDailyQi(finished, today, 'kid-a', 5)).toBeNull();
+    expect(liveDailyResumeQi(finished, today, 'kid-a', 5, today)).toBeNull();
+  });
+
+  it('stamps the asked chip on that root and keeps earlier ones', () => {
+    const biography = {
+      root: 'Bio',
+      title: ' Biography ',
+      sub: ' a story ',
+    };
+    const stamped = stampDailyAsked(
+      [{ root: 'Chron', title: 'Chron', sub: 'time' }],
+      1,
+      biography,
+      5,
+    );
+    expect(stamped[0]).toEqual({ root: 'Chron', title: 'Chron', sub: 'time' });
+    expect(stamped[1]).toEqual({
+      root: 'Bio',
+      title: 'Biography',
+      sub: 'a story',
+    });
+    expect(stamped).toHaveLength(5);
+    expect(stampDailyAsked(stamped, 1, biography, 5)).not.toBe(stamped);
+
+    const saved = normalizeDailyAsked(stamped);
+    expect(layoutDailyAsked(5, { saved, resumeAt: 2, current: { root: 'Photo', title: 'Photograph', sub: 'from Photo' } })[2]).toEqual({
+      root: 'Photo',
+      title: 'Photograph',
+      sub: 'from Photo',
+    });
+    expect(layoutDailyAsked(5, { saved, done: true }).find((chip) => chip?.root === 'Bio')?.title).toBe(
+      'Biography',
+    );
+    expect(layoutDailyAsked(5, { saved }).every((chip) => chip == null)).toBe(true);
   });
 
   it('holds the meaning until Next — not "is yours" and not an auto-dump', () => {

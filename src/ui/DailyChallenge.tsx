@@ -13,16 +13,19 @@ import {
   dailyHoldRememberLine,
   dailyRecapChipLabel,
   dailySeed,
+  layoutDailyAsked,
   liveDailyResumeQi,
   localDayKey,
   pickDailyRoots,
+  stampDailyAsked,
+  type DailyAskedChip,
 } from '../core/daily';
 import { buildRecall, type RecallBeat } from '../core/recall';
 import { Scene } from './Scene';
 import { findSuccessLine, recapDeckEntry } from '../core/deckFlow';
 import { buildBig, buildYesLine, partYesLine, wordYesLine } from '../core/wordParts';
 import { questionHudName } from './deck/deckQuizHero';
-import { todayRushRecap } from '../core/rushRecap';
+import { recallAskedChip, todayRushRecap } from '../core/rushRecap';
 import {
   buildDailyDone,
   buildModeEmpty,
@@ -38,6 +41,11 @@ type Phase = 'start' | 'play' | 'result';
 
 function palOf(root: Root) {
   return PALETTES[root.pal] ?? PALETTES.green!;
+}
+
+function askedChipFor(root: Root, beat: RecallBeat): DailyAskedChip {
+  const asked = recallAskedChip(root, beat);
+  return { root: root.root, title: asked.title, sub: asked.sub };
 }
 
 /**
@@ -68,6 +76,9 @@ function palOf(root: Root) {
  * Home must not sit over Geo under that same title.
  * Rush / Deck Home now matches — Home → must not
  * sit over Geo under that same title.
+ * The result list names the question — Biography, not Bio / life.
+ * Opening Daily again today keeps that list. Remember chips stay
+ * on the root. Home still names the five roots.
  * Finishing banks Daily XP; replays are free.
  */
 export function DailyChallenge() {
@@ -97,13 +108,32 @@ export function DailyChallenge() {
   );
   const resumeQi = liveDailyResumeQi(dailyRun, day, studentId, deal.length, stats.lastDailyDay);
 
+  const [boot] = useState(() => {
+    const resumeAt = resumeQi;
+    let nextBeat: RecallBeat | null = null;
+    let current: DailyAskedChip | null = null;
+    if (resumeAt != null) {
+      const r = deal[resumeAt];
+      if (r) {
+        nextBeat = buildRecall({ root: r, pool, choices: 3 });
+        current = askedChipFor(r, nextBeat);
+      }
+    }
+    const saved = dailyRun?.day === day ? dailyRun.asked : undefined;
+    return {
+      beat: nextBeat,
+      asked: layoutDailyAsked(deal.length, {
+        saved,
+        resumeAt,
+        current,
+        done: doneToday && resumeAt == null,
+      }),
+    };
+  });
   const [phase, setPhase] = useState<Phase>(() => (resumeQi != null ? 'play' : 'start'));
   const [qi, setQi] = useState(() => resumeQi ?? 0);
-  const [beat, setBeat] = useState<RecallBeat | null>(() => {
-    if (resumeQi == null) return null;
-    const r = deal[resumeQi];
-    return r ? buildRecall({ root: r, pool, choices: 3 }) : null;
-  });
+  const [beat, setBeat] = useState<RecallBeat | null>(boot.beat);
+  const [played, setPlayed] = useState<(DailyAskedChip | null)[]>(boot.asked);
   const [picked, setPicked] = useState<number | null>(null);
   const bankedRef = useRef(false);
 
@@ -182,9 +212,12 @@ export function DailyChallenge() {
     openRoot(id, { entry: recapDeckEntry(completed.has(id)) });
   }
 
-  function dealBeat(r: Root) {
-    setBeat(buildRecall({ root: r, pool, choices: 3 }));
+  function dealBeat(r: Root, index: number, opts?: { reset?: boolean }) {
+    const next = buildRecall({ root: r, pool, choices: 3 });
+    const chip = askedChipFor(r, next);
+    setBeat(next);
     setPicked(null);
+    setPlayed((prev) => stampDailyAsked(opts?.reset ? [] : prev, index, chip, deal.length));
   }
 
   function startRun() {
@@ -193,15 +226,15 @@ export function DailyChallenge() {
     if (!first) return;
     bankedRef.current = false;
     setQi(startAt);
-    dealBeat(first);
+    dealBeat(first, startAt, { reset: true });
     setPhase('play');
   }
 
   function bankIfNeeded() {
     if (bankedRef.current || doneToday) return;
     bankedRef.current = true;
-    recordDailyComplete();
     clearDailyRun();
+    recordDailyComplete(undefined, played);
   }
 
   function finish() {
@@ -215,14 +248,16 @@ export function DailyChallenge() {
     const ok = beat.opts[idx]?.ok ?? false;
     if (!ok || doneToday || !root) return;
     const hitId = rootId(root);
+    const nextAsked = stampDailyAsked(played, qi, askedChipFor(root, beat), deal.length);
+    setPlayed(nextAsked);
     if (qi + 1 >= deal.length) {
       if (!bankedRef.current) {
         bankedRef.current = true;
-        recordDailyComplete(hitId);
+        recordDailyComplete(hitId, nextAsked);
       }
       return;
     }
-    saveDailyRun(qi + 1, hitId);
+    saveDailyRun(qi + 1, hitId, nextAsked);
   }
 
   function retry() {
@@ -235,7 +270,7 @@ export function DailyChallenge() {
       const next = qi + 1;
       setQi(next);
       const n = deal[next];
-      if (n) dealBeat(n);
+      if (n) dealBeat(n, next);
       return;
     }
     finish();
@@ -308,6 +343,8 @@ export function DailyChallenge() {
     rememberMissName: remember.name,
     rememberAlso,
   });
+  const showAsked =
+    showDoneLanding && !done.missWaiting && played.some((chip) => Boolean(chip?.title));
 
   return (
     <div
@@ -500,23 +537,29 @@ export function DailyChallenge() {
                 {done.peek}
               </div>
             ) : null}
-            <div className="q-daily-chips" style={{ marginTop: 22 }}>
-              {done.recap.map((chip) => {
+            <div
+              className={`q-daily-chips${showAsked ? ' q-daily-asked' : ''}`}
+              style={{ marginTop: 22 }}
+            >
+              {done.recap.map((chip, i) => {
                 const r = ROOTS.find((root) => root.root === chip.root);
                 if (!r) return null;
                 const chipMiss = chip.ok === false;
+                const asked = showAsked ? played.find((item) => item?.root === r.root) : null;
+                const title = asked?.title || r.root;
+                const sub = asked?.sub || chip.mean || r.mean;
                 return (
                   <button
                     type="button"
                     className={`q-daily-chip${done.recapDone && !chipMiss ? ' is-done' : ''}${
                       chipMiss ? ' is-miss' : ''
-                    }`}
-                    key={r.root}
+                    }${title.length >= 14 ? ' is-long' : ''}`}
+                    key={`${r.root}-${i}`}
                     onClick={() => openRecap(r)}
                     aria-label={
                       chipMiss
                         ? samplePeekLabel('remember', r.root, { ok: false })
-                        : dailyRecapChipLabel(r.root, completed.has(rootId(r)))
+                        : dailyRecapChipLabel(title, completed.has(rootId(r)))
                     }
                   >
                     {done.recapDone && !chipMiss ? (
@@ -529,8 +572,8 @@ export function DailyChallenge() {
                         !
                       </span>
                     ) : null}
-                    {r.root}
-                    <em>{chip.mean || r.mean}</em>
+                    {title}
+                    {sub ? <em>{sub}</em> : null}
                   </button>
                 );
               })}

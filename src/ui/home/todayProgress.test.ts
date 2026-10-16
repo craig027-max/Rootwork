@@ -646,8 +646,8 @@ describe('Today checklist wiring + phone layout', () => {
     expect(home).toContain('dailyRoots.map((r) => rootId(r))');
     expect(store).toContain('recordDailyHit');
     expect(store).toContain('applyDailyHit');
-    expect(store).toContain('saveDailyRun: (qi, hitRootId)');
-    expect(store).toContain('recordDailyComplete: (hitRootId)');
+    expect(store).toContain('saveDailyRun: (qi, hitRootId, asked)');
+    expect(store).toContain('recordDailyComplete: (hitRootId, asked)');
     expect(home).toContain('liveDailyResumeQi');
     expect(home).toContain('dailyResumeQi');
     expect(home).toContain('dailyNextName');
