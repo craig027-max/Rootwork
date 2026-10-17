@@ -32,6 +32,8 @@ export function DeckNav({
   missName,
   finding = false,
   findWord,
+  asked = false,
+  fromRoot,
   quizzing = false,
   quizLong = false,
 }: {
@@ -58,12 +60,24 @@ export function DeckNav({
   /** Browse school-word tap — nav meta is Find · Biology, not Card 01 / 183. */
   finding?: boolean;
   findWord?: string;
+  /** Result chip — from Bio under the school word, and ☰ is not Find. */
+  asked?: boolean;
+  fromRoot?: string;
   /** Gloss / piece / pieces — centre is that name, and it must fit the pill. */
   quizzing?: boolean;
   quizLong?: boolean;
 }) {
-  const meta = deckNavMeta({ missed, missName, findWord, tierName, position, total });
-  const indexAria = deckIndexAria({ missed, finding });
+  const meta = deckNavMeta({
+    missed,
+    missName,
+    findWord,
+    asked,
+    fromRoot,
+    tierName,
+    position,
+    total,
+  });
+  const indexAria = deckIndexAria({ missed, finding: finding && !asked });
   return (
     <nav className={`ww-decknav${missed ? ' is-miss' : ''}`} aria-label="Deck navigation">
       {showPrev ? (

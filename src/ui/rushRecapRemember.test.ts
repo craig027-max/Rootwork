@@ -174,7 +174,7 @@ describe('Rush recap is Remember — not a grade-only / Bio → Geo dump', () =>
     expect(rush).toContain('rememberRushHit');
     expect(rush).toContain('rushRecapFromRun');
     expect(rush).toContain('openRecap');
-    expect(rush).toContain('recapDeckEntry');
+    expect(rush).toContain('askedChipOpen');
     expect(rush).toContain('q-rush-recap');
     expect(rush).toContain('rushRecapChipLabel');
     expect(rush).not.toContain('onClick={() => openRoot(rootId(q.root))}');

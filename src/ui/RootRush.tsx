@@ -11,7 +11,7 @@ import {
   shuffleWith,
 } from '../core/daily';
 import { buildRushQuestion, type RushQuestion } from '../core/rush';
-import { recapDeckEntry } from '../core/deckFlow';
+import { askedChipOpen, resultChipAria } from '../core/deckFlow';
 import {
   homeRushRecapPreview,
   liveRushRecap,
@@ -86,6 +86,8 @@ import { samplePeekLabel } from './home/samplePeek';
  * tap names that school word (Yes — Biology. Built from …), not Bio
  * means life. The result list names that same thing — Biography,
  * not Bio / life — while a Remember miss still names the root.
+ * Tapping a school-word chip opens that word, then Home. A root
+ * chip, a piece, the start peek, and Remember stay on the root.
  * Result + start recap this run as
  * Remember chips — hits keep ✓, misses stay Missed. Owned roots hold
  * meaning then Home, never Bio → Geo. A correct owned hit banks today's
@@ -210,8 +212,10 @@ export function RootRush() {
     else closeQuiz();
   }
 
-  function openRecap(id: string) {
-    openRoot(id, { entry: recapDeckEntry(completed.has(id)) });
+  function openRecap(id: string, title?: string) {
+    const open = askedChipOpen(id, completed, title);
+    if (!open) return;
+    openRoot(open.id, { entry: open.entry, focusWord: open.focusWord });
   }
 
   function goPrimary(kind: ModeCta['kind'], id?: string) {
@@ -783,6 +787,7 @@ export function RootRush() {
                     const owned = completed.has(id);
                     const hit = hits[i] === true;
                     const asked = rushAskedChip(item);
+                    const opened = askedChipOpen(id, completed, asked.title);
                     return (
                       <button
                         type="button"
@@ -790,8 +795,12 @@ export function RootRush() {
                           asked.title.length >= 14 ? ' is-long' : ''
                         }`}
                         key={`${item.root.root}-${i}`}
-                        onClick={() => openRecap(id)}
-                        aria-label={rushRecapChipLabel(asked.title, owned, hit)}
+                        onClick={() => openRecap(id, asked.title)}
+                        aria-label={resultChipAria(
+                          opened,
+                          rushRecapChipLabel(asked.title, owned, hit),
+                          { missed: !hit },
+                        )}
                       >
                         {hit ? (
                           <span className="q-done-mark" aria-hidden="true">
