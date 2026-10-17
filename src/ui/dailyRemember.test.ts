@@ -42,8 +42,8 @@ describe('Daily hold is today\'s Remember + play-today streak', () => {
     expect(daily).toContain('dailyHoldContinueLine');
     expect(daily).toContain('continueHold');
     expect(daily).toContain('learnNextAction');
-    expect(daily).toContain('recapDeckEntry');
-    expect(daily).toContain('openRecap(r)');
+    expect(daily).toContain('askedChipOpen');
+    expect(daily).toContain('openRecap(r, showAsked ? title : undefined)');
     expect(daily).not.toContain('onClick={() => openRoot(rootId(r))}');
     expect(store).toContain('recordDailyHit');
     expect(store).toContain('applyDailyHit');

@@ -31,9 +31,10 @@ export function deckMeansWord(opts: {
 
 /** Back control — Remember over a miss, Find on a school-word tap, Today on a stale recap. */
 export function deckBackLabel(
-  opts: { remembering?: boolean; missed?: boolean; finding?: boolean } = {},
+  opts: { remembering?: boolean; missed?: boolean; finding?: boolean; asked?: boolean } = {},
 ): string {
   if (opts.missed) return '← Remember';
+  if (opts.asked) return 'Home →';
   if (opts.finding) return '← Find';
   if (opts.remembering) return '← Today';
   return '← All roots';
@@ -52,10 +53,14 @@ export function rememberLeaveLabel(opts: { missed?: boolean } = {}): string {
 export function deckStripTier(opts: {
   missed?: boolean;
   finding?: boolean;
+  /** Result chip that opened a school word — the root name, not Find. */
+  asked?: boolean;
+  rootName?: string;
   tier: number;
   tierName: string;
 }): string {
   if (opts.missed) return 'Remember';
+  if (opts.asked) return cleanName(opts.rootName) || 'Word';
   if (opts.finding) return 'Find';
   return `Tier ${opts.tier} · ${opts.tierName}`;
 }
@@ -80,6 +85,9 @@ export function deckNavMeta(opts: {
   missed?: boolean;
   missName?: string;
   findWord?: string;
+  /** Result chip — from Bio, not Find · Biology. */
+  asked?: boolean;
+  fromRoot?: string;
   tierName: string;
   position: number;
   total: number;
@@ -87,6 +95,10 @@ export function deckNavMeta(opts: {
   const name = cleanName(opts.missName);
   if (opts.missed) return name ? `Remember · ${name}` : 'Remember';
   const word = cleanName(opts.findWord);
+  if (word && opts.asked) {
+    const root = cleanName(opts.fromRoot);
+    return root ? `from ${root}` : word;
+  }
   if (word) return `Find · ${word}`;
   return `${opts.tierName} · ${opts.position} / ${opts.total}`;
 }
@@ -129,12 +141,15 @@ export function deckEyebrow(opts: {
   remembering?: boolean;
   missed?: boolean;
   findWord?: string;
+  /** Result chip — the school word, not Find Biology. */
+  asked?: boolean;
   /** Gloss / piece / pieces — not "Greek Root" over Biology. */
   quizKind?: DeckQuizKind;
 }): string {
   const name = cleanName(opts.root);
   if (opts.missed) return name ? `Missed ${name}` : 'Missed';
   const word = cleanName(opts.findWord);
+  if (word && opts.asked) return word;
   if (word) return `Find ${word}`;
   if (opts.remembering) return name ? `Remember ${name}` : 'Remember';
   if (opts.quizKind) return deckQuizEyebrow(opts.quizKind);

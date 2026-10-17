@@ -25,6 +25,7 @@ import {
   isRecallEntry,
   browseOpenForId,
   isFindEntry,
+  isSchoolWordEntry,
   rememberHintLine,
   rememberLeadLine,
   rememberMissLine,
@@ -307,7 +308,9 @@ export function Deck() {
   const quizRecall = recall && recall.rootId === id && !won ? recall : null;
   const openSplit = splitForOpenWord(root.words, openWord);
   const remembering = deckEntry === 'remember';
-  const finding = isFindEntry(deckEntry);
+  const browseFind = isFindEntry(deckEntry);
+  const askedVisit = deckEntry === 'asked';
+  const finding = isSchoolWordEntry(deckEntry);
   const cardRecall = recall && recall.rootId === id ? recall : null;
   const quizHero = finding
     ? null
@@ -335,8 +338,20 @@ export function Deck() {
   else if (!remembering || missRememberVisit.current !== id) missRememberVisit.current = null;
   const missRemember = remembering && (missRememberLive || missRememberVisit.current === id);
   /* eslint-enable react-hooks/refs */
-  const backLabel = deckBackLabel({ remembering, missed: missRemember, finding });
-  const stripTier = deckStripTier({ missed: missRemember, finding, tier: root.t, tierName });
+  const backLabel = deckBackLabel({
+    remembering,
+    missed: missRemember,
+    finding: browseFind,
+    asked: askedVisit,
+  });
+  const stripTier = deckStripTier({
+    missed: missRemember,
+    finding: browseFind,
+    asked: askedVisit,
+    rootName: root.root,
+    tier: root.t,
+    tierName,
+  });
   const stripCount = deckStripCount({
     missed: missRemember,
     missName: root.root,
@@ -346,7 +361,7 @@ export function Deck() {
   });
 
   function onDeckBack() {
-    if (findBackOpensIndex(finding)) {
+    if (findBackOpensIndex(browseFind)) {
       setIndexOpen(true);
       return;
     }
@@ -450,9 +465,11 @@ export function Deck() {
       });
       beginCorrectAdvance(id, dest);
       setRecall({ beat: recall.beat, picked: idx, win: dest.line, rootId: id });
-      // Root Yes clip says "Bio means life". A gloss, part, pieces,
-      // or which-word beat names the school word — don't speak the root over it.
-      if (!glossBeat && !partBeat && !buildBeat && !wordBeat) {
+      // Root Yes clip says "Bio means life". A school-word card, gloss,
+      // piece, pieces, or which-word beat names that word — don't speak
+      // the root over it. buildWordRecall is kind "mean", so the card
+      // has to opt out itself.
+      if (!finding && !glossBeat && !partBeat && !buildBeat && !wordBeat) {
         speakYes(card.root, card.mean);
         watchCurrentClip(true, 'yes');
       }
@@ -522,6 +539,7 @@ export function Deck() {
                   remembering,
                   missed: missRemember,
                   findWord: findWord ?? undefined,
+                  asked: askedVisit,
                   quizKind: quizHero?.kind,
                 })}
               </span>
@@ -841,6 +859,8 @@ export function Deck() {
         missName={root.root}
         finding={finding}
         findWord={findWord ?? undefined}
+        asked={askedVisit}
+        fromRoot={root.root}
         quizzing={Boolean(quizHero)}
         quizLong={Boolean(quizHero?.titleClass.includes('is-long'))}
       />

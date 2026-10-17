@@ -22,7 +22,7 @@ import {
 } from '../core/daily';
 import { buildRecall, type RecallBeat } from '../core/recall';
 import { Scene } from './Scene';
-import { findSuccessLine, recapDeckEntry } from '../core/deckFlow';
+import { askedChipOpen, findSuccessLine, resultChipAria } from '../core/deckFlow';
 import { buildBig, buildYesLine, partYesLine, wordYesLine } from '../core/wordParts';
 import { questionHudName } from './deck/deckQuizHero';
 import { recallAskedChip, todayRushRecap } from '../core/rushRecap';
@@ -77,8 +77,9 @@ function askedChipFor(root: Root, beat: RecallBeat): DailyAskedChip {
  * Rush / Deck Home now matches — Home → must not
  * sit over Geo under that same title.
  * The result list names the question — Biography, not Bio / life.
- * Opening Daily again today keeps that list. Remember chips stay
- * on the root. Home still names the five roots.
+ * Opening Daily again today keeps that list. Tapping a school-word
+ * chip opens that word, then Home. A root chip, a piece, and
+ * Remember stay on the root. Home still names the five roots.
  * Finishing banks Daily XP; replays are free.
  */
 export function DailyChallenge() {
@@ -207,9 +208,10 @@ export function DailyChallenge() {
     goLearn(cta.rootId);
   }
 
-  function openRecap(r: Root) {
-    const id = rootId(r);
-    openRoot(id, { entry: recapDeckEntry(completed.has(id)) });
+  function openRecap(r: Root, title?: string) {
+    const open = askedChipOpen(rootId(r), completed, title);
+    if (!open) return;
+    openRoot(open.id, { entry: open.entry, focusWord: open.focusWord });
   }
 
   function dealBeat(r: Root, index: number, opts?: { reset?: boolean }) {
@@ -548,6 +550,11 @@ export function DailyChallenge() {
                 const asked = showAsked ? played.find((item) => item?.root === r.root) : null;
                 const title = asked?.title || r.root;
                 const sub = asked?.sub || chip.mean || r.mean;
+                const opened = askedChipOpen(
+                  rootId(r),
+                  completed,
+                  showAsked ? title : undefined,
+                );
                 return (
                   <button
                     type="button"
@@ -555,12 +562,14 @@ export function DailyChallenge() {
                       chipMiss ? ' is-miss' : ''
                     }${title.length >= 14 ? ' is-long' : ''}`}
                     key={`${r.root}-${i}`}
-                    onClick={() => openRecap(r)}
-                    aria-label={
+                    onClick={() => openRecap(r, showAsked ? title : undefined)}
+                    aria-label={resultChipAria(
+                      opened,
                       chipMiss
                         ? samplePeekLabel('remember', r.root, { ok: false })
-                        : dailyRecapChipLabel(title, completed.has(rootId(r)))
-                    }
+                        : dailyRecapChipLabel(title, completed.has(rootId(r))),
+                      { missed: chipMiss },
+                    )}
                   >
                     {done.recapDone && !chipMiss ? (
                       <span className="q-done-mark" aria-hidden="true">

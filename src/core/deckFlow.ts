@@ -145,18 +145,25 @@ export type AfterCorrectRecall =
  * How a card opens. `teach` is Play / Next / index (examples + I know this).
  * `recall` is the post-Yes next-tap — skip examples, stay in the quiz loop.
  * `remember` is Home's one-beat retention: named root, then Home — never Geo.
- * `find` is Browse's school-word tap: open Biology on Bio, then Home — never Geo.
+ * `find` is Browse's school-word tap: open Biology on Bio, then the catalog.
+ * `asked` is a Daily / Rush result chip that named a school word: open that
+ * word, then Home — not the root quiz, and not the catalog.
  */
-export type DeckEntry = 'teach' | 'recall' | 'remember' | 'find';
+export type DeckEntry = 'teach' | 'recall' | 'remember' | 'find' | 'asked';
 
 /** Quiz-loop entries skip examples. Remember is one beat; recall continues. */
 export function isRecallEntry(entry: DeckEntry): boolean {
   return entry === 'recall' || entry === 'remember';
 }
 
-/** Browse school-word tap — look at the word, not a Remember quiz. */
+/** Browse school-word tap — look at the word, then the catalog. */
 export function isFindEntry(entry: DeckEntry): boolean {
   return entry === 'find';
+}
+
+/** School-word card — Browse find, or a result chip that named that word. */
+export function isSchoolWordEntry(entry: DeckEntry): boolean {
+  return entry === 'find' || entry === 'asked';
 }
 
 /** In-flight Yes beat. Lives in the store so a remount cannot wipe it into examples. */
@@ -273,7 +280,7 @@ export function afterCorrectRecall(
   const pickedWord = opts?.word?.replace(/\s+/g, ' ').trim();
   const pickedSplit = opts?.wordSplit?.replace(/\s+/g, ' ').trim();
   const wordLine = pickedWord ? wordYesLine(pickedWord, pickedSplit) : null;
-  if (opts?.entry === 'find') {
+  if (opts?.entry === 'find' || opts?.entry === 'asked') {
     const word = opts.findWord?.replace(/\s+/g, ' ').trim();
     const def = opts.findDef?.replace(/\s+/g, ' ').trim();
     return { kind: 'home', line: word && def ? findSuccessLine(word, def) : rootLine };
@@ -356,6 +363,39 @@ export function browseOpenForId(
   return { id: recap.id, entry: 'find', focusWord: word };
 }
 
+/**
+ * Daily / Rush result chip. A school word (Century) opens that word, then
+ * Home. The root name, a piece (-ator), an empty title, and a Remember-hero
+ * chip stay Remember or teach — Home peeks never come through here.
+ */
+export function askedChipOpen(
+  id: string,
+  completed: ReadonlySet<string>,
+  title?: string | null,
+): BrowseOpen | null {
+  const recap = recapOpenForId(id, completed);
+  if (!recap) return null;
+  const root = ROOTS_BY_ID[recap.id];
+  const name = title?.replace(/\s+/g, ' ').trim() ?? '';
+  if (!root || !name) return recap;
+  if (name.toLowerCase() === root.root.toLowerCase()) return recap;
+  const opened = browseOpenForId(id, completed, name);
+  if (!opened || opened.entry !== 'find' || !opened.focusWord) return recap;
+  return { id: opened.id, entry: 'asked', focusWord: opened.focusWord };
+}
+
+/** Result-chip aria. A school-word open is not "Remember Century". */
+export function resultChipAria(
+  open: BrowseOpen | null,
+  fallback: string,
+  opts: { missed?: boolean } = {},
+): string {
+  const word =
+    open?.entry === 'asked' ? open.focusWord?.replace(/\s+/g, ' ').trim() : '';
+  if (!word) return fallback;
+  return opts.missed ? `Missed ${word}` : `Open ${word}`;
+}
+
 /** After the Yes line, the next card opens in recall — never teach/examples. */
 export function entryAfterSuccess(dest: AfterCorrectRecall): DeckEntry {
   return dest.kind === 'next' ? 'recall' : 'teach';
@@ -433,7 +473,7 @@ export function afterHearNextTap(opts: {
   entry: DeckEntry;
   won: boolean;
 }): AfterHearNextTap {
-  const stay = opts.entry === 'remember' || opts.entry === 'find';
+  const stay = opts.entry === 'remember' || opts.entry === 'find' || opts.entry === 'asked';
   const afterHear = opts.hearFinished || isRecallEntry(opts.entry);
   return {
     showRush: !opts.nextPlay && !stay,
@@ -524,6 +564,7 @@ export function afterYesNextLabel(
   opts: { missed?: boolean } = {},
 ): string {
   if (entry === 'remember') return opts.missed ? '← Remember' : 'Home →';
+  if (entry === 'asked') return 'Home →';
   if (entry === 'find') return '← Find';
   return dest.kind === 'next' ? 'Next →' : 'Done →';
 }

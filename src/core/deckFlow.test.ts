@@ -14,9 +14,12 @@ import {
   allowManualStep,
   commitCorrectAdvance,
   decideCorrectAdvance,
+  askedChipOpen,
   browseOpenForId,
   deckEntryForOpen,
   isFindEntry,
+  isSchoolWordEntry,
+  resultChipAria,
   recapDeckEntry,
   recapOpenForId,
   recapOpenForRoot,
@@ -290,6 +293,78 @@ describe('afterCorrectRecall', () => {
       }),
     ).toBe(true);
     expect(deckEntryForOpen({ entry: 'find' })).toBe('find');
+  });
+
+  it('a result chip that names a school word opens that word, then Home', () => {
+    const biology = bio.words.find((w) => w.w === 'Biology');
+    if (!biology) throw new Error('fixture: Biology');
+    expect(askedChipOpen(bioId, new Set([bioId]), 'Biology')).toEqual({
+      id: bioId,
+      entry: 'asked',
+      focusWord: 'Biology',
+    });
+    expect(askedChipOpen(bioId, new Set(), '  biography ')).toEqual({
+      id: bioId,
+      entry: 'asked',
+      focusWord: 'biography',
+    });
+    expect(askedChipOpen(bioId, new Set([bioId]), 'Bio')).toEqual({
+      id: bioId,
+      entry: 'remember',
+    });
+    expect(askedChipOpen(bioId, new Set(), 'bio')).toEqual({ id: bioId, entry: 'teach' });
+    expect(askedChipOpen(bioId, new Set([bioId]), '-logy')).toEqual({
+      id: bioId,
+      entry: 'remember',
+    });
+    expect(askedChipOpen(bioId, new Set([bioId]))).toEqual({ id: bioId, entry: 'remember' });
+    expect(askedChipOpen('no-such-root', new Set(), 'Biology')).toBeNull();
+    expect(
+      afterCorrectRecall(bioId, false, {
+        entry: 'asked',
+        findWord: 'Biology',
+        findDef: biology.d,
+      }).line,
+    ).toMatch(/^Yes — Biology\./);
+    expect(
+      afterCorrectRecall(bioId, false, {
+        entry: 'asked',
+        findWord: 'Biology',
+        findDef: biology.d,
+      }).line,
+    ).not.toMatch(/Bio means life/);
+    expect(afterYesNextLabel({ kind: 'home', line: 'Yes — Biology.' }, 'asked')).toBe('Home →');
+    expect(afterYesNextLabel({ kind: 'home', line: 'Yes — Biology.' }, 'find')).toBe('← Find');
+    expect(
+      afterHearNextTap({ nextPlay: false, hearFinished: false, entry: 'asked', won: false }),
+    ).toEqual({ showRush: false, showNextRoot: false });
+    expect(isFindEntry('asked')).toBe(false);
+    expect(isSchoolWordEntry('asked')).toBe(true);
+    expect(isSchoolWordEntry('find')).toBe(true);
+    expect(isRecallEntry('asked')).toBe(false);
+    expect(deckEntryForOpen({ entry: 'asked' })).toBe('asked');
+    const wordOpen = askedChipOpen(bioId, new Set([bioId]), 'Biology');
+    expect(resultChipAria(wordOpen, 'Remember Bio')).toBe('Open Biology');
+    expect(resultChipAria(wordOpen, 'Remember Bio', { missed: true })).toBe('Missed Biology');
+    expect(resultChipAria(askedChipOpen(bioId, new Set([bioId]), 'Bio'), 'Remember Bio')).toBe(
+      'Remember Bio',
+    );
+    expect(
+      showExampleWords({
+        recall: null,
+        currentRootId: bioId,
+        entry: 'asked',
+        correctAdvance: null,
+      }),
+    ).toBe(true);
+    for (const root of ROOTS) {
+      const id = rootId(root);
+      expect(askedChipOpen(id, new Set([id]), root.root)?.entry).toBe('remember');
+      for (const word of root.words) {
+        if (word.w.replace(/\s+/g, ' ').trim().toLowerCase() === root.root.toLowerCase()) continue;
+        expect(askedChipOpen(id, new Set([id]), word.w)?.entry).toBe('asked');
+      }
+    }
   });
 });
 

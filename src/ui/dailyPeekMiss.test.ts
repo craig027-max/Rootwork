@@ -277,7 +277,7 @@ describe('Daily peek after a miss is Remember — not today\'s five ✓ over Geo
     expect(overlay).toContain('recapDone: !miss');
     expect(daily).toContain('done.recap.map');
     expect(daily).toContain('chipMiss');
-    expect(daily).toContain('openRecap(r)');
+    expect(daily).toContain('openRecap(r, showAsked ? title : undefined)');
     expect(daily).toContain("samplePeekLabel('remember', r.root, { ok: false })");
     expect(home).toContain('rushMissAlso: missHero ? rememberAlso : undefined');
     expect(peek).toContain('export function missPeekForNames');
