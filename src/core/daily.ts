@@ -183,12 +183,119 @@ export function pickDailyRoots(
   return shuffleWith(pool, rng).slice(0, Math.min(count, pool.length));
 }
 
-/** In-progress Daily — next unanswered index, namespaced per learner + day. */
+/** One Daily result chip — the thing that question asked, pinned to its root. */
+export interface DailyAskedChip {
+  /** Catalog root name (`Bio`), so a later deal cannot move the chip. */
+  root: string;
+  title: string;
+  sub: string;
+}
+
+/** In-progress Daily — next unanswered index, namespaced per learner + day.
+ *  `asked` is the result list (Biography, not Bio / life). A finished day
+ *  keeps those chips with `qi` at the end so it cannot resume. */
 export interface DailyRun {
   day: string;
   studentId: string | null;
   /** Next unanswered root (0-based). 0 is a fresh start, not a resume. */
   qi: number;
+  /** Index-aligned with today's deal. Null slots fall back to the root. */
+  asked?: (DailyAskedChip | null)[];
+}
+
+const ASKED_TITLE_MAX = 80;
+const ASKED_SUB_MAX = 160;
+const ASKED_SLOTS_MAX = 8;
+
+function cleanAskedText(raw: string, max: number): string {
+  return raw.replace(/\s+/g, ' ').trim().slice(0, max);
+}
+
+function parseAskedChip(item: unknown): DailyAskedChip | null {
+  if (!item || typeof item !== 'object' || Array.isArray(item)) return null;
+  const o = item as Record<string, unknown>;
+  if (typeof o.root !== 'string' || typeof o.title !== 'string') return null;
+  const root = cleanAskedText(o.root, 40);
+  const title = cleanAskedText(o.title, ASKED_TITLE_MAX);
+  if (!root || !title) return null;
+  const sub = typeof o.sub === 'string' ? cleanAskedText(o.sub, ASKED_SUB_MAX) : '';
+  return { root, title, sub };
+}
+
+/** Keep a stored asked list, or drop it. One bad slot becomes null — the resume index stays. */
+export function normalizeDailyAsked(raw: unknown): (DailyAskedChip | null)[] | undefined {
+  if (!Array.isArray(raw) || raw.length === 0) return undefined;
+  const out = raw.slice(0, ASKED_SLOTS_MAX).map(parseAskedChip);
+  if (!out.some((chip) => chip)) return undefined;
+  return out;
+}
+
+/**
+ * Stamp the chip for the question they just saw. Earlier chips stay.
+ * Used when banking a mid-run and when the result list renders.
+ */
+export function stampDailyAsked(
+  prev: readonly (DailyAskedChip | null)[] | null | undefined,
+  index: number,
+  chip: DailyAskedChip,
+  length: number,
+): (DailyAskedChip | null)[] {
+  const n = Math.max(0, Math.min(length, ASKED_SLOTS_MAX));
+  const copy: (DailyAskedChip | null)[] = Array.from({ length: n }, (_, i) => {
+    const item = prev?.[i];
+    return item?.root && item.title
+      ? { root: item.root, title: item.title, sub: item.sub }
+      : null;
+  });
+  const root = cleanAskedText(chip.root, 40);
+  const title = cleanAskedText(chip.title, ASKED_TITLE_MAX);
+  if (index >= 0 && index < n && root && title) {
+    copy[index] = { root, title, sub: cleanAskedText(chip.sub, ASKED_SUB_MAX) };
+  }
+  return copy;
+}
+
+/**
+ * Result chips for this visit. A mid-run keeps chips already answered and
+ * puts the question on screen at `resumeAt`. A finished day keeps the
+ * whole list. A fresh start is empty.
+ */
+export function layoutDailyAsked(
+  length: number,
+  opts: {
+    saved?: readonly (DailyAskedChip | null)[] | null;
+    resumeAt?: number | null;
+    current?: DailyAskedChip | null;
+    done?: boolean;
+  } = {},
+): (DailyAskedChip | null)[] {
+  const n = Math.max(0, Math.min(length, ASKED_SLOTS_MAX));
+  const slots: (DailyAskedChip | null)[] = Array.from({ length: n }, () => null);
+  const saved = opts.saved;
+  const resumeAt = opts.resumeAt;
+  if (resumeAt != null && Number.isInteger(resumeAt)) {
+    for (let i = 0; i < resumeAt && i < n; i++) {
+      const chip = saved?.[i];
+      if (chip?.root && chip.title) slots[i] = { root: chip.root, title: chip.title, sub: chip.sub };
+    }
+    const currentRoot = opts.current ? cleanAskedText(opts.current.root, 40) : '';
+    const currentTitle = opts.current ? cleanAskedText(opts.current.title, ASKED_TITLE_MAX) : '';
+    if (opts.current && currentRoot && currentTitle && resumeAt >= 0 && resumeAt < n) {
+      slots[resumeAt] = {
+        root: currentRoot,
+        title: currentTitle,
+        sub: cleanAskedText(opts.current.sub, ASKED_SUB_MAX),
+      };
+    }
+    return slots;
+  }
+  if (opts.done && saved) {
+    for (let i = 0; i < n; i++) {
+      const chip = saved[i];
+      if (chip?.root && chip.title) slots[i] = { root: chip.root, title: chip.title, sub: chip.sub };
+    }
+  }
+  return slots;
 }
 
 /** Coerce a stored blob into a DailyRun, or drop junk. */
@@ -198,7 +305,10 @@ export function parseDailyRun(raw: unknown): DailyRun | null {
   if (typeof o.day !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(o.day)) return null;
   if (o.studentId != null && typeof o.studentId !== 'string') return null;
   if (typeof o.qi !== 'number' || !Number.isInteger(o.qi) || o.qi < 0) return null;
-  return { day: o.day, studentId: o.studentId ?? null, qi: o.qi };
+  const asked = normalizeDailyAsked(o.asked);
+  return asked
+    ? { day: o.day, studentId: o.studentId ?? null, qi: o.qi, asked }
+    : { day: o.day, studentId: o.studentId ?? null, qi: o.qi };
 }
 
 /**

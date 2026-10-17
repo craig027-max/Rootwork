@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ROOTS, firstRoot, rootId, rootsInTier } from '../data/roots';
+import { buildRecall } from './recall';
 import { buildRushQuestion } from './rush';
 import { buildBig, buildPicksForRoot, otherPartsForRoot } from './wordParts';
 import { quizGloss } from './wordDef';
@@ -28,6 +29,7 @@ import {
   rushWordHoldLine,
   rushWordMissLine,
   rememberMissCtaLabel,
+  recallAskedChip,
   rushAskedChip,
   rushRecapChipLabel,
   rushRecapFromRun,
@@ -423,6 +425,66 @@ describe('rushHoldLine + rushMissLine + rushRecapChipLabel', () => {
         expect(chip.title, pick.word).toBe(pick.word);
         expect(chip.sub, pick.word).toBe(buildBig(pick.split));
         expect(chip.title, pick.word).not.toBe(root.root);
+      }
+    }
+  });
+
+  it('names a Daily beat the same way — not Bio / life over Biography', () => {
+    const bio = first;
+    expect(
+      recallAskedChip(bio, {
+        kind: 'gloss',
+        word: 'Biography',
+        gloss: "The true written story of a real person's life",
+      }),
+    ).toEqual({
+      title: 'Biography',
+      sub: "The true written story of a real person's life",
+    });
+    expect(recallAskedChip(bio, { kind: 'part', part: '-logy', partMean: 'study of' })).toEqual({
+      title: '-logy',
+      sub: 'study of',
+    });
+    expect(
+      recallAskedChip(bio, {
+        kind: 'build',
+        word: 'Biology',
+        split: 'bio (life) + -logy (study of)',
+      }),
+    ).toEqual({ title: 'Biology', sub: 'bio + -logy' });
+    expect(recallAskedChip(bio, { kind: 'word', word: 'Biology' })).toEqual({
+      title: 'Biology',
+      sub: 'from Bio',
+    });
+    expect(recallAskedChip(bio, { kind: 'mean' })).toEqual({ title: bio.root, sub: bio.mean });
+    expect(recallAskedChip(bio, { kind: 'gloss' }).title).toBe(bio.root);
+
+    const rng = () => 0;
+    for (const root of ROOTS) {
+      for (const kind of ['mean', 'word', 'gloss', 'part', 'build'] as const) {
+        const beat = buildRecall({ root, pool: ROOTS, kind, rng, choices: 3 });
+        const chip = recallAskedChip(root, beat);
+        if (beat.kind === 'gloss' && beat.word) {
+          expect(chip.title, beat.word).toBe(beat.word);
+          expect(chip.sub, beat.word).toBe(beat.gloss);
+          if (beat.word !== root.root) expect(chip.title, root.root).not.toBe(root.root);
+        } else if (beat.kind === 'part' && beat.part) {
+          expect(chip.title, beat.part).toBe(beat.part);
+          expect(chip.sub, beat.part).toBe(beat.partMean);
+          if (beat.part !== root.root) expect(chip.title, root.root).not.toBe(root.root);
+        } else if (beat.kind === 'build' && beat.word && beat.split) {
+          expect(chip.title, beat.word).toBe(beat.word);
+          expect(chip.sub, beat.word).toBe(buildBig(beat.split));
+          if (beat.word !== root.root) expect(chip.title, root.root).not.toBe(root.root);
+          expect(chip.sub, beat.word).not.toBe(root.mean);
+        } else if (beat.kind === 'word' && beat.word && beat.word !== root.root) {
+          expect(chip.title, beat.word).toBe(beat.word);
+          expect(chip.title, beat.word).not.toBe(root.root);
+          expect(chip.sub, beat.word).toBe(`from ${root.root}`);
+          expect(chip.sub, beat.word).not.toBe(root.mean);
+        } else if (beat.kind === 'mean') {
+          expect(chip).toEqual({ title: root.root, sub: root.mean });
+        }
       }
     }
   });

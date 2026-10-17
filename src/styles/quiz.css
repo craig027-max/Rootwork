@@ -283,6 +283,23 @@
 .q-rush-recap .q-daily-chip.is-long {
   font-size: 0.78rem;
 }
+.q-daily-asked {
+  justify-content: center;
+  text-align: left;
+}
+.q-daily-asked .q-daily-chip {
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.q-daily-asked .q-daily-chip.is-long {
+  font-size: 0.78rem;
+}
+.q-daily-asked .q-daily-chip em {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .q-daily-chip {
   font-family: var(--font-game);
   font-weight: 700;
@@ -428,6 +445,15 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-rush-recap .q-daily-chip.is-long {
     display: inline-flex;
   }
+  .q-daily-asked {
+    display: flex;
+  }
+  .q-daily-asked .q-daily-chip {
+    display: inline-flex;
+  }
+  .q-daily-asked .q-daily-chip.is-long {
+    display: inline-flex;
+  }
   .q-daily-chip.is-miss {
     display: inline-flex;
   }
@@ -544,6 +570,9 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-rush-recap { display: flex; }
   .q-rush-recap .q-daily-chip { display: inline-flex; }
   .q-rush-recap .q-daily-chip.is-long { display: inline-flex; }
+  .q-daily-asked { display: flex; }
+  .q-daily-asked .q-daily-chip { display: inline-flex; }
+  .q-daily-asked .q-daily-chip.is-long { display: inline-flex; }
   .q-daily-chip.is-miss { display: inline-flex; }
   .q-fb.bad { display: block; }
   .q-rush .q-play .q-next { display: block; }
