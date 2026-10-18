@@ -22,7 +22,8 @@ describe('after Hear: one next tap, no Rush dump', () => {
   });
 
   it('does not invent smash-together Hear copy — Hear/Yes strings stay sequential', () => {
-    expect(deck).toContain('aria-label={`Hear ${root.root}`}');
+    expect(deck).toContain('`Hear ${root.root}`');
+    expect(deck).toContain('wordRootHearLabel(root.root)');
     expect(deck).not.toMatch(/while (Hear|Yes|you listen)/i);
     expect(deck).not.toMatch(/starts during/i);
     expect(deck).not.toMatch(/overlap/i);

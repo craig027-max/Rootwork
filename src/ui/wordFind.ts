@@ -2,11 +2,13 @@
  * Browse find leftover after #98 / #99 / #100: the school word is open, so
  * teach that word — not "Bio means life" over Biology. Title / means / nav
  * leftover: Biology and its gloss, not Bio / life sitting over the word.
+ * Hear leftover: the speaker under Century names the root (Hear the root
+ * Cent), not SENT as if that were how Century sounds.
  *
  * Definitions and other-half roots are authored catalog fields. Do not
  * invent a split or a meaning.
  */
-import { findSuccessLine } from '../core/deckFlow';
+import { findSuccessLine, hearHoldLine } from '../core/deckFlow';
 import { shortWordDef } from '../core/wordDef';
 import { ROOTS, rootId } from '../data/roots';
 import type { RootWord } from '../data/roots.data';
@@ -55,6 +57,42 @@ export function findHintLine(word: string): string {
 
 export function findKnowLabel(): string {
   return 'I know this word ✓';
+}
+
+/** Speaker under a school word — Hear the root, not Hear Century. */
+export function wordRootHearLabel(rootName: string): string {
+  const name = rootName.replace(/\s+/g, ' ').trim();
+  return name ? `Hear the root ${name}` : 'Hear the root';
+}
+
+/**
+ * Pronunciation under a school word. The authored root spelling stays
+ * (SENT), prefixed so it cannot read as the word.
+ */
+export function wordRootSayLine(rootName: string, say: string): string {
+  const name = rootName.replace(/\s+/g, ' ').trim();
+  const sound = say.replace(/\s+/g, ' ').trim();
+  if (!name) return sound;
+  if (!sound) return `the root ${name}`;
+  return `the root ${name} · ${sound}`;
+}
+
+/** Mid-clip status on a school word — the clip is the root, not the word. */
+export function wordRootListeningLine(): string {
+  return 'Hearing the root…';
+}
+
+/**
+ * After the clip, name the root with the same sound + meaning the root
+ * card holds. A bare "sent · hundred" must not sit under Century.
+ */
+export function wordRootHearHold(rootName: string, say: string, mean: string): string {
+  const name = rootName.replace(/\s+/g, ' ').trim();
+  const held = hearHoldLine(say, mean).replace(/\s+/g, ' ').trim();
+  const useful = held === '·' ? '' : held;
+  if (!name) return useful;
+  if (!useful) return name;
+  return `${name} · ${useful}`;
 }
 
 /** ← Find opens the catalog with the query still typed — not Home. */
