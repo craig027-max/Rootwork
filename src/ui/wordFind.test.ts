@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ROOTS, isRootOpenable, rootId } from '../data/roots';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { hearHoldLine } from '../core/deckFlow';
 import {
   findAlsoNote,
   findAlsoTapLabel,
@@ -13,6 +16,10 @@ import {
   otherRootsForWord,
   shortWordDef,
   wordDefForOpen,
+  wordRootHearHold,
+  wordRootHearLabel,
+  wordRootListeningLine,
+  wordRootSayLine,
 } from './wordFind';
 
 const bio = ROOTS.find((r) => r.root === 'Bio')!;
@@ -64,6 +71,46 @@ describe('Find teaches the school word — not Bio means life', () => {
     expect(otherRootsForWord('Photograph', rootId(photo))).toEqual([]);
     expect(findAlsoTapLabel('Log')).toBe('Also on Log →');
     expect(findAlsoNote('Log', log.mean)).toBe(`Also on Log · ${log.mean}`);
+  });
+
+  it('hears the root under a school word — not SENT over Century', () => {
+    const cent = ROOTS.find((r) => r.root === 'Cent')!;
+    const century = cent.words.find((w) => w.w === 'Century')!;
+    expect(century.w).toBe('Century');
+    expect(wordRootHearLabel(cent.root)).toBe('Hear the root Cent');
+    expect(wordRootHearLabel(cent.root)).not.toBe(`Hear ${century.w}`);
+    expect(wordRootSayLine(cent.root, cent.say)).toBe(`the root Cent · ${cent.say}`);
+    expect(wordRootSayLine(cent.root, cent.say).startsWith(cent.say)).toBe(false);
+    expect(wordRootListeningLine()).toBe('Hearing the root…');
+    expect(wordRootHearHold(cent.root, cent.say, cent.mean)).toBe(
+      `Cent · ${hearHoldLine(cent.say, cent.mean)}`,
+    );
+    expect(wordRootHearHold(cent.root, cent.say, cent.mean)).not.toMatch(/^sent\b/i);
+    expect(wordRootHearLabel('')).toBe('Hear the root');
+    expect(wordRootSayLine('', cent.say)).toBe(cent.say);
+    expect(wordRootSayLine(cent.root, '  ')).toBe('the root Cent');
+    expect(wordRootHearHold('', cent.say, cent.mean)).toBe(hearHoldLine(cent.say, cent.mean));
+
+    for (const root of ROOTS) {
+      expect(wordRootHearLabel(root.root)).toBe(`Hear the root ${root.root}`);
+      expect(wordRootSayLine(root.root, root.say)).toContain(`the root ${root.root}`);
+      for (const word of root.words) {
+        expect(wordRootHearLabel(root.root)).not.toBe(`Hear ${word.w}`);
+        expect(wordRootSayLine(root.root, root.say)).not.toBe(word.w);
+      }
+    }
+  });
+
+  it('wires the school-word speaker and leaves the root card on Hear {root}', () => {
+    const deck = readFileSync(join(process.cwd(), 'src/ui/Deck.tsx'), 'utf8');
+    expect(deck).toContain('wordRootHearLabel(root.root)');
+    expect(deck).toContain('wordRootSayLine(root.root, root.say)');
+    expect(deck).toContain('wordRootListeningLine()');
+    expect(deck).toContain('wordRootHearHold(root.root, root.say, root.mean)');
+    expect(deck).toContain('finding && findWord');
+    expect(deck).toContain('`Hear ${root.root}`');
+    expect(deck).toContain('{root.say} &nbsp;·&nbsp; <span className="origin">from {root.org}</span>');
+    expect(deck).toContain('speakRoot(card.root, card.say)');
   });
 
   it('does not open a paywall tap for a locked other half', () => {

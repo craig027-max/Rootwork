@@ -88,6 +88,10 @@ import {
   findMissLine,
   otherRootsForWord,
   wordDefForOpen,
+  wordRootHearHold,
+  wordRootHearLabel,
+  wordRootListeningLine,
+  wordRootSayLine,
 } from './wordFind';
 
 function palOf(root: Root) {
@@ -555,7 +559,9 @@ export function Deck() {
                   <button
                     type="button"
                     className={`ww-hear${listen.hearActive ? ' is-listening' : ''}`}
-                    aria-label={`Hear ${root.root}`}
+                    aria-label={
+                      finding && findWord ? wordRootHearLabel(root.root) : `Hear ${root.root}`
+                    }
                     aria-pressed={listen.hearActive}
                     onClick={onHear}
                   >
@@ -567,13 +573,27 @@ export function Deck() {
                     </svg>
                   </button>
                   <span>
-                    {root.say} &nbsp;·&nbsp; <span className="origin">from {root.org}</span>
+                    {finding && findWord ? (
+                      <>
+                        {wordRootSayLine(root.root, root.say)}
+                        {' · '}
+                        <span className="origin">from {root.org}</span>
+                      </>
+                    ) : (
+                      <>
+                        {root.say} &nbsp;·&nbsp; <span className="origin">from {root.org}</span>
+                      </>
+                    )}
                   </span>
                 </div>
               )}
               {listen.line ? (
                 <div className="ww-listen" role="status" aria-live="polite">
-                  <p className="ww-listen-line">{listen.line}</p>
+                  <p className="ww-listen-line">
+                    {finding && findWord && listenKind === 'hear'
+                      ? wordRootListeningLine()
+                      : listen.line}
+                  </p>
                   {listen.beats ? (
                     <p className="ww-listen-beats">
                       {listen.beats.map((beat) => (
@@ -589,7 +609,11 @@ export function Deck() {
                 </div>
               ) : hearHold.line ? (
                 <div className="ww-listen ww-listen-hold" role="status" aria-live="polite">
-                  <p className="ww-listen-line">{hearHold.line}</p>
+                  <p className="ww-listen-line">
+                    {finding && findWord
+                      ? wordRootHearHold(root.root, root.say, root.mean)
+                      : hearHold.line}
+                  </p>
                 </div>
               ) : null}
               {quizHero ? (

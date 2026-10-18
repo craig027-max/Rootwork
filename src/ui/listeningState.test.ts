@@ -28,7 +28,8 @@ describe('listening state while Hear/Yes plays', () => {
     expect(deck).toContain('listen.line');
     expect(deck).toContain('is-listening');
     expect(deck).toContain('aria-pressed={listen.hearActive}');
-    expect(deck).toContain('aria-label={`Hear ${root.root}`}');
+    expect(deck).toContain('`Hear ${root.root}`');
+    expect(deck).toContain('wordRootListeningLine()');
     expect(css).toContain('.ww-hear.is-listening');
     expect(css).toContain('.ww-listen');
   });
