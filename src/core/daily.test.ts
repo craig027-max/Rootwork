@@ -20,7 +20,11 @@ import {
   dailyProgressLabel,
   dailyResumePreview,
   dailySeed,
+  applyDailyAskedPreview,
+  dailyAskedRecapNames,
+  dailyPeekName,
   dailyTilePreview,
+  liveDailyAsked,
   localDayKey,
   layoutDailyAsked,
   normalizeDailyAsked,
@@ -380,5 +384,79 @@ describe('Daily mid-run resume + hold meaning', () => {
     expect(dailyRecapChipLabel('Chron', false)).toBe('Meet Chron');
     expect(dailyRecapChipLabel('  Geo  ', false)).toBe('Meet Geo');
     expect(dailyRecapChipLabel('', true)).toBe('Remember');
+  });
+});
+
+describe('Home Daily names the asked question', () => {
+  const biography = {
+    root: 'Bio',
+    title: '  Biography  ',
+    sub: "  The true written story of a real person's life.  ",
+  };
+  const lines = [
+    { root: 'Bio', mean: 'life' },
+    { root: 'Geo', mean: 'earth' },
+    { root: 'Photo', mean: 'light' },
+  ];
+
+  it('names Biography and keeps a meaning beat on the root', () => {
+    const named = applyDailyAskedPreview(lines, [
+      biography,
+      { root: 'Geo', title: 'Geo', sub: 'earth' },
+      { root: 'Photo', title: 'Photograph', sub: 'A picture made with light' },
+    ]);
+    expect(named[0]).toEqual({
+      root: 'Bio',
+      mean: "The true written story of a real person's life.",
+      asked: 'Biography',
+    });
+    expect(named[0]?.mean).not.toBe('life');
+    expect(dailyPeekName(named[0]!)).toBe('Biography');
+    expect(named[1]).toEqual({ root: 'Geo', mean: 'earth' });
+    expect(named[1]?.asked).toBeUndefined();
+    expect(dailyPeekName(named[1]!)).toBe('Geo');
+    expect(named[2]).toEqual({
+      root: 'Photo',
+      mean: 'A picture made with light',
+      asked: 'Photograph',
+    });
+    expect(named[2]?.mean).not.toMatch(/Photo means light/);
+  });
+
+  it('does not move a chip onto a different root, and a fresh peek stays the roots', () => {
+    const pinned = applyDailyAskedPreview(lines, [
+      { root: 'Photo', title: 'Photograph', sub: 'A picture made with light' },
+    ]);
+    expect(pinned[0]).toEqual({ root: 'Bio', mean: 'life' });
+    expect(pinned[1]).toEqual({ root: 'Geo', mean: 'earth' });
+    expect(pinned[2]).toEqual({
+      root: 'Photo',
+      mean: 'A picture made with light',
+      asked: 'Photograph',
+    });
+    expect(
+      applyDailyAskedPreview(lines, [{ root: 'Nope', title: 'Biography', sub: 'a life story' }]),
+    ).toEqual(lines);
+    expect(applyDailyAskedPreview(lines, undefined)).toEqual(lines);
+    expect(applyDailyAskedPreview(lines, [])).toEqual(lines);
+    expect(
+      dailyAskedRecapNames(
+        [{ root: 'Bio' }, { root: 'Geo' }, { root: 'Photo' }],
+        [biography, { root: 'Geo', title: 'Geo', sub: 'earth' }],
+      ),
+    ).toEqual(['Biography', 'Geo', 'Photo']);
+  });
+
+  it('ignores another day and another kid', () => {
+    const run = {
+      day: '2026-10-19',
+      studentId: 'kid-a',
+      qi: 5,
+      asked: [biography],
+    };
+    expect(liveDailyAsked(run, '2026-10-19', 'kid-a')).toEqual([biography]);
+    expect(liveDailyAsked(run, '2026-10-18', 'kid-a')).toBeUndefined();
+    expect(liveDailyAsked(run, '2026-10-19', 'kid-b')).toBeUndefined();
+    expect(liveDailyAsked(null, '2026-10-19', 'kid-a')).toBeUndefined();
   });
 });

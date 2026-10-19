@@ -20,7 +20,16 @@ export interface DetailVM {
   ring?: { pct: number; label: string };
   pmA?: string;
   pmB?: ReactNode;
-  samples: { root: string; mean: string; ok?: boolean; owned?: boolean }[];
+  samples: {
+    root: string;
+    mean: string;
+    ok?: boolean;
+    owned?: boolean;
+    /** School word or piece when this Daily question was not the root. */
+    asked?: string;
+    /** Asked title is a school word on this root — Open, not Remember. */
+    opensWord?: boolean;
+  }[];
   /** Daily tile: stack name + one-line meaning so kids can read today's set. */
   sampleLines?: boolean;
   /** Daily done / all-hit Rush: mark preview lines as a recap, not a fresh teaser. */
@@ -61,7 +70,7 @@ export function DetailPanel({
   onPrimary: () => void;
   onSecondary: () => void;
   /** Named peek chip — Remember / Continue Daily / Continue {root}, not dead chrome. */
-  onSample?: (root: string) => void;
+  onSample?: (root: string, asked?: string) => void;
 }) {
   const p = PALETTES[vm.jewel] ?? PALETTES.green!;
   const emoji = vm.scene ? (SCENE_EMOJI[vm.scene.key] ?? '✨') : null;
@@ -130,7 +139,7 @@ export function DetailPanel({
             const isNext = Boolean(vm.samplesNext && i === 0 && !chipDone);
             const cls = `ww-schip${chipDone ? ' is-done' : ''}${
               chipMiss ? ' is-miss' : ''
-            }${isNext ? ' is-next' : ''}${tapable ? ' is-tap' : ''}`;
+            }${isNext ? ' is-next' : ''}${tapable ? ' is-tap' : ''}${s.asked ? ' is-asked' : ''}`;
             const body = (
               <>
                 {chipDone ? (
@@ -143,21 +152,26 @@ export function DetailPanel({
                     !
                   </span>
                 ) : null}
-                <b>{s.root}</b>
+                {s.asked ? <b>{s.asked}</b> : <b>{s.root}</b>}
                 <span>{s.mean}</span>
               </>
             );
+            const ariaName = s.asked || s.root;
             return tapable && onSample && vm.sampleTap ? (
               <button
                 type="button"
                 className={cls}
                 key={s.root}
-                onClick={() => onSample(s.root)}
-                aria-label={samplePeekLabel(vm.sampleTap, s.root, {
-                  dailyNext: isNext,
-                  ok: s.ok,
-                  owned: s.owned,
-                })}
+                onClick={() => onSample(s.root, s.asked)}
+                aria-label={
+                  vm.sampleTap === 'remember' && s.opensWord && s.asked
+                    ? `Open ${s.asked}`
+                    : samplePeekLabel(vm.sampleTap, ariaName, {
+                        dailyNext: isNext,
+                        ok: s.ok,
+                        owned: s.owned,
+                      })
+                }
               >
                 {body}
               </button>

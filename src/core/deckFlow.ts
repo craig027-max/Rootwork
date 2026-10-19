@@ -364,9 +364,10 @@ export function browseOpenForId(
 }
 
 /**
- * Daily / Rush result chip. A school word (Century) opens that word, then
- * Home. The root name, a piece (-ator), an empty title, and a Remember-hero
- * chip stay Remember or teach — Home peeks never come through here.
+ * Daily / Rush result chip, and a Home Daily peek that names the same
+ * question. A school word (Century) opens that word, then Home. The root
+ * name, a piece (-ator), an empty title, and a Remember-hero chip stay
+ * Remember or teach.
  */
 export function askedChipOpen(
   id: string,
