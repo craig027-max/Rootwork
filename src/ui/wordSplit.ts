@@ -1,3 +1,4 @@
+import { shortWordDef } from '../core/wordDef';
 import type { RootWord } from '../data/roots.data';
 
 /** Authored morphological split already on the word (`b`). Do not invent pieces. */
@@ -18,6 +19,38 @@ export function splitForOpenWord(
   if (!open) return null;
   const word = words.find((w) => w.w === open);
   return word ? wordPartSplit(word) : null;
+}
+
+/**
+ * Study-card tap leftover: phone chips hide each gloss, and the lesson
+ * line still said Bio means life under an open Biology. Name that school
+ * word and its authored definition. Do not invent a meaning.
+ */
+export interface OpenChipLesson {
+  word: string;
+  gloss: string;
+}
+
+export function openChipLesson(word: string, def: string): OpenChipLesson | null {
+  const name = word.replace(/\s+/g, ' ').trim();
+  const gloss = shortWordDef(def);
+  if (!name || !gloss) return null;
+  return { word: name, gloss };
+}
+
+/** Full lesson line — Biology — The science of living things. */
+export function openChipMeanLine(word: string, def: string): string | null {
+  const lesson = openChipLesson(word, def);
+  if (!lesson) return null;
+  return `${lesson.word} — ${lesson.gloss}`;
+}
+
+/** Chip name when the gloss paragraph is hidden. Pause between word and meaning. */
+export function openChipAria(word: string, def: string): string {
+  const lesson = openChipLesson(word, def);
+  const name = word.replace(/\s+/g, ' ').trim();
+  if (!lesson) return name;
+  return `${lesson.word}. ${lesson.gloss}`;
 }
 
 /**
