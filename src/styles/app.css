@@ -1696,7 +1696,8 @@ button.ww-schip:focus-visible {
   color: var(--text-secondary);
   padding: 6px 4px;
 }
-.ww-mean-line.is-find {
+.ww-mean-line.is-find,
+.ww-mean-line.is-word {
   white-space: normal;
   overflow: visible;
 }
@@ -2162,9 +2163,8 @@ button.ww-schip:focus-visible {
   font-size: 0.82rem;
   line-height: 1.25;
   color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
 }
 .ww-word:hover {
   background: rgba(var(--spark-rgb), 0.12);

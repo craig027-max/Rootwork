@@ -76,7 +76,13 @@ import {
 } from './deck/deckChrome';
 import { DeckNav } from './deck/DeckNav';
 import { RootIndex } from './deck/RootIndex';
-import { openWordForFind, splitForOpenWord, toggleOpenWord } from './wordSplit';
+import {
+  openChipAria,
+  openChipLesson,
+  openWordForFind,
+  splitForOpenWord,
+  toggleOpenWord,
+} from './wordSplit';
 import {
   findAlsoNote,
   findAlsoTapLabel,
@@ -330,6 +336,11 @@ export function Deck() {
   const findDef = finding ? wordDefForOpen(root.words, findWord) : null;
   const findSplit = findWord ? splitForOpenWord(root.words, findWord) : null;
   const alsoRoots = findWord ? otherRootsForWord(findWord, id) : [];
+  // Study tap — name Biology, not Bio means life. Find already has its line.
+  const chipLesson =
+    finding || !openWord
+      ? null
+      : openChipLesson(openWord, wordDefForOpen(root.words, openWord) ?? '');
   const day = localDayKey();
   const missRememberLive =
     remembering &&
@@ -675,6 +686,7 @@ export function Deck() {
                     }`}
                     key={w.w}
                     title={`${w.b} — ${w.d}`}
+                    aria-label={openChipAria(w.w, w.d)}
                     aria-expanded={openWord === w.w}
                     aria-controls="ww-word-split"
                     onClick={() => setOpenWord((cur) => toggleOpenWord(cur, w.w))}
@@ -717,10 +729,20 @@ export function Deck() {
                   )}
                 </div>
               ) : null}
-              {/* Phone chips hide per-word glosses; find names the school word. */}
-              <p className={`ww-mean-line${finding ? ' is-find' : ''}`}>
+              {/* Phone chips hide per-word glosses. An open chip names that
+                  school word; a closed card still names the root. */}
+              <p
+                className={`ww-mean-line${finding ? ' is-find' : ''}${chipLesson ? ' is-word' : ''}`}
+                role={chipLesson ? 'status' : undefined}
+              >
                 {finding && findWord && findDef ? (
                   findMeanLine(findWord, findDef)
+                ) : chipLesson ? (
+                  <>
+                    <strong>{chipLesson.word}</strong>
+                    {' — '}
+                    {chipLesson.gloss}
+                  </>
                 ) : (
                   <>
                     <strong>{root.root}</strong> means {root.mean}
