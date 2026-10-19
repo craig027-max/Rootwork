@@ -51,8 +51,9 @@ export interface ModeItem {
   disabled?: boolean;
   /** Best-result meta for the row (e.g. "A · 4★" for Root Rush), design's `best`. */
   best?: string;
-  /** Daily / last-Rush peek: names + meanings. Rush lines keep `ok` so a miss is not a ✓. */
-  preview?: { root: string; mean: string; ok?: boolean }[];
+  /** Daily / last-Rush peek: names + meanings. Rush lines keep `ok` so a miss is not a ✓.
+   *  `asked` is the school word when that Daily question was not the root. */
+  preview?: { root: string; mean: string; ok?: boolean; asked?: string }[];
   /** When Daily is banked, the preview lines are a done recap (✓ on each). */
   previewDone?: boolean;
   /** Mid-run Daily: remaining-root peek — first line is the next unanswered. */
@@ -521,7 +522,7 @@ export function buildMenu(
     /** Next unanswered Daily index when a mid-run is live. */
     dailyResumeQi?: number | null;
     dailyTotal?: number;
-    dailyPreview?: { root: string; mean: string }[];
+    dailyPreview?: { root: string; mean: string; asked?: string }[];
     /** Last Rush names + hit/miss — menu row peeks the real run, not a Starter trio. */
     rushPreview?: { root: string; mean: string; ok?: boolean }[];
     /** Next unanswered Daily root name when a mid-run is live. */
@@ -572,7 +573,7 @@ export function buildMenu(
       jewel: 'gold',
       title: modeMenuTitle({ name: 'Daily Challenge', missName }),
       sub: opts.dailyDone
-        ? dailyDoneMenuSub(opts.dailyPreview?.map((p) => p.root), {
+        ? dailyDoneMenuSub(opts.dailyPreview?.map((p) => p.asked || p.root), {
             missName: opts.rushMissName,
           })
         : opts.dailyNextName

@@ -116,7 +116,9 @@ export function TierMenu({
                   <span
                     className={`ww-daily-line${lineDone ? ' is-done' : ''}${
                       lineMiss ? ' is-miss' : ''
-                    }${it.previewResume && idx === 0 && !lineDone ? ' is-next' : ''}`}
+                    }${it.previewResume && idx === 0 && !lineDone ? ' is-next' : ''}${
+                      p.asked ? ' is-asked' : ''
+                    }`}
                     key={p.root}
                   >
                     {lineDone ? (
@@ -129,7 +131,7 @@ export function TierMenu({
                         !
                       </span>
                     ) : null}
-                    <b>{p.root}</b>
+                    {p.asked ? <b>{p.asked}</b> : <b>{p.root}</b>}
                     <span>{p.mean}</span>
                   </span>
                 );

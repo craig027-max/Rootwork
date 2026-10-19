@@ -79,7 +79,9 @@ function askedChipFor(root: Root, beat: RecallBeat): DailyAskedChip {
  * The result list names the question — Biography, not Bio / life.
  * Opening Daily again today keeps that list. Tapping a school-word
  * chip opens that word, then Home. A root chip, a piece, and
- * Remember stay on the root. Home still names the five roots.
+ * Remember stay on the root. Home names that same question on
+ * the Daily tile and the Today row — not Bio / life over Biography.
+ * A root chip and a Remember miss stay on the root.
  * Finishing banks Daily XP; replays are free.
  */
 export function DailyChallenge() {

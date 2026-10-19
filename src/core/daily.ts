@@ -77,6 +77,11 @@ export const DAILY_TILE_PREVIEW_COUNT = 3;
 export interface DailyTileLine {
   root: string;
   mean: string;
+  /**
+   * The thing that question asked, when it is not the root name.
+   * Biology over Bio. Absent on a meaning beat and on a slot with no chip.
+   */
+  asked?: string;
 }
 
 /**
@@ -110,6 +115,57 @@ export function dailyResumePreview(
   if (!Number.isInteger(from) || from < 1) return dailyTilePreview(deal, count);
   if (from >= deal.length) return [];
   return dailyTilePreview(deal.slice(from), count);
+}
+
+/**
+ * Today's stored result chips. Another day or another kid must not rename
+ * this deal — Home falls back to the root names.
+ */
+export function liveDailyAsked(
+  run: DailyRun | null | undefined,
+  day: string,
+  studentId: string | null,
+): (DailyAskedChip | null)[] | undefined {
+  if (!run || run.day !== day) return undefined;
+  if ((run.studentId ?? null) !== (studentId ?? null)) return undefined;
+  return run.asked;
+}
+
+/** Bold name on a Home Daily line — the asked thing, else the catalog root. */
+export function dailyPeekName(line: { root: string; asked?: string }): string {
+  const asked = line.asked?.replace(/\s+/g, ' ').trim();
+  if (asked) return asked;
+  return line.root.replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Home Daily peek after the result list learned the question. A chip pinned
+ * to Bio names Biography and its gloss. A meaning beat (title is the root)
+ * and a missing chip stay Bio / life. Match on the root name so a later
+ * deal cannot move Biography onto Photo.
+ */
+export function applyDailyAskedPreview<T extends { root: string; mean: string }>(
+  lines: readonly T[],
+  asked: readonly (DailyAskedChip | null)[] | null | undefined,
+): (T & { asked?: string })[] {
+  return lines.map((line) => {
+    const chip = asked?.find((item) => item?.root === line.root);
+    const title = chip?.title.replace(/\s+/g, ' ').trim() ?? '';
+    const sub = chip?.sub.replace(/\s+/g, ' ').trim() ?? '';
+    if (!title || title.toLowerCase() === line.root.toLowerCase()) return { ...line };
+    return { ...line, mean: sub || line.mean, asked: title };
+  });
+}
+
+/** Today-row / done names — Biography when that question asked it, else the root. */
+export function dailyAskedRecapNames(
+  deal: readonly { root: string }[],
+  asked: readonly (DailyAskedChip | null)[] | null | undefined,
+): string[] {
+  return applyDailyAskedPreview(
+    deal.map((item) => ({ root: item.root, mean: '' })),
+    asked,
+  ).map((line) => dailyPeekName(line));
 }
 
 /** Next unanswered Daily root when a mid-run is live. */

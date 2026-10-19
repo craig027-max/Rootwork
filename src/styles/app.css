@@ -530,6 +530,9 @@
   .ww-daily-line.is-next {
     display: flex;
   }
+  .ww-daily-line.is-asked {
+    display: flex;
+  }
   .ww-daily-mark {
     display: inline;
   }
@@ -608,6 +611,11 @@
     display: flex;
   }
   .ww-samples.is-lines .ww-schip.is-next.is-tap {
+    display: flex;
+  }
+  .ww-samples.is-lines .ww-schip.is-asked,
+  .ww-samples.is-lines .ww-schip.is-asked.is-tap,
+  .ww-samples.is-lines .ww-schip.is-asked.is-done.is-tap {
     display: flex;
   }
   .ww-samples.is-lines .ww-schip > span:last-child {
@@ -981,6 +989,36 @@
 }
 .ww-daily-mark.is-miss {
   color: #ff8a8f;
+}
+.ww-daily-line.is-asked {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.ww-daily-line.is-asked b {
+  overflow-wrap: anywhere;
+}
+.ww-daily-line.is-asked > span:last-child {
+  margin-left: 0;
+  flex: 1 1 100%;
+  text-align: left;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+.ww-samples.is-lines .ww-schip.is-asked {
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.ww-samples.is-lines .ww-schip.is-asked b {
+  overflow-wrap: anywhere;
+}
+.ww-samples.is-lines .ww-schip.is-asked > span:last-child {
+  margin-left: 0;
+  flex: 1 1 100%;
+  text-align: left;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
 }
 .ww-daily-line.is-done b {
   color: var(--text-primary);
@@ -2707,6 +2745,14 @@ button.ww-schip:focus-visible {
   }
   .ww-daily-line.is-miss .ww-daily-mark.is-miss {
     display: inline;
+  }
+  .ww-daily-line.is-asked {
+    display: flex;
+  }
+  .ww-samples.is-lines .ww-schip.is-asked,
+  .ww-samples.is-lines .ww-schip.is-asked.is-tap,
+  .ww-samples.is-lines .ww-schip.is-asked.is-done.is-tap {
+    display: flex;
   }
   .ww-lead2.is-remember-miss,
   .ww-muted.is-remember-miss {

@@ -1,12 +1,15 @@
 import type { ReactNode } from 'react';
 import { PALETTES, ROOTS, ROOTS_BY_ID, TIERS, rootId, rootsInTier, type Root } from '../../data/roots';
 import {
+  applyDailyAskedPreview,
   continueDailyLabel,
   dailyDoneLead,
   dailyNextRoot,
   dailyResumePreview,
   dailyTilePreview,
+  type DailyAskedChip,
 } from '../../core/daily';
+import { askedChipOpen } from '../../core/deckFlow';
 import { gradeForPct } from '../../core/stats';
 import {
   entryRootName,
@@ -123,6 +126,8 @@ export function buildDetailVM(
     dailyDone: boolean;
     /** Next unanswered Daily index when a mid-run is live. */
     dailyResumeQi?: number | null;
+    /** Today's result chips — Biography, not Bio / life. Another day stays unset. */
+    dailyAsked?: readonly (DailyAskedChip | null)[] | null;
     dailyTotal?: number;
     streak: number;
     nextPlay: boolean;
@@ -271,11 +276,14 @@ export function buildDetailVM(
     const dailyResume =
       extra.dailyResumeQi != null && extra.dailyResumeQi >= 1 ? extra.dailyResumeQi : null;
     const nextDaily = dailyNextRoot(extra.dailyRoots, dailyResume);
-    const dailySamples = extra.dailyDone
-      ? dailyTilePreview(extra.dailyRoots)
-      : dailyResume != null
-        ? dailyResumePreview(extra.dailyRoots, dailyResume)
-        : dailyTilePreview(extra.dailyRoots);
+    const dailySamples = applyDailyAskedPreview(
+      extra.dailyDone
+        ? dailyTilePreview(extra.dailyRoots)
+        : dailyResume != null
+          ? dailyResumePreview(extra.dailyRoots, dailyResume)
+          : dailyTilePreview(extra.dailyRoots),
+      extra.dailyAsked,
+    );
     const remainingAfterPeek =
       extra.dailyDone || dailyResume == null
         ? extra.dailyRoots.length - dailySamples.length
@@ -327,10 +335,18 @@ export function buildDetailVM(
       samples: miss
         ? missSamples
         : extra.dailyDone
-          ? dailySamples.map((s) => ({
-              ...s,
-              owned: ROOTS.some((r) => r.root === s.root && extra.completed.has(rootId(r))),
-            }))
+          ? dailySamples.map((s) => {
+              const catalog = ROOTS.find((r) => r.root === s.root);
+              const open =
+                catalog && s.asked
+                  ? askedChipOpen(rootId(catalog), extra.completed, s.asked)
+                  : null;
+              return {
+                ...s,
+                owned: Boolean(catalog && extra.completed.has(rootId(catalog))),
+                opensWord: open?.entry === 'asked',
+              };
+            })
           : dailySamples,
       sampleLines: true,
       samplesDone: extra.dailyDone && dailySamples.length > 0 && !miss,

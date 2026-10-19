@@ -15,7 +15,7 @@ const home = readFileSync(join(process.cwd(), 'src/ui/Home.tsx'), 'utf8');
 const deck = readFileSync(join(process.cwd(), 'src/ui/Deck.tsx'), 'utf8');
 
 describe('Result chip opens the asked word — then Home, not the root quiz', () => {
-  it('wires Daily and Rush result taps, and leaves Home on the root', () => {
+  it('wires Daily and Rush result taps, and Home opens a school-word chip', () => {
     expect(daily).toContain('askedChipOpen');
     expect(daily).toContain('resultChipAria');
     expect(daily).toContain('openRecap(r, showAsked ? title : undefined)');
@@ -24,8 +24,10 @@ describe('Result chip opens the asked word — then Home, not the root quiz', ()
     expect(rush).toContain('onClick={() => openRecap(id, asked.title)}');
     expect(rush).toMatch(/onClick=\{\(\) => openRecap\(s\.id\)\}/);
     expect(rush).toMatch(/onClick=\{\(\) => openRecap\(id\)\}/);
-    expect(home).not.toContain('askedChipOpen');
-    expect(home).not.toContain("entry: 'asked'");
+    expect(home).toContain('askedChipOpen');
+    expect(home).toContain("open?.entry === 'asked'");
+    expect(home).toContain('onRecap(tap.name)');
+    expect(home).not.toContain("entry: 'find'");
   });
 
   it('opens the word card and sends leave / Yes home — Browse find still opens the catalog', () => {

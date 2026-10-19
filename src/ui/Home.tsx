@@ -4,15 +4,18 @@ import { useEntitledForDisplay } from '../app/hooks';
 import { ROOTS, rootId, isRootOpenable, type TierNum } from '../data/roots';
 import { DEFAULT_AVATAR } from '../data/avatars';
 import {
+  applyDailyAskedPreview,
+  dailyAskedRecapNames,
   dailyNextRoot,
   dailyResumePreview,
   dailySeed,
   dailyTilePreview,
+  liveDailyAsked,
   localDayKey,
   pickDailyRoots,
   liveDailyResumeQi,
 } from '../core/daily';
-import { browseOpenForId, recapOpenForRoot } from '../core/deckFlow';
+import { askedChipOpen, browseOpenForId, recapOpenForRoot } from '../core/deckFlow';
 import { homeRushRecapPreview, liveRushRecap, todayRushRecap } from '../core/rushRecap';
 import {
   buildMenu,
@@ -79,6 +82,13 @@ export function Home() {
     stats.lastDailyDay,
   );
   const dailyNext = dailyNextRoot(dailyRoots, dailyResumeQi);
+  const dailyAsked = liveDailyAsked(dailyRun, day, activeStudentId);
+  const dailyPreview = applyDailyAskedPreview(
+    dailyResumeQi != null
+      ? dailyResumePreview(dailyRoots, dailyResumeQi)
+      : dailyTilePreview(dailyRoots),
+    dailyAsked,
+  );
   const profile = buildProfileProgress(stats, completed.size, day);
   const learnedId = learnedRootToday(progress, day);
   const rememberedId = rememberRootToday(progress, day);
@@ -107,7 +117,7 @@ export function Home() {
     dailyTotal: dailyRoots.length,
     dailyNextName: dailyNext?.root,
     dailyNextMean: dailyNext?.mean,
-    dailyRecapNames: dailyRoots.map((r) => r.root),
+    dailyRecapNames: dailyAskedRecapNames(dailyRoots, dailyAsked),
     completed,
     entitled,
     learnedToday: learnedId !== null,
@@ -132,10 +142,6 @@ export function Home() {
     rememberAlso,
   });
   const learnHero = learnHeroCta != null;
-  const dailyPreview =
-    dailyResumeQi != null
-      ? dailyResumePreview(dailyRoots, dailyResumeQi)
-      : dailyTilePreview(dailyRoots);
   const rushPreview = homeRushRecapPreview(lastRush, {
     dailyResume: dailyResumeQi != null,
   });
@@ -253,7 +259,7 @@ export function Home() {
     if (recap) openRoot(recap.id, { entry: recap.entry });
   }
 
-  function onSamplePick(name: string) {
+  function onSamplePick(name: string, asked?: string) {
     const tap = homeSampleAction(selected, name, {
       dailyDone,
       rememberMissName: missHero ? remember.name : undefined,
@@ -262,6 +268,12 @@ export function Home() {
     if (!tap) return;
     if (tap.kind === 'daily') {
       setView('daily');
+      return;
+    }
+    const catalog = ROOTS.find((r) => r.root === tap.name);
+    const open = catalog ? askedChipOpen(rootId(catalog), completed, asked) : null;
+    if (open?.entry === 'asked') {
+      openRoot(open.id, { entry: open.entry, focusWord: open.focusWord });
       return;
     }
     onRecap(tap.name);
@@ -277,6 +289,7 @@ export function Home() {
     dailyRoots,
     dailyDone,
     dailyResumeQi,
+    dailyAsked,
     dailyTotal: dailyRoots.length,
     streak: stats.streakCurrent,
     nextPlay,
