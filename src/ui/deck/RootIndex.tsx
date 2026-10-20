@@ -9,11 +9,9 @@ import {
   isRootOpenable,
   type Root,
 } from '../../data/roots';
-import { recapDeckEntry } from '../../core/deckFlow';
 import { paletteVars } from '../components/styleVars';
 import {
   indexChipKind,
-  indexChipLabel,
   indexChipMark,
   indexHeading,
   indexRootsMissFirst,
@@ -26,8 +24,10 @@ import {
   INDEX_SEARCH_PLACEHOLDER,
   buildIndexBrowseSections,
   cleanSearchQuery,
+  indexChipAria,
+  indexChipFace,
   indexChipHint,
-  indexFocusWord,
+  indexChipWordLong,
   indexMatchCount,
   indexRootMatch,
   indexSearchEmptyHint,
@@ -181,27 +181,32 @@ export function RootIndex({
                   const locked = !isRootOpenable(id, entitled);
                   const owned = Boolean(completed?.has(id));
                   const kind = indexChipKind({ missed: missed.has(id), owned, locked });
-                  const remember = recapDeckEntry(owned) === 'remember';
-                  const mark = indexChipMark(kind);
                   const match = indexRootMatch(root, query);
-                  const hint = indexChipHint(match);
-                  const focusWord = indexFocusWord(match);
+                  const face = indexChipFace({ root: root.root, mean: root.mean, match });
+                  const wordHit = Boolean(face.word);
+                  // A word hit opens that word. ✓ / ! would say the word is
+                  // Remembered or Missed, and the tap is not that visit.
+                  const mark = wordHit ? null : indexChipMark(kind);
+                  const hint = wordHit ? null : indexChipHint(match);
                   return (
                     <button
                       key={id}
                       type="button"
                       className={`ww-ichip${locked ? ' lockchip' : ''}${
-                        kind === 'done' ? ' is-done' : ''
-                      }${kind === 'miss' ? ' is-miss' : ''}${hint ? ' is-hit' : ''}`}
+                        !wordHit && kind === 'done' ? ' is-done' : ''
+                      }${!wordHit && kind === 'miss' ? ' is-miss' : ''}${
+                        wordHit ? ' is-word' : ''
+                      }${wordHit && indexChipWordLong(face.title) ? ' is-long' : ''}${
+                        hint ? ' is-hit' : ''
+                      }`}
                       style={paletteVars(palRgb(root), (PALETTES[root.pal] ?? PALETTES.green!).grad)}
-                      onClick={() => onPick(id, focusWord ?? undefined)}
-                      aria-label={
-                        kind === 'miss'
-                          ? indexChipLabel(root.root, kind)
-                          : remember
-                            ? indexChipLabel(root.root, 'done')
-                            : root.root
-                      }
+                      onClick={() => onPick(id, face.word ?? undefined)}
+                      aria-label={indexChipAria({
+                        root: root.root,
+                        kind,
+                        word: face.word,
+                        locked,
+                      })}
                     >
                       <div className="ir">
                         {mark ? (
@@ -212,9 +217,9 @@ export function RootIndex({
                             {mark}
                           </span>
                         ) : null}
-                        {root.root} {locked ? '🔒' : ''}
+                        {face.title} {locked ? '🔒' : ''}
                       </div>
-                      <div className="im">{root.mean}</div>
+                      <div className="im">{face.sub}</div>
                       {hint ? <div className="ih">{hint}</div> : null}
                     </button>
                   );

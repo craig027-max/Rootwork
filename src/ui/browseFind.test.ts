@@ -31,6 +31,12 @@ describe('Browse find is wired — not a 183-chip scroll', () => {
     expect(index).toContain('indexSearchSub');
     expect(index).toContain('indexSearchEscape');
     expect(index).toContain('indexChipHint');
+    expect(index).toContain('indexChipFace');
+    expect(index).toContain('indexChipAria');
+    expect(index).toContain('face.title');
+    expect(index).toContain('face.sub');
+    expect(index).toContain("onPick(id, face.word ?? undefined)");
+    expect(index).not.toContain('{root.root} {locked');
     expect(index).toContain('indexHeading');
     expect(index).toContain('indexSub');
     expect(index).toContain('indexRootsMissFirst');
@@ -47,9 +53,13 @@ describe('Browse find is wired — not a 183-chip scroll', () => {
     expect(phone).toMatch(/\.ww-index-q\s*\{[^}]*display:\s*block/);
     expect(phone).toMatch(/\.ww-index-empty\s*\{[^}]*display:\s*block/);
     expect(phone).toMatch(/\.ww-ichip \.ih\s*\{[^}]*display:\s*block/);
+    expect(phone).toMatch(/\.ww-ichip\.is-word\s*\{[^}]*display:\s*block/);
+    expect(phone).toMatch(/\.ww-ichip\.is-word \.ir\s*\{[^}]*overflow-wrap:\s*anywhere/);
     expect(phone).not.toMatch(/\.ww-index-find\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.ww-index-q\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.ww-ichip \.ih\s*\{[^}]*display:\s*none/);
+    expect(phone).not.toMatch(/\.ww-ichip\.is-word\s*\{[^}]*display:\s*none/);
+    expect(phone).not.toMatch(/\.ww-ichip\.is-word\.is-long\s*\{[^}]*display:\s*none/);
     expect(css).toMatch(/\.ww-index-q\s*\{/);
     expect(css).toMatch(/\.ww-index-empty\s*\{/);
     expect(css).toMatch(/\.ww-ichip \.ih\s*\{/);

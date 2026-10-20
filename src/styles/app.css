@@ -733,6 +733,20 @@
   .ww-ichip.is-hit .ih {
     display: block;
   }
+  .ww-ichip.is-word {
+    display: block;
+  }
+  .ww-ichip.is-word.is-long {
+    display: block;
+  }
+  .ww-ichip.is-word .ir {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+  .ww-ichip.is-word .im {
+    display: block;
+    overflow-wrap: anywhere;
+  }
   .ww-tier-sec.is-miss {
     display: block;
   }
@@ -2518,6 +2532,15 @@ button.ww-schip:focus-visible {
   font-size: 0.78rem;
   color: var(--text-secondary);
 }
+.ww-ichip.is-word .ir {
+  overflow-wrap: anywhere;
+}
+.ww-ichip.is-word.is-long .ir {
+  overflow-wrap: anywhere;
+}
+.ww-ichip.is-word .im {
+  overflow-wrap: anywhere;
+}
 
 @media (max-width: 820px) {
   .ww-hero {
@@ -2655,6 +2678,20 @@ button.ww-schip:focus-visible {
   }
   .ww-ichip .ih {
     display: block;
+  }
+  .ww-ichip.is-word {
+    display: block;
+  }
+  .ww-ichip.is-word.is-long {
+    display: block;
+  }
+  .ww-ichip.is-word .ir {
+    display: block;
+    overflow-wrap: anywhere;
+  }
+  .ww-ichip.is-word .im {
+    display: block;
+    overflow-wrap: anywhere;
   }
   .ww-lead2,
   .ww-eyebrow2 {

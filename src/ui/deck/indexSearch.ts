@@ -6,7 +6,10 @@
  *
  * School-word forms count (biologist → Biology). A true miss says we
  * don't have that word — not that no root matched, as if they searched
- * wrong. Definitions and breakdowns stay out. They are sentences:
+ * wrong. A word hit names that school word on the chip — Biology, not
+ * Bio / life with Biology as a footnote. A root, meaning, or sound hit
+ * stays the root, and a catalog chip still says Remember / Missed.
+ * Definitions and breakdowns stay out. They are sentences:
  * "as in a photo" opened Capture, and compacting "Large, or" into
  * "largeor" invented a Geo hit on Xenon / Suburb / Metamorphosis.
  */
@@ -18,7 +21,12 @@ import {
   type Root,
   type TierNum,
 } from '../../data/roots';
-import { indexRootsMissFirst, indexTiersMissFirst } from './indexChip';
+import {
+  indexChipLabel,
+  indexRootsMissFirst,
+  indexTiersMissFirst,
+  type IndexChipKind,
+} from './indexChip';
 
 /** Fold kid typing: "Bio-logy", "  LIFE  ", "FOH-toh" all become searchable. */
 export function cleanSearchQuery(raw: string): string {
@@ -145,7 +153,7 @@ export function indexRootMatch(root: Root, query: string): IndexMatch | null {
   return null;
 }
 
-/** Chip extra line — Biology under Bio when they typed the word, not the root. */
+/** Spoken-sound footnote under the root. A word hit is the title, not this line. */
 export function indexChipHint(match: IndexMatch | null): string | null {
   const hint = match?.hint?.replace(/\s+/g, ' ').trim();
   if (!hint) return null;
@@ -161,6 +169,49 @@ export function indexFocusWord(match: IndexMatch | null): string | null {
   const hint = match?.hint?.replace(/\s+/g, ' ').trim();
   if (!hint || match?.why !== 'word') return null;
   return hint;
+}
+
+export interface IndexChipFace {
+  title: string;
+  sub: string;
+  /** School word this chip opens. Null keeps the catalog root tap. */
+  word: string | null;
+}
+
+/** Giant name on a find chip — Biology, not Bio over the word they typed. */
+export function indexChipFace(opts: {
+  root: string;
+  mean: string;
+  match: IndexMatch | null;
+}): IndexChipFace {
+  const root = opts.root.replace(/\s+/g, ' ').trim();
+  const mean = opts.mean.replace(/\s+/g, ' ').trim();
+  const word = indexFocusWord(opts.match);
+  if (word) {
+    const from = root && mean ? `from ${root} · ${mean}` : root ? `from ${root}` : mean;
+    return { title: word, sub: from, word };
+  }
+  return { title: root, sub: mean, word: null };
+}
+
+/** Photosynthesis-length titles wrap instead of clipping the school word. */
+export function indexChipWordLong(title: string): boolean {
+  return title.replace(/\s+/g, ' ').trim().length >= 14;
+}
+
+/**
+ * What the chip does. A school word opens that word — not Remember Bio.
+ * A locked word says so. A root / meaning / sound hit keeps Remember / Missed.
+ */
+export function indexChipAria(opts: {
+  root: string;
+  kind: IndexChipKind;
+  word?: string | null;
+  locked?: boolean;
+}): string {
+  const word = opts.word?.replace(/\s+/g, ' ').trim() ?? '';
+  if (word) return opts.locked ? `Locked ${word}` : `Open ${word}`;
+  return indexChipLabel(opts.root, opts.kind);
 }
 
 export function filterIndexRoots<T extends Root>(roots: readonly T[], query: string): T[] {

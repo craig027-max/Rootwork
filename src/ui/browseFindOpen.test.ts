@@ -81,8 +81,8 @@ describe('Browse find tap opens the school word — not a closed chip', () => {
   });
 
   it('wires Home / Deck / Browse to pass the school word through', () => {
-    expect(index).toContain('indexFocusWord');
-    expect(index).toContain('onPick(id, focusWord ?? undefined)');
+    expect(index).toContain('indexChipFace');
+    expect(index).toContain('onPick(id, face.word ?? undefined)');
     expect(home).toContain('browseOpenForId');
     expect(home).toContain('focusWord: recap.focusWord');
     expect(deck).toContain('browseOpenForId');
