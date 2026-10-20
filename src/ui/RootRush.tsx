@@ -85,9 +85,10 @@ import { samplePeekLabel } from './home/samplePeek';
  * tally says first try once any miss is on the board. A which-word
  * tap names that school word (Yes — Biology. Built from …), not Bio
  * means life. The result list names that same thing — Biography,
- * not Bio / life — while a Remember miss still names the root.
- * Tapping a school-word chip opens that word, then Home. A root
- * chip, a piece, the start peek, and Remember stay on the root.
+ * not Bio / life — and Home plus the next start peek use that stored
+ * chip. A Remember miss still names the root. Tapping a school-word
+ * chip opens that word, then Home. A root chip, a piece, and Remember
+ * stay on the root.
  * Result + start recap this run as
  * Remember chips — hits keep ✓, misses stay Missed. Owned roots hold
  * meaning then Home, never Bio → Geo. A correct owned hit banks today's
@@ -299,7 +300,15 @@ export function RootRush() {
     if (recordedRunRef.current !== runSeed) {
       recordedRunRef.current = runSeed;
       const recap = rushRecapFromRun(
-        questions.map((item, i) => ({ id: rootId(item.root), ok: hitsRef.current[i] === true })),
+        questions.map((item, i) => {
+          const chip = rushAskedChip(item);
+          return {
+            id: rootId(item.root),
+            ok: hitsRef.current[i] === true,
+            asked: chip.title,
+            askedSub: chip.sub,
+          };
+        }),
         { day, studentId },
       );
       const run = recordQuizRun(correctCount, questions.length, score, recap?.roots);
@@ -409,7 +418,7 @@ export function RootRush() {
     ? (rushStart.peekChips ?? []).flatMap((s) => {
         const catalog = ROOTS.find((r) => r.root === s.root);
         return catalog
-          ? [{ id: rootId(catalog), root: s.root, mean: s.mean, ok: s.ok === true }]
+          ? [{ id: rootId(catalog), root: s.root, mean: s.mean, ok: s.ok === true, asked: undefined }]
           : [];
       })
     : homeRushRecapPreview(lastRush, { dailyResume: dailyResumeQi != null });
@@ -551,22 +560,43 @@ export function RootRush() {
             ) : null}
             {startPeek.length > 0 ? (
               <div className="q-daily-chips q-rush-recap q-rush-start-recap">
-                {startPeek.map((s) => {
+                {startPeek.map((s, i) => {
                   const owned = completed.has(s.id);
                   const chipMiss = s.ok === false || rushStart.missWaiting;
+                  if (rushStart.missWaiting) {
+                    return (
+                      <button
+                        type="button"
+                        className="q-daily-chip is-miss"
+                        key={`${s.id}-${i}`}
+                        onClick={() => openRecap(s.id)}
+                        aria-label={samplePeekLabel('remember', s.root, { ok: false })}
+                      >
+                        <span className="q-done-mark is-miss" aria-hidden="true">
+                          !
+                        </span>
+                        {s.root}
+                        <em>{s.mean}</em>
+                      </button>
+                    );
+                  }
+                  const name = s.asked || s.root;
+                  const opened = askedChipOpen(s.id, completed, s.asked);
                   return (
                     <button
                       type="button"
                       className={`q-daily-chip${s.ok && !chipMiss ? ' is-done' : ''}${
                         chipMiss ? ' is-miss' : ''
-                      }`}
-                      key={s.id}
-                      onClick={() => openRecap(s.id)}
-                      aria-label={
+                      }${name.length >= 14 ? ' is-long' : ''}`}
+                      key={`${s.id}-${i}`}
+                      onClick={() => openRecap(s.id, s.asked)}
+                      aria-label={resultChipAria(
+                        opened,
                         chipMiss
-                          ? samplePeekLabel('remember', s.root, { ok: false })
-                          : rushRecapChipLabel(s.root, owned, s.ok)
-                      }
+                          ? samplePeekLabel('remember', name, { ok: false })
+                          : rushRecapChipLabel(name, owned, s.ok),
+                        { missed: chipMiss },
+                      )}
                     >
                       {s.ok && !chipMiss ? (
                         <span className="q-done-mark" aria-hidden="true">
@@ -578,7 +608,7 @@ export function RootRush() {
                           !
                         </span>
                       ) : null}
-                      {s.root}
+                      {s.asked || s.root}
                       <em>{s.mean}</em>
                     </button>
                   );
