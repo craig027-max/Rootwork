@@ -7,7 +7,10 @@ import {
   buildIndexBrowseSections,
   cleanSearchQuery,
   filterIndexRoots,
+  indexChipAria,
+  indexChipFace,
   indexChipHint,
+  indexChipWordLong,
   indexFocusWord,
   indexMatchCount,
   indexRootMatch,
@@ -93,6 +96,78 @@ describe('Browse find — a root, meaning, or word; not a 183-chip scroll', () =
     expect(indexSearchSub('xyzzyqq', 0)).toBe("We don't have xyzzyqq.");
     expect(indexSearchSub('xyzzyqq', 0)).not.toMatch(/No roots match/i);
     expect(indexSearchSub('dinosaur', 0)).toBe("We don't have dinosaur.");
+  });
+
+  it('names the school word on a word hit — not Bio / life over Biology', () => {
+    const biology = indexChipFace({
+      root: bio.root,
+      mean: bio.mean,
+      match: indexRootMatch(bio, 'biology'),
+    });
+    expect(biology).toEqual({ title: 'Biology', sub: 'from Bio · life', word: 'Biology' });
+    expect(biology.title).not.toBe(bio.root);
+    expect(biology.sub).not.toBe(bio.mean);
+
+    const log = ROOTS.find((r) => r.root === 'Log')!;
+    const otherHalf = indexChipFace({
+      root: log.root,
+      mean: log.mean,
+      match: indexRootMatch(log, 'biology'),
+    });
+    expect(otherHalf.title).toBe('Biology');
+    expect(otherHalf.sub).toBe(`from Log · ${log.mean}`);
+    expect(otherHalf.sub).not.toBe(biology.sub);
+
+    expect(indexChipAria({ root: bio.root, kind: 'done', word: 'Biology' })).toBe('Open Biology');
+    expect(indexChipAria({ root: bio.root, kind: 'done', word: 'Biology' })).not.toMatch(/Remember|Bio$/);
+    expect(indexChipAria({ root: bio.root, kind: 'miss', word: 'Biology' })).toBe('Open Biology');
+    expect(indexChipAria({ root: bio.root, kind: 'miss', word: 'Biology' })).not.toMatch(/Missed/);
+    expect(indexChipAria({ root: log.root, kind: 'lock', word: 'Biology', locked: true })).toBe(
+      'Locked Biology',
+    );
+
+    const meaning = indexChipFace({
+      root: bio.root,
+      mean: bio.mean,
+      match: indexRootMatch(bio, 'life'),
+    });
+    expect(meaning).toEqual({ title: 'Bio', sub: 'life', word: null });
+    const rootHit = indexChipFace({
+      root: bio.root,
+      mean: bio.mean,
+      match: indexRootMatch(bio, 'bio'),
+    });
+    expect(rootHit).toEqual({ title: 'Bio', sub: 'life', word: null });
+    const sound = indexChipFace({
+      root: bio.root,
+      mean: bio.mean,
+      match: indexRootMatch(bio, 'BY-oh'),
+    });
+    expect(sound.title).toBe('Bio');
+    expect(sound.word).toBeNull();
+    expect(indexChipHint(indexRootMatch(bio, 'BY-oh'))).toBe(bio.say);
+    expect(indexChipAria({ root: 'Geo', kind: 'miss' })).toBe('Missed Geo');
+    expect(indexChipAria({ root: 'Geo', kind: 'done' })).toBe('Remember Geo');
+    expect(indexChipWordLong('Photosynthesis')).toBe(true);
+    expect(indexChipWordLong('Biology')).toBe(false);
+
+    for (const root of ROOTS) {
+      for (const item of root.words) {
+        const match = indexRootMatch(root, item.w);
+        if (!match || match.why !== 'word' || !match.hint) continue;
+        const face = indexChipFace({ root: root.root, mean: root.mean, match });
+        expect(face.title, `${root.root} / ${item.w}`).toBe(match.hint);
+        expect(face.word, `${root.root} / ${item.w}`).toBe(match.hint);
+        expect(face.sub, `${root.root} / ${item.w}`).toContain(root.root);
+        expect(face.sub, `${root.root} / ${item.w}`).not.toBe(root.mean);
+        expect(indexChipAria({ root: root.root, kind: 'done', word: face.word })).toBe(
+          `Open ${face.title}`,
+        );
+        expect(indexChipAria({ root: root.root, kind: 'done', word: face.word })).not.toMatch(
+          /Remember/,
+        );
+      }
+    }
   });
 
   it('finds Biology from biologist — a school-word form is not an empty miss', () => {

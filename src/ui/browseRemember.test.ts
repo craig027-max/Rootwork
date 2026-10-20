@@ -81,8 +81,8 @@ describe('Browse roots / See all / index is Remember — not a Bio → Geo dump'
     expect(deck).not.toContain('openRoot(pickId);');
     expect(index).toContain('completed?.has(id)');
     expect(index).toContain('is-done');
-    expect(index).toContain('indexChipLabel');
-    expect(index).toContain('recapDeckEntry');
+    expect(index).toContain('indexChipAria');
+    expect(index).toContain("!wordHit && kind === 'done'");
   });
 
   it('keeps the catalog readable on a phone — owned ✓ chips stay on screen', () => {
