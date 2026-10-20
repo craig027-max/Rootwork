@@ -161,7 +161,7 @@ export function DetailPanel({
               <button
                 type="button"
                 className={cls}
-                key={s.root}
+                key={`${s.root}-${i}`}
                 onClick={() => onSample(s.root, s.asked)}
                 aria-label={
                   vm.sampleTap === 'remember' && s.opensWord && s.asked
@@ -176,7 +176,7 @@ export function DetailPanel({
                 {body}
               </button>
             ) : (
-              <div className={cls} key={s.root}>
+              <div className={cls} key={`${s.root}-${i}`}>
                 {body}
               </div>
             );

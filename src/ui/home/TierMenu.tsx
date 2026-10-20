@@ -119,7 +119,7 @@ export function TierMenu({
                     }${it.previewResume && idx === 0 && !lineDone ? ' is-next' : ''}${
                       p.asked ? ' is-asked' : ''
                     }`}
-                    key={p.root}
+                    key={`${p.root}-${idx}`}
                   >
                     {lineDone ? (
                       <span className="ww-daily-mark" aria-hidden="true">

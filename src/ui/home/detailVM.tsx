@@ -192,10 +192,20 @@ export function buildDetailVM(
       const missHero = Boolean(miss && !continueDaily);
       const missRoot = miss ? ROOTS_BY_ID[miss.id] : undefined;
       const missSamples = missHero && miss ? missPeekForNames(miss.name, miss.also) : [];
-      const rushSamples = missHero
-        ? missSamples
+      const rushPeek = missHero
+        ? []
         : homeRushRecapPreview(extra.rushRecap, {
             dailyResume: Boolean(continueDaily),
+          });
+      const rushSamples = missHero
+        ? missSamples
+        : rushPeek.map((s) => {
+            const open = s.asked ? askedChipOpen(s.id, extra.completed, s.asked) : null;
+            return {
+              ...s,
+              owned: extra.completed.has(s.id),
+              opensWord: open?.entry === 'asked',
+            };
           });
       const rushMore = missHero
         ? 0

@@ -52,7 +52,7 @@ export interface ModeItem {
   /** Best-result meta for the row (e.g. "A · 4★" for Root Rush), design's `best`. */
   best?: string;
   /** Daily / last-Rush peek: names + meanings. Rush lines keep `ok` so a miss is not a ✓.
-   *  `asked` is the school word when that Daily question was not the root. */
+   *  `asked` is the school word or piece when that question was not the root. */
   preview?: { root: string; mean: string; ok?: boolean; asked?: string }[];
   /** When Daily is banked, the preview lines are a done recap (✓ on each). */
   previewDone?: boolean;

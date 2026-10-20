@@ -28,6 +28,13 @@ export interface RushRecapLine {
   root: string;
   mean: string;
   ok: boolean;
+  /**
+   * The thing that question asked, when it is not the root name.
+   * Biography over Bio. Absent on a meaning beat and on an older save.
+   */
+  asked?: string;
+  /** Gloss, piece meaning, or pieces under `asked`. */
+  askedSub?: string;
 }
 
 /** Named last-run peek — keep `ok` so a miss cannot wear a fake ✓. */
@@ -36,6 +43,8 @@ export interface RushRecapPeek {
   root: string;
   mean: string;
   ok: boolean;
+  /** School word or piece when that question was not the root. */
+  asked?: string;
 }
 
 /** Last finished Rush — namespaced per learner, like Daily mid-run. */
@@ -43,6 +52,42 @@ export interface RushRecap {
   day: string;
   studentId: string | null;
   roots: RushRecapLine[];
+}
+
+const ASKED_TITLE_MAX = 80;
+const ASKED_SUB_MAX = 160;
+
+function cleanAskedField(raw: unknown, max: number): string {
+  if (typeof raw !== 'string') return '';
+  return raw.replace(/\s+/g, ' ').trim().slice(0, max);
+}
+
+/**
+ * Keep a result-chip name only when it is not the root. "bio" over Bio
+ * is a meaning beat. An older save with no chip stays on the catalog root.
+ */
+function storedAsked(
+  rootName: string,
+  titleRaw: unknown,
+  subRaw: unknown,
+): { asked: string; askedSub?: string } | null {
+  const title = cleanAskedField(titleRaw, ASKED_TITLE_MAX);
+  if (!title || title.toLowerCase() === rootName.toLowerCase()) return null;
+  const sub = cleanAskedField(subRaw, ASKED_SUB_MAX);
+  return sub ? { asked: title, askedSub: sub } : { asked: title };
+}
+
+/** Bold name + line under a Home / start chip — the asked thing, else the root. */
+function peekFromLine(line: RushRecapLine): RushRecapPeek {
+  const asked = line.asked?.replace(/\s+/g, ' ').trim();
+  const sub = line.askedSub?.replace(/\s+/g, ' ').trim();
+  return {
+    id: line.id,
+    root: line.root,
+    mean: asked && sub ? sub : line.mean,
+    ok: line.ok,
+    ...(asked ? { asked } : {}),
+  };
 }
 
 /** Coerce a stored blob into a RushRecap, or drop junk. */
@@ -59,11 +104,14 @@ export function parseRushRecap(raw: unknown): RushRecap | null {
     if (typeof r.id !== 'string' || !r.id) continue;
     if (typeof r.root !== 'string' || !r.root.trim()) continue;
     if (typeof r.mean !== 'string') continue;
+    const root = r.root.replace(/\s+/g, ' ').trim();
+    const asked = storedAsked(root, r.asked, r.askedSub);
     roots.push({
       id: r.id,
-      root: r.root.replace(/\s+/g, ' ').trim(),
+      root,
       mean: r.mean.replace(/\s+/g, ' ').trim(),
       ok: r.ok === true,
+      ...(asked ?? {}),
     });
   }
   if (roots.length === 0) return null;
@@ -111,12 +159,7 @@ export function rushRecapPreview(
   count: number = RUSH_RECAP_PREVIEW_COUNT,
 ): RushRecapPeek[] {
   if (!recap || recap.roots.length === 0 || count <= 0) return [];
-  return recap.roots.slice(0, Math.min(count, recap.roots.length)).map((r) => ({
-    id: r.id,
-    root: r.root,
-    mean: r.mean,
-    ok: r.ok,
-  }));
+  return recap.roots.slice(0, Math.min(count, recap.roots.length)).map(peekFromLine);
 }
 
 /**
@@ -132,20 +175,26 @@ export function homeRushRecapPreview(
   return rushRecapPreview(recap, opts.count);
 }
 
-/** Build a persistable last-run recap from this round's questions. */
+/**
+ * Build a persistable last-run recap from this round's questions.
+ * `asked` is the result-chip name (Biography). A meaning beat, or a title
+ * that is the root, is stored as the catalog root so Home cannot invent one.
+ */
 export function rushRecapFromRun(
-  lines: readonly { id: string; ok: boolean }[],
+  lines: readonly { id: string; ok: boolean; asked?: string; askedSub?: string }[],
   opts: { day: string; studentId: string | null },
 ): RushRecap | null {
   const roots: RushRecapLine[] = [];
   for (const line of lines) {
     const catalog = ROOTS_BY_ID[line.id];
     if (!catalog) continue;
+    const asked = storedAsked(catalog.root, line.asked, line.askedSub);
     roots.push({
       id: line.id,
       root: catalog.root,
       mean: catalog.mean,
       ok: line.ok,
+      ...(asked ?? {}),
     });
   }
   if (roots.length === 0) return null;
@@ -384,7 +433,8 @@ function cleanAsked(raw?: string): string {
  * Rush result list names the question, not the root over a school word.
  * Biography / its gloss, -logy / study of, Biology / bio + -logy.
  * A meaning or which-root question stays Bio / life — that was the ask.
- * Home and Remember peeks stay on the root; this is only the round's list.
+ * Home and the next start peek use this same chip. A Remember miss
+ * still names the root.
  */
 export function rushAskedChip(q: {
   type: string;
