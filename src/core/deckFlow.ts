@@ -8,9 +8,18 @@
 
 import { ROOTS, ROOTS_BY_ID, neighborOpenable, rootId, type Root, type RootId } from '../data/roots';
 import type { HearBeatChip } from './hearBeats';
+import { rushGlossMissLine } from './rushRecap';
 import { speakablePronunciation } from './speak';
 import { shortWordDef } from './wordDef';
-import { buildYesLine, partYesLine, wordYesLine } from './wordParts';
+import {
+  buildBig,
+  buildMissLine,
+  buildYesLine,
+  partMissLine,
+  partYesLine,
+  wordMissLine,
+  wordYesLine,
+} from './wordParts';
 
 /** Quiet pause so a kid can read the one-line win before the next card. */
 export const SUCCESS_BEAT_MS = 900;
@@ -213,22 +222,96 @@ export function rememberMissLine(rootName: string, mean: string): string {
 /**
  * Remember visit lead. A Rush miss is honest — You already own must
  * not sit over Geo after Home / Continue already named Missed Geo.
+ * A piece or school-word miss names that question. A which-word miss
+ * stays on the root so the answer is not sitting in the lead.
  */
-export function rememberLeadLine(rootName: string, opts: { missed?: boolean } = {}): string {
+export function rememberLeadLine(
+  rootName: string,
+  opts: { missed?: boolean; asked?: string; askedKind?: string } = {},
+): string {
   const name = rootName.replace(/\s+/g, ' ').trim() || 'this root';
+  const asked = opts.asked?.replace(/\s+/g, ' ').trim();
+  if (opts.missed && opts.askedKind === 'word') {
+    return `You missed ${name} in Rush. Tap which word it builds — then Home.`;
+  }
+  if (opts.missed && asked && asked.toLowerCase() !== name.toLowerCase()) {
+    if (opts.askedKind === 'build') {
+      return `You missed ${asked} in Rush. Tap which word those pieces build — then Home.`;
+    }
+    return `You missed ${asked} in Rush. Tap what it means — then Home.`;
+  }
   if (opts.missed) return `You missed ${name} in Rush. Tap what it means — then Home.`;
   return `You already own ${name}. Tap what it means — or which word it builds. Then Home.`;
 }
 
 /** Remember quiz hint. Rush miss names the miss — not a generic one-tap. */
-export function rememberHintLine(rootName: string, opts: { missed?: boolean } = {}): string {
-  const name = rootName.replace(/\s+/g, ' ').trim();
+export function rememberHintLine(
+  rootName: string,
+  opts: { missed?: boolean; asked?: string; askedKind?: string } = {},
+): string {
+  const root = rootName.replace(/\s+/g, ' ').trim();
+  const asked = opts.asked?.replace(/\s+/g, ' ').trim();
+  if (opts.missed && opts.askedKind === 'word') {
+    return root ? `Remember ${root} — tap the word you missed.` : 'Remember — tap the word you missed.';
+  }
+  const name = asked || root;
   if (opts.missed) {
     return name ? `Remember ${name} — you missed this in Rush.` : 'Remember — you missed this in Rush.';
   }
-  return name
-    ? `Remember ${name} — one tap. No shame if you miss.`
+  return root
+    ? `Remember ${root} — one tap. No shame if you miss.`
     : 'Remember — one tap. No shame if you miss.';
+}
+
+/**
+ * Chrome name for a replayed miss. The piece, the school word, or the
+ * pieces — never the answer tile. A which-word miss stays on the root.
+ */
+export function rememberedAskName(
+  beat: { kind: string; word?: string; part?: string; split?: string } | null | undefined,
+  pinned: boolean,
+): string | undefined {
+  if (!pinned || !beat || beat.kind === 'mean' || beat.kind === 'word') return undefined;
+  if (beat.kind === 'part') {
+    const part = beat.part?.replace(/\s+/g, ' ').trim();
+    return part || undefined;
+  }
+  if (beat.kind === 'build') {
+    const pieces = beat.split ? buildBig(beat.split) : '';
+    const name = pieces.replace(/\s+/g, ' ').trim();
+    return name || undefined;
+  }
+  const word = beat.word?.replace(/\s+/g, ' ').trim();
+  return word || undefined;
+}
+
+/**
+ * After a wrong Remember tap. A replayed piece or school word names
+ * that answer. A root question stays Geo means earth.
+ */
+export function rememberAskedTeach(
+  rootName: string,
+  mean: string,
+  beat: {
+    kind: string;
+    word?: string;
+    gloss?: string;
+    part?: string;
+    partMean?: string;
+    split?: string;
+  },
+): string {
+  if (beat.kind === 'word' && beat.word) return wordMissLine(beat.word, beat.split);
+  if (beat.kind === 'part' && beat.part && beat.partMean) {
+    return partMissLine(beat.part, beat.partMean, beat.word);
+  }
+  if (beat.kind === 'gloss' && beat.word && beat.gloss) {
+    return rushGlossMissLine(beat.word, beat.gloss);
+  }
+  if (beat.kind === 'build' && beat.word && beat.split) {
+    return buildMissLine(beat.word, beat.split);
+  }
+  return rememberMissLine(rootName, mean);
 }
 
 export function starterDoneLine(): string {

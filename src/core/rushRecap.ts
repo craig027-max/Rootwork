@@ -434,8 +434,9 @@ function cleanAsked(raw?: string): string {
  * Biography / its gloss, -logy / study of, Biology / bio + -logy.
  * A meaning or which-root question stays Bio / life — that was the ask.
  * Home and the next start peek use this same chip. Remember still
- * opens the root. The Today miss row names this chip when the
- * question was not the root — not Photo · light over -graph.
+ * opens the root, and a piece or school-word miss replays this chip
+ * — not a fresh Photo-means-light question over -graph. The Today
+ * miss row names this chip when the question was not the root.
  */
 export function rushAskedChip(q: {
   type: string;
@@ -589,6 +590,27 @@ export function listOwnedRushMissAsked(
     const mean = line.askedSub?.replace(/\s+/g, ' ').trim();
     return mean ? { name, mean } : { name };
   });
+}
+
+/**
+ * The first unreviewed miss of this root today — the question Today
+ * already named. Null on a meaning beat, an older save, or a root that
+ * is not waiting. Remember replays that chip instead of a new coin-flip.
+ */
+export function ownedRushMissAsked(
+  id: string,
+  recap: RushRecap | null | undefined,
+  progress: RushMissProgress,
+  day: string,
+): RushMissAsked | null {
+  const needle = id.replace(/\s+/g, ' ').trim();
+  if (!needle) return null;
+  const line = ownedRushMissLines(recap, progress, day).find((item) => item.id === needle);
+  if (!line) return null;
+  const name = line.asked?.replace(/\s+/g, ' ').trim();
+  if (!name) return null;
+  const mean = line.askedSub?.replace(/\s+/g, ' ').trim();
+  return mean ? { name, mean } : { name };
 }
 
 /** True when this owned Rush miss is still waiting to be Remembered. */

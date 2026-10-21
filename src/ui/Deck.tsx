@@ -26,18 +26,18 @@ import {
   browseOpenForId,
   isFindEntry,
   isSchoolWordEntry,
+  rememberAskedTeach,
+  rememberedAskName,
   rememberHintLine,
   rememberLeadLine,
-  rememberMissLine,
   showExampleWords,
   winLineOnCard,
   type AfterCorrectRecall,
 } from '../core/deckFlow';
 import { buildWordRecall } from '../core/wordRecall';
 import { localDayKey } from '../core/daily';
-import { isOwnedRushMiss, listOwnedRushMissIds, todayRushRecap } from '../core/rushRecap';
-import { buildRecall, type RecallBeat } from '../core/recall';
-import { wordMissLine } from '../core/wordParts';
+import { isOwnedRushMiss, listOwnedRushMissIds, ownedRushMissAsked, todayRushRecap } from '../core/rushRecap';
+import { buildRecall, recallForMissedAsk, type RecallBeat } from '../core/recall';
 import { deckQuizHero, deckStudyLead } from './deck/deckQuizHero';
 import {
   hearBeatChips,
@@ -150,6 +150,8 @@ export function Deck() {
     picked: number | null;
     win: string | null;
     rootId: string;
+    /** This beat replays the stored Rush miss — not a root coin-flip. */
+    pinnedAsk?: boolean;
   } | null>(null);
   const pool = useMemo(
     () => ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
@@ -232,20 +234,43 @@ export function Deck() {
       return;
     }
     if (isRecallEntry(deckEntry)) {
+      const state = useWondralStore.getState();
+      const day = localDayKey();
+      const missedAsk =
+        deckEntry === 'remember'
+          ? ownedRushMissAsked(
+              currentRootId,
+              todayRushRecap(state.rushRecap, state.activeStudentId, day),
+              state.progress,
+              day,
+            )
+          : null;
+      // Replay -graph / Photograph. Otherwise Remember stays mean | word
+      // so a Geo visit cannot invent a Geography gloss.
+      const pinned = missedAsk
+        ? recallForMissedAsk({
+            root: opened,
+            pool: poolRef.current,
+            asked: missedAsk,
+            choices: 3,
+          })
+        : null;
       setRecall((prev) =>
         prev && prev.rootId === currentRootId
           ? prev
           : {
-              beat: buildRecall({
-                root: opened,
-                pool: poolRef.current,
-                choices: 3,
-                // Remember names the root. A Geography gloss would sit over Geo.
-                kinds: deckEntry === 'remember' ? ['mean', 'word'] : undefined,
-              }),
+              beat:
+                pinned ??
+                buildRecall({
+                  root: opened,
+                  pool: poolRef.current,
+                  choices: 3,
+                  kinds: deckEntry === 'remember' ? ['mean', 'word'] : undefined,
+                }),
               picked: null,
               win: null,
               rootId: currentRootId,
+              pinnedAsk: Boolean(pinned),
             },
       );
       return;
@@ -353,6 +378,11 @@ export function Deck() {
   else if (!remembering || missRememberVisit.current !== id) missRememberVisit.current = null;
   const missRemember = remembering && (missRememberLive || missRememberVisit.current === id);
   /* eslint-enable react-hooks/refs */
+  const askedReplay = rememberedAskName(
+    cardRecall?.beat,
+    Boolean(missRemember && cardRecall?.pinnedAsk),
+  );
+  const askedKind = missRemember && cardRecall?.pinnedAsk ? cardRecall.beat.kind : undefined;
   const backLabel = deckBackLabel({
     remembering,
     missed: missRemember,
@@ -369,7 +399,7 @@ export function Deck() {
   });
   const stripCount = deckStripCount({
     missed: missRemember,
-    missName: root.root,
+    missName: askedReplay || root.root,
     findWord: findWord ?? undefined,
     position,
     total: ROOTS.length,
@@ -538,6 +568,7 @@ export function Deck() {
                   studying,
                   findWord: findWord ?? undefined,
                   quizTitle: quizHero?.title,
+                  missAsked: askedReplay,
                 })}
               </span>
             </div>
@@ -556,6 +587,7 @@ export function Deck() {
                   findWord: findWord ?? undefined,
                   asked: askedVisit,
                   quizKind: quizHero?.kind,
+                  missAsked: askedReplay,
                 })}
               </span>
               <div
@@ -664,7 +696,11 @@ export function Deck() {
               ) : studying && !quizHero ? (
                 <p className={`ww-lead2${missRemember ? ' is-remember-miss' : ''}`}>
                   {remembering
-                    ? rememberLeadLine(root.root, { missed: missRemember })
+                    ? rememberLeadLine(root.root, {
+                        missed: missRemember,
+                        asked: askedReplay,
+                        askedKind,
+                      })
                     : deckStudyLead(root.root)}
                 </p>
               ) : quizHero ? null : (
@@ -782,9 +818,7 @@ export function Deck() {
                 <div className={`ww-recall-teach${remembering ? ' is-remember' : ''}${missRemember ? ' is-miss' : ''}`}>
                   <p>
                     {remembering
-                      ? quizRecall.beat.kind === 'word' && quizRecall.beat.word
-                        ? wordMissLine(quizRecall.beat.word, quizRecall.beat.split)
-                        : rememberMissLine(root.root, root.mean)
+                      ? rememberAskedTeach(root.root, root.mean, quizRecall.beat)
                       : finding && findWord && findDef
                         ? findMissLine(findWord, findDef)
                         : quizRecall.beat.teach}
@@ -847,7 +881,11 @@ export function Deck() {
             ) : quizRecall && quizRecall.picked === null ? (
               <span className={`ww-muted${missRemember ? ' is-remember-miss' : ''}${finding ? ' is-find' : ''}`}>
                 {remembering
-                  ? rememberHintLine(root.root, { missed: missRemember })
+                  ? rememberHintLine(root.root, {
+                      missed: missRemember,
+                      asked: askedReplay,
+                      askedKind,
+                    })
                   : finding && findWord
                     ? findHintLine(findWord)
                     : "One tap. No shame if you miss — we'll show you."}
@@ -881,6 +919,7 @@ export function Deck() {
           missed: missRemember,
           findWord: findWord ?? undefined,
           quizTitle: quizHero?.title,
+          missAsked: askedReplay,
         })}
         meaning={deckNavMeaning({
           meaning: studying ? '?' : root.mean,
@@ -902,7 +941,7 @@ export function Deck() {
         showPrev={deckShowPrev({ remembering, finding })}
         nextDisabled={listen.disableNextRoot}
         missed={missRemember}
-        missName={root.root}
+        missName={askedReplay || root.root}
         finding={finding}
         findWord={findWord ?? undefined}
         asked={askedVisit}
