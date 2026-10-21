@@ -44,6 +44,7 @@ import { buildProfileProgress } from './home/profileProgress';
 import {
   buildTodayProgress,
   learnedRootToday,
+  listRushMissAsked,
   listRushMissRemember,
   pickRememberRoot,
   rememberRootToday,
@@ -99,6 +100,9 @@ export function Home() {
   const rushMissIds = listRushMissRemember(rushToday, progress, day, {
     exclude: rememberExclude,
   });
+  const rushMissAsked = listRushMissAsked(rushToday, progress, day, {
+    exclude: rememberExclude,
+  });
   const rushMissId = rushMissIds[0] ?? null;
   const rememberId =
     rushMissId ??
@@ -129,7 +133,10 @@ export function Home() {
     rememberMean: remember.mean,
     rememberRootId: rememberId ?? undefined,
     rememberMissed: rushMissId != null,
+    rememberMissAsked: rushMissAsked[0]?.name,
+    rememberMissAskedMean: rushMissAsked[0]?.mean,
     rememberAlso,
+    rememberAlsoAsked: rushMissAsked[1]?.name,
   });
   const missHero = Boolean(today.missWaiting && today.cta?.kind === 'remember' && rushMissId);
   const learnHeroCta = rushLearnReady(completed, entitled, {

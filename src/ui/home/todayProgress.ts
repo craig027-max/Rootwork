@@ -74,7 +74,9 @@
  * Rush / Deck Home now matches — Home → must
  * not sit over Geo under that same heading.
  * Continue / Keep going / Rush CTAs stay as #68 left them when no
- * miss is waiting.
+ * miss is waiting. A piece or school-word miss names that question
+ * on the Today row — Missed -graph · record, not Missed Photo · light.
+ * Remember still opens the root.
  *
  * Pure so tests lock the copy without I/O.
  */
@@ -85,9 +87,11 @@ import {
   localDayKey,
 } from '../../core/daily';
 import {
+  listOwnedRushMissAsked,
   listOwnedRushMissIds,
   rememberMissCtaLabel,
   todayMissRecap,
+  type RushMissAsked,
   type RushRecap,
 } from '../../core/rushRecap';
 import { ROOTS_BY_ID } from '../../data/roots';
@@ -97,6 +101,7 @@ import { type ProgressStamp, stampReviewedAt } from './progressStamp';
 export type { ProgressStamp };
 export { stampReviewedAt };
 export { rememberMissCtaLabel, todayMissRecap };
+export type { RushMissAsked };
 
 export type TodayItemKey = 'daily' | 'learn' | 'remember';
 export type TodayAction = 'daily' | 'learn' | 'rush' | 'review' | 'remember' | 'none';
@@ -253,8 +258,26 @@ export function pickRushMissRemember(
   return listRushMissRemember(recap, progress, day, opts)[0] ?? null;
 }
 
+/**
+ * Asked name for each remaining miss, aligned with `listRushMissRemember`.
+ * Null when that question was the root.
+ */
+export function listRushMissAsked(
+  recap: RushRecap | null | undefined,
+  progress: Record<string, ProgressStamp>,
+  day: string,
+  opts: { exclude?: Iterable<string | null | undefined> } = {},
+): (RushMissAsked | null)[] {
+  return listOwnedRushMissAsked(recap, progress, day, opts);
+}
+
 function stripCta(label: string): string {
   return label.replace(/\s*›\s*$/, '');
+}
+
+function tidy(raw?: string): string | undefined {
+  const text = raw?.replace(/\s+/g, ' ').trim();
+  return text || undefined;
 }
 
 function learnRowLabel(opts: {
@@ -277,13 +300,19 @@ function rememberRowLabel(opts: {
   mean?: string;
   missed?: boolean;
   also?: string;
+  /** Piece or school word — the row names this, not the catalog root. */
+  asked?: string;
+  askedMean?: string;
+  /** Next miss when that question was not the root. */
+  alsoAsked?: string;
 }): string {
   if (opts.done) {
     return opts.name ? `Remembered ${opts.name}` : 'Remembered a root today';
   }
-  const name = opts.name?.trim();
-  const mean = opts.mean?.trim();
-  const also = opts.also?.replace(/\s+/g, ' ').trim();
+  const asked = opts.missed ? tidy(opts.asked) : undefined;
+  const name = asked || tidy(opts.name);
+  const mean = asked ? tidy(opts.askedMean) : tidy(opts.mean);
+  const also = (opts.missed ? tidy(opts.alsoAsked) : undefined) || tidy(opts.also);
   if (opts.missed) {
     if (name && mean && also) return `Missed ${name} · ${mean} · then ${also}`;
     if (name && mean) return `Missed ${name} · ${mean}`;
@@ -326,8 +355,16 @@ export function buildTodayProgress(opts: {
   rememberRootId?: string;
   /** Today's Rush miss — Today names Missed {root}, not Remembered {hit}. */
   rememberMissed?: boolean;
+  /**
+   * Piece or school word on that miss. The row names this
+   * (`-graph` · record), not the catalog root (`Photo` · light).
+   */
+  rememberMissAsked?: string;
+  rememberMissAskedMean?: string;
   /** Next remaining Rush miss — peek "then Chron" so two misses are not a one-chip lie. */
   rememberAlso?: string;
+  /** Next miss's piece or school word — "then -logy", not "then Bio". */
+  rememberAlsoAsked?: string;
 }): TodayProgress {
   if (opts.firstRun || opts.nextPlay) {
     return {
@@ -416,6 +453,13 @@ export function buildTodayProgress(opts: {
         mean: rememberMean,
         missed: rememberMissed,
         also: rememberAlso,
+        ...(rememberMissed
+          ? {
+              asked: opts.rememberMissAsked,
+              askedMean: opts.rememberMissAskedMean,
+              alsoAsked: opts.rememberAlsoAsked,
+            }
+          : {}),
       }),
       action: rememberId ? 'remember' : 'none',
       ...(rememberId ? { rootId: rememberId } : {}),

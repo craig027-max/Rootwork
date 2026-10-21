@@ -433,8 +433,9 @@ function cleanAsked(raw?: string): string {
  * Rush result list names the question, not the root over a school word.
  * Biography / its gloss, -logy / study of, Biology / bio + -logy.
  * A meaning or which-root question stays Bio / life — that was the ask.
- * Home and the next start peek use this same chip. A Remember miss
- * still names the root.
+ * Home and the next start peek use this same chip. Remember still
+ * opens the root. The Today miss row names this chip when the
+ * question was not the root — not Photo · light over -graph.
  */
 export function rushAskedChip(q: {
   type: string;
@@ -518,23 +519,25 @@ export function rushRecapChipLabel(
   return owned ? `Remember ${name}` : `Meet ${name}`;
 }
 
+type RushMissProgress = Record<string, { completedAt?: number; reviewedAt?: number }>;
+
 /**
  * Owned misses from today's last Rush that are still unreviewed.
  * Play order — the Missed chips they already see — not oldest stale Bio.
  * Hits, unowned Meet roots, today's learn, and reviewed-today drop.
  * Yesterday's recap must not steal Today's Remember.
  */
-export function listOwnedRushMissIds(
+function ownedRushMissLines(
   recap: RushRecap | null | undefined,
-  progress: Record<string, { completedAt?: number; reviewedAt?: number }>,
+  progress: RushMissProgress,
   day: string,
   opts: { exclude?: Iterable<string | null | undefined> } = {},
-): string[] {
+): RushRecapLine[] {
   if (!recap || recap.day !== day || recap.roots.length === 0) return [];
   const exclude = new Set(
     [...(opts.exclude ?? [])].filter((id): id is string => typeof id === 'string' && id.length > 0),
   );
-  const ids: string[] = [];
+  const lines: RushRecapLine[] = [];
   for (const line of recap.roots) {
     if (line.ok || exclude.has(line.id) || !ROOTS_BY_ID[line.id]) continue;
     const rec = progress[line.id];
@@ -549,9 +552,43 @@ export function listOwnedRushMissIds(
     ) {
       continue;
     }
-    ids.push(line.id);
+    lines.push(line);
   }
-  return ids;
+  return lines;
+}
+
+export function listOwnedRushMissIds(
+  recap: RushRecap | null | undefined,
+  progress: RushMissProgress,
+  day: string,
+  opts: { exclude?: Iterable<string | null | undefined> } = {},
+): string[] {
+  return ownedRushMissLines(recap, progress, day, opts).map((line) => line.id);
+}
+
+/** Piece or school word on one owned miss. Absent when that question was the root. */
+export interface RushMissAsked {
+  name: string;
+  mean?: string;
+}
+
+/**
+ * What each owned miss asked, in the same order as `listOwnedRushMissIds`.
+ * Null on a meaning beat and on an older save — the Today row stays
+ * Photo · light in that case. A piece question is -graph · record.
+ */
+export function listOwnedRushMissAsked(
+  recap: RushRecap | null | undefined,
+  progress: RushMissProgress,
+  day: string,
+  opts: { exclude?: Iterable<string | null | undefined> } = {},
+): (RushMissAsked | null)[] {
+  return ownedRushMissLines(recap, progress, day, opts).map((line) => {
+    const name = line.asked?.replace(/\s+/g, ' ').trim();
+    if (!name) return null;
+    const mean = line.askedSub?.replace(/\s+/g, ' ').trim();
+    return mean ? { name, mean } : { name };
+  });
 }
 
 /** True when this owned Rush miss is still waiting to be Remembered. */
