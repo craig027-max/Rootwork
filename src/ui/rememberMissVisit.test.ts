@@ -102,8 +102,10 @@ describe('Remember visit after a miss is honest — not You already own / Tap co
     expect(deck).toContain('isOwnedRushMiss');
     expect(deck).toContain('todayRushRecap');
     expect(deck).toContain('missRememberVisit');
-    expect(deck).toContain('rememberLeadLine(root.root, { missed: missRemember })');
-    expect(deck).toContain('rememberHintLine(root.root, { missed: missRemember })');
+    expect(deck).toContain('rememberLeadLine(root.root, {');
+    expect(deck).toContain('rememberHintLine(root.root, {');
+    expect(deck).toContain('missed: missRemember,');
+    expect(deck).toContain('asked: askedReplay,');
     expect(deck).toContain("ww-lead2${missRemember ? ' is-remember-miss' : ''}");
     expect(deck).toContain("ww-muted${missRemember ? ' is-remember-miss' : ''}");
     expect(deck).toContain('done && !remembering');

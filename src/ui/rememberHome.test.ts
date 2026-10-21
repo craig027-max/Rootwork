@@ -52,9 +52,11 @@ describe('Remember {root}: one-beat visit, then Home', () => {
     expect(deck).toContain('ww-card2${remembering ? \' is-remember\' : \'\'}');
     expect(deck).toContain('ww-caption${remembering ? \' is-remember\' : \'\'}');
     expect(deck).toContain('is-remember-miss');
-    expect(deck).toContain('rememberLeadLine(root.root, { missed: missRemember })');
-    expect(deck).toContain('rememberHintLine(root.root, { missed: missRemember })');
-    expect(deck).toContain('rememberMissLine');
+    expect(deck).toContain('rememberLeadLine(root.root, {');
+    expect(deck).toContain('rememberHintLine(root.root, {');
+    expect(deck).toContain('missed: missRemember,');
+    expect(deck).toContain('asked: askedReplay,');
+    expect(deck).toContain('rememberAskedTeach');
     expect(deck).toContain('quizRecall.picked === null');
   });
 

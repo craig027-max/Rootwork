@@ -110,6 +110,13 @@ export function deckIndexAria(opts: { missed?: boolean; finding?: boolean } = {}
   return 'All roots index';
 }
 
+/** Missed Geo, or Missed -graph when Remember is replaying that question. */
+function missedChromeName(root: string, missAsked?: string): string {
+  const asked = cleanName(missAsked);
+  const name = asked || cleanName(root);
+  return name ? `Missed ${name}` : 'Missed';
+}
+
 /** Scene caption — Missed Geo, not watch the scene / Remember Geo as a stale recap. */
 export function deckCaption(opts: {
   emoji: string;
@@ -122,9 +129,11 @@ export function deckCaption(opts: {
   findWord?: string;
   /** Gloss / piece / pieces question — name that thing, not "watch the scene". */
   quizTitle?: string;
+  /** Replayed Rush miss — -graph, not Photo over that piece. */
+  missAsked?: string;
 }): string {
+  if (opts.missed) return `${opts.emoji} ${missedChromeName(opts.root, opts.missAsked)}`;
   const name = cleanName(opts.root);
-  if (opts.missed) return name ? `${opts.emoji} Missed ${name}` : `${opts.emoji} Missed`;
   const word = cleanName(opts.findWord);
   if (word) return `${opts.emoji} ${word}`;
   if (opts.remembering) return name ? `${opts.emoji} Remember ${name}` : `${opts.emoji} Remember`;
@@ -145,9 +154,11 @@ export function deckEyebrow(opts: {
   asked?: boolean;
   /** Gloss / piece / pieces — not "Greek Root" over Biology. */
   quizKind?: DeckQuizKind;
+  /** Replayed Rush miss — -graph, not Photo over that piece. */
+  missAsked?: string;
 }): string {
+  if (opts.missed) return missedChromeName(opts.root, opts.missAsked);
   const name = cleanName(opts.root);
-  if (opts.missed) return name ? `Missed ${name}` : 'Missed';
   const word = cleanName(opts.findWord);
   if (word && opts.asked) return word;
   if (word) return `Find ${word}`;
@@ -184,9 +195,11 @@ export function deckNavRoot(opts: {
   findWord?: string;
   /** Gloss / piece / pieces — Biology, not Bio · ? under that question. */
   quizTitle?: string;
+  /** Replayed Rush miss — -graph, not Photo over that piece. */
+  missAsked?: string;
 }): string {
+  if (opts.missed) return missedChromeName(opts.root, opts.missAsked);
   const name = cleanName(opts.root);
-  if (opts.missed) return name ? `Missed ${name}` : 'Missed';
   const word = cleanName(opts.findWord);
   if (word) return word;
   const asked = cleanName(opts.quizTitle);

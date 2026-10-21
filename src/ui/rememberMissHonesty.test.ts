@@ -102,11 +102,9 @@ describe('Today Remember after Rush is honest — Missed Geo, not stale Bio', ()
     expect(home).toContain("entry: 'remember'");
     expect(band).toContain('item.missed');
     expect(band).toContain('is-miss');
-    expect(deck).toContain('rememberMissLine');
+    expect(deck).toContain('rememberAskedTeach');
     expect(deck).toContain("remembering ? ' is-remember' : ''");
-    expect(deck).toContain('rememberMissLine(root.root, root.mean)');
-    expect(deck).toContain('wordMissLine(quizRecall.beat.word, quizRecall.beat.split)');
-    expect(deck).toContain("quizRecall.beat.kind === 'word' && quizRecall.beat.word");
+    expect(deck).toContain('rememberAskedTeach(root.root, root.mean, quizRecall.beat)');
     expect(deck).toContain('onClick={closeRoot}');
     expect(deck).toContain('rememberLeaveLabel');
     expect(deck).toContain('quizRecall.picked === null');
