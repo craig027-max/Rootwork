@@ -76,7 +76,8 @@
  * Continue / Keep going / Rush CTAs stay as #68 left them when no
  * miss is waiting. A piece or school-word miss names that question
  * on the Today row — Missed -graph · record, not Missed Photo · light.
- * Remember still opens the root.
+ * The fat tap, the recap, and the Home hello name that same question
+ * — Remember -graph, not Remember Photo. The tap still opens Photo.
  *
  * Pure so tests lock the copy without I/O.
  */
@@ -89,6 +90,7 @@ import {
 import {
   listOwnedRushMissAsked,
   listOwnedRushMissIds,
+  missDisplayName,
   rememberMissCtaLabel,
   todayMissRecap,
   type RushMissAsked,
@@ -389,6 +391,12 @@ export function buildTodayProgress(opts: {
   const rememberId = opts.rememberRootId?.trim() || undefined;
   const rememberMissed = Boolean(opts.rememberMissed) && !rememberedToday;
   const rememberAlso = rememberMissed ? opts.rememberAlso?.replace(/\s+/g, ' ').trim() || undefined : undefined;
+  const faceName = rememberMissed
+    ? missDisplayName(rememberName, opts.rememberMissAsked) || rememberName
+    : rememberName;
+  const faceAlso = rememberMissed
+    ? missDisplayName(rememberAlso, opts.rememberAlsoAsked) || rememberAlso
+    : undefined;
   const dailyTotal = opts.dailyTotal && opts.dailyTotal > 0 ? opts.dailyTotal : 5;
   const dailyResume =
     !opts.dailyDone &&
@@ -483,7 +491,7 @@ export function buildTodayProgress(opts: {
         : rememberMissed && rememberId && pathClear
           ? {
               kind: 'remember',
-              label: rememberMissCtaLabel(rememberName ?? ''),
+              label: rememberMissCtaLabel(faceName ?? ''),
               rootId: rememberId,
             }
           : next.kind === 'learn' && next.rootId
@@ -505,11 +513,11 @@ export function buildTodayProgress(opts: {
         ? `Daily and ${learnedName} are done`
         : "Today's path is done"
       : pathClear && rememberMissed
-        ? todayMissRecap(rememberName, rememberAlso)
+        ? todayMissRecap(faceName, faceAlso)
         : null,
     items,
     cta,
     missWaiting: rememberMissed,
-    missName: rememberMissed && pathClear ? rememberName : undefined,
+    missName: rememberMissed && pathClear ? faceName : undefined,
   };
 }

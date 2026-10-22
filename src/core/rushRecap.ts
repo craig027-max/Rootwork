@@ -436,7 +436,8 @@ function cleanAsked(raw?: string): string {
  * Home and the next start peek use this same chip. Remember still
  * opens the root, and a piece or school-word miss replays this chip
  * — not a fresh Photo-means-light question over -graph. The Today
- * miss row names this chip when the question was not the root.
+ * miss row names this chip when the question was not the root, and
+ * the Remember button names it too.
  */
 export function rushAskedChip(q: {
   type: string;
@@ -624,6 +625,18 @@ export function isOwnedRushMiss(
   const needle = id.replace(/\s+/g, ' ').trim();
   if (!needle) return false;
   return listOwnedRushMissIds(recap, progress, day, opts).includes(needle);
+}
+
+/**
+ * Piece or school word when that question was not the root.
+ * "Geo" over Geo stays unset so a meaning miss keeps the catalog name.
+ */
+export function missDisplayName(rootName?: string, asked?: string): string | undefined {
+  const root = rootName?.replace(/\s+/g, ' ').trim();
+  const name = asked?.replace(/\s+/g, ' ').trim();
+  if (!name) return undefined;
+  if (root && name.toLowerCase() === root.toLowerCase()) return undefined;
+  return name;
 }
 
 /** Fat tap after Daily + a learn are done but a Rush miss still waits. */

@@ -28,7 +28,7 @@ import {
   todayMissRecap,
   type RushRecap,
 } from '../../core/rushRecap';
-import { missPeekForNames, missPeekSamples, samplePeekTap } from './samplePeek';
+import { missFacePeek, samplePeekTap } from './samplePeek';
 import { keepGoingLabel } from './todayProgress';
 import type { DetailVM } from './DetailPanel';
 
@@ -50,20 +50,38 @@ export function detailSceneCaption(opts: {
 function sceneFrom(
   root: Root | undefined,
   fallback: { key: string; palKey: string; caption: string },
-  opts: { missed?: boolean } = {},
+  opts: { missed?: boolean; name?: string } = {},
 ) {
   const palKey = root?.pal ?? fallback.palKey;
   const p = PALETTES[palKey] ?? PALETTES.green!;
+  const shown = opts.name?.replace(/\s+/g, ' ').trim() || root?.root;
   return {
     key: root?.scene ?? fallback.key,
     pal: p.pal,
     caption: detailSceneCaption({
       missed: opts.missed,
-      root: root?.root,
-      mean: root?.mean,
+      root: shown,
+      mean: opts.name ? undefined : root?.mean,
       fallback: fallback.caption,
     }),
   };
+}
+
+/** Chip text names the missed question. The tap stays on the root quiz. */
+function askedMissSamples(miss: {
+  id: string;
+  name: string;
+  mean?: string;
+  also?: string;
+  alsoMean?: string;
+  alsoId?: string;
+}) {
+  return missFacePeek(miss).map((sample) => ({
+    root: sample.root,
+    mean: sample.mean,
+    ok: false as const,
+    ...(sample.asked ? { asked: sample.asked } : {}),
+  }));
 }
 
 /** Derive the detail-panel view model from the selected menu row + live progress.
@@ -138,7 +156,12 @@ export function buildDetailVM(
     learnedToday?: boolean;
     rememberMissId?: string | null;
     rememberMissName?: string;
+    rememberMissAsked?: string;
+    rememberMissAskedMean?: string;
     rememberAlso?: string;
+    rememberAlsoId?: string | null;
+    rememberAlsoAsked?: string;
+    rememberAlsoAskedMean?: string;
     rushRuns?: number;
     rushBestPct?: number;
     rushBestStars?: number;
@@ -183,7 +206,12 @@ export function buildDetailVM(
         learnedToday: extra.learnedToday,
         rememberMissId: extra.rememberMissId,
         rememberMissName: extra.rememberMissName,
+        rememberMissAsked: extra.rememberMissAsked,
+        rememberMissAskedMean: extra.rememberMissAskedMean,
         rememberAlso: extra.rememberAlso,
+        rememberAlsoId: extra.rememberAlsoId,
+        rememberAlsoAsked: extra.rememberAlsoAsked,
+        rememberAlsoAskedMean: extra.rememberAlsoAskedMean,
       };
       const miss = rushMissRememberReady(extra.completed, extra.entitled, missOpts);
       const learn = rushLearnReady(extra.completed, extra.entitled, missOpts);
@@ -191,7 +219,7 @@ export function buildDetailVM(
         learn?.rootId ? ROOTS_BY_ID[learn.rootId] : undefined;
       const missHero = Boolean(miss && !continueDaily);
       const missRoot = miss ? ROOTS_BY_ID[miss.id] : undefined;
-      const missSamples = missHero && miss ? missPeekForNames(miss.name, miss.also) : [];
+      const missSamples = missHero && miss ? askedMissSamples(miss) : [];
       const rushPeek = missHero
         ? []
         : homeRushRecapPreview(extra.rushRecap, {
@@ -278,7 +306,7 @@ export function buildDetailVM(
         scene: sceneFrom(
           missRoot ?? learnRoot,
           { key: 'heat', palKey: 'fire', caption: 'Root Rush' },
-          { missed: missHero },
+          { missed: missHero, name: missHero ? miss?.name : undefined },
         ),
         heroCta: Boolean(learn || missHero),
       };
@@ -310,12 +338,17 @@ export function buildDetailVM(
       learnedToday: extra.learnedToday,
       rememberMissId: extra.rememberMissId,
       rememberMissName: extra.rememberMissName,
+      rememberMissAsked: extra.rememberMissAsked,
+      rememberMissAskedMean: extra.rememberMissAskedMean,
       rememberAlso: extra.rememberAlso,
+      rememberAlsoId: extra.rememberAlsoId,
+      rememberAlsoAsked: extra.rememberAlsoAsked,
+      rememberAlsoAskedMean: extra.rememberAlsoAskedMean,
     };
     const miss = extra.dailyDone
       ? rushMissRememberReady(extra.completed, extra.entitled, missOpts)
       : null;
-    const missSamples = miss ? missPeekForNames(miss.name, miss.also) : [];
+    const missSamples = miss ? askedMissSamples(miss) : [];
     const doneLead = extra.dailyDone
       ? dailyDoneLead(extra.streak, { missWaiting: Boolean(miss) })
       : null;
@@ -390,7 +423,7 @@ export function buildDetailVM(
           palKey: 'gold',
           caption: 'Daily',
         },
-        { missed: Boolean(miss) },
+        { missed: Boolean(miss), name: miss?.name },
       ),
       // Mid-run: park Continue Daily · N of 5 under the next-root scene —
       // same one-tap Rush / Today already name, so Aqua is not buried.
@@ -410,19 +443,19 @@ export function buildDetailVM(
     learnedToday: extra.learnedToday,
     rememberMissId: extra.rememberMissId,
     rememberMissName: extra.rememberMissName,
+    rememberMissAsked: extra.rememberMissAsked,
+    rememberMissAskedMean: extra.rememberMissAskedMean,
     rememberAlso: extra.rememberAlso,
+    rememberAlsoId: extra.rememberAlsoId,
+    rememberAlsoAsked: extra.rememberAlsoAsked,
+    rememberAlsoAskedMean: extra.rememberAlsoAskedMean,
   });
   const missHero = Boolean(miss);
   const missRoot = missHero && miss ? ROOTS_BY_ID[miss.id] : undefined;
 
   if (item.locked) {
     if (missHero && miss) {
-      const missSamples = missPeekSamples({
-        root: miss.name,
-        mean: missRoot?.mean,
-        also: miss.also,
-        alsoMean: miss.also ? ROOTS.find((r) => r.root === miss.also)?.mean : undefined,
-      });
+      const missSamples = askedMissSamples(miss);
       return {
         jewel: item.jewel,
         animKey: item.key,
@@ -437,7 +470,7 @@ export function buildDetailVM(
         secondary: { label: '🔓 Ask a grown-up to unlock' },
         waiting: todayMissRecap(miss.name, miss.also),
         waitingMiss: true,
-        scene: sceneFrom(missRoot, { key: 'dna', palKey: item.jewel, caption: name }, { missed: true }),
+        scene: sceneFrom(missRoot, { key: 'dna', palKey: item.jewel, caption: name }, { missed: true, name: miss.name }),
         heroCta: true,
       };
     }
@@ -474,15 +507,7 @@ export function buildDetailVM(
   // / Tier 3 · Scholar must not sit over that same miss. Home
   // list row titles now match — Tier 1 · Starter must not sit
   // over Geo when the sub already says Missed · remember.
-  const missSamples =
-    missHero && miss
-      ? missPeekSamples({
-          root: miss.name,
-          mean: missRoot?.mean,
-          also: miss.also,
-          alsoMean: miss.also ? ROOTS.find((r) => r.root === miss.also)?.mean : undefined,
-        })
-      : [];
+  const missSamples = missHero && miss ? askedMissSamples(miss) : [];
   const peek = firstPlay
     ? []
     : missHero
@@ -557,7 +582,11 @@ export function buildDetailVM(
         : undefined,
     waiting: missHero && miss ? todayMissRecap(miss.name, miss.also) : undefined,
     waitingMiss: missHero,
-    scene: sceneFrom(sceneRoot, { key: 'dna', palKey: item.jewel, caption: name }, { missed: missHero }),
+    scene: sceneFrom(
+      sceneRoot,
+      { key: 'dna', palKey: item.jewel, caption: name },
+      { missed: missHero, name: missHero ? miss?.name : undefined },
+    ),
     heroCta: firstPlay || resumeNow || missHero,
   };
 }

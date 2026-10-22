@@ -210,7 +210,7 @@ describe('Starter after a miss is Remember — not every root owned / Remember B
     expect(detail).toContain('complete');
     expect(detail).toContain('Remember ${rootName} is just for fun.');
     expect(detail).toContain('Remember ${rootName} ›');
-    expect(detail).toContain('missPeekSamples');
+    expect(detail).toContain('askedMissSamples');
     expect(menu).toContain('missHere ? `Missed ${missName} · remember`');
     expect(menu).toContain('isMissProgressTier');
     expect(menu).toContain('if (opts.rememberMissId) return { kind: \'tier\', t: item.t }');
