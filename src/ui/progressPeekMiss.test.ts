@@ -253,7 +253,7 @@ describe('Progress peek after a miss is Remember — not Play Bene / Remember Bi
   });
 
   it('wires Home + Deck catalog — Missed Geo chips, not Play Bene / a fake ✓', () => {
-    expect(detail).toContain('missPeekSamples');
+    expect(detail).toContain('askedMissSamples');
     expect(detail).toContain('missHero: true');
     expect(detail).toContain('missHero');
     expect(peek).toContain('missPeekSamples');

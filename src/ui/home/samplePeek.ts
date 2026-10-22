@@ -34,7 +34,7 @@
  * now matches — Home must not sit over Geo
  * under that same heading.
  */
-import { ROOTS } from '../../data/roots';
+import { ROOTS, ROOTS_BY_ID } from '../../data/roots';
 import type { MenuItem } from './menu';
 
 export type SamplePeekTap = 'remember' | 'daily' | 'continue' | 'play';
@@ -43,26 +43,107 @@ export interface MissPeekSample {
   root: string;
   mean: string;
   ok: false;
+  /** School word or piece when `root` is the catalog card. */
+  asked?: string;
+  /** Catalog id — the tap still opens this root. */
+  id?: string;
 }
 
 /** Waiting Rush miss chips — Geo first, then Chron. No Bene / Bio dump. */
 export function missPeekSamples(
-  miss?: { root: string; mean?: string; also?: string; alsoMean?: string } | null,
+  miss?: {
+    root: string;
+    mean?: string;
+    asked?: string;
+    id?: string;
+    also?: string;
+    alsoMean?: string;
+    alsoAsked?: string;
+    alsoId?: string;
+  } | null,
 ): MissPeekSample[] {
   const name = miss?.root.replace(/\s+/g, ' ').trim();
   if (!name) return [];
+  const asked = miss?.asked?.replace(/\s+/g, ' ').trim();
   const also = miss?.also?.replace(/\s+/g, ' ').trim();
+  const alsoAsked = miss?.alsoAsked?.replace(/\s+/g, ' ').trim();
   const out: MissPeekSample[] = [
-    { root: name, mean: miss?.mean?.replace(/\s+/g, ' ').trim() ?? '', ok: false },
+    {
+      root: name,
+      mean: miss?.mean?.replace(/\s+/g, ' ').trim() ?? '',
+      ok: false,
+      ...(asked ? { asked } : {}),
+      ...(miss?.id ? { id: miss.id } : {}),
+    },
   ];
-  if (also && also !== name) {
+  const firstKey = asked || name;
+  const alsoKey = alsoAsked || also;
+  if (also && alsoKey && alsoKey !== firstKey) {
     out.push({
       root: also,
       mean: miss?.alsoMean?.replace(/\s+/g, ' ').trim() ?? '',
       ok: false,
+      ...(alsoAsked ? { asked: alsoAsked } : {}),
+      ...(miss?.alsoId ? { id: miss.alsoId } : {}),
     });
   }
   return out;
+}
+
+function tidyPeek(raw?: string): string | undefined {
+  const text = raw?.replace(/\s+/g, ' ').trim();
+  return text || undefined;
+}
+
+/**
+ * Remember chips for a waiting miss. The bold name is the question
+ * (-graph, Photograph). `root` stays the catalog card so the tap
+ * still opens Photo. A meaning miss stays Geo / earth.
+ */
+export function missFacePeek(face: {
+  id: string;
+  name: string;
+  mean?: string;
+  also?: string;
+  alsoMean?: string;
+  alsoId?: string;
+}): MissPeekSample[] {
+  const catalog = ROOTS_BY_ID[face.id];
+  const catalogName = catalog?.root ?? tidyPeek(face.name) ?? '';
+  if (!catalogName) return [];
+  const display = tidyPeek(face.name) || catalogName;
+  const asked =
+    display.toLowerCase() === catalogName.toLowerCase() ? undefined : display;
+  const mean =
+    face.mean !== undefined ? face.mean.replace(/\s+/g, ' ').trim() : (catalog?.mean ?? '');
+  const alsoCatalog = face.alsoId ? ROOTS_BY_ID[face.alsoId] : undefined;
+  const alsoDisplay = tidyPeek(face.also);
+  const alsoSame =
+    Boolean(alsoCatalog) &&
+    Boolean(alsoDisplay) &&
+    alsoDisplay!.toLowerCase() === alsoCatalog!.root.toLowerCase();
+  const alsoRoot = alsoSame
+    ? alsoCatalog!.root
+    : alsoCatalog && alsoDisplay
+      ? alsoCatalog.root
+      : alsoDisplay;
+  const alsoAsked = alsoCatalog && alsoDisplay && !alsoSame ? alsoDisplay : undefined;
+  const alsoMean =
+    face.alsoMean !== undefined
+      ? face.alsoMean.replace(/\s+/g, ' ').trim()
+      : alsoSame || !alsoAsked
+        ? (ROOTS.find((r) => r.root === alsoDisplay)?.mean ?? '')
+        : '';
+  return missPeekSamples({
+    root: catalogName,
+    mean,
+    asked,
+    id: face.id,
+    also: alsoRoot,
+    alsoMean,
+    alsoAsked,
+    alsoId: face.alsoId,
+  });
 }
 
 /** Same Missed Geo / then Chron chips, looked up from the catalog. */

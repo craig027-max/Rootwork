@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
-import { PALETTES, ROOTS, TIERS, rootId, isRootOpenable } from '../data/roots';
+import { PALETTES, ROOTS, ROOTS_BY_ID, TIERS, rootId, isRootOpenable } from '../data/roots';
 import {
   dailyNextRoot,
   dailySeed,
@@ -37,7 +37,7 @@ import {
 } from '../core/rushRecap';
 import type { RunResult } from '../core/stats';
 import { Scene } from './Scene';
-import { learnedRootToday, listRushMissRemember, rootLabel } from './home/todayProgress';
+import { learnedRootToday, listRushMissAsked, listRushMissRemember, rootLabel } from './home/todayProgress';
 import {
   buildModeEmpty,
   buildRushResultNext,
@@ -177,14 +177,23 @@ export function RootRush() {
   const learnedId = learnedRootToday(progress, day);
   const nextLearn = learnNextAction(completed, entitled);
   const rushToday = todayRushRecap(rushRecap, studentId, day);
+  const rushMissExclude = [learnedId, nextLearn.rootId, ...dailyRoots.map((r) => rootId(r))];
   const rushMissIds = listRushMissRemember(rushToday, progress, day, {
-    exclude: [learnedId, nextLearn.rootId, ...dailyRoots.map((r) => rootId(r))],
+    exclude: rushMissExclude,
+  });
+  const rushMissAsked = listRushMissAsked(rushToday, progress, day, {
+    exclude: rushMissExclude,
   });
   const rushMissId = rushMissIds[0] ?? null;
   const missRemember = {
     rememberMissId: rushMissId,
     rememberMissName: rootLabel(rushMissId).name,
+    rememberMissAsked: rushMissAsked[0]?.name,
+    rememberMissAskedMean: rushMissAsked[0]?.mean,
     rememberAlso: rootLabel(rushMissIds[1]).name,
+    rememberAlsoId: rushMissIds[1],
+    rememberAlsoAsked: rushMissAsked[1]?.name,
+    rememberAlsoAskedMean: rushMissAsked[1]?.mean,
     dailyDone,
     learnedToday: learnedId !== null,
   };
@@ -416,9 +425,9 @@ export function RootRush() {
   });
   const startPeek = rushStart.missWaiting
     ? (rushStart.peekChips ?? []).flatMap((s) => {
-        const catalog = ROOTS.find((r) => r.root === s.root);
+        const catalog = (s.id && ROOTS_BY_ID[s.id]) || ROOTS.find((r) => r.root === s.root);
         return catalog
-          ? [{ id: rootId(catalog), root: s.root, mean: s.mean, ok: s.ok === true, asked: undefined }]
+          ? [{ id: rootId(catalog), root: s.root, mean: s.mean, ok: s.ok === true, asked: s.asked }]
           : [];
       })
     : homeRushRecapPreview(lastRush, { dailyResume: dailyResumeQi != null });
@@ -564,19 +573,20 @@ export function RootRush() {
                   const owned = completed.has(s.id);
                   const chipMiss = s.ok === false || rushStart.missWaiting;
                   if (rushStart.missWaiting) {
+                    const label = s.asked || s.root;
                     return (
                       <button
                         type="button"
-                        className="q-daily-chip is-miss"
-                        key={`${s.id}-${i}`}
+                        className={`q-daily-chip is-miss${label.length >= 14 ? ' is-long' : ''}`}
+                        key={`${s.id}-${s.asked ?? ''}-${i}`}
                         onClick={() => openRecap(s.id)}
-                        aria-label={samplePeekLabel('remember', s.root, { ok: false })}
+                        aria-label={samplePeekLabel('remember', label, { ok: false })}
                       >
                         <span className="q-done-mark is-miss" aria-hidden="true">
                           !
                         </span>
-                        {s.root}
-                        <em>{s.mean}</em>
+                        {label}
+                        {s.mean ? <em>{s.mean}</em> : null}
                       </button>
                     );
                   }
@@ -792,23 +802,26 @@ export function RootRush() {
             ) : null}
             <div className="q-daily-chips q-rush-recap" style={{ marginTop: 22 }}>
               {rushNext.missWaiting && rushNext.recap
-                ? rushNext.recap.map((chip) => {
-                    const catalog = ROOTS.find((r) => r.root === chip.root);
+                ? rushNext.recap.map((chip, i) => {
+                    const catalog =
+                      (chip.id && ROOTS_BY_ID[chip.id]) || ROOTS.find((r) => r.root === chip.root);
                     if (!catalog) return null;
                     const id = rootId(catalog);
+                    const label = chip.asked || chip.root || catalog.root;
+                    const sub = chip.asked ? chip.mean : chip.mean || catalog.mean;
                     return (
                       <button
                         type="button"
-                        className="q-daily-chip is-miss"
-                        key={catalog.root}
+                        className={`q-daily-chip is-miss${label.length >= 14 ? ' is-long' : ''}`}
+                        key={`${id}-${label}-${i}`}
                         onClick={() => openRecap(id)}
-                        aria-label={samplePeekLabel('remember', catalog.root, { ok: false })}
+                        aria-label={samplePeekLabel('remember', label, { ok: false })}
                       >
                         <span className="q-done-mark is-miss" aria-hidden="true">
                           !
                         </span>
-                        {catalog.root}
-                        <em>{chip.mean || catalog.mean}</em>
+                        {label}
+                        {sub ? <em>{sub}</em> : null}
                       </button>
                     );
                   })

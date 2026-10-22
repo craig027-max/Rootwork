@@ -77,10 +77,10 @@
  * Pure and Date-free so tests lock the copy without I/O.
  */
 import { continueDailyLabel, dailyDoneOverlaySub, dailyNextRowLabel } from '../../core/daily';
-import { rememberMissCtaLabel, todayMissRecap } from '../../core/rushRecap';
+import { missDisplayName, rememberMissCtaLabel, todayMissRecap } from '../../core/rushRecap';
 import { ROOTS, rootId, rootsInTier, type Root } from '../../data/roots';
 import { nextPlayRoot, rushBestLabel, tierPrimaryLabel } from '../home/menu';
-import { missPeekForNames } from '../home/samplePeek';
+import { missFacePeek } from '../home/samplePeek';
 
 export interface ModeCta {
   kind: 'learn' | 'home' | 'daily' | 'remember' | 'rush';
@@ -100,10 +100,28 @@ export interface DailyResumeOpts {
 /** Owned Rush miss Today already named — result / start / Home Rush tile. */
 export interface RushMissRememberOpts {
   rememberMissId?: string | null;
+  /** Catalog root — Photo. The display name uses the asked question when one is stored. */
   rememberMissName?: string;
   rememberAlso?: string;
+  /** Piece or school word — -graph, not Photo. */
+  rememberMissAsked?: string;
+  rememberMissAskedMean?: string;
+  rememberAlsoId?: string | null;
+  rememberAlsoAsked?: string;
+  rememberAlsoAskedMean?: string;
   dailyDone?: boolean;
   learnedToday?: boolean;
+}
+
+export interface RushMissFace {
+  id: string;
+  /** What the kid reads — -graph, Photograph, or Geo. */
+  name: string;
+  also?: string;
+  /** Line under the name when the question was not the root. */
+  mean?: string;
+  alsoMean?: string;
+  alsoId?: string;
 }
 
 /**
@@ -142,17 +160,34 @@ export function rushLearnReady(
  * Remember Geo is the Rush hero only when Today would already make it
  * the fat tap. Continue Daily / unfinished Continue {learn} stay first.
  */
+function tidyMiss(raw?: string | null): string | undefined {
+  const text = raw?.replace(/\s+/g, ' ').trim();
+  return text || undefined;
+}
+
 export function rushMissRememberReady(
   completed: Set<string>,
   entitled: boolean,
   opts: RushMissRememberOpts & DailyResumeOpts,
-): { id: string; name: string; also?: string } | null {
+): RushMissFace | null {
   if (!rushPathClear(completed, entitled, opts)) return null;
   const id = opts.rememberMissId?.trim();
-  const name = opts.rememberMissName?.replace(/\s+/g, ' ').trim();
-  if (!id || !name) return null;
-  const also = opts.rememberAlso?.replace(/\s+/g, ' ').trim() || undefined;
-  return { id, name, also };
+  const catalog = tidyMiss(opts.rememberMissName);
+  if (!id || !catalog) return null;
+  const asked = missDisplayName(catalog, opts.rememberMissAsked);
+  const name = asked || catalog;
+  const alsoCatalog = tidyMiss(opts.rememberAlso);
+  const alsoAsked = missDisplayName(alsoCatalog, opts.rememberAlsoAsked);
+  const also = alsoAsked || alsoCatalog;
+  const face: RushMissFace = { id, name };
+  if (also) face.also = also;
+  if (asked) face.mean = tidyMiss(opts.rememberMissAskedMean) ?? '';
+  if (alsoAsked) {
+    face.alsoMean = tidyMiss(opts.rememberAlsoAskedMean) ?? '';
+    const alsoId = tidyMiss(opts.rememberAlsoId);
+    if (alsoId) face.alsoId = alsoId;
+  }
+  return face;
 }
 
 /**
@@ -243,7 +278,7 @@ export interface DailyDoneVM {
   eyebrow: string;
   streakLine: string;
   sub: string;
-  recap: { root: string; mean: string; ok?: boolean }[];
+  recap: { root: string; mean: string; ok?: boolean; asked?: string; id?: string }[];
   recapDone: boolean;
   primary: ModeCta;
   replayLabel: string;
@@ -339,7 +374,7 @@ export function buildDailyDone(
     streakLine,
     sub: dailyDoneOverlaySub(opts.justFinished),
     recap: miss
-      ? missPeekForNames(miss.name, miss.also)
+      ? missFacePeek(miss)
       : opts.deal.map((r) => ({ root: r.root, mean: r.mean })),
     recapDone: !miss,
     primary: dailyDonePrimary(opts.completed, opts.entitled, missOpts),
@@ -386,7 +421,7 @@ export interface RushStartVM {
   /** Level chips — off while Remember is the hero. Play again keeps the last tier. */
   pickLevel: boolean;
   /** Path-done Rush miss — Missed Geo, not last-run Photo ✓ Bio ✓. */
-  peekChips: { root: string; mean: string; ok?: boolean }[] | null;
+  peekChips: { root: string; mean: string; ok?: boolean; asked?: string; id?: string }[] | null;
   /** Path-done Rush miss — Close remember, not Close quiz over Geo. */
   closeLabel: string;
   /** Path-done Rush miss — ← Remember, not Home → over Geo. */
@@ -450,7 +485,7 @@ export function buildRushStart(
     title: miss ? `Remember ${miss.name}` : null,
     eyebrow: miss ? 'Remember' : 'Root Rush',
     pickLevel: !miss,
-    peekChips: miss ? missPeekForNames(miss.name, miss.also) : null,
+    peekChips: miss ? missFacePeek(miss) : null,
     closeLabel: overlayCloseLabel('rush', Boolean(miss)),
     homeLabel: miss ? overlayHomeLabel(true) : null,
   };
@@ -473,7 +508,7 @@ export interface RushResultVM {
   /** Giant grade letter / NEW BEST — off while Remember is the hero. */
   celebrateGrade: boolean;
   /** Path-done Rush miss — Missed Geo, not last-run Photo ✓ Bio ✓. */
-  recap: { root: string; mean: string; ok?: boolean }[] | null;
+  recap: { root: string; mean: string; ok?: boolean; asked?: string; id?: string }[] | null;
   /** Path-done Rush miss — Close remember, not Close quiz over Geo. */
   closeLabel: string;
   /** Path-done Rush miss — ← Remember, not Home → over Geo. */
@@ -542,7 +577,7 @@ export function buildRushResultNext(
       title: `Remember ${miss.name}`,
       eyebrow: 'Remember',
       celebrateGrade: false,
-      recap: missPeekForNames(miss.name, miss.also),
+      recap: missFacePeek(miss),
       closeLabel: overlayCloseLabel('rush', true),
       homeLabel: overlayHomeLabel(true),
     };

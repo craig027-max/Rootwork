@@ -162,8 +162,12 @@ export function Home() {
     dailyPreview,
     rushPreview,
     dailyNextName: dailyNext?.root,
-    rushMissName: missHero ? remember.name : undefined,
-    rushMissAlso: missHero ? rememberAlso : undefined,
+    rushMissName: missHero ? (today.missName ?? remember.name) : undefined,
+    rushMissId: missHero ? rushMissId ?? undefined : undefined,
+    rushMissMean: missHero && rushMissAsked[0] ? (rushMissAsked[0].mean ?? '') : undefined,
+    rushMissAlso: missHero ? (rushMissAsked[1]?.name ?? rememberAlso) : undefined,
+    rushMissAlsoId: missHero ? rushMissIds[1] : undefined,
+    rushMissAlsoMean: missHero && rushMissAsked[1] ? (rushMissAsked[1].mean ?? '') : undefined,
     rushLearnName: learnHero ? learnHeroCta.rootName ?? learn.name : undefined,
     rushKeepGoing: Boolean(learnHero && today.pathDone),
     nextPlay,
@@ -278,7 +282,10 @@ export function Home() {
       return;
     }
     const catalog = ROOTS.find((r) => r.root === tap.name);
-    const open = catalog ? askedChipOpen(rootId(catalog), completed, asked) : null;
+    const replayMiss =
+      missHero &&
+      (asked === rushMissAsked[0]?.name || asked === rushMissAsked[1]?.name);
+    const open = catalog && !replayMiss ? askedChipOpen(rootId(catalog), completed, asked) : null;
     if (open?.entry === 'asked') {
       openRoot(open.id, { entry: open.entry, focusWord: open.focusWord });
       return;
@@ -306,7 +313,12 @@ export function Home() {
     learnedToday: learnedId !== null,
     rememberMissId: missHero ? rushMissId : null,
     rememberMissName: missHero ? remember.name : undefined,
+    rememberMissAsked: missHero ? rushMissAsked[0]?.name : undefined,
+    rememberMissAskedMean: missHero ? rushMissAsked[0]?.mean : undefined,
     rememberAlso: missHero ? rememberAlso : undefined,
+    rememberAlsoId: missHero ? rushMissIds[1] : undefined,
+    rememberAlsoAsked: missHero ? rushMissAsked[1]?.name : undefined,
+    rememberAlsoAskedMean: missHero ? rushMissAsked[1]?.mean : undefined,
     rushRuns: stats.runs,
     rushBestPct: stats.bestPct,
     rushBestStars: stats.bestStars,

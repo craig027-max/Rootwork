@@ -34,7 +34,7 @@ import {
   rushMissRememberReady,
   type ModeCta,
 } from './modes/modeHandoff';
-import { learnedRootToday, listRushMissRemember, rootLabel } from './home/todayProgress';
+import { learnedRootToday, listRushMissAsked, listRushMissRemember, rootLabel } from './home/todayProgress';
 import { samplePeekLabel } from './home/samplePeek';
 
 type Phase = 'start' | 'play' | 'result';
@@ -161,24 +161,39 @@ export function DailyChallenge() {
   const learnedId = learnedRootToday(progress, day);
   const learnedToday = learnedId !== null;
   const rushToday = todayRushRecap(rushRecap, studentId, day);
+  const rushMissExclude = [learnedId, nextLearn.rootId, ...deal.map((r) => rootId(r))];
   const rushMissIds = listRushMissRemember(rushToday, progress, day, {
-    exclude: [learnedId, nextLearn.rootId, ...deal.map((r) => rootId(r))],
+    exclude: rushMissExclude,
+  });
+  const rushMissAsked = listRushMissAsked(rushToday, progress, day, {
+    exclude: rushMissExclude,
   });
   const rushMissId = rushMissIds[0] ?? null;
   const remember = rootLabel(rushMissId);
   const rememberAlso = rootLabel(rushMissIds[1]).name;
+  const missAsk = {
+    rememberMissAsked: rushMissAsked[0]?.name,
+    rememberMissAskedMean: rushMissAsked[0]?.mean,
+    rememberAlsoId: rushMissIds[1],
+    rememberAlsoAsked: rushMissAsked[1]?.name,
+    rememberAlsoAskedMean: rushMissAsked[1]?.mean,
+  };
   const nextLearnMean = nextLearn.rootId ? ROOTS_BY_ID[nextLearn.rootId]?.mean : undefined;
   const lastHoldMiss = !nextHold
     ? rushMissRememberReady(completed, entitled, {
         rememberMissId: rushMissId,
         rememberMissName: remember.name,
         rememberAlso,
+        ...missAsk,
         dailyDone: true,
         learnedToday,
       })
     : null;
   const continueHold = lastHoldMiss
-    ? dailyHoldRememberLine(lastHoldMiss.name, remember.mean)
+    ? dailyHoldRememberLine(
+        lastHoldMiss.name,
+        lastHoldMiss.mean !== undefined ? lastHoldMiss.mean : remember.mean,
+      )
     : !nextHold && nextLearn.kind === 'learn' && nextLearn.rootName
       ? learnedToday
         ? dailyHoldKeepGoingLine(nextLearn.rootName, nextLearnMean)
@@ -346,6 +361,7 @@ export function DailyChallenge() {
     rememberMissId: rushMissId,
     rememberMissName: remember.name,
     rememberAlso,
+    ...missAsk,
   });
   const showAsked =
     showDoneLanding && !done.missWaiting && played.some((chip) => Boolean(chip?.title));
@@ -546,12 +562,14 @@ export function DailyChallenge() {
               style={{ marginTop: 22 }}
             >
               {done.recap.map((chip, i) => {
-                const r = ROOTS.find((root) => root.root === chip.root);
+                const r =
+                  (chip.id && ROOTS_BY_ID[chip.id]) ||
+                  ROOTS.find((root) => root.root === chip.root);
                 if (!r) return null;
                 const chipMiss = chip.ok === false;
-                const asked = showAsked ? played.find((item) => item?.root === r.root) : null;
-                const title = asked?.title || r.root;
-                const sub = asked?.sub || chip.mean || r.mean;
+                const playedAsked = showAsked ? played.find((item) => item?.root === r.root) : null;
+                const title = chip.asked || playedAsked?.title || r.root;
+                const sub = chip.asked ? chip.mean : playedAsked?.sub || chip.mean || r.mean;
                 const opened = askedChipOpen(
                   rootId(r),
                   completed,
@@ -563,12 +581,12 @@ export function DailyChallenge() {
                     className={`q-daily-chip${done.recapDone && !chipMiss ? ' is-done' : ''}${
                       chipMiss ? ' is-miss' : ''
                     }${title.length >= 14 ? ' is-long' : ''}`}
-                    key={`${r.root}-${i}`}
+                    key={`${r.root}-${chip.asked ?? ''}-${i}`}
                     onClick={() => openRecap(r, showAsked ? title : undefined)}
                     aria-label={resultChipAria(
                       opened,
                       chipMiss
-                        ? samplePeekLabel('remember', r.root, { ok: false })
+                        ? samplePeekLabel('remember', title, { ok: false })
                         : dailyRecapChipLabel(title, completed.has(rootId(r))),
                       { missed: chipMiss },
                     )}

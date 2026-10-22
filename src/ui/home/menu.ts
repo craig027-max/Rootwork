@@ -29,7 +29,7 @@ import {
 import { recapOpenForId, type DeckEntry } from '../../core/deckFlow';
 import { dailyDoneMenuSub, dailyNextSub } from '../../core/daily';
 import { gradeForPct, starsForPct } from '../../core/stats';
-import { missPeekForNames } from './samplePeek';
+import { missFacePeek, missPeekForNames } from './samplePeek';
 
 /** Per-tier presentation: emoji chip + the PALETTES jewel key that themes the row. */
 export const TIER_META: { icon: string; jewel: string }[] = [
@@ -53,7 +53,7 @@ export interface ModeItem {
   best?: string;
   /** Daily / last-Rush peek: names + meanings. Rush lines keep `ok` so a miss is not a ✓.
    *  `asked` is the school word or piece when that question was not the root. */
-  preview?: { root: string; mean: string; ok?: boolean; asked?: string }[];
+  preview?: { root: string; mean: string; ok?: boolean; asked?: string; id?: string }[];
   /** When Daily is banked, the preview lines are a done recap (✓ on each). */
   previewDone?: boolean;
   /** Mid-run Daily: remaining-root peek — first line is the next unanswered. */
@@ -529,8 +529,14 @@ export function buildMenu(
     dailyNextName?: string;
     /** Path-done Rush miss — Rush / Daily / HERE / Starter / Scholar name Remember. */
     rushMissName?: string;
+    /** Catalog id for that miss — the peek tap still opens Photo when the name is -graph. */
+    rushMissId?: string;
+    /** Gloss under the asked name. Absent on a meaning miss. */
+    rushMissMean?: string;
     /** Second waiting miss — Daily peek can name then Chron. */
     rushMissAlso?: string;
+    rushMissAlsoId?: string;
+    rushMissAlsoMean?: string;
     /** Daily banked + Today still names this learn — not a combo-only dump. */
     rushLearnName?: string;
     /** Today ✓ — extra play, not unfinished Continue. */
@@ -543,7 +549,19 @@ export function buildMenu(
     opts.nextPlay ?? isNextPlayHome(completed, entitled, { choseMode: opts.choseMode });
   const missName = opts.rushMissName?.replace(/\s+/g, ' ').trim() || undefined;
   const missAlso = opts.rushMissAlso?.replace(/\s+/g, ' ').trim() || undefined;
-  const missPreview = missName ? missPeekForNames(missName, missAlso) : [];
+  const missId = opts.rushMissId?.replace(/\s+/g, ' ').trim() || undefined;
+  const missPreview = !missName
+    ? []
+    : missId
+      ? missFacePeek({
+          id: missId,
+          name: missName,
+          mean: opts.rushMissMean,
+          also: missAlso,
+          alsoId: opts.rushMissAlsoId,
+          alsoMean: opts.rushMissAlsoMean,
+        })
+      : missPeekForNames(missName, missAlso);
   const modes: MenuItem[] = [
     {
       kind: 'mode',
