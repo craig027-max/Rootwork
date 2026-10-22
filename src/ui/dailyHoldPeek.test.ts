@@ -1,6 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { dailyHoldNextLine } from '../core/daily';
+import { dailyNextPeekFace } from '../core/dailyNextPeek';
+import { quizGloss } from '../core/wordDef';
+import { buildBig, buildPicksForRoot, otherPartsForRoot } from '../core/wordParts';
 import { ROOTS } from '../data/roots';
 
 const daily = readFileSync(join(process.cwd(), 'src/ui/DailyChallenge.tsx'), 'utf8');
@@ -25,8 +29,11 @@ function mediaBlock(source: string, query: string): string {
   throw new Error(`unclosed @media (${query})`);
 }
 
-describe('Daily hold: peek the next root, then Next — Home lands on that peek', () => {
-  it('holds Yes + Next · {root} · {meaning} — last root stays Done', () => {
+describe('Daily hold: peek the next question, then Next — Home lands on that peek', () => {
+  it('holds Yes + the question Next will open — last root stays Done', () => {
+    expect(daily).toContain('dailyNextPeekFace(nextHold, queuedNext)');
+    expect(daily).toContain('dealBeat(n, next, { beat: queuedNext })');
+    expect(daily).toContain('setQueuedNext');
     expect(daily).toContain('dailyHoldNextLine');
     expect(daily).toContain('dailyHoldContinueLine');
     expect(daily).toContain('dailyHoldKeepGoingLine');
@@ -62,19 +69,108 @@ describe('Daily hold: peek the next root, then Next — Home lands on that peek'
     expect(home).toContain('liveDailyResumeQi');
   });
 
-  it('keeps the next-root peek readable on a phone and a short screen', () => {
+  it('keeps the next-question peek readable on a phone and a short screen', () => {
     const phone = mediaBlock(quiz, 'max-width: 560px');
     const short = mediaBlock(quiz, 'max-height: 720px');
     expect(phone).toMatch(/\.q-daily \.q-hold\s*\{[^}]*display:\s*flex/);
     expect(phone).toMatch(/\.q-daily \.q-fb\.q-next-peek\s*\{[^}]*display:\s*block/);
+    expect(phone).toMatch(/\.q-daily \.q-fb\.q-next-peek\.is-long\s*\{[^}]*display:\s*block/);
     expect(short).toMatch(/\.q-daily \.q-hold\s*\{[^}]*display:\s*flex/);
     expect(short).toMatch(/\.q-daily \.q-fb\.q-next-peek\s*\{[^}]*display:\s*block/);
+    expect(short).toMatch(/\.q-daily \.q-fb\.q-next-peek\.is-long\s*\{[^}]*display:\s*block/);
     expect(phone).not.toMatch(/\.q-daily \.q-hold\s*\{[^}]*display:\s*none/);
     expect(phone).not.toMatch(/\.q-fb\.q-next-peek\s*\{[^}]*display:\s*none/);
+    expect(phone).not.toMatch(/\.q-fb\.q-next-peek\.is-long\s*\{[^}]*display:\s*none/);
     expect(short).not.toMatch(/\.q-daily \.q-hold\s*\{[^}]*display:\s*none/);
     expect(short).not.toMatch(/\.q-fb\.q-next-peek\s*\{[^}]*display:\s*none/);
+    expect(short).not.toMatch(/\.q-fb\.q-next-peek\.is-long\s*\{[^}]*display:\s*none/);
     expect(quiz).toMatch(/\.q-hold\s*\{/);
-    expect(quiz).toMatch(/\.q-fb\.q-next-peek\s*\{/);
+    expect(quiz).toMatch(/\.q-fb\.q-next-peek\s*\{[^}]*white-space:\s*normal/);
+    expect(quiz).toMatch(/\.q-fb\.q-next-peek\.is-long\s*\{[^}]*white-space:\s*normal/);
+  });
+
+  it('names -graph, Photograph, and the pieces — a meaning beat stays on the root', () => {
+    const photo = ROOTS.find((r) => r.root === 'Photo');
+    const bio = ROOTS.find((r) => r.root === 'Bio');
+    if (!photo || !bio) throw new Error('fixture: Photo / Bio');
+    const graph = otherPartsForRoot(photo).find((part) => part.letters === '-graph');
+    const photograph = photo.words.find((w) => w.w === 'Photograph');
+    const biology = bio.words.find((w) => w.w === 'Biology');
+    if (!graph || !photograph || !biology) throw new Error('fixture: -graph / Photograph / Biology');
+    const gloss = quizGloss(photograph.d);
+    if (!gloss) throw new Error('fixture: Photograph gloss');
+
+    const piece = dailyNextPeekFace(photo, {
+      kind: 'part',
+      part: graph.letters,
+      word: graph.word,
+    });
+    expect(dailyHoldNextLine(piece.name, piece.mean)).toBe('Next · -graph · in Photograph');
+    expect(piece.mean).not.toBe(graph.mean);
+    expect(piece.mean).not.toContain(photo.mean);
+
+    const word = dailyNextPeekFace(photo, { kind: 'gloss', word: photograph.w });
+    expect(dailyHoldNextLine(word.name, word.mean)).toBe('Next · Photograph · from Photo');
+    expect(word.mean).not.toBe(gloss);
+    expect(word.mean).not.toContain(photo.mean);
+
+    const pieces = dailyNextPeekFace(bio, { kind: 'build', split: biology.b, word: biology.w });
+    expect(pieces.name).toBe(buildBig(biology.b));
+    expect(pieces.mean).toBeUndefined();
+    expect(pieces.name.toLowerCase()).not.toBe(biology.w.toLowerCase());
+    expect(dailyHoldNextLine(pieces.name, pieces.mean)).toBe(`Next · ${buildBig(biology.b)}`);
+
+    expect(dailyNextPeekFace(photo, { kind: 'mean' })).toEqual({
+      name: photo.root,
+      mean: photo.mean,
+    });
+    expect(dailyNextPeekFace(photo, { kind: 'word', word: photograph.w })).toEqual({
+      name: photo.root,
+      mean: photo.mean,
+    });
+    expect(dailyNextPeekFace(photo, null)).toEqual({ name: photo.root, mean: photo.mean });
+  });
+
+  it('names every catalog question without printing the answer tile', () => {
+    for (const root of ROOTS) {
+      expect(dailyNextPeekFace(root, { kind: 'mean' })).toEqual({
+        name: root.root,
+        mean: root.mean,
+      });
+      expect(dailyNextPeekFace(root, null)).toEqual({ name: root.root, mean: root.mean });
+
+      for (const part of otherPartsForRoot(root)) {
+        const face = dailyNextPeekFace(root, {
+          kind: 'part',
+          part: part.letters,
+          word: part.word,
+        });
+        expect(face.name, root.root).toBe(part.letters);
+        expect(face.mean, root.root).toBe(`in ${part.word}`);
+        expect(face.mean, root.root).not.toBe(part.mean);
+      }
+
+      for (const item of root.words) {
+        const gloss = quizGloss(item.d);
+        if (!gloss) continue;
+        const face = dailyNextPeekFace(root, { kind: 'gloss', word: item.w });
+        expect(face.name, `${root.root} ${item.w}`).toBe(item.w);
+        expect(face.mean, item.w).toBe(`from ${root.root}`);
+        expect(face.mean, item.w).not.toBe(gloss);
+      }
+
+      for (const pick of buildPicksForRoot(root)) {
+        const face = dailyNextPeekFace(root, {
+          kind: 'build',
+          split: pick.split,
+          word: pick.word,
+        });
+        expect(face.name, pick.word).toBe(buildBig(pick.split));
+        expect(face.mean, pick.word).toBeUndefined();
+        expect(face.name.toLowerCase(), pick.word).not.toBe(pick.word.toLowerCase());
+      }
+    }
+    expect(ROOTS.length).toBe(183);
   });
 
   it('does not expand the catalog', () => {

@@ -37,7 +37,8 @@ describe('A miss retries the question they just missed', () => {
     expect(daily).toContain("if (o.ok) cls += ' correct'");
     expect(daily).toContain('Try again ›');
     expect(daily).toContain('dealBeat(first, startAt, { reset: true })');
-    expect(daily).toContain('dealBeat(n, next)');
+    expect(daily).toContain('dealBeat(n, next, { beat: queuedNext })');
+    expect(daily).not.toMatch(/function retry\(\) \{[^}]*dealBeat/);
   });
 
   it('Rush Try again stays on that question — the first miss still counts', () => {

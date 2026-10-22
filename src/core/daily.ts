@@ -493,9 +493,10 @@ export function dailyHoldLine(rootName: string, mean: string): string {
 }
 
 /**
- * After the Yes hold, name the next unanswered Daily root the way Home
- * already peeks it — so Next is not a dump onto an unnamed card.
- * Last root has no Daily Next peek — it peeks Continue · next learn instead.
+ * After the Yes hold, name the next Daily question — so Next is not a
+ * dump onto an unnamed card. Last root has no Daily Next peek — it
+ * peeks Continue · next learn instead. The face (root vs -graph vs
+ * Photograph) is `dailyNextPeekFace` — this only joins the words.
  */
 export function dailyHoldNextLine(nextName: string, nextMean?: string): string {
   const name = nextName.replace(/\s+/g, ' ').trim();
