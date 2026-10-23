@@ -371,6 +371,83 @@ export function rushResultTallyLabel(missedAny: boolean): string {
 }
 
 /**
+ * How long a correct Rush tap stays before the next question.
+ *
+ * 1600ms fits "Yes — Bio means life." A school-word Yes is a longer
+ * sentence in the same slot, and the round used to move on before it
+ * could be read. The score suffix (+200 · 2× combo) does not add time.
+ * A miss does not use this — Try again waits. Enter still skips.
+ */
+export const RUSH_YES_HOLD_MS = 1600;
+/** Safety rail so a very long gloss cannot stall the round. */
+export const RUSH_YES_HOLD_MAX_MS = 7200;
+/** Quiet reading pace for the lesson sentence, after the short root beat. */
+const RUSH_YES_HOLD_WPM = 170;
+const RUSH_YES_HOLD_SHORT_WORDS = 6;
+
+/** Lesson sentence — drop the trailing +points so a combo does not add time. */
+export function rushYesLesson(line: string): string {
+  return line.replace(/\s+/g, ' ').trim().replace(/\s\+[\d,].*$/, '').trim();
+}
+
+export function rushYesHoldMs(line: string): number {
+  const lesson = rushYesLesson(line);
+  const words = lesson ? lesson.split(' ').filter(Boolean).length : 0;
+  if (words <= RUSH_YES_HOLD_SHORT_WORDS) return RUSH_YES_HOLD_MS;
+  const read = Math.round((words / RUSH_YES_HOLD_WPM) * 60_000);
+  return Math.min(RUSH_YES_HOLD_MAX_MS, Math.max(RUSH_YES_HOLD_MS, read));
+}
+
+/**
+ * The Yes line Rush actually shows. The auto-advance timer must use
+ * this same string — a second copy would hold the wrong sentence.
+ */
+export function rushShownYesLine(
+  q: {
+    type: string;
+    root: { root: string; mean: string };
+    glossWord?: string;
+    gloss?: string;
+    part?: string;
+    partMean?: string;
+    buildWord?: string;
+    buildSplit?: string;
+    word?: string;
+    wordSplit?: string;
+  },
+  opts: { practice: boolean; points: number; mult: number },
+): string {
+  if (opts.practice) {
+    return rushPracticeYesLine({
+      type: q.type,
+      rootName: q.root.root,
+      mean: q.root.mean,
+      glossWord: q.glossWord,
+      gloss: q.gloss,
+      part: q.part,
+      partMean: q.partMean,
+      buildWord: q.buildWord,
+      buildSplit: q.buildSplit,
+      word: q.word,
+      wordSplit: q.wordSplit,
+    });
+  }
+  if (q.type === 'part' && q.part && q.partMean) {
+    return rushPartHoldLine(q.part, q.partMean, opts.points, opts.mult);
+  }
+  if (q.type === 'gloss' && q.glossWord && q.gloss) {
+    return rushGlossHoldLine(q.glossWord, q.gloss, opts.points, opts.mult);
+  }
+  if (q.type === 'build' && q.buildWord && q.buildSplit) {
+    return rushBuildHoldLine(q.buildWord, q.buildSplit, opts.points, opts.mult);
+  }
+  if (q.type === 'word' && q.word) {
+    return rushWordHoldLine(q.word, q.wordSplit ?? '', opts.points, opts.mult);
+  }
+  return rushHoldLine(q.root.root, q.root.mean, opts.points, opts.mult);
+}
+
+/**
  * Yes after they get a missed question on a later tap. Same sentence as
  * a scored hit, with no +points — the first miss already counted.
  */
