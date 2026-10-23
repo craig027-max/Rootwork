@@ -20,6 +20,7 @@ import {
   stampDailyAsked,
   type DailyAskedChip,
 } from '../core/daily';
+import { dailyNextPeekFace } from '../core/dailyNextPeek';
 import { buildRecall, type RecallBeat } from '../core/recall';
 import { Scene } from './Scene';
 import { askedChipOpen, findSuccessLine, resultChipAria } from '../core/deckFlow';
@@ -53,7 +54,8 @@ function askedChipFor(root: Root, beat: RecallBeat): DailyAskedChip {
  * scene on screen, one-beat recall, retry on a miss (teach, don't shame).
  * Try again asks that same question again — not a different word.
  * A correct tap holds the meaning until Next — no 800ms dump onto Photo —
- * and peeks the next root (Next · Aqua · water) so Next is not unnamed.
+ * and peeks the question Next will open (Next · -graph · in Photograph,
+ * or Next · Aqua · water on a meaning beat) so Next is not unnamed.
  * Leaving mid-run persists the next unanswered root so Home can say
  * Continue Daily · 3 of 5. An owned hit is today's Remember; the first
  * hit banks play-today. Last hold peeks Continue · next learn — or Keep
@@ -113,18 +115,22 @@ export function DailyChallenge() {
 
   const [boot] = useState(() => {
     const resumeAt = resumeQi;
-    let nextBeat: RecallBeat | null = null;
+    let currentBeat: RecallBeat | null = null;
     let current: DailyAskedChip | null = null;
+    let upcoming: RecallBeat | null = null;
     if (resumeAt != null) {
       const r = deal[resumeAt];
       if (r) {
-        nextBeat = buildRecall({ root: r, pool, choices: 3 });
-        current = askedChipFor(r, nextBeat);
+        currentBeat = buildRecall({ root: r, pool, choices: 3 });
+        current = askedChipFor(r, currentBeat);
       }
+      const upcomingRoot = deal[resumeAt + 1];
+      if (upcomingRoot) upcoming = buildRecall({ root: upcomingRoot, pool, choices: 3 });
     }
     const saved = dailyRun?.day === day ? dailyRun.asked : undefined;
     return {
-      beat: nextBeat,
+      beat: currentBeat,
+      upcoming,
       asked: layoutDailyAsked(deal.length, {
         saved,
         resumeAt,
@@ -136,6 +142,8 @@ export function DailyChallenge() {
   const [phase, setPhase] = useState<Phase>(() => (resumeQi != null ? 'play' : 'start'));
   const [qi, setQi] = useState(() => resumeQi ?? 0);
   const [beat, setBeat] = useState<RecallBeat | null>(boot.beat);
+  /** The question Next will open — the hold peek names this same beat. */
+  const [queuedNext, setQueuedNext] = useState<RecallBeat | null>(boot.upcoming);
   const [played, setPlayed] = useState<(DailyAskedChip | null)[]>(boot.asked);
   const [picked, setPicked] = useState<number | null>(null);
   const bankedRef = useRef(false);
@@ -157,6 +165,8 @@ export function DailyChallenge() {
   const answeredCorrect = answered && beat ? (beat.opts[picked!]?.ok ?? false) : false;
   const isLast = qi + 1 >= deal.length;
   const nextHold = !isLast ? deal[qi + 1] : undefined;
+  const nextPeek = nextHold ? dailyNextPeekFace(nextHold, queuedNext) : null;
+  const nextPeekLine = nextPeek ? dailyHoldNextLine(nextPeek.name, nextPeek.mean) : '';
   const nextLearn = learnNextAction(completed, entitled);
   const learnedId = learnedRootToday(progress, day);
   const learnedToday = learnedId !== null;
@@ -231,12 +241,14 @@ export function DailyChallenge() {
     openRoot(open.id, { entry: open.entry, focusWord: open.focusWord });
   }
 
-  function dealBeat(r: Root, index: number, opts?: { reset?: boolean }) {
-    const next = buildRecall({ root: r, pool, choices: 3 });
+  function dealBeat(r: Root, index: number, opts?: { reset?: boolean; beat?: RecallBeat | null }) {
+    const next = opts?.beat ?? buildRecall({ root: r, pool, choices: 3 });
     const chip = askedChipFor(r, next);
     setBeat(next);
     setPicked(null);
     setPlayed((prev) => stampDailyAsked(opts?.reset ? [] : prev, index, chip, deal.length));
+    const upcomingRoot = deal[index + 1];
+    setQueuedNext(upcomingRoot ? buildRecall({ root: upcomingRoot, pool, choices: 3 }) : null);
   }
 
   function startRun() {
@@ -289,7 +301,7 @@ export function DailyChallenge() {
       const next = qi + 1;
       setQi(next);
       const n = deal[next];
-      if (n) dealBeat(n, next);
+      if (n) dealBeat(n, next, { beat: queuedNext });
       return;
     }
     finish();
@@ -506,9 +518,11 @@ export function DailyChallenge() {
                               ? wordYesLine(beat.word, beat.split)
                               : dailyHoldLine(root.root, root.mean)}
                     </span>
-                    {nextHold ? (
-                      <span className="q-fb q-next-peek">
-                        {dailyHoldNextLine(nextHold.root, nextHold.mean)}
+                    {nextHold && nextPeekLine ? (
+                      <span
+                        className={`q-fb q-next-peek${nextPeekLine.length >= 26 ? ' is-long' : ''}`}
+                      >
+                        {nextPeekLine}
                       </span>
                     ) : continueHold ? (
                       <span className="q-fb q-next-peek">{continueHold}</span>
