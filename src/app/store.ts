@@ -39,6 +39,7 @@ import {
   type CorrectAdvance,
   type DeckEntry,
 } from '../core/deckFlow';
+import type { QueuedStudyRecall } from '../core/studyNextPeek';
 
 export type AppView =
   | 'home'
@@ -320,6 +321,12 @@ interface WondralStore {
   setBrowseQuery: (q: string) => void;
   /** In-flight Yes beat — survives a Deck remount so examples cannot flash back. */
   correctAdvance: CorrectAdvance | null;
+  /**
+   * Recall beat the Study Next line already named. Survives a Deck remount
+   * so Next opens that question — not a new coin-flip. Not persisted.
+   */
+  queuedStudyRecall: QueuedStudyRecall | null;
+  setQueuedStudyRecall: (queued: QueuedStudyRecall | null) => void;
   openRoot: (id: string, opts?: { entry?: DeckEntry; focusWord?: string | null }) => void;
   closeRoot: () => void;
   beginCorrectAdvance: (fromId: string, dest: AfterCorrectRecall) => void;
@@ -426,6 +433,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       deckFocusWord: null,
       browseQuery: '',
       correctAdvance: null,
+      queuedStudyRecall: null,
     });
   },
 
@@ -480,6 +488,8 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   browseQuery: '',
   setBrowseQuery: (q) => set({ browseQuery: q }),
   correctAdvance: null,
+  queuedStudyRecall: null,
+  setQueuedStudyRecall: (queued) => set({ queuedStudyRecall: queued }),
   openRoot: (id, opts) =>
     set((s) => {
       const entry = deckEntryForOpen(opts);
@@ -500,6 +510,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       deckFocusWord: null,
       browseQuery: '',
       correctAdvance: null,
+      queuedStudyRecall: null,
     }),
   beginCorrectAdvance: (fromId, dest) => set({ correctAdvance: { fromId, dest } }),
   clearCorrectAdvance: () => set({ correctAdvance: null }),

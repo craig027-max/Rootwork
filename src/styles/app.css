@@ -2005,6 +2005,20 @@ button.ww-schip:focus-visible {
   letter-spacing: 0;
   overflow-wrap: anywhere;
 }
+.ww-recall-win p.ww-next-peek {
+  margin-top: 6px;
+  font-family: var(--font-game);
+  font-weight: 600;
+  font-size: 0.86rem;
+  line-height: 1.35;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.ww-recall-win p.ww-next-peek.is-long {
+  font-size: 0.78rem;
+  white-space: normal;
+}
 /* Yes clip: one beat on the existing win line — spark + bold + live glow. */
 .ww-recall-win.is-now {
   border-radius: var(--radius-md);
@@ -2650,6 +2664,14 @@ button.ww-schip:focus-visible {
   .ww-index {
     padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px));
   }
+  .ww-recall-win p.ww-next-peek {
+    display: block;
+    white-space: normal;
+  }
+  .ww-recall-win p.ww-next-peek.is-long {
+    display: block;
+    white-space: normal;
+  }
 }
 
 /* Short laptop (~800px) and phones: keep scene + meaning + examples + actions
@@ -2745,6 +2767,14 @@ button.ww-schip:focus-visible {
   .ww-recall-win,
   .ww-recall-win.is-now {
     display: block;
+  }
+  .ww-recall-win p.ww-next-peek {
+    display: block;
+    white-space: normal;
+  }
+  .ww-recall-win p.ww-next-peek.is-long {
+    display: block;
+    white-space: normal;
   }
   .ww-card-actions {
     display: flex;

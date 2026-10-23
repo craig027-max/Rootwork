@@ -36,6 +36,12 @@ import {
 } from '../core/deckFlow';
 import { buildWordRecall } from '../core/wordRecall';
 import { localDayKey } from '../core/daily';
+import {
+  buildQueuedStudyNext,
+  studyHoldPeekLine,
+  studyNextPeekLong,
+  studyRecallToOpen,
+} from '../core/studyNextPeek';
 import { isOwnedRushMiss, listOwnedRushMissIds, ownedRushMissAsked, todayRushRecap } from '../core/rushRecap';
 import { buildRecall, recallForMissedAsk, type RecallBeat } from '../core/recall';
 import { deckQuizHero, deckStudyLead } from './deck/deckQuizHero';
@@ -134,6 +140,7 @@ export function Deck() {
   const deckEntry = useWondralStore((s) => s.deckEntry);
   const deckFocusWord = useWondralStore((s) => s.deckFocusWord);
   const correctAdvance = useWondralStore((s) => s.correctAdvance);
+  const queuedStudyRecall = useWondralStore((s) => s.queuedStudyRecall);
   const beginCorrectAdvance = useWondralStore((s) => s.beginCorrectAdvance);
   const entitled = useEntitledForDisplay();
 
@@ -212,15 +219,26 @@ export function Deck() {
     return () => window.clearInterval(interval);
   }, [listening, listenKind, currentRootId]);
 
+  function queueUpcoming(dest: AfterCorrectRecall | null) {
+    const state = useWondralStore.getState();
+    const next = dest
+      ? buildQueuedStudyNext(dest, state.queuedStudyRecall, poolRef.current)
+      : null;
+    if (next !== state.queuedStudyRecall) state.setQueuedStudyRecall(next);
+  }
+
   useLayoutEffect(() => {
     const opened = currentRootId ? ROOTS_BY_ID[currentRootId] : undefined;
     if (!opened || !currentRootId) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- clear recall when the card closes
       setRecall(null);
+      queueUpcoming(null);
       return;
     }
     const live = useWondralStore.getState().correctAdvance;
     if (live && live.fromId === currentRootId) {
+      // Remount mid-Yes: rebuild only if the named beat was lost.
+      queueUpcoming(live.dest);
       setRecall((prev) =>
         prev?.win && prev.rootId === currentRootId
           ? prev
@@ -235,6 +253,25 @@ export function Deck() {
     }
     if (isRecallEntry(deckEntry)) {
       const state = useWondralStore.getState();
+      // Remember must not open the study beat Next had named.
+      const openedBeat =
+        deckEntry === 'recall'
+          ? studyRecallToOpen(state.queuedStudyRecall, currentRootId)
+          : null;
+      if (openedBeat) {
+        setRecall((prev) =>
+          prev && prev.rootId === currentRootId
+            ? prev
+            : {
+                beat: openedBeat,
+                picked: null,
+                win: null,
+                rootId: currentRootId,
+              },
+        );
+        return;
+      }
+      queueUpcoming(null);
       const day = localDayKey();
       const missedAsk =
         deckEntry === 'remember'
@@ -275,6 +312,7 @@ export function Deck() {
       );
       return;
     }
+    queueUpcoming(null);
     setRecall(null);
   }, [currentRootId, deckEntry]);
 
@@ -341,6 +379,9 @@ export function Deck() {
     mean: card.mean,
   });
   const quizRecall = recall && recall.rootId === id && !won ? recall : null;
+  const peekDest = won && correctAdvance?.fromId === id ? correctAdvance.dest : null;
+  const peekRoot = peekDest?.kind === 'next' ? ROOTS_BY_ID[peekDest.id] : undefined;
+  const nextPeekLine = peekDest ? studyHoldPeekLine(peekDest, queuedStudyRecall, peekRoot) : '';
   const openSplit = splitForOpenWord(root.words, openWord);
   const remembering = deckEntry === 'remember';
   const browseFind = isFindEntry(deckEntry);
@@ -509,6 +550,8 @@ export function Deck() {
         wordSplit: wordBeat ? recall.beat.split : undefined,
       });
       beginCorrectAdvance(id, dest);
+      // Name this beat under Yes, then open the same object on Next.
+      queueUpcoming(dest);
       setRecall({ beat: recall.beat, picked: idx, win: dest.line, rootId: id });
       // Root Yes clip says "Bio means life". A school-word card, gloss,
       // piece, pieces, or which-word beat names that word — don't speak
@@ -860,6 +903,11 @@ export function Deck() {
               >
                 {winLine}
               </p>
+              {nextPeekLine ? (
+                <p className={`ww-next-peek${studyNextPeekLong(nextPeekLine) ? ' is-long' : ''}`}>
+                  {nextPeekLine}
+                </p>
+              ) : null}
             </div>
           ) : null}
 
