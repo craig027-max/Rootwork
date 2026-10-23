@@ -59,7 +59,8 @@ describe('A miss retries the question they just missed', () => {
     expect(rush).toContain('onClick={retry}');
     expect(rush).toContain('{RUSH_RETRY_LABEL}');
     expect(rush).toContain('hits[qi] === false');
-    expect(rush).toContain('rushPracticeYesLine');
+    expect(rush).toContain('rushShownYesLine');
+    expect(rush).toContain('practice: hits[qi] === false');
     expect(rush).toContain('if (answeredCorrect) advance()');
     expect(rush).toContain('else retry()');
     expect(rush).not.toMatch(/onClick=\{advance\}>\s*\{isLast \? 'See results ›' : 'Next ›'\}/);

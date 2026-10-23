@@ -168,8 +168,9 @@ describe('Rush recap is Remember — not a grade-only / Bio → Geo dump', () =>
 
   it('wires Rush hold + recap chips + Remember stamp — not openRoot teach', () => {
     expect(rushHoldLine('Chron', 'time', 200, 2)).toBe('Yes — Chron means time. +200 · 2× combo');
-    expect(rush).toContain('const AUTO_ADVANCE_MS = 1600');
-    expect(rush).toContain('rushHoldLine');
+    expect(rush).toContain('rushYesHoldMs(yesLine)');
+    expect(rush).toContain('rushShownYesLine');
+    expect(rush).not.toContain('const AUTO_ADVANCE_MS = 1600');
     expect(rush).toContain('rushMissLine');
     expect(rush).toContain('rememberRushHit');
     expect(rush).toContain('rushRecapFromRun');

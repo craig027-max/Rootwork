@@ -26,6 +26,11 @@ import {
   rushPracticeHoldLine,
   rushPracticeYesLine,
   RUSH_RETRY_LABEL,
+  RUSH_YES_HOLD_MAX_MS,
+  RUSH_YES_HOLD_MS,
+  rushShownYesLine,
+  rushYesHoldMs,
+  rushYesLesson,
   rushWordHoldLine,
   rushWordMissLine,
   rememberMissCtaLabel,
@@ -230,6 +235,19 @@ describe('rushHoldLine + rushMissLine + rushRecapChipLabel', () => {
     expect(
       rushPracticeYesLine({ type: 'mean', rootName: 'Bio', mean: 'life' }),
     ).toBe('Yes — Bio means life.');
+
+    const bioYes = rushShownYesLine(
+      { type: 'mean', root: { root: 'Bio', mean: 'life' } },
+      { practice: false, points: 100, mult: 1 },
+    );
+    expect(bioYes).toBe('Yes — Bio means life. +100');
+    expect(rushYesHoldMs(bioYes)).toBe(RUSH_YES_HOLD_MS);
+    const bioStreak = rushShownYesLine(
+      { type: 'mean', root: { root: 'Bio', mean: 'life' } },
+      { practice: false, points: 800, mult: 8 },
+    );
+    expect(rushYesHoldMs(bioStreak)).toBe(RUSH_YES_HOLD_MS);
+    expect(rushYesLesson(bioStreak)).toBe('Yes — Bio means life.');
     expect(
       rushPracticeYesLine({
         type: 'gloss',
@@ -540,6 +558,92 @@ describe('todayRushRecap + peekChipDone', () => {
     expect(peekChipDone({ done: true, ok: false })).toBe(false);
     expect(peekChipDone({ done: true })).toBe(true);
     expect(peekChipDone({ done: false })).toBe(false);
+  });
+});
+
+describe('Rush Yes hold', () => {
+  const TYPES = ['mean', 'root', 'word', 'gloss', 'part', 'build'] as const;
+
+  it('keeps a short root Yes at 1.6s and holds a school-word Yes long enough to read', () => {
+    const gloss = rushGlossHoldLine('Biology', 'The science of living things', 100, 1);
+    const glossCombo = rushGlossHoldLine('Biology', 'The science of living things', 800, 8);
+    const built = rushBuildHoldLine('Biology', 'bio (life) + -logy (study of)', 100, 1);
+    const builtCombo = rushBuildHoldLine('Biology', 'bio (life) + -logy (study of)', 200, 2);
+    expect(rushYesLesson(built)).toBe('Yes — Biology. Built from bio (life) + -logy (study of).');
+    expect(rushYesHoldMs(gloss)).toBeGreaterThan(RUSH_YES_HOLD_MS);
+    expect(rushYesHoldMs(glossCombo)).toBe(rushYesHoldMs(gloss));
+    expect(rushYesHoldMs(built)).toBeGreaterThan(rushYesHoldMs(gloss));
+    expect(rushYesHoldMs(builtCombo)).toBe(rushYesHoldMs(built));
+    expect(rushYesHoldMs(built)).toBeLessThanOrEqual(RUSH_YES_HOLD_MAX_MS);
+    expect(
+      rushYesHoldMs(
+        rushPracticeYesLine({
+          type: 'build',
+          rootName: 'Bio',
+          mean: 'life',
+          buildWord: 'Biology',
+          buildSplit: 'bio (life) + -logy (study of)',
+        }),
+      ),
+    ).toBe(rushYesHoldMs(built));
+    expect(rushYesHoldMs('')).toBe(RUSH_YES_HOLD_MS);
+    expect(rushYesHoldMs('+100')).toBe(RUSH_YES_HOLD_MS);
+  });
+
+  it('shows the same Yes the timer will hold, including a later tap with no points', () => {
+    const word = rushShownYesLine(
+      {
+        type: 'word',
+        root: { root: 'Bio', mean: 'life' },
+        word: 'Biology',
+        wordSplit: 'bio (life) + -logy (study of)',
+      },
+      { practice: false, points: 100, mult: 1 },
+    );
+    expect(word).toBe('Yes — Biology. Built from bio (life) + -logy (study of). +100');
+    expect(word).not.toMatch(/Bio means life/);
+    const retry = rushShownYesLine(
+      {
+        type: 'gloss',
+        root: { root: 'Bio', mean: 'life' },
+        glossWord: 'Biology',
+        gloss: 'The science of living things',
+      },
+      { practice: true, points: 100, mult: 1 },
+    );
+    expect(retry).toBe('Yes — Biology. The science of living things.');
+    expect(retry).not.toMatch(/\+|Bio means life/);
+    expect(rushYesHoldMs(retry)).toBe(
+      rushYesHoldMs('Yes — Biology. The science of living things. +100'),
+    );
+  });
+
+  it('holds every catalog Rush Yes inside the reading window', () => {
+    let longer = 0;
+    for (const root of ROOTS) {
+      for (const type of TYPES) {
+        const q = buildRushQuestion({
+          root,
+          scoped: ROOTS,
+          all: ROOTS,
+          type,
+          rng: () => 0,
+        });
+        const plain = rushShownYesLine(q, { practice: false, points: 100, mult: 1 });
+        const streak = rushShownYesLine(q, { practice: false, points: 800, mult: 8 });
+        const practice = rushShownYesLine(q, { practice: true, points: 0, mult: 1 });
+        expect(rushYesHoldMs(streak), `${root.root} ${q.type}`).toBe(rushYesHoldMs(plain));
+        expect(rushYesHoldMs(practice), `${root.root} ${q.type}`).toBe(rushYesHoldMs(plain));
+        const ms = rushYesHoldMs(plain);
+        expect(ms, `${root.root} ${q.type} ${plain}`).toBeGreaterThanOrEqual(RUSH_YES_HOLD_MS);
+        expect(ms, `${root.root} ${q.type}`).toBeLessThanOrEqual(RUSH_YES_HOLD_MAX_MS);
+        const words = rushYesLesson(plain).split(' ').filter(Boolean).length;
+        if (words > 6) longer += 1;
+        if (words <= 6) expect(ms, plain).toBe(RUSH_YES_HOLD_MS);
+        else expect(ms, plain).toBeGreaterThan(RUSH_YES_HOLD_MS);
+      }
+    }
+    expect(longer).toBeGreaterThan(40);
   });
 });
 

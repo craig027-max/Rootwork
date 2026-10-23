@@ -145,8 +145,8 @@ describe('Rush recap is honest — ✓ only on hits, not an all-done dump', () =
     expect(rushMissLine('Chron', 'time')).toBe('Nope — Chron means time.');
     expect(rush).toContain('rushMissLine');
     expect(rush).toContain('rushWordMissLine');
-    expect(rush).toContain('rushWordHoldLine');
-    expect(rush).toContain("q.type === 'word' && q.word");
+    expect(rush).toContain('rushShownYesLine(q,');
+    expect(rush).toContain('{yesLine}');
     expect(rush).toContain('startPeek');
     expect(rush).toContain('q-rush-start-recap');
     expect(rush).toContain("s.ok && !chipMiss ? ' is-done'");

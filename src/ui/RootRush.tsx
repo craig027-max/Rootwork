@@ -15,24 +15,20 @@ import { askedChipOpen, resultChipAria } from '../core/deckFlow';
 import {
   homeRushRecapPreview,
   liveRushRecap,
-  rushBuildHoldLine,
   rushBuildMissLine,
-  rushGlossHoldLine,
   rushGlossMissLine,
-  rushHoldLine,
   rushMissLine,
   rushAnswerKind,
   rushComboLabel,
-  rushPracticeYesLine,
   rushResultTallyLabel,
   RUSH_RETRY_LABEL,
-  rushPartHoldLine,
   rushPartMissLine,
   rushAskedChip,
   rushRecapChipLabel,
-  rushWordHoldLine,
   rushWordMissLine,
   rushRecapFromRun,
+  rushShownYesLine,
+  rushYesHoldMs,
   todayRushRecap,
 } from '../core/rushRecap';
 import type { RunResult } from '../core/stats';
@@ -77,7 +73,9 @@ import { samplePeekLabel } from './home/samplePeek';
  * and the grade stays.
  *
  * A correct tap names the meaning (Yes — Chron means time) then keeps
- * the combo auto-advance. A miss names it too (Nope — Chron means time)
+ * the combo auto-advance. A short root Yes stays 1.6s. A school-word
+ * Yes stays long enough to read that sentence. A miss names it too
+ * (Nope — Chron means time)
  * and Try again asks that same question — not Next onto a different
  * word. A later correct tap names it without points; the first miss
  * still counts. The combo slot says Streak reset or No points on that
@@ -97,8 +95,6 @@ import { samplePeekLabel } from './home/samplePeek';
 
 const ROUND = 10;
 const MAX_MULT = 8;
-/** Long enough to read Yes — {root} means {meaning}, still auto (no Next dump). */
-const AUTO_ADVANCE_MS = 1600;
 
 // ── accent (jewel re-theming) ─────────────────────────────────
 
@@ -212,6 +208,15 @@ export function RootRush() {
   const answeredCorrect = answered && q ? (q.opts[picked!]?.ok ?? false) : false;
   const isLast = qi + 1 >= questions.length;
   const mult = Math.min(MAX_MULT, Math.max(1, streak));
+  const yesLine =
+    phase === 'play' && q && answeredCorrect
+      ? rushShownYesLine(q, {
+          practice: hits[qi] === false,
+          points: 100 * mult,
+          mult,
+        })
+      : '';
+  const yesHoldMs = rushYesHoldMs(yesLine);
 
   function closeQuiz() {
     setView('home');
@@ -356,14 +361,15 @@ export function RootRush() {
   });
 
   // Auto-advance after a correct answer so kids aren't clicking Next on every
-  // question. 1600ms is long enough to read Yes — {root} means {meaning}.
-  // A miss stays on this question (Try again). Enter/Space retries it.
+  // question. A short root Yes stays 1.6s. A longer school-word Yes stays
+  // up long enough to read that same line. A miss stays on this question
+  // (Try again). Enter/Space still moves on, or retries a miss.
   // A later correct tap auto-advances the same way, without adding points.
   useEffect(() => {
     if (phase !== 'play' || picked === null || !answeredCorrect) return;
-    const t = window.setTimeout(() => advanceRef.current(), AUTO_ADVANCE_MS);
+    const t = window.setTimeout(() => advanceRef.current(), yesHoldMs);
     return () => window.clearTimeout(t);
-  }, [phase, picked, qi, answeredCorrect]);
+  }, [phase, picked, qi, answeredCorrect, yesHoldMs]);
 
   useEffect(() => {
     if (phase !== 'play' || picked === null || answeredCorrect) return;
@@ -707,29 +713,7 @@ export function RootRush() {
                     q.type === 'build' ? ' is-build' : ''
                   }${q.type === 'word' ? ' is-word' : ''}`}
                 >
-                  {hits[qi] === false
-                    ? rushPracticeYesLine({
-                        type: q.type,
-                        rootName: q.root.root,
-                        mean: q.root.mean,
-                        glossWord: q.glossWord,
-                        gloss: q.gloss,
-                        part: q.part,
-                        partMean: q.partMean,
-                        buildWord: q.buildWord,
-                        buildSplit: q.buildSplit,
-                        word: q.word,
-                        wordSplit: q.wordSplit,
-                      })
-                    : q.type === 'part' && q.part && q.partMean
-                      ? rushPartHoldLine(q.part, q.partMean, 100 * mult, mult)
-                      : q.type === 'gloss' && q.glossWord && q.gloss
-                        ? rushGlossHoldLine(q.glossWord, q.gloss, 100 * mult, mult)
-                        : q.type === 'build' && q.buildWord && q.buildSplit
-                          ? rushBuildHoldLine(q.buildWord, q.buildSplit, 100 * mult, mult)
-                          : q.type === 'word' && q.word
-                            ? rushWordHoldLine(q.word, q.wordSplit ?? '', 100 * mult, mult)
-                            : rushHoldLine(q.root.root, q.root.mean, 100 * mult, mult)}
+                  {yesLine}
                 </span>
               ) : null}
               {answered && !answeredCorrect ? (
