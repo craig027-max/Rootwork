@@ -7,7 +7,8 @@
  */
 
 import { ROOTS, type Root } from '../data/roots';
-import { shuffleWith } from './daily';
+import { hashSeed, mulberry32, shuffleWith, type DailyPending } from './daily';
+import { dailyNextPeekFace } from './dailyNextPeek';
 import { canon, pickMeaningDistractors, pickWordDefDistractors, pickWordDistractors, sampleUnique } from './distractors';
 import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
 import {
@@ -438,4 +439,125 @@ export function recallForMissedAsk(input: {
   const built = pinnedBuildBeat(root, word, rng, want);
   if (built) return built;
   return pinnedWordBeat(root, pool, word, split, rng, want);
+}
+
+/**
+ * Rebuild the Daily question Home already named. Distractors can shuffle.
+ * The ask and the correct tile stay. Null when the catalog cannot match
+ * — the caller deals a fresh beat instead of inventing one.
+ */
+export function recallFromPending(input: {
+  root: Root;
+  pool: readonly Root[];
+  pending: DailyPending;
+  rng?: () => number;
+  choices?: 2 | 3;
+}): RecallBeat | null {
+  const { root, pool, pending } = input;
+  const rng = input.rng ?? Math.random;
+  const want = input.choices ?? 3;
+  if (pending.kind === 'mean') {
+    return buildRecall({ root, pool, kind: 'mean', choices: want, rng });
+  }
+  if (pending.kind === 'word' && pending.word) {
+    const item = root.words.find((word) => foldAsk(word.w) === foldAsk(pending.word));
+    if (!item) return null;
+    return pinnedWordBeat(
+      root,
+      pool,
+      item.w.replace(/\s+/g, ' ').trim(),
+      item.b.replace(/\s+/g, ' ').trim(),
+      rng,
+      want,
+    );
+  }
+  if (pending.kind === 'gloss' && pending.word) {
+    const item = root.words.find((word) => foldAsk(word.w) === foldAsk(pending.word));
+    if (!item) return null;
+    const gloss = quizGloss(item.d);
+    if (!gloss) return null;
+    return pinnedGlossBeat(
+      root,
+      pool,
+      item.w.replace(/\s+/g, ' ').trim(),
+      gloss,
+      item.b.replace(/\s+/g, ' ').trim(),
+      rng,
+      want,
+    );
+  }
+  if (pending.kind === 'part' && pending.part) {
+    const parts = otherPartsForRoot(root).filter(
+      (part) => foldAsk(part.letters) === foldAsk(pending.part),
+    );
+    const word = pending.word?.replace(/\s+/g, ' ').trim();
+    const part = word
+      ? parts.find((item) => foldAsk(item.word) === foldAsk(word))
+      : parts.length === 1
+        ? parts[0]
+        : null;
+    if (!part) return null;
+    return pinnedPartBeat(root, pool, part, rng, want);
+  }
+  if (pending.kind === 'build') {
+    if (pending.word) return pinnedBuildBeat(root, pending.word, rng, want);
+    const split = pending.split?.replace(/\s+/g, ' ').trim() ?? '';
+    const picked = buildPicksForRoot(root).find(
+      (item) => foldAsk(item.split) === foldAsk(split) || foldAsk(buildBig(item.split)) === foldAsk(split),
+    );
+    if (!picked) return null;
+    return pinnedBuildBeat(root, picked.word, rng, want);
+  }
+  return null;
+}
+
+/** Same unanswered Daily question on Home and on Continue. Pending wins over the seed. */
+export function dailyResumeBeat(input: {
+  root: Root;
+  pool: readonly Root[];
+  pending?: DailyPending | null;
+  day: string;
+  studentId: string | null;
+  qi: number;
+}): RecallBeat {
+  const seed = hashSeed(
+    `${input.day}:${input.studentId ?? ''}:daily-q:${input.qi}:${input.root.root}`,
+  );
+  if (input.pending) {
+    const pinned = recallFromPending({
+      root: input.root,
+      pool: input.pool,
+      pending: input.pending,
+      choices: 3,
+      rng: mulberry32(seed),
+    });
+    if (pinned) return pinned;
+  }
+  return buildRecall({
+    root: input.root,
+    pool: input.pool,
+    choices: 3,
+    rng: mulberry32(seed),
+  });
+}
+
+/** Face Home shows for that beat. The answer tile stays off it. */
+export function dailyShownNext(input: {
+  root: Root | undefined;
+  pool: readonly Root[];
+  pending?: DailyPending | null;
+  day: string;
+  studentId: string | null;
+  qi: number | null;
+}): { name: string; mean?: string } | null {
+  if (!input.root || input.qi == null || !Number.isInteger(input.qi) || input.qi < 1) return null;
+  const beat = dailyResumeBeat({
+    root: input.root,
+    pool: input.pool,
+    pending: input.pending,
+    day: input.day,
+    studentId: input.studentId,
+    qi: input.qi,
+  });
+  return dailyNextPeekFace(input.root, beat);
 }

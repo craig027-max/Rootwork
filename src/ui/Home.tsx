@@ -5,16 +5,19 @@ import { ROOTS, rootId, isRootOpenable, type TierNum } from '../data/roots';
 import { DEFAULT_AVATAR } from '../data/avatars';
 import {
   applyDailyAskedPreview,
+  applyDailyPendingPreview,
   dailyAskedRecapNames,
   dailyNextRoot,
   dailyResumePreview,
   dailySeed,
   dailyTilePreview,
   liveDailyAsked,
+  liveDailyPending,
   localDayKey,
   pickDailyRoots,
   liveDailyResumeQi,
 } from '../core/daily';
+import { dailyShownNext } from '../core/recall';
 import { askedChipOpen, browseOpenForId, recapOpenForRoot } from '../core/deckFlow';
 import { homeRushRecapPreview, liveRushRecap, todayRushRecap } from '../core/rushRecap';
 import {
@@ -71,10 +74,8 @@ export function Home() {
   const rushBest = rushBestLabel(stats);
   const day = localDayKey();
   const dailyDone = stats.lastDailyDay === day;
-  const dailyRoots = pickDailyRoots(
-    ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
-    dailySeed(day, activeStudentId),
-  );
+  const dailyPool = ROOTS.filter((r) => isRootOpenable(rootId(r), entitled));
+  const dailyRoots = pickDailyRoots(dailyPool, dailySeed(day, activeStudentId));
   const dailyResumeQi = liveDailyResumeQi(
     dailyRun,
     day,
@@ -83,12 +84,24 @@ export function Home() {
     stats.lastDailyDay,
   );
   const dailyNext = dailyNextRoot(dailyRoots, dailyResumeQi);
+  const dailyFace = dailyShownNext({
+    root: dailyNext,
+    pool: dailyPool,
+    pending: liveDailyPending(dailyRun, day, activeStudentId),
+    day,
+    studentId: activeStudentId,
+    qi: dailyResumeQi,
+  });
   const dailyAsked = liveDailyAsked(dailyRun, day, activeStudentId);
-  const dailyPreview = applyDailyAskedPreview(
-    dailyResumeQi != null
-      ? dailyResumePreview(dailyRoots, dailyResumeQi)
-      : dailyTilePreview(dailyRoots),
-    dailyAsked,
+  const dailyPreview = applyDailyPendingPreview(
+    applyDailyAskedPreview(
+      dailyResumeQi != null
+        ? dailyResumePreview(dailyRoots, dailyResumeQi)
+        : dailyTilePreview(dailyRoots),
+      dailyAsked,
+    ),
+    dailyNext?.root,
+    dailyFace,
   );
   const profile = buildProfileProgress(stats, completed.size, day);
   const learnedId = learnedRootToday(progress, day);
@@ -119,8 +132,8 @@ export function Home() {
     dailyDone,
     dailyResumeQi,
     dailyTotal: dailyRoots.length,
-    dailyNextName: dailyNext?.root,
-    dailyNextMean: dailyNext?.mean,
+    dailyNextName: dailyFace?.name ?? dailyNext?.root,
+    dailyNextMean: dailyFace?.mean ?? dailyNext?.mean,
     dailyRecapNames: dailyAskedRecapNames(dailyRoots, dailyAsked),
     completed,
     entitled,
@@ -161,7 +174,8 @@ export function Home() {
     dailyTotal: dailyRoots.length,
     dailyPreview,
     rushPreview,
-    dailyNextName: dailyNext?.root,
+    dailyNextName: dailyFace?.name ?? dailyNext?.root,
+    dailyNextMean: dailyFace?.mean,
     rushMissName: missHero ? (today.missName ?? remember.name) : undefined,
     rushMissId: missHero ? rushMissId ?? undefined : undefined,
     rushMissMean: missHero && rushMissAsked[0] ? (rushMissAsked[0].mean ?? '') : undefined,
@@ -304,6 +318,7 @@ export function Home() {
     dailyDone,
     dailyResumeQi,
     dailyAsked,
+    dailyNextFace: dailyFace,
     dailyTotal: dailyRoots.length,
     streak: stats.streakCurrent,
     nextPlay,

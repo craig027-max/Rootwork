@@ -68,6 +68,11 @@ export function TierMenu({
     const sel = i === selectedIndex;
     const locked = it.kind === 'tier' && it.locked;
     const playNow = nextPlay && it.kind === 'tier' && it.current;
+    const subText =
+      it.kind === 'tier' && it.resumeName && !playNow && !it.missName
+        ? `Next · ${it.resumeName}`
+        : it.sub;
+    const resumeLong = (it.resumeName?.length ?? 0) >= 12;
     return (
       <button
         key={it.key}
@@ -102,11 +107,7 @@ export function TierMenu({
               <span className="ww-tag here">HERE</span>
             ) : null}
           </span>
-          <span className="sub">
-            {it.kind === 'tier' && it.resumeName && !playNow && !it.missName
-              ? `Next · ${it.resumeName}`
-              : it.sub}
-          </span>
+          <span className={`sub${subText.length >= 26 ? ' is-long' : ''}`}>{subText}</span>
           {it.kind === 'mode' && it.preview && it.preview.length > 0 ? (
             <span className={`ww-daily-lines${it.previewDone ? ' is-done' : ''}`}>
               {it.preview.map((p, idx) => {
@@ -162,7 +163,7 @@ export function TierMenu({
               </>
             ) : it.resumeName ? (
               <>
-                <span className="pct">{it.resumeName} ›</span>
+                <span className={`pct${resumeLong ? ' is-long' : ''}`}>{it.resumeName} ›</span>
                 <span className="stars" aria-label={`${it.pct} percent owned`}>
                   {it.pct}%
                 </span>
@@ -180,7 +181,7 @@ export function TierMenu({
             )
           ) : it.kind === 'mode' && it.resumeName ? (
             <>
-              <span className="pct">{it.resumeName} ›</span>
+              <span className={`pct${resumeLong ? ' is-long' : ''}`}>{it.resumeName} ›</span>
               {it.best ? <span className="stars">{it.best}</span> : null}
             </>
           ) : it.disabled ? (

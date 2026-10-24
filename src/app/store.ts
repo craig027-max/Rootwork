@@ -16,8 +16,11 @@ import { addStudentProfile, deleteStudentProfile, renameStudentProfile } from '.
 import {
   localDayKey,
   normalizeDailyAsked,
+  parseDailyPending,
   parseDailyRun,
+  sameDailyPending,
   type DailyAskedChip,
+  type DailyPending,
   type DailyRun,
 } from '../core/daily';
 import { parseRushRecap, type RushRecap, type RushRecapLine } from '../core/rushRecap';
@@ -351,7 +354,14 @@ interface WondralStore {
   recordDailyComplete: (hitRootId?: string, asked?: readonly (DailyAskedChip | null)[]) => void;
   /** In-progress Daily — next unanswered index. A finished day keeps the asked chips. */
   dailyRun: DailyRun | null;
-  saveDailyRun: (qi: number, hitRootId?: string, asked?: readonly (DailyAskedChip | null)[]) => void;
+  saveDailyRun: (
+    qi: number,
+    hitRootId?: string,
+    asked?: readonly (DailyAskedChip | null)[],
+    pending?: DailyPending | null,
+  ) => void;
+  /** Remember the question Continue will open. Does not bank a hit. */
+  saveDailyPending: (pending: DailyPending | null) => void;
   clearDailyRun: () => void;
 }
 
@@ -519,15 +529,35 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   stats: INITIAL_STATS,
   dailyRun: INITIAL_DAILY_RUN,
   rushRecap: INITIAL_RUSH_RECAP,
-  saveDailyRun: (qi, hitRootId, asked) => {
+  saveDailyRun: (qi, hitRootId, asked, pending) => {
     const studentId = get().activeStudentId;
     const day = localDayKey();
     if (get().stats.lastDailyDay === day) return;
     const chips = normalizeDailyAsked(asked);
-    const run: DailyRun = chips ? { day, studentId, qi, asked: chips } : { day, studentId, qi };
+    const prev = get().dailyRun;
+    const prevPending =
+      prev && prev.day === day && (prev.studentId ?? null) === (studentId ?? null)
+        ? prev.pending
+        : undefined;
+    const nextPending = pending === undefined ? prevPending : parseDailyPending(pending);
+    const run: DailyRun = { day, studentId, qi };
+    if (chips) run.asked = chips;
+    if (nextPending) run.pending = nextPending;
     persistDailyRun(run, studentId);
     const hit = applyDailyHit(get().stats, get().progress, studentId, hitRootId);
     set({ dailyRun: run, stats: hit.stats, progress: hit.progress });
+  },
+  saveDailyPending: (pending) => {
+    const studentId = get().activeStudentId;
+    const day = localDayKey();
+    if (get().stats.lastDailyDay === day) return;
+    const cur = get().dailyRun;
+    if (!cur || cur.day !== day || (cur.studentId ?? null) !== (studentId ?? null)) return;
+    const next = parseDailyPending(pending);
+    if (!next || sameDailyPending(cur.pending, next)) return;
+    const run: DailyRun = { ...cur, pending: next };
+    persistDailyRun(run, studentId);
+    set({ dailyRun: run });
   },
   clearDailyRun: () => {
     const studentId = get().activeStudentId;

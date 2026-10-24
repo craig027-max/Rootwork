@@ -14,14 +14,17 @@ import {
   dailyRecapChipLabel,
   dailySeed,
   layoutDailyAsked,
+  dailyResumeSentence,
   liveDailyResumeQi,
   localDayKey,
+  pendingFromBeat,
   pickDailyRoots,
+  sameDailyPending,
   stampDailyAsked,
   type DailyAskedChip,
 } from '../core/daily';
 import { dailyNextPeekFace } from '../core/dailyNextPeek';
-import { buildRecall, type RecallBeat } from '../core/recall';
+import { buildRecall, dailyResumeBeat, type RecallBeat } from '../core/recall';
 import { Scene } from './Scene';
 import { askedChipOpen, findSuccessLine, resultChipAria } from '../core/deckFlow';
 import { buildBig, buildYesLine, partYesLine, wordYesLine } from '../core/wordParts';
@@ -56,8 +59,8 @@ function askedChipFor(root: Root, beat: RecallBeat): DailyAskedChip {
  * A correct tap holds the meaning until Next — no 800ms dump onto Photo —
  * and peeks the question Next will open (Next · -graph · in Photograph,
  * or Next · Aqua · water on a meaning beat) so Next is not unnamed.
- * Leaving mid-run persists the next unanswered root so Home can say
- * Continue Daily · 3 of 5. An owned hit is today's Remember; the first
+ * Leaving mid-run persists the next unanswered question so Home can
+ * name it and Continue opens that same question — not a new coin-flip. An owned hit is today's Remember; the first
  * hit banks play-today. Last hold peeks Continue · next learn — or Keep
  * going when today's learn is already done. Done copy recaps today's
  * five — not a fresh-start pitch. Recap chips Remember owned roots and
@@ -92,6 +95,7 @@ export function DailyChallenge() {
   const openRoot = useWondralStore((s) => s.openRoot);
   const recordDailyComplete = useWondralStore((s) => s.recordDailyComplete);
   const saveDailyRun = useWondralStore((s) => s.saveDailyRun);
+  const saveDailyPending = useWondralStore((s) => s.saveDailyPending);
   const clearDailyRun = useWondralStore((s) => s.clearDailyRun);
   const dailyRun = useWondralStore((s) => s.dailyRun);
   const rushRecap = useWondralStore((s) => s.rushRecap);
@@ -115,13 +119,24 @@ export function DailyChallenge() {
 
   const [boot] = useState(() => {
     const resumeAt = resumeQi;
+    const stored =
+      dailyRun && dailyRun.day === day && (dailyRun.studentId ?? null) === (studentId ?? null)
+        ? dailyRun.pending ?? null
+        : null;
     let currentBeat: RecallBeat | null = null;
     let current: DailyAskedChip | null = null;
     let upcoming: RecallBeat | null = null;
     if (resumeAt != null) {
       const r = deal[resumeAt];
       if (r) {
-        currentBeat = buildRecall({ root: r, pool, choices: 3 });
+        currentBeat = dailyResumeBeat({
+          root: r,
+          pool,
+          pending: stored,
+          day,
+          studentId,
+          qi: resumeAt,
+        });
         current = askedChipFor(r, currentBeat);
       }
       const upcomingRoot = deal[resumeAt + 1];
@@ -288,8 +303,21 @@ export function DailyChallenge() {
       }
       return;
     }
-    saveDailyRun(qi + 1, hitId, nextAsked);
+    saveDailyRun(qi + 1, hitId, nextAsked, pendingFromBeat(queuedNext));
   }
+
+  useEffect(() => {
+    if (resumeQi == null || !boot.beat) return;
+    const pending = pendingFromBeat(boot.beat);
+    if (!pending) return;
+    const cur = useWondralStore.getState().dailyRun;
+    if (!cur || cur.day !== day || (cur.studentId ?? null) !== (studentId ?? null)) return;
+    if (cur.qi !== resumeQi) return;
+    if (sameDailyPending(cur.pending, pending)) return;
+    saveDailyPending(pending);
+    // Resume only. A correct tap writes the question Next will open.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function retry() {
     setPicked(null);
@@ -404,7 +432,10 @@ export function DailyChallenge() {
             </h2>
             <p className="q-sub">
               {resumeQi != null && resumeRoot
-                ? `${resumeQi} of ${deal.length} already yours. Next is ${resumeRoot.root} — ${resumeRoot.mean}.`
+                ? `${resumeQi} of ${deal.length} already yours. ${dailyResumeSentence(
+                    resumeRoot,
+                    boot.beat ? dailyNextPeekFace(resumeRoot, boot.beat) : null,
+                  )}`
                 : `${deal.length} fresh roots for ${day}. See the animation, tap the meaning, keep your streak${streakNow > 0 ? ` — you&rsquo;re on 🔥 ${streakNow}` : ''}.`}
             </p>
             <div className="q-daily-chips">

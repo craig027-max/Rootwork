@@ -234,7 +234,9 @@ describe('Home after a miss is Remember — not start / Geo · earth over Geo', 
     expect(detail).toContain('export function detailSceneCaption');
     expect(detail).toContain('Missed ${name}');
     expect(detail).toContain('{ missed: missHero, name: missHero ? miss?.name : undefined }');
-    expect(detail).toContain('{ missed: Boolean(miss), name: miss?.name }');
+    expect(detail).toContain('missed: Boolean(miss)');
+    expect(detail).toContain('name: miss?.name');
+    expect(detail).toContain('dailyResumeCaption(nextDaily, extra.dailyNextFace)');
     expect(panel).toContain('ww-detail-scene-cap${vm.waitingMiss ? \' is-miss\' : \'\'}');
     expect(css).toMatch(/\.ww-panel-label \.s\.is-miss/);
     expect(css).toMatch(/\.ww-detail-scene-cap\.is-miss/);
