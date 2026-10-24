@@ -35,7 +35,7 @@ describe('Daily result names the question — not Bio / life over Biography', ()
     expect(daily).toContain('q-daily-asked');
     expect(daily).toContain('title.length >= 14');
     expect(daily).toContain('recordDailyComplete(hitId, nextAsked)');
-    expect(daily).toContain('saveDailyRun(qi + 1, hitId, nextAsked)');
+    expect(daily).toContain('saveDailyRun(qi + 1, hitId, nextAsked, pendingFromBeat(queuedNext))');
     expect(daily).not.toContain('<em>{chip.mean || r.mean}</em>');
     expect(home).not.toContain('recallAskedChip');
     expect(home).not.toContain('q-daily-asked');

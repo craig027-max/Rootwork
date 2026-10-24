@@ -5,11 +5,13 @@ import { PALETTES, ROOTS, ROOTS_BY_ID, TIERS, rootId, isRootOpenable } from '../
 import {
   dailyNextRoot,
   dailySeed,
+  liveDailyPending,
   localDayKey,
   pickDailyRoots,
   liveDailyResumeQi,
   shuffleWith,
 } from '../core/daily';
+import { dailyShownNext } from '../core/recall';
 import { buildRushQuestion, type RushQuestion } from '../core/rush';
 import { askedChipOpen, resultChipAria } from '../core/deckFlow';
 import {
@@ -163,11 +165,19 @@ export function RootRush() {
     stats.lastDailyDay,
   );
   const dailyNext = dailyNextRoot(dailyRoots, dailyResumeQi);
+  const dailyFace = dailyShownNext({
+    root: dailyNext,
+    pool,
+    pending: liveDailyPending(dailyRun, day, studentId),
+    day,
+    studentId,
+    qi: dailyResumeQi,
+  });
   const dailyResume = {
     dailyResumeQi,
     dailyTotal: dailyRoots.length,
-    dailyNextName: dailyNext?.root,
-    dailyNextMean: dailyNext?.mean,
+    dailyNextName: dailyFace?.name ?? dailyNext?.root,
+    dailyNextMean: dailyFace?.mean ?? dailyNext?.mean,
   };
   const dailyDone = stats.lastDailyDay === day;
   const learnedId = learnedRootToday(progress, day);

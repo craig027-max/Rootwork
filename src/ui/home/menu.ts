@@ -27,7 +27,7 @@ import {
   type TierNum,
 } from '../../data/roots';
 import { recapOpenForId, type DeckEntry } from '../../core/deckFlow';
-import { dailyDoneMenuSub, dailyNextSub } from '../../core/daily';
+import { dailyDoneMenuSub, dailyMenuNextLine } from '../../core/daily';
 import { gradeForPct, starsForPct } from '../../core/stats';
 import { missFacePeek, missPeekForNames } from './samplePeek';
 
@@ -525,8 +525,10 @@ export function buildMenu(
     dailyPreview?: { root: string; mean: string; asked?: string }[];
     /** Last Rush names + hit/miss — menu row peeks the real run, not a Starter trio. */
     rushPreview?: { root: string; mean: string; ok?: boolean }[];
-    /** Next unanswered Daily root name when a mid-run is live. */
+    /** Next unanswered Daily question when a mid-run is live. */
     dailyNextName?: string;
+    /** Gloss under that question. Absent on a meaning beat. */
+    dailyNextMean?: string;
     /** Path-done Rush miss — Rush / Daily / HERE / Starter / Scholar name Remember. */
     rushMissName?: string;
     /** Catalog id for that miss — the peek tap still opens Photo when the name is -graph. */
@@ -595,7 +597,7 @@ export function buildMenu(
             missName: opts.rushMissName,
           })
         : opts.dailyNextName
-          ? dailyNextSub(opts.dailyNextName)
+          ? dailyMenuNextLine(opts.dailyNextName, opts.dailyNextMean)
           : opts.dailyResumeQi != null && opts.dailyResumeQi >= 1
             ? `Continue · ${(opts.dailyResumeQi ?? 0) + 1} of ${opts.dailyTotal ?? 5}`
             : 'Five fresh roots · keep your streak',

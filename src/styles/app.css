@@ -958,6 +958,12 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.ww-menu-body .sub.is-long {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  overflow-wrap: anywhere;
+}
 .ww-menu-row.is-miss .ww-menu-body .t {
   color: #ff8a8f;
 }
@@ -1086,6 +1092,15 @@
   font-weight: 800;
   font-size: 0.96rem;
   color: rgb(var(--spark-rgb));
+}
+.ww-menu-meta .pct.is-long {
+  display: inline-block;
+  max-width: 7.2rem;
+  font-size: 0.78rem;
+  line-height: 1.15;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: right;
 }
 .ww-menu-meta .locklbl {
   font-family: var(--font-mono);

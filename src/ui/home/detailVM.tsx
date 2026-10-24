@@ -2,10 +2,13 @@ import type { ReactNode } from 'react';
 import { PALETTES, ROOTS, ROOTS_BY_ID, TIERS, rootId, rootsInTier, type Root } from '../../data/roots';
 import {
   applyDailyAskedPreview,
+  applyDailyPendingPreview,
   continueDailyLabel,
   dailyDoneLead,
   dailyNextRoot,
+  dailyResumeCaption,
   dailyResumePreview,
+  dailyResumeSentence,
   dailyTilePreview,
   type DailyAskedChip,
 } from '../../core/daily';
@@ -50,20 +53,24 @@ export function detailSceneCaption(opts: {
 function sceneFrom(
   root: Root | undefined,
   fallback: { key: string; palKey: string; caption: string },
-  opts: { missed?: boolean; name?: string } = {},
+  opts: { missed?: boolean; name?: string; caption?: string } = {},
 ) {
   const palKey = root?.pal ?? fallback.palKey;
   const p = PALETTES[palKey] ?? PALETTES.green!;
   const shown = opts.name?.replace(/\s+/g, ' ').trim() || root?.root;
+  const caption = opts.caption?.replace(/\s+/g, ' ').trim();
   return {
     key: root?.scene ?? fallback.key,
     pal: p.pal,
-    caption: detailSceneCaption({
-      missed: opts.missed,
-      root: shown,
-      mean: opts.name ? undefined : root?.mean,
-      fallback: fallback.caption,
-    }),
+    caption:
+      !opts.missed && caption
+        ? caption
+        : detailSceneCaption({
+            missed: opts.missed,
+            root: shown,
+            mean: opts.name ? undefined : root?.mean,
+            fallback: fallback.caption,
+          }),
   };
 }
 
@@ -146,6 +153,8 @@ export function buildDetailVM(
     dailyResumeQi?: number | null;
     /** Today's result chips — Biography, not Bio / life. Another day stays unset. */
     dailyAsked?: readonly (DailyAskedChip | null)[] | null;
+    /** Question Continue will open. Absent — the lead stays on the root. */
+    dailyNextFace?: { name: string; mean?: string } | null;
     dailyTotal?: number;
     streak: number;
     nextPlay: boolean;
@@ -186,8 +195,8 @@ export function buildDetailVM(
       const waiting = dailyWaitingLine({
         dailyResumeQi: extra.dailyResumeQi,
         dailyTotal: extra.dailyRoots.length || extra.dailyTotal,
-        dailyNextName: nextDaily?.root,
-        dailyNextMean: nextDaily?.mean,
+        dailyNextName: extra.dailyNextFace?.name ?? nextDaily?.root,
+        dailyNextMean: extra.dailyNextFace?.mean ?? nextDaily?.mean,
       });
       const total = extra.dailyRoots.length || extra.dailyTotal || 5;
       const qi = extra.dailyResumeQi;
@@ -314,13 +323,17 @@ export function buildDetailVM(
     const dailyResume =
       extra.dailyResumeQi != null && extra.dailyResumeQi >= 1 ? extra.dailyResumeQi : null;
     const nextDaily = dailyNextRoot(extra.dailyRoots, dailyResume);
-    const dailySamples = applyDailyAskedPreview(
-      extra.dailyDone
-        ? dailyTilePreview(extra.dailyRoots)
-        : dailyResume != null
-          ? dailyResumePreview(extra.dailyRoots, dailyResume)
-          : dailyTilePreview(extra.dailyRoots),
-      extra.dailyAsked,
+    const dailySamples = applyDailyPendingPreview(
+      applyDailyAskedPreview(
+        extra.dailyDone
+          ? dailyTilePreview(extra.dailyRoots)
+          : dailyResume != null
+            ? dailyResumePreview(extra.dailyRoots, dailyResume)
+            : dailyTilePreview(extra.dailyRoots),
+        extra.dailyAsked,
+      ),
+      nextDaily?.root,
+      extra.dailyDone ? null : extra.dailyNextFace,
     );
     const remainingAfterPeek =
       extra.dailyDone || dailyResume == null
@@ -331,7 +344,7 @@ export function buildDetailVM(
         ? ` You're on a 🔥 ${extra.streak}-day streak.`
         : '';
     const midLead = nextDaily
-      ? `Next is ${nextDaily.root} — ${nextDaily.mean}. ${dailyResume} of ${extra.dailyRoots.length} already yours.`
+      ? `${dailyResumeSentence(nextDaily, extra.dailyNextFace)} ${dailyResume} of ${extra.dailyRoots.length} already yours.`
       : `Five fresh roots every day. See the animation, tap what it means, keep your streak.`;
     const missOpts = {
       dailyDone: extra.dailyDone,
@@ -423,7 +436,11 @@ export function buildDetailVM(
           palKey: 'gold',
           caption: 'Daily',
         },
-        { missed: Boolean(miss), name: miss?.name },
+        {
+          missed: Boolean(miss),
+          name: miss?.name,
+          caption: !miss && nextDaily ? dailyResumeCaption(nextDaily, extra.dailyNextFace) : undefined,
+        },
       ),
       // Mid-run: park Continue Daily · N of 5 under the next-root scene —
       // same one-tap Rush / Today already name, so Aqua is not buried.

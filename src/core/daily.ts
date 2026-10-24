@@ -8,8 +8,8 @@
  *
  * Mid-run resume (`DailyRun`) is also local-first. A kid who banks two of
  * five, then taps Home, must land back on question 3 — not a Start-daily
- * dump — and Home names that next root (Chron · time), not the already-got
- * first three. A correct tap holds the meaning until Next (same spirit as
+ * dump — and Home names that question (Photograph, -graph, or Chron ·
+ * time), not the already-got first three and not a new coin-flip. A correct tap holds the meaning until Next (same spirit as
  * Hear / Yes / Remember), then peeks the next root so Next is not a dump
  * onto an unnamed card. Photo cannot slam over Bio. An owned hit is
  * today's Remember; the first hit banks the play-today streak. Last hold
@@ -247,9 +247,22 @@ export interface DailyAskedChip {
   sub: string;
 }
 
+/**
+ * The unanswered Daily question, without the answer tile.
+ * Photograph / -graph / the pieces — a meaning beat is just the root.
+ */
+export interface DailyPending {
+  kind: 'mean' | 'word' | 'gloss' | 'part' | 'build';
+  word?: string;
+  part?: string;
+  split?: string;
+}
+
 /** In-progress Daily — next unanswered index, namespaced per learner + day.
  *  `asked` is the result list (Biography, not Bio / life). A finished day
- *  keeps those chips with `qi` at the end so it cannot resume. */
+ *  keeps those chips with `qi` at the end so it cannot resume.
+ *  `pending` is the question Continue will open, so Home can name it
+ *  and a later visit cannot deal a different one. */
 export interface DailyRun {
   day: string;
   studentId: string | null;
@@ -257,11 +270,67 @@ export interface DailyRun {
   qi: number;
   /** Index-aligned with today's deal. Null slots fall back to the root. */
   asked?: (DailyAskedChip | null)[];
+  /** Question at `qi`. Absent on an older save — the visit deals one and keeps it. */
+  pending?: DailyPending;
 }
 
 const ASKED_TITLE_MAX = 80;
 const ASKED_SUB_MAX = 160;
 const ASKED_SLOTS_MAX = 8;
+const PENDING_WORD_MAX = 80;
+const PENDING_PART_MAX = 40;
+const PENDING_SPLIT_MAX = 180;
+
+const PENDING_KINDS = new Set<DailyPending['kind']>(['mean', 'word', 'gloss', 'part', 'build']);
+
+/** Keep a stored question, or drop it. The resume index stays either way. */
+export function parseDailyPending(raw: unknown): DailyPending | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return undefined;
+  const o = raw as Record<string, unknown>;
+  if (typeof o.kind !== 'string' || !PENDING_KINDS.has(o.kind as DailyPending['kind'])) {
+    return undefined;
+  }
+  const kind = o.kind as DailyPending['kind'];
+  const word = typeof o.word === 'string' ? cleanAskedText(o.word, PENDING_WORD_MAX) : '';
+  const part = typeof o.part === 'string' ? cleanAskedText(o.part, PENDING_PART_MAX) : '';
+  const split = typeof o.split === 'string' ? cleanAskedText(o.split, PENDING_SPLIT_MAX) : '';
+  if ((kind === 'gloss' || kind === 'word') && !word) return undefined;
+  if (kind === 'part' && !part) return undefined;
+  if (kind === 'build' && !word && !split) return undefined;
+  const pending: DailyPending = { kind };
+  if (word) pending.word = word;
+  if (part) pending.part = part;
+  if (split) pending.split = split;
+  return pending;
+}
+
+/** The question on screen, minus the answer tile. Null when there is no beat. */
+export function pendingFromBeat(
+  beat: { kind?: string; word?: string; part?: string; split?: string } | null | undefined,
+): DailyPending | null {
+  if (!beat?.kind) return null;
+  return parseDailyPending(beat) ?? null;
+}
+
+export function sameDailyPending(
+  a: DailyPending | null | undefined,
+  b: DailyPending | null | undefined,
+): boolean {
+  if (!a && !b) return true;
+  if (!a || !b) return false;
+  return a.kind === b.kind && (a.word ?? '') === (b.word ?? '') && (a.part ?? '') === (b.part ?? '') && (a.split ?? '') === (b.split ?? '');
+}
+
+/** Today's unanswered question for this learner. Another day or kid stays unset. */
+export function liveDailyPending(
+  run: DailyRun | null | undefined,
+  day: string,
+  studentId: string | null,
+): DailyPending | null {
+  if (!run || run.day !== day) return null;
+  if ((run.studentId ?? null) !== (studentId ?? null)) return null;
+  return run.pending ?? null;
+}
 
 function cleanAskedText(raw: string, max: number): string {
   return raw.replace(/\s+/g, ' ').trim().slice(0, max);
@@ -362,9 +431,11 @@ export function parseDailyRun(raw: unknown): DailyRun | null {
   if (o.studentId != null && typeof o.studentId !== 'string') return null;
   if (typeof o.qi !== 'number' || !Number.isInteger(o.qi) || o.qi < 0) return null;
   const asked = normalizeDailyAsked(o.asked);
-  return asked
-    ? { day: o.day, studentId: o.studentId ?? null, qi: o.qi, asked }
-    : { day: o.day, studentId: o.studentId ?? null, qi: o.qi };
+  const pending = parseDailyPending(o.pending);
+  const run: DailyRun = { day: o.day, studentId: o.studentId ?? null, qi: o.qi };
+  if (asked) run.asked = asked;
+  if (pending) run.pending = pending;
+  return run;
 }
 
 /**
@@ -478,6 +549,64 @@ export function dailyNextRowLabel(opts: {
 /** Menu-row mid-run: same "Next · {root}" language as an in-progress tier. */
 export function dailyNextSub(nextName: string): string {
   return `Next · ${nextName.replace(/\s+/g, ' ').trim()}`;
+}
+
+/**
+ * Menu sub for the question Continue will open.
+ * A meaning beat stays Next · Photo. A school word, piece, or pieces
+ * line matches the in-quiz hold (Next · Photograph · from Photo).
+ */
+export function dailyMenuNextLine(name: string, mean?: string): string {
+  const clean = name.replace(/\s+/g, ' ').trim();
+  const spoken = mean?.replace(/\s+/g, ' ').trim() ?? '';
+  if (!clean) return '';
+  const asked = /^(from|in) /.test(spoken) || clean.includes('+');
+  if (!asked) return dailyNextSub(clean);
+  return dailyHoldNextLine(clean, spoken || undefined);
+}
+
+/** Detail lead — Next is Photograph — from Photo. A meaning beat stays on the root. */
+export function dailyResumeSentence(
+  root: { root: string; mean: string },
+  face?: { name: string; mean?: string } | null,
+): string {
+  const name = face?.name?.replace(/\s+/g, ' ').trim() || root.root;
+  const spoken = face?.mean?.replace(/\s+/g, ' ').trim() ?? '';
+  const asked = /^(from|in) /.test(spoken) || name.includes('+') || name.toLowerCase() !== root.root.toLowerCase();
+  if (!asked) return `Next is ${root.root} — ${root.mean}.`;
+  if (spoken) return `Next is ${name} — ${spoken}.`;
+  return `Next is ${name}.`;
+}
+
+/** Scene caption under that same question. A meaning beat stays Photo · light. */
+export function dailyResumeCaption(
+  root: { root: string; mean: string },
+  face?: { name: string; mean?: string } | null,
+): string {
+  const name = face?.name?.replace(/\s+/g, ' ').trim() || root.root;
+  const spoken = face?.mean?.replace(/\s+/g, ' ').trim() ?? '';
+  const asked = /^(from|in) /.test(spoken) || name.includes('+') || name.toLowerCase() !== root.root.toLowerCase();
+  if (!asked) return `${root.root} · ${root.mean}`;
+  return spoken ? `${name} · ${spoken}` : name;
+}
+
+/**
+ * First remaining Home chip names the question Continue will open.
+ * Later chips stay on roots that have not been dealt. The answer tile
+ * stays off the chip.
+ */
+export function applyDailyPendingPreview<T extends { root: string; mean: string; asked?: string }>(
+  lines: readonly T[],
+  nextRoot: string | undefined,
+  face: { name: string; mean?: string } | null | undefined,
+): T[] {
+  if (!nextRoot || !face || lines.length === 0) return lines.slice();
+  const first = lines[0];
+  if (!first || first.root !== nextRoot) return lines.slice();
+  const name = face.name.replace(/\s+/g, ' ').trim();
+  if (!name || name.toLowerCase() === first.root.toLowerCase()) return lines.slice();
+  const spoken = face.mean?.replace(/\s+/g, ' ').trim();
+  return [{ ...first, mean: spoken || first.mean, asked: name }, ...lines.slice(1)];
 }
 
 /** Fat tap / overlay CTA after a real mid-run (next question is 1-based). */

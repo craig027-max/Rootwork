@@ -37,7 +37,7 @@ describe('Daily hold is today\'s Remember + play-today streak', () => {
   });
 
   it('Daily writes the hit into streak + Remember; last hold peeks Continue', () => {
-    expect(daily).toContain('saveDailyRun(qi + 1, hitId, nextAsked)');
+    expect(daily).toContain('saveDailyRun(qi + 1, hitId, nextAsked, pendingFromBeat(queuedNext))');
     expect(daily).toContain('recordDailyComplete(hitId, nextAsked)');
     expect(daily).toContain('dailyHoldContinueLine');
     expect(daily).toContain('continueHold');
