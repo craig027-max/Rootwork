@@ -6,6 +6,7 @@ import {
   afterCorrectRecall,
   afterHearNextTap,
   afterYesNextLabel,
+  hearHoldWhileAsking,
   allowNextRootTap,
   allowWinNextTap,
   allDoneLine,
@@ -874,6 +875,41 @@ describe('after Hear clip: hold spoken-sound + meaning until next tap', () => {
     expect(won.line).toBeNull();
     expect(won.knowThisReady).toBe(false);
     expect(won.blank).toBe(false);
+  });
+
+  it('a meaning question keeps the sound and drops the answer', () => {
+    const base = {
+      hearFinished: true,
+      listening: false,
+      won: false,
+      say: photo.say,
+      mean: photo.mean,
+    };
+    expect(hearHoldWhileAsking({ ...base, askingMean: false }).line).toBe('foe toh · light');
+    expect(hearHoldWhileAsking({ ...base, askingMean: true }).line).toBe('foe toh');
+    expect(hearHoldWhileAsking({ ...base, askingMean: true }).line).not.toContain('light');
+    expect(hearHoldWhileAsking({ ...base, askingMean: true }).line).not.toMatch(/ · /);
+
+    const bioAsk = hearHoldWhileAsking({
+      hearFinished: true,
+      listening: false,
+      won: false,
+      say: bio.say,
+      mean: bio.mean,
+      askingMean: true,
+    });
+    expect(bioAsk.line).toBe('bye oh');
+    expect(bioAsk.line).not.toContain('life');
+
+    expect(
+      hearHoldWhileAsking({ ...base, askingMean: true, hearFinished: false }).line,
+    ).toBeNull();
+    expect(hearHoldWhileAsking({ ...base, askingMean: true, won: true }).line).toBeNull();
+    // While the clip plays, Deck shows Listening… and does not render this line.
+    expect(hearHoldWhileAsking({ ...base, askingMean: true, listening: true }).line).toBe('foe toh');
+    expect(
+      hearHoldWhileAsking({ ...base, askingMean: true, say: '', mean: 'light' }).line,
+    ).toBeNull();
   });
 
   it('I-know-this then continues Geo → Photo → Aqua — no Rush dump', () => {

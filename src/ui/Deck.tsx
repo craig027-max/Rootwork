@@ -20,7 +20,7 @@ import {
   allowWinNextTap,
   clipListening,
   commitCorrectAdvance,
-  holdHearAfterClip,
+  hearHoldWhileAsking,
   isLessonStudying,
   isRecallEntry,
   browseOpenForId,
@@ -371,13 +371,6 @@ export function Deck() {
       ? hearBeatChips(hearBeatLabels(card.root, card.say), hearBeat)
       : null;
   const listen = clipListening(listening, hearBeats, listenKind === 'yes');
-  const hearHold = holdHearAfterClip({
-    hearFinished,
-    listening,
-    won,
-    say: card.say,
-    mean: card.mean,
-  });
   const quizRecall = recall && recall.rootId === id && !won ? recall : null;
   const peekDest = won && correctAdvance?.fromId === id ? correctAdvance.dest : null;
   const peekRoot = peekDest?.kind === 'next' ? ROOTS_BY_ID[peekDest.id] : undefined;
@@ -387,6 +380,16 @@ export function Deck() {
   const browseFind = isFindEntry(deckEntry);
   const askedVisit = deckEntry === 'asked';
   const finding = isSchoolWordEntry(deckEntry);
+  // Meaning question: Hear must not leave "life" on screen over "?".
+  // A find card asks the school word and keeps its own hold.
+  const hearHold = hearHoldWhileAsking({
+    hearFinished,
+    listening,
+    won,
+    say: card.say,
+    mean: card.mean,
+    askingMean: Boolean(quizRecall && quizRecall.beat.kind === 'mean' && !finding),
+  });
   const cardRecall = recall && recall.rootId === id ? recall : null;
   const quizHero = finding
     ? null
