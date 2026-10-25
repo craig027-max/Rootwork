@@ -688,6 +688,30 @@ export function holdHearAfterClip(opts: {
 }
 
 /**
+ * Hear hold once a question is on the card.
+ *
+ * The teach card still says "foe toh · light". "What does this root mean?"
+ * must not keep light on that line — the speaker they just used would
+ * answer the quiz. The spoken sound stays. Which-word and school-word
+ * questions pass `askingMean` false; the root meaning there is a hint,
+ * not the answer tile. Find keeps `wordRootHearHold`.
+ */
+export function hearHoldWhileAsking(opts: {
+  hearFinished: boolean;
+  listening: boolean;
+  won: boolean;
+  say: string;
+  mean: string;
+  /** True when the open question's correct tile is this root's meaning. */
+  askingMean: boolean;
+}): { line: string | null } {
+  const held = holdHearAfterClip(opts);
+  if (!opts.askingMean || !held.line) return { line: held.line };
+  const sound = speakablePronunciation(opts.say);
+  return { line: sound || null };
+}
+
+/**
  * After the Yes clip ends, stay on this card's win line. A blank card is
  * the old auto-open: dest already swapped in, win line gone.
  */
