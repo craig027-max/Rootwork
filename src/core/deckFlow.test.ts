@@ -942,6 +942,41 @@ describe('after Hear clip: hold spoken-sound + meaning until next tap', () => {
     expect(hearHoldHidesMean({ kind: 'gloss', mean: 'life', answer: 'Biology' })).toBe(false);
   });
 
+  it('drops a spoken sound that is the tile', () => {
+    const air = hearHoldWhileAsking({
+      hearFinished: true,
+      listening: false,
+      won: false,
+      say: 'AIR-oh',
+      mean: 'air',
+      askingMean: true,
+      answer: 'air',
+    });
+    expect(air.line).toBeNull();
+
+    const pyre = hearHoldWhileAsking({
+      hearFinished: true,
+      listening: false,
+      won: false,
+      say: 'PYRE',
+      mean: 'fire',
+      askingMean: false,
+      answer: 'Pyre',
+    });
+    expect(pyre.line).toBe('fire');
+    expect(pyre.line).not.toMatch(/pyre/i);
+
+    expect(rememberLeadLine('Fort', { missed: true, askedKind: 'word', answer: 'Fort' })).toBe(
+      'You missed this root in Rush. Tap which word it builds — then Home.',
+    );
+    expect(rememberHintLine('Fort', { missed: true, askedKind: 'word', answer: 'Fort' })).toBe(
+      'Remember — tap the word you missed.',
+    );
+    expect(rememberLeadLine('Bio', { missed: true, askedKind: 'word', answer: 'Biology' })).toBe(
+      'You missed Bio in Rush. Tap which word it builds — then Home.',
+    );
+  });
+
   it('I-know-this then continues Geo → Photo → Aqua — no Rush dump', () => {
     const hops = [
       [geo, photo, 'jee oh · earth', 'Yes — Geo means earth.'],

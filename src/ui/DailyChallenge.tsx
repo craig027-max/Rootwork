@@ -25,6 +25,7 @@ import {
 } from '../core/daily';
 import { dailyNextPeekFace } from '../core/dailyNextPeek';
 import { buildRecall, dailyResumeBeat, type RecallBeat } from '../core/recall';
+import { meaningPrompt, whichWordPrompt } from '../core/promptFace';
 import { Scene } from './Scene';
 import { askedChipOpen, findSuccessLine, resultChipAria } from '../core/deckFlow';
 import { buildBig, buildYesLine, partYesLine, wordYesLine } from '../core/wordParts';
@@ -164,6 +165,11 @@ export function DailyChallenge() {
   const bankedRef = useRef(false);
 
   const root = deal[qi];
+  const wordFace =
+    root && beat?.kind === 'word'
+      ? whichWordPrompt(root, beat.opts.find((o) => o.ok)?.label ?? beat.word ?? '')
+      : null;
+  const meanFace = root && beat?.kind === 'mean' ? meaningPrompt(root) : null;
   const playHud =
     root && beat
       ? questionHudName({
@@ -175,6 +181,16 @@ export function DailyChallenge() {
           split: beat.split,
         })
       : null;
+  const promptBig =
+    beat?.kind === 'gloss' && beat.word
+      ? beat.word
+      : beat?.kind === 'part' && beat.part
+        ? beat.part
+        : beat?.kind === 'build' && beat.split
+          ? buildBig(beat.split)
+          : wordFace
+            ? wordFace.big
+            : root?.root ?? '';
   const resumeRoot = resumeQi != null ? deal[resumeQi] : undefined;
   const answered = picked !== null;
   const answeredCorrect = answered && beat ? (beat.opts[picked!]?.ok ?? false) : false;
@@ -464,7 +480,7 @@ export function DailyChallenge() {
               <span
                 className={`q-score${playHud?.quiz ? ' is-quiz' : ''}${playHud?.long ? ' is-long' : ''}`}
               >
-                {playHud?.name ?? root.root}
+                {wordFace?.namedByMeaning ? wordFace.big : (playHud?.name ?? root.root)}
               </span>
             </div>
             <div className="q-prog">
@@ -485,20 +501,13 @@ export function DailyChallenge() {
                 className={`q-big${beat.kind === 'gloss' ? ' is-gloss' : ''}${
                   beat.kind === 'part' ? ' is-part' : ''
                 }${beat.kind === 'build' ? ' is-build' : ''}${
-                  (beat.kind === 'gloss' && (beat.word?.length ?? 0) >= 14) ||
-                  (beat.kind === 'part' && (beat.part?.length ?? 0) >= 9) ||
-                  (beat.kind === 'build' && buildBig(beat.split ?? '').length >= 14)
+                  promptBig.length >= 14 ||
+                  (beat.kind === 'part' && (beat.part?.length ?? 0) >= 9)
                     ? ' is-long'
                     : ''
                 }`}
               >
-                {beat.kind === 'gloss' && beat.word
-                  ? beat.word
-                  : beat.kind === 'part' && beat.part
-                    ? beat.part
-                    : beat.kind === 'build' && beat.split
-                      ? buildBig(beat.split)
-                      : root.root}
+                {promptBig}
               </div>
               {beat.kind === 'gloss' ? (
                 <div className="q-psub">
@@ -506,10 +515,18 @@ export function DailyChallenge() {
                 </div>
               ) : beat.kind === 'part' && beat.word ? (
                 <div className="q-psub">in {beat.word}</div>
-              ) : beat.kind === 'build' ? null : (
+              ) : beat.kind === 'build' ? null : wordFace ? (
                 <>
-                  <div className="q-say">{root.say}</div>
-                  <div className="q-psub">from {root.org}</div>
+                  {wordFace.namedByMeaning && wordFace.hint ? (
+                    <div className="q-psub">{wordFace.hint}</div>
+                  ) : null}
+                  {wordFace.say ? <div className="q-say">{wordFace.say}</div> : null}
+                  {wordFace.origin ? <div className="q-psub">{wordFace.origin}</div> : null}
+                </>
+              ) : (
+                <>
+                  {meanFace?.say ? <div className="q-say">{meanFace.say}</div> : null}
+                  {meanFace?.origin ? <div className="q-psub">{meanFace.origin}</div> : null}
                 </>
               )}
             </div>

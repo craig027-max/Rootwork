@@ -2,15 +2,19 @@
  * Root Rush question builder. Pure — combo math lives in RootRush.tsx.
  *
  * A which-root prompt must not spell the button. "Shape" can sit over
- * Form; "form · figure" cannot. Equal is the tile on a which-word
- * question, so that prompt does not also say means "equal".
+ * Form; "form · figure" cannot. A which-word prompt must not spell the
+ * tile either: means "equal" over Equal, PYRE over Pyre, Fort over Fort.
+ * A meaning prompt drops a say line that is the tile (AIR-oh over air).
  */
 
 import type { Root } from '../data/roots';
 import { shuffleWith } from './daily';
 import { canon, pickMeaningDistractors, pickRootDistractors, pickWordDefDistractors, pickWordDistractors, sampleUnique } from './distractors';
+import { meaningPrompt, spellsChoice, whichWordPrompt } from './promptFace';
 import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
 import { buildAsk, buildBig, buildPicksForRoot, otherPartsForRoot, partAsk, partMeanLabels } from './wordParts';
+
+export { rushWordHint } from './promptFace';
 
 export type RushQuestionType = 'mean' | 'root' | 'word' | 'gloss' | 'part' | 'build';
 
@@ -108,18 +112,6 @@ export function whichRootFace(
   };
 }
 
-/**
- * Quiet line under a which-word question. The meaning is a hint until
- * the school word is that meaning — means "equal" over Equal is the tile.
- */
-export function rushWordHint(mean: string, word: string): string | undefined {
-  const spoken = mean.replace(/\s+/g, ' ').trim();
-  const name = word.replace(/\s+/g, ' ').trim();
-  if (!spoken) return undefined;
-  if (name.toLowerCase() === spoken.toLowerCase()) return undefined;
-  return `means “${spoken}”`;
-}
-
 function namesIn(pools: readonly (readonly Root[])[]): string[] {
   const names: string[] = [];
   const seen = new Set<string>();
@@ -205,14 +197,15 @@ export function buildRushQuestion(input: BuildRushQuestionInput): RushQuestion {
   }
 
   if (type === 'mean') {
+    const face = meaningPrompt(d);
     const distract = pickMeaningDistractors(d, pools, 3, rng);
     return {
       root: d,
       type,
       ask: 'What does this root mean?',
       big: d.root,
-      say: d.say,
-      sub: `from ${d.org}`,
+      ...(face.say ? { say: face.say } : {}),
+      ...(face.origin ? { sub: face.origin } : {}),
       opts: shuffleWith(
         [{ label: d.mean, ok: true }, ...distract.map((label) => ({ label, ok: false }))],
         rng,
@@ -266,18 +259,20 @@ export function buildRushQuestion(input: BuildRushQuestionInput): RushQuestion {
     }
   }
 
-  const pickedWord = rndOf(d.words, rng);
+  const safeWords = d.words.filter((item) => !spellsChoice(d.root, item.w));
+  const poolWords = safeWords.length > 0 ? safeWords : d.words;
+  const pickedWord = rndOf(poolWords, rng);
   const correctWord = pickedWord.w.replace(/\s+/g, ' ').trim();
   const wordSplit = pickedWord.b.replace(/\s+/g, ' ').trim();
   const distract = pickWordDistractors(d, pools, correctWord, 3, rng);
-  const wordHint = rushWordHint(d.mean, correctWord);
+  const face = whichWordPrompt(d, correctWord);
   return {
     root: d,
     type: 'word',
     ask: 'Which word is built from this root?',
-    big: d.root,
-    say: d.say,
-    ...(wordHint ? { sub: wordHint } : {}),
+    big: face.big,
+    ...(face.say ? { say: face.say } : {}),
+    ...(face.hint ? { sub: face.hint } : {}),
     word: correctWord,
     wordSplit: wordSplit || undefined,
     opts: shuffleWith(

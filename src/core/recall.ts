@@ -10,6 +10,7 @@ import { ROOTS, type Root } from '../data/roots';
 import { hashSeed, mulberry32, shuffleWith, type DailyPending } from './daily';
 import { dailyNextPeekFace } from './dailyNextPeek';
 import { canon, pickMeaningDistractors, pickWordDefDistractors, pickWordDistractors, sampleUnique } from './distractors';
+import { spellsChoice } from './promptFace';
 import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
 import {
   buildAsk,
@@ -214,7 +215,9 @@ export function buildRecall(input: BuildRecallInput): RecallBeat {
   }
 
   if (kind === 'word') {
-    const item = root.words[Math.floor(rng() * root.words.length)];
+    const safeWords = root.words.filter((item) => !spellsChoice(root.root, item.w));
+    const choices = safeWords.length > 0 ? safeWords : root.words;
+    const item = choices[Math.floor(rng() * choices.length)];
     const correct = item?.w.replace(/\s+/g, ' ').trim() || root.root;
     const split = item?.b.replace(/\s+/g, ' ').trim() || '';
     const distract = pickWordDistractors(root, pools, correct, distractCount, rng);

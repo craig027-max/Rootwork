@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { meaningAsName, spellsChoice } from '../core/promptFace';
 import { quizGloss } from '../core/wordDef';
 import {
   buildQueuedStudyNext,
@@ -113,9 +114,14 @@ describe('Study Yes names the question Next will open', () => {
   it('names every catalog question without printing the answer tile', () => {
     for (const root of ROOTS) {
       expect(studyNextPeekLine(root, { kind: 'mean' })).toBe(`Next · ${root.root} · ${root.mean}`);
-      expect(studyNextPeekLine(root, { kind: 'word', word: root.words[0]?.w })).toBe(
-        `Next · ${root.root} · ${root.mean}`,
-      );
+      const firstWord = root.words[0]?.w ?? '';
+      const wordLine = studyNextPeekLine(root, { kind: 'word', word: firstWord });
+      if (spellsChoice(root.root, firstWord)) {
+        expect(wordLine, root.root).toBe(`Next · ${meaningAsName(root.mean)}`);
+        expect(wordLine.toLowerCase(), root.root).not.toContain(firstWord.toLowerCase());
+      } else {
+        expect(wordLine, root.root).toBe(`Next · ${root.root} · ${root.mean}`);
+      }
 
       for (const part of otherPartsForRoot(root)) {
         const line = studyNextPeekLine(root, {

@@ -45,6 +45,7 @@ import {
 } from '../core/studyNextPeek';
 import { isOwnedRushMiss, listOwnedRushMissIds, ownedRushMissAsked, todayRushRecap } from '../core/rushRecap';
 import { buildRecall, recallForMissedAsk, type RecallBeat } from '../core/recall';
+import { meaningPrompt, whichWordPrompt } from '../core/promptFace';
 import { deckQuizHero, deckStudyLead } from './deck/deckQuizHero';
 import {
   hearBeatChips,
@@ -383,6 +384,22 @@ export function Deck() {
   const finding = isSchoolWordEntry(deckEntry);
   // Meaning question: Hear must not leave "life" on screen over "?".
   // A find card asks the school word and keeps its own hold.
+  const quizAnswer = quizRecall?.beat.opts.find((o) => o.ok)?.label ?? '';
+  const wordPrompt =
+    !finding && quizRecall?.beat.kind === 'word'
+      ? whichWordPrompt(root, quizAnswer || quizRecall.beat.word || '')
+      : null;
+  const meanPromptFace =
+    !finding && quizRecall?.beat.kind === 'mean' ? meaningPrompt(root) : null;
+  const quizPron = wordPrompt
+    ? {
+        say: wordPrompt.say,
+        origin: wordPrompt.origin,
+        hint: wordPrompt.namedByMeaning ? wordPrompt.hint : undefined,
+      }
+    : meanPromptFace
+      ? { say: meanPromptFace.say, origin: meanPromptFace.origin, hint: undefined }
+      : null;
   const hearHold = hearHoldWhileAsking({
     hearFinished,
     listening,
@@ -393,8 +410,9 @@ export function Deck() {
       finding,
       kind: quizRecall?.beat.kind,
       mean: card.mean,
-      answer: quizRecall?.beat.opts.find((o) => o.ok)?.label,
+      answer: quizAnswer,
     }),
+    answer: finding ? undefined : quizAnswer,
   });
   const cardRecall = recall && recall.rootId === id ? recall : null;
   const quizHero = finding
@@ -433,6 +451,11 @@ export function Deck() {
     Boolean(missRemember && cardRecall?.pinnedAsk),
   );
   const askedKind = missRemember && cardRecall?.pinnedAsk ? cardRecall.beat.kind : undefined;
+  const labelRoot = wordPrompt?.namedByMeaning
+    ? missRemember
+      ? ''
+      : wordPrompt.big
+    : root.root;
   const backLabel = deckBackLabel({
     remembering,
     missed: missRemember,
@@ -449,7 +472,7 @@ export function Deck() {
   });
   const stripCount = deckStripCount({
     missed: missRemember,
-    missName: askedReplay || root.root,
+    missName: askedReplay || labelRoot,
     findWord: findWord ?? undefined,
     position,
     total: ROOTS.length,
@@ -612,7 +635,7 @@ export function Deck() {
               >
                 {deckCaption({
                   emoji,
-                  root: root.root,
+                  root: labelRoot,
                   mean: root.mean,
                   alt: root.alt,
                   remembering,
@@ -632,7 +655,7 @@ export function Deck() {
               >
                 <span className="ww-eyebrow-dot" aria-hidden="true" />
                 {deckEyebrow({
-                  root: root.root,
+                  root: labelRoot,
                   lang,
                   remembering,
                   missed: missRemember,
@@ -643,11 +666,15 @@ export function Deck() {
                 })}
               </span>
               <div
-                className={`ww-root${finding ? ' is-find' : ''}${quizHero ? ` ${quizHero.titleClass}` : ''}`}
+                className={`ww-root${finding ? ' is-find' : ''}${quizHero ? ` ${quizHero.titleClass}` : ''}${
+                  !quizHero && wordPrompt && wordPrompt.big.length >= 14 ? ' is-long' : ''
+                }`}
               >
                 {quizHero
                   ? quizHero.title
-                  : deckFindTitle({ root: root.root, findWord: findWord ?? undefined })}
+                  : wordPrompt
+                    ? wordPrompt.big
+                    : deckFindTitle({ root: root.root, findWord: findWord ?? undefined })}
               </div>
               {quizHero ? null : (
                 <div className="ww-pron">
@@ -655,7 +682,11 @@ export function Deck() {
                     type="button"
                     className={`ww-hear${listen.hearActive ? ' is-listening' : ''}`}
                     aria-label={
-                      finding && findWord ? wordRootHearLabel(root.root) : `Hear ${root.root}`
+                      finding && findWord
+                        ? wordRootHearLabel(root.root)
+                        : wordPrompt?.namedByMeaning
+                          ? 'Hear this root'
+                          : `Hear ${root.root}`
                     }
                     aria-pressed={listen.hearActive}
                     onClick={onHear}
@@ -673,6 +704,14 @@ export function Deck() {
                         {wordRootSayLine(root.root, root.say)}
                         {' · '}
                         <span className="origin">from {root.org}</span>
+                      </>
+                    ) : quizPron ? (
+                      <>
+                        {quizPron.hint ?? null}
+                        {quizPron.hint && (quizPron.say || quizPron.origin) ? <>&nbsp;·&nbsp;</> : null}
+                        {quizPron.say ?? null}
+                        {quizPron.say && quizPron.origin ? <>&nbsp;·&nbsp;</> : null}
+                        {quizPron.origin ? <span className="origin">{quizPron.origin}</span> : null}
                       </>
                     ) : (
                       <>
@@ -752,6 +791,7 @@ export function Deck() {
                         missed: missRemember,
                         asked: askedReplay,
                         askedKind,
+                        answer: quizRecall?.beat.kind === 'word' ? quizAnswer : undefined,
                       })
                     : deckStudyLead(root.root)}
                 </p>
@@ -942,6 +982,7 @@ export function Deck() {
                       missed: missRemember,
                       asked: askedReplay,
                       askedKind,
+                      answer: quizRecall?.beat.kind === 'word' ? quizAnswer : undefined,
                     })
                   : finding && findWord
                     ? findHintLine(findWord)
@@ -972,7 +1013,7 @@ export function Deck() {
 
       <DeckNav
         rootLabel={deckNavRoot({
-          root: root.root,
+          root: labelRoot,
           missed: missRemember,
           findWord: findWord ?? undefined,
           quizTitle: quizHero?.title,
@@ -998,7 +1039,7 @@ export function Deck() {
         showPrev={deckShowPrev({ remembering, finding })}
         nextDisabled={listen.disableNextRoot}
         missed={missRemember}
-        missName={askedReplay || root.root}
+        missName={askedReplay || labelRoot}
         finding={finding}
         findWord={findWord ?? undefined}
         asked={askedVisit}

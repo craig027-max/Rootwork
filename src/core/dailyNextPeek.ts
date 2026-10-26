@@ -6,8 +6,11 @@
  * that hero. The answer tile stays off it: record, the gloss, and the
  * school word those pieces build are not printed early.
  * A meaning or which-word card still says Photo · light — its giant
- * type is the root. No beat yet stays on the root too.
+ * type is the root. A which-word tile that is the root name (Fort)
+ * cannot: the peek names the meaning instead. No beat yet stays on
+ * the root too.
  */
+import { spellsChoice, whichWordPrompt } from './promptFace';
 import { buildBig } from './wordParts';
 
 export interface DailyNextPeek {
@@ -47,6 +50,17 @@ export function dailyNextPeekFace(
     const pieces = buildBig(beat.split ?? '');
     if (!pieces) return fallback;
     return { name: pieces };
+  }
+
+  if (beat.kind === 'word') {
+    const word = beat.word?.replace(/\s+/g, ' ').trim() ?? '';
+    if (word && spellsChoice(rootName, word)) {
+      const face = whichWordPrompt(
+        { root: rootName, say: '', mean: rootMean, org: '', alt: '' },
+        word,
+      );
+      return { name: face.big };
+    }
   }
 
   return fallback;
