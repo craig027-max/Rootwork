@@ -396,7 +396,8 @@ describe('Remember replays the missed question — not Photo means light over -g
     expect(deck).toContain("kinds: deckEntry === 'remember' ? ['mean', 'word'] : undefined");
     expect(deck).toContain('missAsked: askedReplay');
     expect(deck).toContain('rememberAskedTeach(root.root, root.mean, quizRecall.beat)');
-    expect(deck).toContain('missName={askedReplay || root.root}');
+    expect(deck).toContain('missName={askedReplay || labelRoot}');
+    expect(deck).toContain(": root.root;");
     const phone = mediaBlock(css, 'max-width: 860px');
     const short = mediaBlock(css, 'max-height: 720px');
     for (const block of [phone, short]) {

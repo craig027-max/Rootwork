@@ -143,8 +143,8 @@ describe('Deck after a miss is Remember — not Starter / Card 02 / 183 over Geo
     expect(deck).toContain('deckStripTier');
     expect(deck).toContain('deckStripCount');
     expect(deck).toContain('missed: missRemember');
-    expect(deck).toContain('missName: askedReplay || root.root');
-    expect(deck).toContain('missName={askedReplay || root.root}');
+    expect(deck).toContain('missName: askedReplay || labelRoot');
+    expect(deck).toContain('missName={askedReplay || labelRoot}');
     expect(deck).toContain('ww-strip${missRemember ? \' is-miss\' : \'\'}');
     expect(deck).toContain('missed={missRemember}');
     expect(deck).not.toContain("remembering ? '← Today' : '← All roots'");

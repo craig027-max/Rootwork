@@ -9,6 +9,7 @@
 import { ROOTS, ROOTS_BY_ID, neighborOpenable, rootId, type Root, type RootId } from '../data/roots';
 import type { HearBeatChip } from './hearBeats';
 import { rushGlossMissLine } from './rushRecap';
+import { spellsChoice } from './promptFace';
 import { speakablePronunciation } from './speak';
 import { shortWordDef } from './wordDef';
 import {
@@ -227,12 +228,14 @@ export function rememberMissLine(rootName: string, mean: string): string {
  */
 export function rememberLeadLine(
   rootName: string,
-  opts: { missed?: boolean; asked?: string; askedKind?: string } = {},
+  opts: { missed?: boolean; asked?: string; askedKind?: string; answer?: string } = {},
 ): string {
   const name = rootName.replace(/\s+/g, ' ').trim() || 'this root';
   const asked = opts.asked?.replace(/\s+/g, ' ').trim();
   if (opts.missed && opts.askedKind === 'word') {
-    return `You missed ${name} in Rush. Tap which word it builds — then Home.`;
+    const tile = opts.answer?.replace(/\s+/g, ' ').trim() ?? '';
+    const who = tile && spellsChoice(name, tile) ? 'this root' : name;
+    return `You missed ${who} in Rush. Tap which word it builds — then Home.`;
   }
   if (opts.missed && asked && asked.toLowerCase() !== name.toLowerCase()) {
     if (opts.askedKind === 'build') {
@@ -247,11 +250,13 @@ export function rememberLeadLine(
 /** Remember quiz hint. Rush miss names the miss — not a generic one-tap. */
 export function rememberHintLine(
   rootName: string,
-  opts: { missed?: boolean; asked?: string; askedKind?: string } = {},
+  opts: { missed?: boolean; asked?: string; askedKind?: string; answer?: string } = {},
 ): string {
   const root = rootName.replace(/\s+/g, ' ').trim();
   const asked = opts.asked?.replace(/\s+/g, ' ').trim();
   if (opts.missed && opts.askedKind === 'word') {
+    const tile = opts.answer?.replace(/\s+/g, ' ').trim() ?? '';
+    if (tile && spellsChoice(root, tile)) return 'Remember — tap the word you missed.';
     return root ? `Remember ${root} — tap the word you missed.` : 'Remember — tap the word you missed.';
   }
   const name = asked || root;
@@ -711,7 +716,8 @@ export function hearHoldHidesMean(opts: {
  *
  * The teach card still says "foe toh · light". "What does this root mean?"
  * must not keep light on that line — the speaker they just used would
- * answer the quiz. The spoken sound stays. Which-word and school-word
+ * answer the quiz. The spoken sound stays, unless that sound is the
+ * tile (AIR-oh over air, PYRE over Pyre). Which-word and school-word
  * questions pass `askingMean` false, unless the school word is the
  * meaning (Equal). The root meaning there is a hint, not the answer
  * tile. Find keeps `wordRootHearHold`.
@@ -724,11 +730,21 @@ export function hearHoldWhileAsking(opts: {
   mean: string;
   /** True when the open question's correct tile is this root's meaning. */
   askingMean: boolean;
+  /** Correct tile. A piece of the hold that spells it comes off. */
+  answer?: string | null;
 }): { line: string | null } {
   const held = holdHearAfterClip(opts);
-  if (!opts.askingMean || !held.line) return { line: held.line };
+  if (!held.line) return { line: held.line };
+  const answer = opts.answer?.replace(/\s+/g, ' ').trim() ?? '';
   const sound = speakablePronunciation(opts.say);
-  return { line: sound || null };
+  const spokenMean = opts.mean.replace(/\s+/g, ' ').trim();
+  const soundLeaks =
+    answer !== '' && (spellsChoice(sound, answer) || spellsChoice(opts.say, answer));
+  const meanLeaks = opts.askingMean || (answer !== '' && spellsChoice(spokenMean, answer));
+  if (soundLeaks && meanLeaks) return { line: null };
+  if (meanLeaks) return { line: sound || null };
+  if (soundLeaks) return { line: spokenMean || null };
+  return { line: held.line };
 }
 
 /**
