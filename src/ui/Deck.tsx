@@ -20,6 +20,7 @@ import {
   allowWinNextTap,
   clipListening,
   commitCorrectAdvance,
+  hearHoldHidesMean,
   hearHoldWhileAsking,
   isLessonStudying,
   isRecallEntry,
@@ -388,7 +389,12 @@ export function Deck() {
     won,
     say: card.say,
     mean: card.mean,
-    askingMean: Boolean(quizRecall && quizRecall.beat.kind === 'mean' && !finding),
+    askingMean: hearHoldHidesMean({
+      finding,
+      kind: quizRecall?.beat.kind,
+      mean: card.mean,
+      answer: quizRecall?.beat.opts.find((o) => o.ok)?.label,
+    }),
   });
   const cardRecall = recall && recall.rootId === id ? recall : null;
   const quizHero = finding

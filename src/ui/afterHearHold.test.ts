@@ -24,7 +24,7 @@ function mediaBlock(source: string, query: string): string {
 describe('after Hear clip: hold spoken-sound + meaning, one next tap', () => {
   it('keeps spoken-sound + meaning on the card after Listening… ends', () => {
     expect(deck).toContain('hearHoldWhileAsking');
-    expect(deck).toContain("quizRecall.beat.kind === 'mean' && !finding");
+    expect(deck).toContain('hearHoldHidesMean');
     expect(deck).toContain('hearHold.line');
     expect(deck).toContain('ww-listen-hold');
     expect(deck).toContain("watchCurrentClip(true, 'hear')");

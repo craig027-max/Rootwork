@@ -6,7 +6,7 @@ import {
   scoreWordDistractor,
   wordContainsRoot,
 } from './distractors';
-import { buildRushQuestion } from './rush';
+import { buildRushQuestion, rushWordHint, whichRootFace } from './rush';
 import { quizGloss } from './wordDef';
 import { buildBig, buildPicksForRoot, otherPartsForRoot, partMeanLabels } from './wordParts';
 
@@ -220,6 +220,122 @@ describe('buildRushQuestion', () => {
     expect(q.opts.length).toBe(3);
     for (const opt of q.opts) expect(onCard.has(opt.label)).toBe(true);
     expect(buildPicksForRoot(bio).some((p) => p.word === q.buildWord)).toBe(true);
+  });
+
+  it('asks which root without spelling the button', () => {
+    const names = ROOTS.map((r) => r.root);
+    const formQ = buildRushQuestion({
+      root: form,
+      scoped: tier1,
+      all: tier1,
+      type: 'root',
+      rng: mulberry32(5),
+    });
+    expect(formQ.type).toBe('root');
+    expect(formQ.ask).toBe('Which root carries this meaning?');
+    expect(formQ.big).toBe('Shape');
+    expect(formQ.sub).toBe('figure');
+    expect(formQ.sub).not.toMatch(/form/i);
+    expect(`${formQ.big} ${formQ.sub ?? ''}`).not.toMatch(/form/i);
+    expect(formQ.opts.find((o) => o.ok)?.label).toBe('Form');
+
+    const equ = ROOTS.find((r) => r.root === 'Equ')!;
+    const equQ = buildRushQuestion({
+      root: equ,
+      scoped: ROOTS,
+      all: ROOTS,
+      type: 'root',
+      rng: mulberry32(6),
+    });
+    expect(equQ.type).toBe('root');
+    expect(equQ.big).toBe('Even · level');
+    expect(equQ.sub).toBeUndefined();
+    expect(equQ.big).not.toMatch(/equ/i);
+    expect(equQ.opts.find((o) => o.ok)?.label).toBe('Equ');
+
+    const jud = ROOTS.find((r) => r.root === 'Jud')!;
+    const judQ = buildRushQuestion({
+      root: jud,
+      scoped: ROOTS,
+      all: ROOTS,
+      type: 'root',
+      rng: mulberry32(7),
+    });
+    expect(judQ.big).toBe('To decide');
+    expect(judQ.big).not.toMatch(/jud/i);
+    expect(judQ.sub).toBeUndefined();
+
+    const bioQ = buildRushQuestion({
+      root: bio,
+      scoped: tier1,
+      all: tier1,
+      type: 'root',
+      rng: mulberry32(8),
+    });
+    expect(bioQ.big).toBe('Life');
+    expect(bioQ.sub).toBe('living things');
+
+    const morph = ROOTS.find((r) => r.root === 'Morph')!;
+    expect(whichRootFace(morph, names)?.sub).toBeUndefined();
+    expect(whichRootFace(morph, names)?.big).toBe('Shape');
+    expect(whichRootFace(form, names)).toEqual({ big: 'Shape', sub: 'figure' });
+    expect(rushWordHint('life', 'Biology')).toBe('means “life”');
+    expect(rushWordHint('equal', 'Equal')).toBeUndefined();
+    expect(rushWordHint('equal', 'Equator')).toBe('means “equal”');
+    expect(rushWordHint('judge', 'Judge')).toBeUndefined();
+
+    for (const root of ROOTS) {
+      const q = buildRushQuestion({
+        root,
+        scoped: ROOTS,
+        all: ROOTS,
+        type: 'root',
+        rng: mulberry32(root.root.length + 3),
+      });
+      expect(q.type, root.root).toBe('root');
+      const prompt = [q.ask, q.big, q.sub ?? ''].join(' ');
+      const correct = q.opts.find((o) => o.ok)?.label ?? '';
+      expect(prompt.toLowerCase().includes(correct.toLowerCase()), `${root.root}: ${prompt}`).toBe(
+        false,
+      );
+      const letters = correct.replace(/[^a-z]/gi, '').toLowerCase();
+      if (letters.length >= 3) {
+        const chunks = [q.big, ...(q.sub ? q.sub.split('·') : [])];
+        for (const chunk of chunks) {
+          expect(
+            chunk.replace(/[^a-z]/gi, '').toLowerCase().includes(letters),
+            `${root.root}: ${chunk}`,
+          ).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('does not print Equal under means “equal”', () => {
+    const equ = ROOTS.find((r) => r.root === 'Equ')!;
+    const jud = ROOTS.find((r) => r.root === 'Jud')!;
+    for (const root of [equ, jud, bio]) {
+      for (let seed = 0; seed < 12; seed++) {
+        const q = buildRushQuestion({
+          root,
+          scoped: ROOTS,
+          all: ROOTS,
+          type: 'word',
+          rng: mulberry32(seed + 40),
+        });
+        expect(q.type).toBe('word');
+        const correct = q.opts.find((o) => o.ok)?.label ?? '';
+        const prompt = [q.ask, q.big, q.say ?? '', q.sub ?? ''].join(' ');
+        expect(prompt.toLowerCase().includes(correct.toLowerCase()), `${root.root}: ${prompt}`).toBe(
+          false,
+        );
+        if (correct.toLowerCase() === root.mean.toLowerCase()) {
+          expect(q.sub, correct).toBeUndefined();
+        } else {
+          expect(q.sub).toBe(`means “${root.mean}”`);
+        }
+      }
+    }
   });
 
   it('still builds four tiles when the scoped pool is tiny, topping up from all', () => {
