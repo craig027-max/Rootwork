@@ -43,7 +43,7 @@ describe('after Hear: one next tap, no Rush dump', () => {
 
   it('holds spoken-sound + meaning after Hear; I-know-this stays the one tap', () => {
     expect(deck).toContain('hearHoldWhileAsking');
-    expect(deck).toContain("quizRecall.beat.kind === 'mean' && !finding");
+    expect(deck).toContain('hearHoldHidesMean');
     expect(deck).toContain('hearHold.line');
     expect(deck).toContain('ww-listen-hold');
     expect(deck).toContain('setHearFinished(true)');

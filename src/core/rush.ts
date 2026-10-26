@@ -1,5 +1,9 @@
 /**
  * Root Rush question builder. Pure — combo math lives in RootRush.tsx.
+ *
+ * A which-root prompt must not spell the button. "Shape" can sit over
+ * Form; "form · figure" cannot. Equal is the tile on a which-word
+ * question, so that prompt does not also say means "equal".
  */
 
 import type { Root } from '../data/roots';
@@ -46,6 +50,89 @@ function rndOf<T>(arr: readonly T[], rng: () => number): T {
 }
 
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** Root spellings shorter than this hide inside ordinary words (re, in). */
+const ROOT_SPELL_MIN = 3;
+
+function foldLetters(value: string): string {
+  return value.replace(/[^a-z]/gi, '').toLowerCase();
+}
+
+/** True when this hint contains the root the kid is supposed to pick. */
+export function spellsRootAnswer(text: string, rootName: string): boolean {
+  const root = foldLetters(rootName);
+  if (root.length < ROOT_SPELL_MIN) return false;
+  const folded = foldLetters(text);
+  return folded.includes(root);
+}
+
+function altPieces(alt: string): string[] {
+  return alt
+    .split('·')
+    .map((part) => part.replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+}
+
+function pieceIsRootName(piece: string, names: readonly string[]): boolean {
+  const folded = foldLetters(piece);
+  if (folded.length < ROOT_SPELL_MIN) return false;
+  return names.some((name) => foldLetters(name) === folded);
+}
+
+/**
+ * Giant word + quiet line for "Which root carries this meaning?".
+ * The meaning stays the giant word unless that word spells the root
+ * (Equal / Equ). The alt stays the quiet line unless a piece of it
+ * spells the root (form · figure) or is itself a root name (form).
+ * Null when nothing safe is left to show — deal another question.
+ */
+export function whichRootFace(
+  root: { root: string; mean: string; alt: string },
+  rootNames: readonly string[],
+): { big: string; sub?: string } | null {
+  const mean = root.mean.replace(/\s+/g, ' ').trim();
+  const usable = altPieces(root.alt).filter(
+    (part) => !spellsRootAnswer(part, root.root) && !pieceIsRootName(part, rootNames),
+  );
+
+  if (spellsRootAnswer(mean, root.root)) {
+    const face = usable.join(' · ');
+    if (!face || spellsRootAnswer(face, root.root)) return null;
+    return { big: cap(face) };
+  }
+
+  const sub = usable.join(' · ');
+  return {
+    big: mean ? cap(mean) : root.root,
+    ...(sub ? { sub } : {}),
+  };
+}
+
+/**
+ * Quiet line under a which-word question. The meaning is a hint until
+ * the school word is that meaning — means "equal" over Equal is the tile.
+ */
+export function rushWordHint(mean: string, word: string): string | undefined {
+  const spoken = mean.replace(/\s+/g, ' ').trim();
+  const name = word.replace(/\s+/g, ' ').trim();
+  if (!spoken) return undefined;
+  if (name.toLowerCase() === spoken.toLowerCase()) return undefined;
+  return `means “${spoken}”`;
+}
+
+function namesIn(pools: readonly (readonly Root[])[]): string[] {
+  const names: string[] = [];
+  const seen = new Set<string>();
+  for (const pool of pools) {
+    for (const root of pool) {
+      const key = root.root.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      names.push(root.root);
+    }
+  }
+  return names;
+}
 
 export interface BuildRushQuestionInput {
   root: Root;
@@ -162,31 +249,35 @@ export function buildRushQuestion(input: BuildRushQuestionInput): RushQuestion {
   }
 
   if (type === 'root') {
-    const distract = pickRootDistractors(d, pools, 3, rng);
-    return {
-      root: d,
-      type,
-      ask: 'Which root carries this meaning?',
-      big: cap(d.mean),
-      sub: d.alt,
-      opts: shuffleWith(
-        [{ label: d.root, ok: true }, ...distract.map((label) => ({ label, ok: false }))],
-        rng,
-      ),
-    };
+    const face = whichRootFace(d, namesIn(pools));
+    if (face) {
+      const distract = pickRootDistractors(d, pools, 3, rng);
+      return {
+        root: d,
+        type,
+        ask: 'Which root carries this meaning?',
+        big: face.big,
+        ...(face.sub ? { sub: face.sub } : {}),
+        opts: shuffleWith(
+          [{ label: d.root, ok: true }, ...distract.map((label) => ({ label, ok: false }))],
+          rng,
+        ),
+      };
+    }
   }
 
   const pickedWord = rndOf(d.words, rng);
   const correctWord = pickedWord.w.replace(/\s+/g, ' ').trim();
   const wordSplit = pickedWord.b.replace(/\s+/g, ' ').trim();
   const distract = pickWordDistractors(d, pools, correctWord, 3, rng);
+  const wordHint = rushWordHint(d.mean, correctWord);
   return {
     root: d,
     type: 'word',
     ask: 'Which word is built from this root?',
     big: d.root,
     say: d.say,
-    sub: `means “${d.mean}”`,
+    ...(wordHint ? { sub: wordHint } : {}),
     word: correctWord,
     wordSplit: wordSplit || undefined,
     opts: shuffleWith(

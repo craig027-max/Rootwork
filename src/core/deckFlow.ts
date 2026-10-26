@@ -688,13 +688,33 @@ export function holdHearAfterClip(opts: {
 }
 
 /**
+ * True when the Hear line's meaning would be the answer tile.
+ * A meaning question's tile is the meaning. A which-word tile is too,
+ * when the school word is that meaning (Equal). Find keeps its own hold.
+ */
+export function hearHoldHidesMean(opts: {
+  finding?: boolean;
+  kind?: string | null;
+  mean?: string | null;
+  answer?: string | null;
+}): boolean {
+  if (opts.finding) return false;
+  if (opts.kind === 'mean') return true;
+  if (opts.kind !== 'word') return false;
+  const mean = opts.mean?.replace(/\s+/g, ' ').trim().toLowerCase() ?? '';
+  const answer = opts.answer?.replace(/\s+/g, ' ').trim().toLowerCase() ?? '';
+  return mean.length > 0 && mean === answer;
+}
+
+/**
  * Hear hold once a question is on the card.
  *
  * The teach card still says "foe toh · light". "What does this root mean?"
  * must not keep light on that line — the speaker they just used would
  * answer the quiz. The spoken sound stays. Which-word and school-word
- * questions pass `askingMean` false; the root meaning there is a hint,
- * not the answer tile. Find keeps `wordRootHearHold`.
+ * questions pass `askingMean` false, unless the school word is the
+ * meaning (Equal). The root meaning there is a hint, not the answer
+ * tile. Find keeps `wordRootHearHold`.
  */
 export function hearHoldWhileAsking(opts: {
   hearFinished: boolean;

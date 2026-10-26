@@ -6,6 +6,7 @@ import {
   afterCorrectRecall,
   afterHearNextTap,
   afterYesNextLabel,
+  hearHoldHidesMean,
   hearHoldWhileAsking,
   allowNextRootTap,
   allowWinNextTap,
@@ -910,6 +911,35 @@ describe('after Hear clip: hold spoken-sound + meaning until next tap', () => {
     expect(
       hearHoldWhileAsking({ ...base, askingMean: true, say: '', mean: 'light' }).line,
     ).toBeNull();
+  });
+
+  it('a which-word question drops the meaning when that word is the tile', () => {
+    const equ = {
+      hearFinished: true,
+      listening: false,
+      won: false,
+      say: 'EK-wuh',
+      mean: 'equal',
+    };
+    const equal = hearHoldWhileAsking({
+      ...equ,
+      askingMean: hearHoldHidesMean({ kind: 'word', mean: 'equal', answer: 'Equal' }),
+    });
+    expect(hearHoldHidesMean({ kind: 'word', mean: 'equal', answer: 'Equal' })).toBe(true);
+    expect(equal.line).toBe('eck wuh');
+    expect(equal.line).not.toMatch(/equal/i);
+
+    const equator = hearHoldWhileAsking({
+      ...equ,
+      askingMean: hearHoldHidesMean({ kind: 'word', mean: 'equal', answer: 'Equator' }),
+    });
+    expect(hearHoldHidesMean({ kind: 'word', mean: 'equal', answer: 'Equator' })).toBe(false);
+    expect(equator.line).toBe('eck wuh · equal');
+
+    expect(hearHoldHidesMean({ finding: true, kind: 'mean', mean: 'life', answer: 'life' })).toBe(
+      false,
+    );
+    expect(hearHoldHidesMean({ kind: 'gloss', mean: 'life', answer: 'Biology' })).toBe(false);
   });
 
   it('I-know-this then continues Geo → Photo → Aqua — no Rush dump', () => {
