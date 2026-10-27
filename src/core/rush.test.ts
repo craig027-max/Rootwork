@@ -196,7 +196,8 @@ describe('buildRushQuestion', () => {
     });
     expect(q.type).toBe('build');
     expect(q.buildWord).toBe('Biology');
-    expect(q.ask).toBe('Which word is built from bio (life) + -logy (study of)?');
+    expect(q.ask).toBe('Which word is built from bio + -logy?');
+    expect(q.ask).not.toMatch(/\(life\)|\(study of\)/);
     expect(q.big).toBe('bio + -logy');
     expect(q.big).toBe(buildBig(q.buildSplit!));
     expect(q.big).not.toBe('Bio');

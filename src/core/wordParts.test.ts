@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { spellsChoice } from './promptFace';
 import { ROOTS } from '../data/roots';
 import {
   buildAsk,
@@ -105,9 +106,8 @@ describe('buildPicksForRoot', () => {
     const biology = picks.find((p) => p.word === 'Biology');
     expect(biology?.split).toBe('bio (life) + -logy (study of)');
     expect(biology?.siblings.sort()).toEqual(['Biodegradable', 'Biography']);
-    expect(buildAsk(biology!.split)).toBe(
-      'Which word is built from bio (life) + -logy (study of)?',
-    );
+    expect(buildAsk(biology!.split)).toBe('Which word is built from bio + -logy?');
+    expect(buildAsk(biology!.split)).not.toMatch(/\(/);
     expect(buildBig(biology!.split)).toBe('bio + -logy');
     expect(buildBig(biology!.split)).not.toBe('Biology');
     expect(buildBig(biology!.split)).not.toBe('Bio');
@@ -131,6 +131,25 @@ describe('buildPicksForRoot', () => {
     expect(wordMissLine('Biology', biology!.split)).not.toMatch(/Bio means life/);
     expect(wordYesLine('Biology')).toBe('Yes — Biology.');
     expect(wordMissLine('')).toBe('Nope — try the next one.');
+  });
+
+  it('asks with the letters and keeps the glosses off every tile', () => {
+    for (const root of ROOTS) {
+      for (const pick of buildPicksForRoot(root)) {
+        const letters = buildBig(pick.split)
+          .replace(/\s*\([^)]*\)/g, '')
+          .replace(/\s+/g, ' ')
+          .trim();
+        const ask = buildAsk(pick.split);
+        expect(ask, pick.word).toBe(`Which word is built from ${letters}?`);
+        expect(ask, pick.word).not.toMatch(/\(/);
+        expect(spellsChoice(ask, pick.word), pick.word).toBe(false);
+        for (const sibling of pick.siblings) {
+          expect(spellsChoice(ask, sibling), `${pick.word} vs ${sibling}`).toBe(false);
+        }
+        expect(buildTeach(pick.word, pick.split), pick.word).toContain(pick.split);
+      }
+    }
   });
 
   it('keeps the answer out of the split, and siblings off other roots', () => {
