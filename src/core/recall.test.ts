@@ -6,6 +6,7 @@ import { buildRecall } from './recall';
 import { quizGloss } from './wordDef';
 import { canon } from './distractors';
 import {
+  buildAsk,
   buildPicksForRoot,
   otherPartsForRoot,
   parseWordSplit,
@@ -248,7 +249,8 @@ describe('buildRecall', () => {
     expect(beat.kind).toBe('build');
     expect(beat.word).toBe('Biology');
     expect(beat.split).toBe('bio (life) + -logy (study of)');
-    expect(beat.ask).toBe('Which word is built from bio (life) + -logy (study of)?');
+    expect(beat.ask).toBe('Which word is built from bio + -logy?');
+    expect(beat.ask).not.toMatch(/\(/);
     expect(beat.ask).not.toMatch(/What does Biology mean/);
     expect(beat.opts.filter((o) => o.ok)).toHaveLength(1);
     expect(beat.opts.find((o) => o.ok)?.label).toBe('Biology');
@@ -280,8 +282,10 @@ describe('buildRecall', () => {
       expect(beat.kind, root.root).toBe('build');
       const onCard = new Set(root.words.map((w) => w.w));
       expect(onCard.has(beat.word ?? ''), root.root).toBe(true);
-      expect(beat.ask, root.root).toBe(`Which word is built from ${beat.split}?`);
+      expect(beat.ask, root.root).toBe(buildAsk(beat.split ?? ''));
+      expect(beat.ask, root.root).not.toMatch(/\(/);
       expect(beat.ask.toLowerCase(), root.root).not.toContain((beat.word ?? '').toLowerCase());
+      expect(beat.teach, root.root).toContain(beat.split ?? '');
       expect(beat.opts.filter((o) => o.ok), root.root).toHaveLength(1);
       expect(beat.opts.find((o) => o.ok)?.label, root.root).toBe(beat.word);
       const seen = new Set<string>();

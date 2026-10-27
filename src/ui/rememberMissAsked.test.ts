@@ -11,7 +11,7 @@ import {
 import { quizGloss } from '../core/wordDef';
 import { recallForMissedAsk } from '../core/recall';
 import { ownedRushMissAsked, rushAskedChip, rushRecapFromRun } from '../core/rushRecap';
-import { buildBig, buildPicksForRoot, otherPartsForRoot, partMissLine } from '../core/wordParts';
+import { buildAsk, buildBig, buildPicksForRoot, otherPartsForRoot, partMissLine } from '../core/wordParts';
 import { ROOTS, rootId, rootsInTier } from '../data/roots';
 import { deckCaption, deckEyebrow, deckNavRoot, deckStripCount } from './deck/deckChrome';
 import { deckQuizHero } from './deck/deckQuizHero';
@@ -177,7 +177,10 @@ describe('Remember replays the missed question — not Photo means light over -g
     });
     expect(pieces.sub).toBe('bio + -logy');
     expect(buildBeat?.kind).toBe('build');
-    expect(buildBeat?.ask).toBe(`Which word is built from ${biology.b}?`);
+    expect(buildBeat?.ask).toBe(buildAsk(biology.b));
+    expect(buildBeat?.ask).toBe('Which word is built from bio + -logy?');
+    expect(buildBeat?.ask).not.toMatch(/\(/);
+    expect(buildBeat?.teach).toContain(biology.b);
     expect(correctLabel(buildBeat!)).toBe('Biology');
     const pieceName = rememberedAskName(buildBeat, true);
     expect(pieceName).toBe('bio + -logy');

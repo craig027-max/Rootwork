@@ -16,7 +16,7 @@ import { dailyNextPeekFace } from '../core/dailyNextPeek';
 import { mulberry32 } from '../core/daily';
 import { dailyResumeBeat, dailyShownNext, recallFromPending } from '../core/recall';
 import { quizGloss } from '../core/wordDef';
-import { otherPartsForRoot } from '../core/wordParts';
+import { buildAsk, otherPartsForRoot } from '../core/wordParts';
 import { ROOTS, isRootOpenable, rootId, rootsInTier } from '../data/roots';
 import { buildDetailVM } from './home/detailVM';
 import { buildMenu } from './home/menu';
@@ -97,7 +97,10 @@ describe('Continue Daily reopens the question Home names', () => {
     });
     expect(pieces?.word).toBe('Biology');
     expect(pieces?.opts.find((o) => o.ok)?.label).toBe('Biology');
-    expect(pieces?.ask).toContain(biology.b);
+    expect(pieces?.split).toBe(biology.b);
+    expect(pieces?.ask).toBe(buildAsk(biology.b));
+    expect(pieces?.ask).not.toContain('(life)');
+    expect(pieces?.ask).not.toContain('(study of)');
 
     expect(
       recallFromPending({

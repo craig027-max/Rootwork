@@ -187,10 +187,18 @@ export function buildBig(split: string): string {
   return split.replace(/\s+/g, ' ').trim();
 }
 
+/**
+ * Question line. Same letters as the giant word — `bio + -logy`, not
+ * `bio (life) + -logy (study of)`. The glosses name the word; they
+ * belong on the Yes and the miss, after the tap.
+ */
 export function buildAsk(split: string): string {
-  const parts = split.replace(/\s+/g, ' ').trim();
-  if (!parts) return 'Which word do these pieces build?';
-  return `Which word is built from ${parts}?`;
+  const pieces = buildBig(split)
+    .replace(/\s*\([^)]*\)/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!pieces) return 'Which word do these pieces build?';
+  return `Which word is built from ${pieces}?`;
 }
 
 export function buildTeach(word: string, split: string): string {
