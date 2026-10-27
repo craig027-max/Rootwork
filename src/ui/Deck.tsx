@@ -422,6 +422,7 @@ export function Deck() {
         mean: root.mean,
         kind: cardRecall?.beat.kind,
         word: cardRecall?.beat.word,
+        gloss: cardRecall?.beat.gloss,
         part: cardRecall?.beat.part,
         split: cardRecall?.beat.split,
       });

@@ -25,7 +25,7 @@ import {
 } from '../core/daily';
 import { dailyNextPeekFace } from '../core/dailyNextPeek';
 import { buildRecall, dailyResumeBeat, type RecallBeat } from '../core/recall';
-import { meaningPrompt, whichWordPrompt } from '../core/promptFace';
+import { glossQuietLine, meaningPrompt, whichWordPrompt } from '../core/promptFace';
 import { Scene } from './Scene';
 import { askedChipOpen, findSuccessLine, resultChipAria } from '../core/deckFlow';
 import { buildBig, buildYesLine, partYesLine, wordYesLine } from '../core/wordParts';
@@ -510,9 +510,7 @@ export function DailyChallenge() {
                 {promptBig}
               </div>
               {beat.kind === 'gloss' ? (
-                <div className="q-psub">
-                  from {root.root} · {root.mean}
-                </div>
+                <div className="q-psub">{glossQuietLine(root.root, root.mean, beat.gloss)}</div>
               ) : beat.kind === 'part' && beat.word ? (
                 <div className="q-psub">in {beat.word}</div>
               ) : beat.kind === 'build' ? null : wordFace ? (

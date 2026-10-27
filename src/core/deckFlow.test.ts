@@ -942,6 +942,34 @@ describe('after Hear clip: hold spoken-sound + meaning until next tap', () => {
     expect(hearHoldHidesMean({ kind: 'gloss', mean: 'life', answer: 'Biology' })).toBe(false);
   });
 
+  it('a school-word question drops a meaning that sits in the gloss', () => {
+    const biography = bio.words.find((w) => w.w === 'Biography')!;
+    const biology = bio.words.find((w) => w.w === 'Biology')!;
+    const lifeStory = biography.d.split('—')[0]?.trim() ?? biography.d;
+    const living = biology.d.split('—')[0]?.trim() ?? biology.d;
+    const leaked = hearHoldWhileAsking({
+      hearFinished: true,
+      listening: false,
+      won: false,
+      say: bio.say,
+      mean: bio.mean,
+      askingMean: hearHoldHidesMean({ kind: 'gloss', mean: bio.mean, answer: lifeStory }),
+      answer: lifeStory,
+    });
+    expect(leaked.line).toBe('bye oh');
+    expect(leaked.line).not.toContain('life');
+    const kept = hearHoldWhileAsking({
+      hearFinished: true,
+      listening: false,
+      won: false,
+      say: bio.say,
+      mean: bio.mean,
+      askingMean: hearHoldHidesMean({ kind: 'gloss', mean: bio.mean, answer: living }),
+      answer: living,
+    });
+    expect(kept.line).toBe('bye oh · life');
+  });
+
   it('drops a spoken sound that is the tile', () => {
     const air = hearHoldWhileAsking({
       hearFinished: true,

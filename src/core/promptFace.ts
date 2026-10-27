@@ -113,6 +113,39 @@ export function whichWordPrompt(root: PromptRoot, word: string): WhichWordPrompt
 }
 
 /**
+ * True when this root meaning is already a word inside the answer tile.
+ * "life" sits in "a real person's life". "light" sits in "capturing light".
+ * "living things" does not contain the word life. A piece of a longer
+ * meaning counts too: "half" sits in "foot-and-a-half".
+ */
+export function meaningSitsInAnswer(mean: string, answer: string): boolean {
+  const spoken = clean(mean);
+  const tile = clean(answer);
+  if (!spoken || !tile) return false;
+  if (spellsChoice(tile, spoken)) return true;
+  for (const word of spoken.split(/[^A-Za-z]+/)) {
+    if (word.length >= 4 && spellsChoice(tile, word)) return true;
+  }
+  return false;
+}
+
+/**
+ * Quiet line under "What does Biography mean?".
+ * `from Bio · life` hands out the word life when the tile is a person's
+ * life. Biology's "living things" does not contain that word, so the
+ * hint stays. Photograph drops light. The Yes and the miss still teach it.
+ */
+export function glossQuietLine(root: string, mean: string, gloss?: string | null): string {
+  const name = clean(root);
+  const spoken = clean(mean);
+  const leaks = meaningSitsInAnswer(spoken, gloss ?? '');
+  if (name && spoken && !leaks) return `from ${name} · ${spoken}`;
+  if (name) return `from ${name}`;
+  if (spoken && !leaks) return spoken;
+  return 'this word';
+}
+
+/**
  * Meaning-question say and origin. Aero drops AIR-oh. The root name
  * stays — Aero does not spell the tile air.
  */

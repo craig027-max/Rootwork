@@ -10,7 +10,7 @@
 import type { Root } from '../data/roots';
 import { shuffleWith } from './daily';
 import { canon, pickMeaningDistractors, pickRootDistractors, pickWordDefDistractors, pickWordDistractors, sampleUnique } from './distractors';
-import { meaningPrompt, spellsChoice, whichWordPrompt } from './promptFace';
+import { glossQuietLine, meaningPrompt, spellsChoice, whichWordPrompt } from './promptFace';
 import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
 import { buildAsk, buildBig, buildPicksForRoot, otherPartsForRoot, partAsk, partMeanLabels } from './wordParts';
 
@@ -229,7 +229,7 @@ export function buildRushQuestion(input: BuildRushQuestionInput): RushQuestion {
           type,
           ask: `What does ${picked.word} mean?`,
           big: picked.word,
-          sub: `from ${d.root} · ${d.mean}`,
+          sub: glossQuietLine(d.root, d.mean, picked.gloss),
           glossWord: picked.word,
           gloss: picked.gloss,
           opts: shuffleWith(

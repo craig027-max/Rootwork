@@ -4,12 +4,15 @@ import { describe, expect, it } from 'vitest';
 import { ROOTS } from '../data/roots';
 import { mulberry32 } from './daily';
 import {
+  glossQuietLine,
   meaningAsName,
   meaningPrompt,
+  meaningSitsInAnswer,
   promptReadsAnswer,
   spellsChoice,
   whichWordPrompt,
 } from './promptFace';
+import { quizGloss } from './wordDef';
 import { buildRecall } from './recall';
 import { buildRushQuestion } from './rush';
 
@@ -107,6 +110,75 @@ describe('whichWordPrompt', () => {
   });
 });
 
+describe('glossQuietLine', () => {
+  const photo = ROOTS.find((r) => r.root === 'Photo')!;
+  const aqua = ROOTS.find((r) => r.root === 'Aqua')!;
+  const geo = ROOTS.find((r) => r.root === 'Geo')!;
+  const tele = ROOTS.find((r) => r.root === 'Tele')!;
+  const sesqui = ROOTS.find((r) => r.root === 'Sesqui')!;
+
+  function glossOf(root: (typeof ROOTS)[number], word: string): string {
+    const item = root.words.find((w) => w.w === word);
+    const gloss = item ? quizGloss(item.d) : null;
+    if (!gloss) throw new Error(`fixture: ${word}`);
+    return gloss;
+  }
+
+  it('keeps life under Biology and drops it when the tile says life', () => {
+    const biology = glossOf(bio, 'Biology');
+    const biography = glossOf(bio, 'Biography');
+    expect(meaningSitsInAnswer(bio.mean, biology)).toBe(false);
+    expect(meaningSitsInAnswer(bio.mean, biography)).toBe(true);
+    expect(glossQuietLine(bio.root, bio.mean, biology)).toBe('from Bio · life');
+    expect(glossQuietLine(bio.root, bio.mean, biography)).toBe('from Bio');
+    expect(glossQuietLine(bio.root, bio.mean, biography)).not.toContain('life');
+    expect(biography.toLowerCase()).toContain('life');
+  });
+
+  it('drops light, water, earth, and far when those words are the tile', () => {
+    expect(glossQuietLine(photo.root, photo.mean, glossOf(photo, 'Photograph'))).toBe('from Photo');
+    expect(glossQuietLine(photo.root, photo.mean, glossOf(photo, 'Photon'))).toBe('from Photo');
+    expect(glossQuietLine(aqua.root, aqua.mean, glossOf(aqua, 'Aquatic'))).toBe('from Aqua');
+    expect(glossQuietLine(geo.root, geo.mean, glossOf(geo, 'Geography'))).toBe('from Geo');
+    expect(glossQuietLine(tele.root, tele.mean, glossOf(tele, 'Telephone'))).toBe('from Tele');
+    expect(glossQuietLine(photo.root, photo.mean, glossOf(photo, 'Photograph'))).not.toContain('light');
+  });
+
+  it('drops half inside a longer meaning, and keeps the meaning when it is absent', () => {
+    const pedalian = glossOf(sesqui, 'Sesquipedalian');
+    const centennial = glossOf(sesqui, 'Sesquicentennial');
+    const alteral = glossOf(sesqui, 'Sesquialteral');
+    expect(meaningSitsInAnswer(sesqui.mean, pedalian)).toBe(true);
+    expect(meaningSitsInAnswer(sesqui.mean, alteral)).toBe(true);
+    expect(meaningSitsInAnswer(sesqui.mean, centennial)).toBe(false);
+    expect(glossQuietLine(sesqui.root, sesqui.mean, pedalian)).toBe('from Sesqui');
+    expect(glossQuietLine(sesqui.root, sesqui.mean, alteral)).toBe('from Sesqui');
+    expect(glossQuietLine(sesqui.root, sesqui.mean, centennial)).toBe('from Sesqui · one and a half');
+  });
+
+  it('never prints a meaning that sits in that school word’s gloss', () => {
+    for (const root of ROOTS) {
+      for (const word of root.words) {
+        const gloss = quizGloss(word.d);
+        if (!gloss || gloss.toLowerCase() === root.mean.toLowerCase()) continue;
+        const line = glossQuietLine(root.root, root.mean, gloss);
+        expect(line, `${root.root} ${word.w}`).not.toBe(gloss);
+        expect(promptReadsAnswer([line], gloss), `${root.root} ${word.w}`).toBe(false);
+        if (meaningSitsInAnswer(root.mean, gloss)) {
+          expect(line, `${root.root} ${word.w}`).toBe(`from ${root.root}`);
+          for (const piece of root.mean.split(/[^A-Za-z]+/)) {
+            if (piece.length >= 4 && spellsChoice(gloss, piece)) {
+              expect(line.toLowerCase(), `${word.w} ${piece}`).not.toContain(piece.toLowerCase());
+            }
+          }
+        } else {
+          expect(line, `${root.root} ${word.w}`).toBe(`from ${root.root} · ${root.mean}`);
+        }
+      }
+    }
+  });
+});
+
 describe('meaningPrompt', () => {
   it('drops AIR-oh and keeps Aero and the Greek origin', () => {
     const face = meaningPrompt(aero);
@@ -195,6 +267,10 @@ describe('dealt questions leave the tile off the prompt', () => {
     const deck = readFileSync(join(process.cwd(), 'src/ui/Deck.tsx'), 'utf8');
     expect(daily).toContain('whichWordPrompt');
     expect(daily).toContain('meaningPrompt');
+    expect(daily).toContain('glossQuietLine(root.root, root.mean, beat.gloss)');
+    expect(daily).not.toContain('from {root.root} · {root.mean}');
+    const rush = readFileSync(join(process.cwd(), 'src/core/rush.ts'), 'utf8');
+    expect(rush).toContain('glossQuietLine(d.root, d.mean, picked.gloss)');
     expect(daily).not.toContain('<div className="q-say">{root.say}</div>');
     expect(deck).toContain('whichWordPrompt');
     expect(deck).toContain('meaningPrompt');
