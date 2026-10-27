@@ -5,6 +5,7 @@
  * type. Study was still painting Bio over those questions. Meaning and
  * which-word stay on the root: those questions are about Bio.
  */
+import { glossQuietLine } from '../../core/promptFace';
 import { buildBig } from '../../core/wordParts';
 
 export type DeckQuizKind = 'gloss' | 'part' | 'build';
@@ -16,7 +17,8 @@ export interface DeckQuizHero {
   titleClass: string;
   /**
    * Quiet line under the name. Never a glowing "?" and never the answer.
-   * Empty on a pieces question — the ask already says which word.
+   * A school-word question says from Bio · life until that meaning sits
+   * in the gloss — then it says from Bio. Empty on a pieces question.
    */
   hint: string;
 }
@@ -26,6 +28,8 @@ export interface DeckQuizHeroInput {
   mean: string;
   kind?: string | null;
   word?: string | null;
+  /** Authored gloss, so a meaning that sits in the tile can come off the hint. */
+  gloss?: string | null;
   part?: string | null;
   split?: string | null;
 }
@@ -73,7 +77,7 @@ export function deckQuizHero(input: DeckQuizHeroInput): DeckQuizHero | null {
 
   if (input.kind === 'gloss') {
     if (!word) return null;
-    const hint = root && mean ? `from ${root} · ${mean}` : root ? `from ${root}` : 'this word';
+    const hint = glossQuietLine(root, mean, input.gloss);
     return {
       kind: 'gloss',
       title: word,

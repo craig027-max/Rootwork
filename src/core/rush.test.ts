@@ -6,6 +6,7 @@ import {
   scoreWordDistractor,
   wordContainsRoot,
 } from './distractors';
+import { glossQuietLine, meaningSitsInAnswer } from './promptFace';
 import { buildRushQuestion, rushWordHint, whichRootFace } from './rush';
 import { quizGloss } from './wordDef';
 import { buildBig, buildPicksForRoot, otherPartsForRoot, partMeanLabels } from './wordParts';
@@ -132,6 +133,8 @@ describe('buildRushQuestion', () => {
     expect(q.big).toBe(q.glossWord);
     expect(q.big).not.toBe('Bio');
     expect(q.sub).toBe('from Bio · life');
+    expect(q.sub).toBe(glossQuietLine(bio.root, bio.mean, q.gloss));
+    expect(meaningSitsInAnswer(bio.mean, q.gloss ?? '')).toBe(false);
     expect(q.say).toBeUndefined();
     expect(q.opts.filter((o) => o.ok)).toHaveLength(1);
     expect(q.opts.find((o) => o.ok)?.label).toBe(q.gloss);
@@ -140,6 +143,31 @@ describe('buildRushQuestion', () => {
       expect(glosses.has(opt.label)).toBe(true);
       expect(opt.label).not.toBe('life');
     }
+  });
+
+  it('drops a root meaning that already sits in the school-word gloss', () => {
+    const photo = ROOTS.find((r) => r.root === 'Photo')!;
+    for (const root of ROOTS) {
+      for (let seed = 0; seed < 6; seed++) {
+        const q = buildRushQuestion({
+          root,
+          scoped: ROOTS,
+          all: ROOTS,
+          type: 'gloss',
+          rng: mulberry32(seed + 11),
+        });
+        if (q.type !== 'gloss' || !q.gloss) continue;
+        expect(q.sub, `${root.root} ${q.glossWord}`).toBe(
+          glossQuietLine(root.root, root.mean, q.gloss),
+        );
+        expect(q.sub, q.glossWord).not.toBe(q.gloss);
+        if (meaningSitsInAnswer(root.mean, q.gloss)) {
+          expect(q.sub, `${root.root} ${q.glossWord}`).toBe(`from ${root.root}`);
+        }
+      }
+    }
+    const photograph = photo.words.find((w) => w.w === 'Photograph')!;
+    expect(glossQuietLine(photo.root, photo.mean, quizGloss(photograph.d))).toBe('from Photo');
   });
 
   it('asks what the other piece means, and the big type is that piece', () => {

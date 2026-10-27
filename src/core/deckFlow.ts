@@ -9,7 +9,7 @@
 import { ROOTS, ROOTS_BY_ID, neighborOpenable, rootId, type Root, type RootId } from '../data/roots';
 import type { HearBeatChip } from './hearBeats';
 import { rushGlossMissLine } from './rushRecap';
-import { spellsChoice } from './promptFace';
+import { meaningSitsInAnswer, spellsChoice } from './promptFace';
 import { speakablePronunciation } from './speak';
 import { shortWordDef } from './wordDef';
 import {
@@ -720,7 +720,8 @@ export function hearHoldHidesMean(opts: {
  * tile (AIR-oh over air, PYRE over Pyre). Which-word and school-word
  * questions pass `askingMean` false, unless the school word is the
  * meaning (Equal). The root meaning there is a hint, not the answer
- * tile. Find keeps `wordRootHearHold`.
+ * tile — unless that meaning is already a word in the gloss (life
+ * inside "a person's life"). Find keeps `wordRootHearHold`.
  */
 export function hearHoldWhileAsking(opts: {
   hearFinished: boolean;
@@ -740,7 +741,7 @@ export function hearHoldWhileAsking(opts: {
   const spokenMean = opts.mean.replace(/\s+/g, ' ').trim();
   const soundLeaks =
     answer !== '' && (spellsChoice(sound, answer) || spellsChoice(opts.say, answer));
-  const meanLeaks = opts.askingMean || (answer !== '' && spellsChoice(spokenMean, answer));
+  const meanLeaks = opts.askingMean || (answer !== '' && meaningSitsInAnswer(spokenMean, answer));
   if (soundLeaks && meanLeaks) return { line: null };
   if (meanLeaks) return { line: sound || null };
   if (soundLeaks) return { line: spokenMean || null };

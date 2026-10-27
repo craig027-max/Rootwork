@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { ROOTS } from '../data/roots';
 import { canon } from '../core/distractors';
+import { glossQuietLine, meaningSitsInAnswer, spellsChoice } from '../core/promptFace';
 import { quizGloss } from '../core/wordDef';
 import { buildBig, buildPicksForRoot, otherPartsForRoot } from '../core/wordParts';
 import { deckQuizEyebrow, deckQuizHero, deckStudyLead, questionHudName } from './deck/deckQuizHero';
@@ -39,13 +40,32 @@ describe('Study quiz hero names the thing being asked', () => {
       mean: bio.mean,
       kind: 'gloss',
       word: 'Biology',
+      gloss,
     });
     expect(hero?.title).toBe('Biology');
     expect(hero?.title).not.toBe(bio.root);
     expect(hero?.hint).toBe(`from ${bio.root} · ${bio.mean}`);
+    expect(hero?.hint).toBe(glossQuietLine(bio.root, bio.mean, gloss));
     expect(hero?.hint).not.toBe('?');
     expect(hero?.hint).not.toContain(gloss);
     expect(hero?.titleClass).toBe('is-gloss');
+  });
+
+  it('drops life under Biography — the tile already says life', () => {
+    const biography = bio.words.find((w) => w.w === 'Biography')!;
+    const spoken = quizGloss(biography.d)!;
+    const hero = deckQuizHero({
+      root: bio.root,
+      mean: bio.mean,
+      kind: 'gloss',
+      word: 'Biography',
+      gloss: spoken,
+    });
+    expect(spoken.toLowerCase()).toContain('life');
+    expect(hero?.title).toBe('Biography');
+    expect(hero?.hint).toBe('from Bio');
+    expect(hero?.hint).not.toContain('life');
+    expect(hero?.hint).not.toContain(spoken);
   });
 
   it('names -logy on a piece question — not Bio, and not study of', () => {
@@ -141,13 +161,23 @@ describe('Study quiz hero names the thing being asked', () => {
           mean: root.mean,
           kind: 'gloss',
           word: word.w,
+          gloss: spoken,
         });
         const title = word.w.replace(/\s+/g, ' ').trim();
         expect(hero?.title, word.w).toBe(title);
         if (title !== root.root) expect(hero?.title, word.w).not.toBe(root.root);
+        expect(hero?.hint, word.w).toBe(glossQuietLine(root.root, root.mean, spoken));
         expect(hero?.hint, word.w).not.toBe('?');
         expect(hero?.hint, word.w).not.toBe(spoken);
         expect(hero?.hint, word.w).not.toContain(spoken);
+        if (meaningSitsInAnswer(root.mean, spoken)) {
+          expect(hero?.hint, word.w).toBe(`from ${root.root}`);
+          for (const piece of root.mean.split(/[^A-Za-z]+/)) {
+            if (piece.length >= 4 && spellsChoice(spoken, piece)) {
+              expect(hero?.hint.toLowerCase(), `${word.w} ${piece}`).not.toContain(piece.toLowerCase());
+            }
+          }
+        }
       }
       for (const part of otherPartsForRoot(root)) {
         const hero = deckQuizHero({
@@ -188,6 +218,7 @@ describe('Study quiz hero names the thing being asked', () => {
     expect(deck).not.toContain('quizHero.alt');
     expect(deck).toContain('const quizHero = finding');
     expect(deck).toContain(': deckQuizHero({');
+    expect(deck).toContain('gloss: cardRecall?.beat.gloss');
     expect(deck).toContain("kinds: deckEntry === 'remember' ? ['mean', 'word'] : undefined");
     expect(deck).toContain('ww-root${finding ? \' is-find\' : \'\'}${quizHero ? ` ${quizHero.titleClass}` : \'\'}');
     expect(deck).toContain('quizHero ? null : (');
