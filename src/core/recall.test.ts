@@ -11,6 +11,7 @@ import {
   otherPartsForRoot,
   parseWordSplit,
   partMeanLabels,
+  samePieceIdea,
   usablePartMean,
 } from './wordParts';
 
@@ -214,7 +215,35 @@ describe('buildRecall', () => {
       expect(beat.teach).toContain(`${beat.part} means ${beat.partMean}`);
       expect(beat.teach).not.toMatch(/Bio means life/);
       expect(beat.teach.toLowerCase()).not.toMatch(/wrong|nope|fail|shame/);
+      for (const opt of beat.opts) {
+        if (opt.ok) continue;
+        expect(samePieceIdea(opt.label, beat.partMean ?? ''), beat.ask).toBe(false);
+      }
     }
+  });
+
+  it('does not offer study as a wrong tile for -logy (study of)', () => {
+    for (let seed = 0; seed < 30; seed++) {
+      const beat = buildRecall({
+        root: bio,
+        pool: ROOTS,
+        kind: 'part',
+        rng: mulberry32(seed),
+        choices: 3,
+      });
+      if (beat.partMean !== 'study of' && beat.partMean !== 'writing') continue;
+      const labels = beat.opts.map((opt) => opt.label);
+      expect(labels, beat.ask).not.toContain(beat.partMean === 'study of' ? 'study' : 'write');
+    }
+    const logy = buildRecall({
+      root: bio,
+      pool: ROOTS,
+      kind: 'part',
+      rng: () => 0,
+      choices: 3,
+    });
+    expect(logy.partMean).toBe('study of');
+    expect(logy.opts.map((opt) => opt.label)).not.toContain('study');
   });
 
   it('builds an other-part beat for every root that has one, and falls back otherwise', () => {

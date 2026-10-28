@@ -7,7 +7,9 @@
  * (angle, way, view) and tiny glue glosses (of, do, in) are not questions.
  */
 import type { Root } from '../data/roots.data';
+import { shuffleWith } from './daily';
 import { canon } from './distractors';
+import { carriesInflection } from './promptFace';
 
 export interface WordPiece {
   /** Letters as written, e.g. "-logy" or "graph". */
@@ -82,6 +84,70 @@ export function otherPartsForRoot(root: Root): OtherPart[] {
         letters: piece.letters,
         mean,
       });
+    }
+  }
+  return out;
+}
+
+const PIECE_GLUE = new Set(['of', 'that']);
+
+function pieceHeads(label: string): string[] {
+  return label
+    .toLowerCase()
+    .split('/')
+    .map((part) => {
+      const words = part.replace(/\s+/g, ' ').trim().split(' ').filter(Boolean);
+      while (words.length > 1 && PIECE_GLUE.has(words[words.length - 1]!)) words.pop();
+      return words.join(' ');
+    })
+    .filter(Boolean);
+}
+
+/**
+ * True when two piece glosses are the same idea a kid would accept.
+ * "study of" is study. "writing" is write. "makes" is make. "voice/call"
+ * is voice. "break down" is not down, and "without" is not with — those
+ * are different choices, so they can still sit beside each other.
+ */
+export function samePieceIdea(a: string, b: string): boolean {
+  const left = pieceHeads(a);
+  const right = pieceHeads(b);
+  for (const x of left) {
+    for (const y of right) {
+      if (x === y) return true;
+      if (!x.includes(' ') && !y.includes(' ') && (carriesInflection(x, y) || carriesInflection(y, x))) {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+/**
+ * Wrong tiles for "what does this piece mean?".
+ * A rival that is the same idea as the answer — study next to study of —
+ * is not a choice. Pools are tried in order, the same way other distractors
+ * fall back from the open tier to the full catalog.
+ */
+export function pickPartDistractors(
+  pools: readonly (readonly Root[])[],
+  n: number,
+  exclude: readonly string[],
+  rng: () => number = Math.random,
+): string[] {
+  if (n <= 0) return [];
+  const banned = exclude.map((label) => label.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const pool of pools) {
+    for (const label of shuffleWith(partMeanLabels(pool), rng)) {
+      const key = canon(label);
+      if (seen.has(key)) continue;
+      if (banned.some((item) => canon(item) === key || samePieceIdea(item, label))) continue;
+      if (out.some((item) => samePieceIdea(item, label))) continue;
+      seen.add(key);
+      out.push(label);
+      if (out.length >= n) return out;
     }
   }
   return out;
