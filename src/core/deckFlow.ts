@@ -720,8 +720,9 @@ export function hearHoldHidesMean(opts: {
  * tile (AIR-oh over air, PYRE over Pyre). Which-word and school-word
  * questions pass `askingMean` false, unless the school word is the
  * meaning (Equal). The root meaning there is a hint, not the answer
- * tile — unless that meaning is already a word in the gloss (life
- * inside "a person's life"). Find keeps `wordRootHearHold`.
+ * tile — unless that meaning is already in the gloss (life inside
+ * "a person's life", light inside "sunlight"). Find keeps
+ * `wordRootHearHold`.
  */
 export function hearHoldWhileAsking(opts: {
   hearFinished: boolean;

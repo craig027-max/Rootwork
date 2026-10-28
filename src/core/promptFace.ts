@@ -113,18 +113,58 @@ export function whichWordPrompt(root: PromptRoot, word: string): WhichWordPrompt
 }
 
 /**
- * True when this root meaning is already a word inside the answer tile.
- * "life" sits in "a real person's life". "light" sits in "capturing light".
- * "living things" does not contain the word life. A piece of a longer
+ * Endings that keep the meaning's letters as the same word.
+ * "stars" is star. "smallest" is small. "heard" is hear.
+ * A leftover like the "t" in "start" is a different word.
+ */
+const MEANING_INFLECTION =
+  /^(?:s|es|ed|d|ing|er|est|ly|y|ies|ied|ier|iest|ness|ful|less|ment|en|ish|ous|ive|ion|tion|ation|able|ible|ings|ers)$/;
+
+/**
+ * True when `word` is this meaning plus an ending or a compound.
+ * "sunlight" carries light. "hands" carries hand. "knowledge" carries
+ * know. "moving" carries move (the e drops). "living" does not carry
+ * life, and "start" does not carry star.
+ */
+function wordCarriesMeaning(word: string, mean: string): boolean {
+  if (mean.length < 4 || word.length <= mean.length) return false;
+  const spoken = word.toLowerCase();
+  const stem = mean.toLowerCase();
+  if (spoken.startsWith(stem)) {
+    const rest = spoken.slice(stem.length);
+    return MEANING_INFLECTION.test(rest) || rest.length >= 3;
+  }
+  if (spoken.endsWith(stem) && spoken.length - stem.length >= 2) return true;
+  if (stem.endsWith('e')) {
+    const dropped = stem.slice(0, -1);
+    if (dropped.length >= 3 && spoken.startsWith(dropped)) {
+      return /^(?:ed|er|est|ing)$/.test(spoken.slice(dropped.length));
+    }
+  }
+  return false;
+}
+
+/** True when some word in the tile carries `mean` as a stem or a compound. */
+function meaningCarriesIn(mean: string, answer: string): boolean {
+  const words = answer.match(/[A-Za-z]+/g) ?? [];
+  return words.some((word) => wordCarriesMeaning(word, mean));
+}
+
+/**
+ * True when this root meaning is already inside the answer tile.
+ * "life" sits in "a real person's life". "light" sits in "sunlight"
+ * and in "capturing light". "hand" sits in "hands". "star" sits in
+ * "stars". "living things" does not contain the word life, and
+ * "start" does not contain the word star. A piece of a longer
  * meaning counts too: "half" sits in "foot-and-a-half".
  */
 export function meaningSitsInAnswer(mean: string, answer: string): boolean {
   const spoken = clean(mean);
   const tile = clean(answer);
   if (!spoken || !tile) return false;
-  if (spellsChoice(tile, spoken)) return true;
+  if (spellsChoice(tile, spoken) || meaningCarriesIn(spoken, tile)) return true;
   for (const word of spoken.split(/[^A-Za-z]+/)) {
-    if (word.length >= 4 && spellsChoice(tile, word)) return true;
+    if (word.length >= 4 && (spellsChoice(tile, word) || meaningCarriesIn(word, tile))) return true;
   }
   return false;
 }
@@ -132,8 +172,9 @@ export function meaningSitsInAnswer(mean: string, answer: string): boolean {
 /**
  * Quiet line under "What does Biography mean?".
  * `from Bio · life` hands out the word life when the tile is a person's
- * life. Biology's "living things" does not contain that word, so the
- * hint stays. Photograph drops light. The Yes and the miss still teach it.
+ * life. `from Photo · light` hands out light when the tile says sunlight.
+ * Biology's "living things" does not contain that word, so the hint
+ * stays. The Yes and the miss still teach the meaning.
  */
 export function glossQuietLine(root: string, mean: string, gloss?: string | null): string {
   const name = clean(root);

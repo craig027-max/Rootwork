@@ -109,6 +109,23 @@ describe('buildRecall', () => {
     expect(sawBiology).toBe(true);
   });
 
+  it('a Photosynthesis miss still teaches light after the hint dropped it', () => {
+    const photo = ROOTS.find((r) => r.root === 'Photo');
+    if (!photo) throw new Error('fixture: Photo');
+    const beat = buildRecall({
+      root: photo,
+      pool,
+      kind: 'gloss',
+      rng: () => 0.4,
+      choices: 3,
+    });
+    expect(beat.word).toBe('Photosynthesis');
+    expect(beat.gloss?.toLowerCase()).toContain('sunlight');
+    expect(beat.teach).toContain('photo (light)');
+    expect(beat.ask).toBe('What does Photosynthesis mean?');
+    expect(beat.ask).not.toContain('light');
+  });
+
   it('can build a school-word beat for every root', () => {
     const glosses = new Set<string>();
     for (const root of ROOTS) {

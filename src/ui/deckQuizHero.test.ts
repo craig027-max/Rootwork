@@ -51,6 +51,24 @@ describe('Study quiz hero names the thing being asked', () => {
     expect(hero?.titleClass).toBe('is-gloss');
   });
 
+  it('drops light under Photosynthesis — sunlight already says it', () => {
+    const photo = ROOTS.find((r) => r.root === 'Photo')!;
+    const sun = photo.words.find((w) => w.w === 'Photosynthesis')!;
+    const spoken = quizGloss(sun.d)!;
+    const hero = deckQuizHero({
+      root: photo.root,
+      mean: photo.mean,
+      kind: 'gloss',
+      word: 'Photosynthesis',
+      gloss: spoken,
+    });
+    expect(spoken.toLowerCase()).toContain('sunlight');
+    expect(hero?.title).toBe('Photosynthesis');
+    expect(hero?.hint).toBe('from Photo');
+    expect(hero?.hint).not.toContain('light');
+    expect(hero?.hint).not.toContain(spoken);
+  });
+
   it('drops life under Biography — the tile already says life', () => {
     const biography = bio.words.find((w) => w.w === 'Biography')!;
     const spoken = quizGloss(biography.d)!;
