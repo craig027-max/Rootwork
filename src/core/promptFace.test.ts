@@ -144,6 +144,41 @@ describe('glossQuietLine', () => {
     expect(glossQuietLine(photo.root, photo.mean, glossOf(photo, 'Photograph'))).not.toContain('light');
   });
 
+  it('drops a meaning tucked inside the tile — sunlight, hands, stars — and keeps life over living', () => {
+    const sun = glossOf(photo, 'Photosynthesis');
+    expect(sun.toLowerCase()).toContain('sunlight');
+    expect(sun.toLowerCase()).not.toMatch(/\blight\b/);
+    expect(meaningSitsInAnswer(photo.mean, sun)).toBe(true);
+    expect(glossQuietLine(photo.root, photo.mean, sun)).toBe('from Photo');
+    expect(glossQuietLine(photo.root, photo.mean, sun)).not.toContain('light');
+
+    const manu = ROOTS.find((r) => r.root === 'Manu')!;
+    const hands = glossOf(manu, 'Manicure');
+    expect(meaningSitsInAnswer('hand', hands)).toBe(true);
+    expect(glossQuietLine(manu.root, manu.mean, hands)).toBe('from Manu');
+    expect(glossQuietLine(manu.root, manu.mean, hands)).not.toContain('hand');
+
+    const astro = ROOTS.find((r) => r.root === 'Astro')!;
+    const stars = glossOf(astro, 'Astronomy');
+    expect(meaningSitsInAnswer('star', stars)).toBe(true);
+    expect(glossQuietLine(astro.root, astro.mean, stars)).toBe('from Astro');
+    expect(glossQuietLine(astro.root, astro.mean, stars)).not.toContain('star');
+
+    const min = ROOTS.find((r) => r.root === 'Min')!;
+    expect(glossQuietLine(min.root, min.mean, glossOf(min, 'Minimum'))).toBe('from Min');
+    expect(glossQuietLine(min.root, min.mean, glossOf(min, 'Minor'))).toBe('from Min');
+
+    const mot = ROOTS.find((r) => r.root === 'Mot')!;
+    expect(meaningSitsInAnswer('move', glossOf(mot, 'Motion'))).toBe(true);
+    expect(glossQuietLine(mot.root, mot.mean, glossOf(mot, 'Motion'))).toBe('from Mot');
+
+    expect(meaningSitsInAnswer('life', 'The science of living things')).toBe(false);
+    expect(meaningSitsInAnswer('star', 'a start in the sky')).toBe(false);
+    expect(meaningSitsInAnswer('form', 'information about the topic')).toBe(false);
+    expect(meaningSitsInAnswer('light', 'How green plants use sunlight')).toBe(true);
+    expect(meaningSitsInAnswer('know', 'Knowledge gained by study')).toBe(true);
+  });
+
   it('drops half inside a longer meaning, and keeps the meaning when it is absent', () => {
     const pedalian = glossOf(sesqui, 'Sesquipedalian');
     const centennial = glossOf(sesqui, 'Sesquicentennial');

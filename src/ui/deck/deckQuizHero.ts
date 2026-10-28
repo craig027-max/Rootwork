@@ -18,7 +18,8 @@ export interface DeckQuizHero {
   /**
    * Quiet line under the name. Never a glowing "?" and never the answer.
    * A school-word question says from Bio · life until that meaning sits
-   * in the gloss — then it says from Bio. Empty on a pieces question.
+   * in the gloss — life in "a person's life", light in "sunlight" —
+   * then it says from Bio. Empty on a pieces question.
    */
   hint: string;
 }

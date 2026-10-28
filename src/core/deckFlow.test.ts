@@ -968,6 +968,21 @@ describe('after Hear clip: hold spoken-sound + meaning until next tap', () => {
       answer: living,
     });
     expect(kept.line).toBe('bye oh · life');
+
+    const sun = photo.words.find((w) => w.w === 'Photosynthesis')!;
+    const sunlight = sun.d.split('—')[0]?.trim() ?? sun.d;
+    const tucked = hearHoldWhileAsking({
+      hearFinished: true,
+      listening: false,
+      won: false,
+      say: photo.say,
+      mean: photo.mean,
+      askingMean: hearHoldHidesMean({ kind: 'gloss', mean: photo.mean, answer: sunlight }),
+      answer: sunlight,
+    });
+    expect(sunlight.toLowerCase()).toContain('sunlight');
+    expect(tucked.line).toBe('foe toh');
+    expect(tucked.line).not.toContain('light');
   });
 
   it('drops a spoken sound that is the tile', () => {
