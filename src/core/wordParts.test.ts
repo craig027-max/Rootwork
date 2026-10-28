@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { mulberry32 } from './daily';
 import { spellsChoice } from './promptFace';
 import { ROOTS } from '../data/roots';
 import {
@@ -17,6 +18,8 @@ import {
   partMissLine,
   partTeach,
   partYesLine,
+  pickPartDistractors,
+  samePieceIdea,
   pieceMatchesRoot,
   usablePartMean,
 } from './wordParts';
@@ -97,6 +100,56 @@ describe('other part of a school word', () => {
     expect(labels).not.toContain('of');
     expect(labels).not.toContain('do');
     expect(new Set(labels.map((l) => l.toLowerCase())).size).toBe(labels.length);
+  });
+
+  it('treats a gloss and its ending as one idea, and keeps a real rival', () => {
+    expect(samePieceIdea('study of', 'study')).toBe(true);
+    expect(samePieceIdea('writing', 'write')).toBe(true);
+    expect(samePieceIdea('makes', 'make')).toBe(true);
+    expect(samePieceIdea('placing', 'place')).toBe(true);
+    expect(samePieceIdea('full of', 'fully')).toBe(true);
+    expect(samePieceIdea('voice/call', 'voice')).toBe(true);
+    expect(samePieceIdea('voice/call', 'call')).toBe(true);
+    expect(samePieceIdea('thing that', 'thing')).toBe(true);
+    expect(samePieceIdea('nature of', 'nature')).toBe(true);
+    expect(samePieceIdea('break down', 'down')).toBe(false);
+    expect(samePieceIdea('break down', 'break')).toBe(false);
+    expect(samePieceIdea('putting together', 'together')).toBe(false);
+    expect(samePieceIdea('without', 'with')).toBe(false);
+    expect(samePieceIdea('underworld', 'under')).toBe(false);
+    expect(samePieceIdea('remove', 'move')).toBe(false);
+    expect(samePieceIdea('particle', 'part')).toBe(false);
+  });
+
+  it('never deals study beside study of, and still deals a real rival', () => {
+    for (const root of ROOTS) {
+      for (const part of otherPartsForRoot(root)) {
+        for (let seed = 0; seed < 6; seed++) {
+          const distract = pickPartDistractors(
+            [ROOTS],
+            2,
+            [part.mean, root.mean],
+            mulberry32(seed),
+          );
+          expect(distract.length, `${part.word} ${part.letters}`).toBeGreaterThanOrEqual(1);
+          for (const label of distract) {
+            expect(samePieceIdea(label, part.mean), `${part.word}: ${label} ~ ${part.mean}`).toBe(
+              false,
+            );
+            expect(samePieceIdea(label, root.mean), `${part.word}: ${label} ~ ${root.mean}`).toBe(
+              false,
+            );
+          }
+          expect(new Set(distract.map((label) => label.toLowerCase())).size).toBe(distract.length);
+        }
+      }
+    }
+    const beside = pickPartDistractors([ROOTS], 80, ['putting together'], () => 0);
+    expect(beside).toContain('together');
+    expect(beside).not.toContain('putting together');
+    const study = pickPartDistractors([ROOTS], 80, ['study of'], () => 0);
+    expect(study).not.toContain('study');
+    expect(study).not.toContain('study of');
   });
 });
 

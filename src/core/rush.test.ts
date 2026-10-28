@@ -9,7 +9,7 @@ import {
 import { glossQuietLine, meaningSitsInAnswer } from './promptFace';
 import { buildRushQuestion, rushWordHint, whichRootFace } from './rush';
 import { quizGloss } from './wordDef';
-import { buildBig, buildPicksForRoot, otherPartsForRoot, partMeanLabels } from './wordParts';
+import { buildBig, buildPicksForRoot, otherPartsForRoot, partMeanLabels, samePieceIdea } from './wordParts';
 
 const form = ROOTS.find((r) => r.root === 'Form')!;
 const bio = ROOTS.find((r) => r.root === 'Bio')!;
@@ -212,6 +212,31 @@ describe('buildRushQuestion', () => {
     expect(q.opts.length).toBeGreaterThanOrEqual(2);
     expect(q.opts.filter((o) => o.ok)).toHaveLength(1);
     expect(q.big).not.toBe(bio.root);
+  });
+
+  it('does not put the same idea on two piece tiles', () => {
+    for (const root of ROOTS) {
+      if (otherPartsForRoot(root).length === 0) continue;
+      for (let seed = 0; seed < 4; seed++) {
+        const q = buildRushQuestion({
+          root,
+          scoped: tier1,
+          all: ROOTS,
+          type: 'part',
+          rng: mulberry32(seed + 40),
+        });
+        if (q.type !== 'part' || !q.partMean) continue;
+        const wrong = q.opts.filter((opt) => !opt.ok).map((opt) => opt.label);
+        for (const label of wrong) {
+          expect(samePieceIdea(label, q.partMean), `${q.ask} :: ${label}`).toBe(false);
+        }
+        for (let i = 0; i < wrong.length; i++) {
+          for (let j = i + 1; j < wrong.length; j++) {
+            expect(samePieceIdea(wrong[i]!, wrong[j]!), q.ask).toBe(false);
+          }
+        }
+      }
+    }
   });
 
   it('asks which word the pieces build, and the big type is the pieces', () => {

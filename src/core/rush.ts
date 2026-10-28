@@ -9,10 +9,10 @@
 
 import type { Root } from '../data/roots';
 import { shuffleWith } from './daily';
-import { canon, pickMeaningDistractors, pickRootDistractors, pickWordDefDistractors, pickWordDistractors, sampleUnique } from './distractors';
+import { canon, pickMeaningDistractors, pickRootDistractors, pickWordDefDistractors, pickWordDistractors } from './distractors';
 import { glossQuietLine, meaningPrompt, spellsChoice, whichWordPrompt } from './promptFace';
 import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
-import { buildAsk, buildBig, buildPicksForRoot, otherPartsForRoot, partAsk, partMeanLabels } from './wordParts';
+import { buildAsk, buildBig, buildPicksForRoot, otherPartsForRoot, partAsk, pickPartDistractors } from './wordParts';
 
 export { rushWordHint } from './promptFace';
 
@@ -171,8 +171,8 @@ export function buildRushQuestion(input: BuildRushQuestionInput): RushQuestion {
     const picks = otherPartsForRoot(d);
     if (picks.length > 0) {
       const picked = rndOf(picks, rng);
-      const distract = sampleUnique(
-        [partMeanLabels(scoped), partMeanLabels(all)],
+      const distract = pickPartDistractors(
+        [scoped, all],
         3,
         [picked.mean, d.mean],
         rng,

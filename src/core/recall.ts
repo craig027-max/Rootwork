@@ -9,7 +9,7 @@
 import { ROOTS, type Root } from '../data/roots';
 import { hashSeed, mulberry32, shuffleWith, type DailyPending } from './daily';
 import { dailyNextPeekFace } from './dailyNextPeek';
-import { canon, pickMeaningDistractors, pickWordDefDistractors, pickWordDistractors, sampleUnique } from './distractors';
+import { canon, pickMeaningDistractors, pickWordDefDistractors, pickWordDistractors } from './distractors';
 import { spellsChoice } from './promptFace';
 import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
 import {
@@ -19,8 +19,8 @@ import {
   buildTeach,
   otherPartsForRoot,
   partAsk,
-  partMeanLabels,
   partTeach,
+  pickPartDistractors,
   type OtherPart,
 } from './wordParts';
 
@@ -125,8 +125,8 @@ function buildPartRecall(
   if (picks.length === 0) return null;
   const picked = picks[Math.floor(rng() * picks.length)]!;
   const distractCount = Math.max(1, Math.min(want - 1, 2));
-  const distract = sampleUnique(
-    [partMeanLabels(pool), partMeanLabels(ROOTS)],
+  const distract = pickPartDistractors(
+    [pool, ROOTS],
     distractCount,
     [picked.mean, root.mean],
     rng,
@@ -276,8 +276,8 @@ function pinnedPartBeat(
   want: number,
 ): RecallBeat | null {
   const distractCount = Math.max(1, Math.min(want - 1, 2));
-  const distract = sampleUnique(
-    [partMeanLabels(pool), partMeanLabels(ROOTS)],
+  const distract = pickPartDistractors(
+    [pool, ROOTS],
     distractCount,
     [part.mean, root.mean],
     rng,

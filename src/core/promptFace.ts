@@ -121,6 +121,23 @@ const MEANING_INFLECTION =
   /^(?:s|es|ed|d|ing|er|est|ly|y|ies|ied|ier|iest|ness|ful|less|ment|en|ish|ous|ive|ion|tion|ation|able|ible|ings|ers)$/;
 
 /**
+ * True when `word` is `stem` plus a grammatical ending.
+ * "writing" is write. "makes" is make. "placing" is place (the e drops).
+ * "without" is not with, and "sunlight" is not light — those are compounds.
+ */
+export function carriesInflection(word: string, stem: string): boolean {
+  if (stem.length < 3 || word.length <= stem.length) return false;
+  if (word.startsWith(stem) && MEANING_INFLECTION.test(word.slice(stem.length))) return true;
+  if (stem.endsWith('e')) {
+    const dropped = stem.slice(0, -1);
+    if (dropped.length >= 3 && word.startsWith(dropped)) {
+      return /^(?:ed|er|est|ing)$/.test(word.slice(dropped.length));
+    }
+  }
+  return false;
+}
+
+/**
  * True when `word` is this meaning plus an ending or a compound.
  * "sunlight" carries light. "hands" carries hand. "knowledge" carries
  * know. "moving" carries move (the e drops). "living" does not carry
@@ -135,13 +152,7 @@ function wordCarriesMeaning(word: string, mean: string): boolean {
     return MEANING_INFLECTION.test(rest) || rest.length >= 3;
   }
   if (spoken.endsWith(stem) && spoken.length - stem.length >= 2) return true;
-  if (stem.endsWith('e')) {
-    const dropped = stem.slice(0, -1);
-    if (dropped.length >= 3 && spoken.startsWith(dropped)) {
-      return /^(?:ed|er|est|ing)$/.test(spoken.slice(dropped.length));
-    }
-  }
-  return false;
+  return carriesInflection(spoken, stem);
 }
 
 /** True when some word in the tile carries `mean` as a stem or a compound. */
