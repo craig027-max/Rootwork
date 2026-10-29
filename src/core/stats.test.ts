@@ -3,13 +3,16 @@ import {
   EMPTY_STATS,
   accuracyPct,
   bumpStreak,
+  endedStreakPhrase,
   gradeForPct,
   levelForXp,
+  liveStreakCount,
   recordDailyComplete,
   recordDailyHit,
   recordRootLearned,
   recordRun,
   starsForPct,
+  streakHold,
   xpForRun,
   XP_PER_DAILY,
   XP_PER_ROOT,
@@ -87,6 +90,37 @@ describe('bumpStreak', () => {
       streakLongest: 6,
       lastActiveDay: '2026-06-29',
     });
+  });
+});
+
+describe('streakHold', () => {
+  const counted = { streakCurrent: 7, lastActiveDay: '2026-09-04' };
+
+  it('keeps yesterday at risk and today banked', () => {
+    expect(streakHold(counted, '2026-09-04')).toBe('banked');
+    expect(streakHold(counted, '2026-09-05')).toBe('risk');
+    expect(liveStreakCount(counted, '2026-09-05')).toBe(7);
+    expect(streakHold({ streakCurrent: 2, lastActiveDay: '2026-06-30' }, '2026-07-01')).toBe('risk');
+  });
+
+  it('treats a missed day as already over — the stored count is not live', () => {
+    expect(streakHold(counted, '2026-09-06')).toBe('lapsed');
+    expect(liveStreakCount(counted, '2026-09-06')).toBe(0);
+    expect(streakHold({ streakCurrent: 7, lastActiveDay: null }, '2026-09-06')).toBe('lapsed');
+    expect(streakHold({ streakCurrent: 7, lastActiveDay: '2026-09-08' }, '2026-09-06')).toBe('lapsed');
+    expect(streakHold(EMPTY_STATS, '2026-09-06')).toBe('none');
+    expect(endedStreakPhrase(7)).toBe('Your 7-day streak ended');
+    expect(endedStreakPhrase(1)).toBe('Your 1-day streak ended');
+    expect(endedStreakPhrase(0)).toBe('');
+  });
+
+  it('the next play after a gap starts at 1 and does not restore the old count', () => {
+    const lapsed = { ...EMPTY_STATS, streakCurrent: 7, streakLongest: 7, lastActiveDay: '2026-09-04' };
+    const next = recordRootLearned(lapsed, { day: '2026-09-06' });
+    expect(next.streakCurrent).toBe(1);
+    expect(next.streakLongest).toBe(7);
+    expect(streakHold(next, '2026-09-06')).toBe('banked');
+    expect(liveStreakCount(next, '2026-09-06')).toBe(1);
   });
 });
 

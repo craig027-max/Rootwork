@@ -67,6 +67,7 @@
  */
 
 import type { Root } from '../data/roots';
+import { endedStreakPhrase, liveStreakCount, streakHold } from './stats';
 
 export const DAILY_COUNT = 5;
 
@@ -673,6 +674,29 @@ function cleanDailyNames(names?: readonly string[], max = 3): string[] {
     .map((n) => n.replace(/\s+/g, ' ').trim())
     .filter(Boolean)
     .slice(0, max);
+}
+
+/**
+ * Daily start card before any of today's five are answered.
+ * A streak that already lapsed is named as ended — not "you're on 🔥 7"
+ * when the next correct tap will reset that count to 1.
+ */
+export function dailyFreshStartLead(
+  count: number,
+  day: string,
+  stats: { streakCurrent: number; lastActiveDay: string | null },
+): string {
+  const n = Number.isFinite(count) ? Math.max(0, Math.round(count)) : 0;
+  const head = `${n} fresh roots for ${day}.`;
+  if (streakHold(stats, day) === 'lapsed') {
+    const ended = endedStreakPhrase(stats.streakCurrent);
+    return ended
+      ? `${head} ${ended} — today's five start a new one.`
+      : `${head} See the animation, tap the meaning, keep your streak.`;
+  }
+  const live = liveStreakCount(stats, day);
+  const flame = live > 0 ? ` — you're on 🔥 ${live}` : '';
+  return `${head} See the animation, tap the meaning, keep your streak${flame}.`;
 }
 
 /**

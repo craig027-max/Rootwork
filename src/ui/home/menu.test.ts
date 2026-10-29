@@ -488,6 +488,29 @@ describe('homeSecondaryAction — Browse / See all is the catalog, not Bio', () 
     expect(homeSecondaryAction(builderRow)).toEqual({ kind: 'tier', t: 2 });
   });
 
+  it('hides a lapsed 🔥 count and names the ended streak on Daily', () => {
+    const { items } = buildMenu(startedBuilder, false, {
+      currentTier: 2,
+      dailyStreak: 7,
+      dailyStreakEnded: 7,
+    });
+    const daily = items.find((it) => it.kind === 'mode' && it.key === 'daily');
+    expect(daily?.kind).toBe('mode');
+    if (daily?.kind !== 'mode') throw new Error('expected Daily row');
+    expect(daily.sub).toBe('Your 7-day streak ended');
+    expect(daily.best).toBeUndefined();
+    expect(daily.sub).not.toMatch(/keep your streak|🔥/);
+
+    const alive = buildMenu(startedBuilder, false, {
+      currentTier: 2,
+      dailyStreak: 7,
+    }).items.find((it) => it.kind === 'mode' && it.key === 'daily');
+    expect(alive?.kind).toBe('mode');
+    if (alive?.kind !== 'mode') throw new Error('expected Daily row');
+    expect(alive.sub).toBe('Five fresh roots · keep your streak');
+    expect(alive.best).toBe('🔥 7');
+  });
+
   it('still upgrades a locked paid teaser', () => {
     const { tucked } = buildMenu(startedBuilder, false, { currentTier: 2 });
     const locked = tucked.find((it) => it.locked);

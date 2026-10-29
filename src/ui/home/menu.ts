@@ -28,7 +28,7 @@ import {
 } from '../../data/roots';
 import { recapOpenForId, type DeckEntry } from '../../core/deckFlow';
 import { dailyDoneMenuSub, dailyMenuNextLine } from '../../core/daily';
-import { gradeForPct, starsForPct } from '../../core/stats';
+import { endedStreakPhrase, gradeForPct, starsForPct } from '../../core/stats';
 import { missFacePeek, missPeekForNames } from './samplePeek';
 
 /** Per-tier presentation: emoji chip + the PALETTES jewel key that themes the row. */
@@ -518,6 +518,11 @@ export function buildMenu(
     currentTier?: TierNum;
     rushBest?: string;
     dailyStreak?: number;
+    /**
+     * Stored streak that can no longer be kept (a missed day). The row
+     * names that ending and hides the 🔥 count until a new one starts.
+     */
+    dailyStreakEnded?: number;
     dailyDone?: boolean;
     /** Next unanswered Daily index when a mid-run is live. */
     dailyResumeQi?: number | null;
@@ -600,14 +605,16 @@ export function buildMenu(
           ? dailyMenuNextLine(opts.dailyNextName, opts.dailyNextMean)
           : opts.dailyResumeQi != null && opts.dailyResumeQi >= 1
             ? `Continue · ${(opts.dailyResumeQi ?? 0) + 1} of ${opts.dailyTotal ?? 5}`
-            : 'Five fresh roots · keep your streak',
+            : opts.dailyStreakEnded && opts.dailyStreakEnded > 0
+              ? endedStreakPhrase(opts.dailyStreakEnded)
+              : 'Five fresh roots · keep your streak',
       badge: opts.dailyDone && !opts.rushMissName
         ? 'DONE'
         : opts.dailyResumeQi != null && opts.dailyResumeQi >= 1
           ? `${opts.dailyResumeQi}/${opts.dailyTotal ?? 5}`
           : undefined,
       best:
-        opts.rushMissName
+        opts.rushMissName || (opts.dailyStreakEnded && opts.dailyStreakEnded > 0 && !opts.dailyDone)
           ? undefined
           : opts.dailyStreak && opts.dailyStreak > 0
             ? `🔥 ${opts.dailyStreak}`

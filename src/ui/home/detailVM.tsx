@@ -13,7 +13,7 @@ import {
   type DailyAskedChip,
 } from '../../core/daily';
 import { askedChipOpen } from '../../core/deckFlow';
-import { gradeForPct } from '../../core/stats';
+import { endedStreakPhrase, gradeForPct } from '../../core/stats';
 import {
   entryRootName,
   rushBestLabel,
@@ -157,6 +157,8 @@ export function buildDetailVM(
     dailyNextFace?: { name: string; mean?: string } | null;
     dailyTotal?: number;
     streak: number;
+    /** Stored streak that already lapsed. Zero or unset while it can still be kept. */
+    streakEnded?: number;
     nextPlay: boolean;
     completed: Set<string>;
     entitled: boolean;
@@ -339,13 +341,25 @@ export function buildDetailVM(
       extra.dailyDone || dailyResume == null
         ? extra.dailyRoots.length - dailySamples.length
         : extra.dailyRoots.length - dailyResume - dailySamples.length;
+    const endedDays =
+      !extra.dailyDone && extra.streak <= 0 && (extra.streakEnded ?? 0) > 0
+        ? Math.max(0, Math.round(extra.streakEnded ?? 0))
+        : 0;
+    const endedPhrase = endedDays > 0 ? endedStreakPhrase(endedDays) : '';
     const streakLine =
       extra.streak > 0 && !extra.dailyDone
         ? ` You're on a 🔥 ${extra.streak}-day streak.`
         : '';
+    const keepPitch = `Five fresh roots every day. See the animation, tap what it means, keep your streak.`;
+    const freshLead = endedPhrase
+      ? `Five fresh roots every day. ${endedPhrase} — today's five start a new one.`
+      : `${keepPitch}${streakLine}`;
     const midLead = nextDaily
       ? `${dailyResumeSentence(nextDaily, extra.dailyNextFace)} ${dailyResume} of ${extra.dailyRoots.length} already yours.`
-      : `Five fresh roots every day. See the animation, tap what it means, keep your streak.`;
+      : endedPhrase
+        ? freshLead
+        : keepPitch;
+    const resumeTail = nextDaily ? streakLine || (endedPhrase ? ` ${endedPhrase}.` : '') : streakLine;
     const missOpts = {
       dailyDone: extra.dailyDone,
       learnedToday: extra.learnedToday,
@@ -383,11 +397,7 @@ export function buildDetailVM(
       animKey: item.key,
       eyebrow: miss ? 'Remember' : 'Daily Challenge',
       big: miss ? `Remember ${miss.name}` : 'Daily',
-      lead: doneLead
-        ? doneLead
-        : dailyResume == null
-          ? `Five fresh roots every day. See the animation, tap what it means, keep your streak.${streakLine}`
-          : `${midLead}${streakLine}`,
+      lead: doneLead ? doneLead : dailyResume == null ? freshLead : `${midLead}${resumeTail}`,
       samples: miss
         ? missSamples
         : extra.dailyDone
