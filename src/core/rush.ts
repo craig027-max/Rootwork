@@ -9,9 +9,9 @@
 
 import type { Root } from '../data/roots';
 import { shuffleWith } from './daily';
-import { canon, pickMeaningDistractors, pickRootDistractors, pickWordDefDistractors, pickWordDistractors } from './distractors';
+import { canon, pickGlossDistractors, pickMeaningDistractors, pickRootDistractors, pickWordDistractors } from './distractors';
 import { glossQuietLine, meaningPrompt, spellsChoice, whichWordPrompt } from './promptFace';
-import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
+import { quizGloss } from './wordDef';
 import { buildAsk, buildBig, buildPicksForRoot, otherPartsForRoot, partAsk, pickPartDistractors } from './wordParts';
 
 export { rushWordHint } from './promptFace';
@@ -222,7 +222,7 @@ export function buildRushQuestion(input: BuildRushQuestionInput): RushQuestion {
     });
     if (picks.length > 0) {
       const picked = rndOf(picks, rng);
-      const distract = pickWordDefDistractors(picked.word, picked.gloss, pools, 3, rng, GLOSS_TILE_MAX);
+      const distract = pickGlossDistractors(d.mean, picked.word, picked.gloss, pools, 3, rng);
       if (distract.length >= 1) {
         return {
           root: d,

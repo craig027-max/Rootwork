@@ -170,6 +170,47 @@ describe('buildRushQuestion', () => {
     expect(glossQuietLine(photo.root, photo.mean, quizGloss(photograph.d))).toBe('from Photo');
   });
 
+  it('does not point from Bio · life at a wrong tile that says life', () => {
+    let sawBiology = false;
+    for (let seed = 0; seed < 24; seed++) {
+      const q = buildRushQuestion({
+        root: bio,
+        scoped: tier1,
+        all: tier1,
+        type: 'gloss',
+        rng: mulberry32(seed + 3),
+      });
+      expect(q.type).toBe('gloss');
+      if (q.glossWord !== 'Biology') continue;
+      sawBiology = true;
+      expect(q.sub).toBe('from Bio · life');
+      expect(q.opts).toHaveLength(4);
+      for (const opt of q.opts) {
+        if (opt.ok) continue;
+        expect(meaningSitsInAnswer(bio.mean, opt.label), opt.label).toBe(false);
+      }
+    }
+    expect(sawBiology).toBe(true);
+
+    for (const root of ROOTS) {
+      for (let seed = 0; seed < 4; seed++) {
+        const q = buildRushQuestion({
+          root,
+          scoped: tier1,
+          all: ROOTS,
+          type: 'gloss',
+          rng: mulberry32(seed + 90),
+        });
+        if (q.type !== 'gloss' || !q.gloss || !q.sub) continue;
+        if (q.sub !== root.mean && !q.sub.endsWith(` · ${root.mean}`)) continue;
+        for (const opt of q.opts) {
+          if (opt.ok) continue;
+          expect(meaningSitsInAnswer(root.mean, opt.label), `${q.glossWord}: ${opt.label}`).toBe(false);
+        }
+      }
+    }
+  });
+
   it('asks what the other piece means, and the big type is that piece', () => {
     const means = new Set(partMeanLabels(ROOTS));
     const q = buildRushQuestion({
