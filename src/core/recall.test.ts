@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { ROOTS } from '../data/roots';
 import { mulberry32 } from './daily';
-import { wordContainsRoot } from './distractors';
-import { buildRecall } from './recall';
+import { canon, wordContainsRoot } from './distractors';
+import { glossQuietLine, meaningSitsInAnswer } from './promptFace';
+import { buildRecall, recallFromPending } from './recall';
 import { quizGloss } from './wordDef';
-import { canon } from './distractors';
 import {
   buildAsk,
   buildPicksForRoot,
@@ -108,6 +108,63 @@ describe('buildRecall', () => {
       }
     }
     expect(sawBiology).toBe(true);
+  });
+
+  it('does not point from Bio · life at a wrong tile that says life', () => {
+    const biology = recallFromPending({
+      root: bio,
+      pool: ROOTS,
+      pending: { kind: 'gloss', word: 'Biology' },
+      rng: mulberry32(3),
+      choices: 3,
+    });
+    expect(biology?.kind).toBe('gloss');
+    expect(biology?.word).toBe('Biology');
+    expect(glossQuietLine(bio.root, bio.mean, biology?.gloss)).toBe('from Bio · life');
+    expect(biology?.opts.filter((opt) => opt.ok)).toHaveLength(1);
+    expect(biology?.opts.length).toBe(3);
+    for (const opt of biology?.opts ?? []) {
+      if (opt.ok) continue;
+      expect(meaningSitsInAnswer(bio.mean, opt.label), opt.label).toBe(false);
+    }
+
+    const scope = ROOTS.find((r) => r.root === 'Scope');
+    if (!scope) throw new Error('fixture: Scope');
+    const microscope = recallFromPending({
+      root: scope,
+      pool: ROOTS,
+      pending: { kind: 'gloss', word: 'Microscope' },
+      rng: mulberry32(4),
+      choices: 3,
+    });
+    expect(glossQuietLine(scope.root, scope.mean, microscope?.gloss)).toBe('from Scope · look');
+    for (const opt of microscope?.opts ?? []) {
+      if (opt.ok) continue;
+      expect(meaningSitsInAnswer(scope.mean, opt.label), opt.label).toBe(false);
+    }
+
+    for (const root of ROOTS) {
+      for (const item of root.words) {
+        const gloss = quizGloss(item.d);
+        if (!gloss || canon(gloss) === canon(root.mean)) continue;
+        for (let seed = 0; seed < 3; seed++) {
+          const beat = recallFromPending({
+            root,
+            pool: ROOTS,
+            pending: { kind: 'gloss', word: item.w },
+            rng: mulberry32(seed + item.w.length),
+            choices: 3,
+          });
+          expect(beat?.kind, item.w).toBe('gloss');
+          const hint = glossQuietLine(root.root, root.mean, beat?.gloss);
+          if (hint !== root.mean && !hint.endsWith(` · ${root.mean}`)) continue;
+          for (const opt of beat?.opts ?? []) {
+            if (opt.ok) continue;
+            expect(meaningSitsInAnswer(root.mean, opt.label), `${item.w}: ${opt.label}`).toBe(false);
+          }
+        }
+      }
+    }
   });
 
   it('a Photosynthesis miss still teaches light after the hint dropped it', () => {

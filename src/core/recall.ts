@@ -9,9 +9,9 @@
 import { ROOTS, type Root } from '../data/roots';
 import { hashSeed, mulberry32, shuffleWith, type DailyPending } from './daily';
 import { dailyNextPeekFace } from './dailyNextPeek';
-import { canon, pickMeaningDistractors, pickWordDefDistractors, pickWordDistractors } from './distractors';
+import { canon, pickGlossDistractors, pickMeaningDistractors, pickWordDistractors } from './distractors';
 import { spellsChoice } from './promptFace';
-import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
+import { quizGloss } from './wordDef';
 import {
   buildAsk,
   buildBig,
@@ -157,13 +157,13 @@ function buildGlossRecall(
   if (picks.length === 0) return null;
   const picked = picks[Math.floor(rng() * picks.length)]!;
   const distractCount = Math.max(1, Math.min(want - 1, 2));
-  const distract = pickWordDefDistractors(
+  const distract = pickGlossDistractors(
+    root.mean,
     picked.word,
     picked.gloss,
     [pool, ROOTS],
     distractCount,
     rng,
-    GLOSS_TILE_MAX,
   );
   if (distract.length < 1) return null;
   const opts = shuffleWith(
@@ -308,13 +308,13 @@ function pinnedGlossBeat(
 ): RecallBeat | null {
   if (!gloss || canon(gloss) === canon(root.mean)) return null;
   const distractCount = Math.max(1, Math.min(want - 1, 2));
-  const distract = pickWordDefDistractors(
+  const distract = pickGlossDistractors(
+    root.mean,
     word,
     gloss,
     [pool.filter((item) => item.root !== root.root), ROOTS],
     distractCount,
     rng,
-    GLOSS_TILE_MAX,
   );
   if (distract.length < 1) return null;
   const teach = split

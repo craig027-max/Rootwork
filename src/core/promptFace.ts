@@ -185,7 +185,8 @@ export function meaningSitsInAnswer(mean: string, answer: string): boolean {
  * `from Bio · life` hands out the word life when the tile is a person's
  * life. `from Photo · light` hands out light when the tile says sunlight.
  * Biology's "living things" does not contain that word, so the hint
- * stays. The Yes and the miss still teach the meaning.
+ * stays. A wrong tile that still says life is not dealt beside it.
+ * The Yes and the miss still teach the meaning.
  */
 export function glossQuietLine(root: string, mean: string, gloss?: string | null): string {
   const name = clean(root);

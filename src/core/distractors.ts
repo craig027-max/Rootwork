@@ -8,7 +8,8 @@
 
 import type { Root } from '../data/roots';
 import { shuffleWith } from './daily';
-import { quizGloss } from './wordDef';
+import { meaningSitsInAnswer } from './promptFace';
+import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
 
 /** Near-identical meanings that must never appear as rival tiles. */
 const SYNONYM_GROUPS: string[][] = [
@@ -251,6 +252,10 @@ function collectWordDefs(
  * Wrong options for "what does this school word mean?" — other authored
  * definitions only. `maxLen` defaults to no cap so Find can still use a
  * long correct gloss's siblings; gloss beats pass the tile cap.
+ *
+ * `avoidMean` drops a tile that already contains that meaning. The quiet
+ * line still says "from Bio · life" when the right tile does not, so a
+ * wrong tile that says life would be the one the hint points at.
  */
 export function pickWordDefDistractors(
   word: string,
@@ -259,9 +264,30 @@ export function pickWordDefDistractors(
   n: number,
   rng: () => number = Math.random,
   maxLen = Number.POSITIVE_INFINITY,
+  avoidMean?: string,
 ): string[] {
   const labels = collectWordDefs(pools, word, maxLen);
-  return sampleUnique([labels], n, [correct], rng);
+  const mean = avoidMean?.replace(/\s+/g, ' ').trim();
+  const safe = mean ? labels.filter((label) => !meaningSitsInAnswer(mean, label)) : labels;
+  return sampleUnique([safe], n, [correct], rng);
+}
+
+/**
+ * Wrong tiles for a school-word question whose quiet line may still
+ * name the root meaning. When that line has already dropped the meaning
+ * (it sits in the right tile), a wrong tile may still say it.
+ */
+export function pickGlossDistractors(
+  mean: string,
+  word: string,
+  gloss: string,
+  pools: readonly (readonly Root[])[],
+  n: number,
+  rng: () => number = Math.random,
+): string[] {
+  const spoken = mean.replace(/\s+/g, ' ').trim();
+  const avoid = spoken && !meaningSitsInAnswer(spoken, gloss) ? spoken : undefined;
+  return pickWordDefDistractors(word, gloss, pools, n, rng, GLOSS_TILE_MAX, avoid);
 }
 
 /** Wrong options for "which root carries this meaning?". */
