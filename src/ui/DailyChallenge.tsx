@@ -14,6 +14,7 @@ import {
   dailyRecapChipLabel,
   dailySeed,
   layoutDailyAsked,
+  dailyFreshStartLead,
   dailyResumeSentence,
   liveDailyResumeQi,
   localDayKey,
@@ -404,7 +405,6 @@ export function DailyChallenge() {
     );
   }
 
-  const streakNow = stats.streakCurrent;
   const p = root ? palOf(root) : palOf(deal[0]!);
   const showDoneLanding = (phase === 'start' && doneToday) || phase === 'result';
   const done = buildDailyDone({
@@ -452,7 +452,7 @@ export function DailyChallenge() {
                     resumeRoot,
                     boot.beat ? dailyNextPeekFace(resumeRoot, boot.beat) : null,
                   )}`
-                : `${deal.length} fresh roots for ${day}. See the animation, tap the meaning, keep your streak${streakNow > 0 ? ` — you&rsquo;re on 🔥 ${streakNow}` : ''}.`}
+                : dailyFreshStartLead(deal.length, day, stats)}
             </p>
             <div className="q-daily-chips">
               {(resumeQi != null ? deal.slice(resumeQi) : deal).map((r) => (

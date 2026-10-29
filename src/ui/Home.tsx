@@ -43,6 +43,7 @@ import { DetailPanel } from './home/DetailPanel';
 import { buildDetailVM } from './home/detailVM';
 import { RootIndex } from './deck/RootIndex';
 import { dailyDonePrimary, learnNextAction, rushLearnReady } from './modes/modeHandoff';
+import { liveStreakCount, streakHold } from '../core/stats';
 import { buildProfileProgress } from './home/profileProgress';
 import {
   buildTodayProgress,
@@ -104,6 +105,8 @@ export function Home() {
     dailyFace,
   );
   const profile = buildProfileProgress(stats, completed.size, day);
+  const streakLive = liveStreakCount(stats, day);
+  const streakEnded = streakHold(stats, day) === 'lapsed' ? Math.round(stats.streakCurrent) : 0;
   const learnedId = learnedRootToday(progress, day);
   const rememberedId = rememberRootToday(progress, day);
   const nextLearn = learnNextAction(completed, entitled);
@@ -168,7 +171,8 @@ export function Home() {
   const { items, tucked } = buildMenu(completed, entitled, {
     currentTier,
     rushBest,
-    dailyStreak: stats.streakCurrent,
+    dailyStreak: streakLive,
+    dailyStreakEnded: streakEnded > 0 ? streakEnded : undefined,
     dailyDone,
     dailyResumeQi,
     dailyTotal: dailyRoots.length,
@@ -320,7 +324,8 @@ export function Home() {
     dailyAsked,
     dailyNextFace: dailyFace,
     dailyTotal: dailyRoots.length,
-    streak: stats.streakCurrent,
+    streak: streakLive,
+    streakEnded: streakEnded > 0 ? streakEnded : undefined,
     nextPlay,
     completed,
     entitled,

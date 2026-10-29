@@ -313,3 +313,35 @@ describe('Home Daily tile: done-state recap after Daily is banked', () => {
     expect(vm.secondary?.label).toBe('Play again ›');
   });
 });
+
+describe('Home Daily detail — a lapsed streak is not still on fire', () => {
+  it('replaces keep-your-streak with the ended count', () => {
+    const vm = buildDetailVM(dailyItem, {
+      dailyRoots: today,
+      dailyDone: false,
+      streak: 0,
+      streakEnded: 7,
+      nextPlay: false,
+      completed: startedBuilder,
+      entitled: false,
+    });
+    expect(vm.lead).toBe(
+      "Five fresh roots every day. Your 7-day streak ended — today's five start a new one.",
+    );
+    expect(vm.lead).not.toMatch(/keep your streak|🔥/);
+  });
+
+  it('still names a live streak that yesterday can keep', () => {
+    const vm = buildDetailVM(dailyItem, {
+      dailyRoots: today,
+      dailyDone: false,
+      streak: 7,
+      nextPlay: false,
+      completed: startedBuilder,
+      entitled: false,
+    });
+    expect(vm.lead).toBe(
+      "Five fresh roots every day. See the animation, tap what it means, keep your streak. You're on a 🔥 7-day streak.",
+    );
+  });
+});

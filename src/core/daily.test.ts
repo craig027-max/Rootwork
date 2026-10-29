@@ -6,6 +6,7 @@ import {
   afterDailyNextLabel,
   dailyHoldKeepGoingLine,
   dailyDoneLead,
+  dailyFreshStartLead,
   dailyDoneMenuSub,
   dailyDoneOverlaySub,
   dailyRecapChipLabel,
@@ -358,6 +359,23 @@ describe('Daily mid-run resume + hold meaning', () => {
     expect(dailyHoldRememberLine('  Chron  ', '  time ')).toBe('Remember · Chron · time');
     expect(dailyHoldRememberLine('Geo')).toBe('Remember · Geo');
     expect(dailyHoldRememberLine('Geo', 'earth')).not.toMatch(/Keep going|Continue |Next ·|Play again|Done →/);
+  });
+
+  it('names a lapsed streak as ended on the Daily start card', () => {
+    const lapsed = { streakCurrent: 7, lastActiveDay: '2026-09-04' };
+    expect(dailyFreshStartLead(5, '2026-09-06', lapsed)).toBe(
+      "5 fresh roots for 2026-09-06. Your 7-day streak ended — today's five start a new one.",
+    );
+    expect(dailyFreshStartLead(5, '2026-09-06', lapsed)).not.toMatch(/you're on|keep your streak|🔥 7/);
+    expect(dailyFreshStartLead(5, '2026-09-05', lapsed)).toBe(
+      "5 fresh roots for 2026-09-05. See the animation, tap the meaning, keep your streak — you're on 🔥 7.",
+    );
+    expect(dailyFreshStartLead(5, '2026-09-04', lapsed)).toBe(
+      "5 fresh roots for 2026-09-04. See the animation, tap the meaning, keep your streak — you're on 🔥 7.",
+    );
+    expect(dailyFreshStartLead(5, '2026-09-06', { streakCurrent: 0, lastActiveDay: null })).toBe(
+      '5 fresh roots for 2026-09-06. See the animation, tap the meaning, keep your streak.',
+    );
   });
 
   it('recaps Daily done — not a fresh-start pitch, and Meet vs Remember', () => {

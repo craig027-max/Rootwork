@@ -95,6 +95,46 @@ function dayNumber(day: string): number {
 }
 
 /**
+ * Whether today's play can still extend the stored streak.
+ * Same calendar day → banked. Yesterday → at risk (the next play adds one).
+ * A longer gap, a future last day, or a count with no day → already over.
+ * The stored count stays until the next play; screens that say "your streak"
+ * must use this, not `streakCurrent` alone.
+ */
+export type StreakHold = 'none' | 'risk' | 'banked' | 'lapsed';
+
+export function streakHold(
+  stats: Pick<GameStats, 'streakCurrent' | 'lastActiveDay'>,
+  day: string,
+): StreakHold {
+  if (!Number.isFinite(stats.streakCurrent) || stats.streakCurrent <= 0) return 'none';
+  const last = stats.lastActiveDay;
+  if (!last) return 'lapsed';
+  if (last === day) return 'banked';
+  const gap = dayNumber(day) - dayNumber(last);
+  if (gap === 1) return 'risk';
+  return 'lapsed';
+}
+
+/** Days the UI may still call the current streak. Zero once the run has lapsed. */
+export function liveStreakCount(
+  stats: Pick<GameStats, 'streakCurrent' | 'lastActiveDay'>,
+  day: string,
+): number {
+  const hold = streakHold(stats, day);
+  if (hold === 'risk' || hold === 'banked') return Math.max(0, Math.round(stats.streakCurrent));
+  return 0;
+}
+
+/** "Your 7-day streak ended" — empty when there is no ended count to name. */
+export function endedStreakPhrase(days: number): string {
+  const n = Number.isFinite(days) ? Math.max(0, Math.round(days)) : 0;
+  if (n <= 0) return '';
+  const label = n === 1 ? '1-day streak' : `${n}-day streak`;
+  return `Your ${label} ended`;
+}
+
+/**
  * Apply a day's activity to the streak. Same day → unchanged; the next calendar
  * day → +1; any larger gap (or first ever) → reset to 1.
  */

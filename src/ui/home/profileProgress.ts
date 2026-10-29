@@ -8,10 +8,10 @@
  *
  * Pure and Date-injectable (pass `day`) so tests lock the copy without I/O.
  */
-import { accuracyPct, type GameStats } from '../../core/stats';
+import { accuracyPct, endedStreakPhrase, streakHold, type GameStats } from '../../core/stats';
 import { ROOTS } from '../../data/roots';
 
-export type StreakKind = 'none' | 'risk' | 'banked';
+export type StreakKind = 'none' | 'risk' | 'banked' | 'lapsed';
 
 export interface ProfileStat {
   key: 'streak' | 'stars' | 'acc' | 'roots';
@@ -41,11 +41,13 @@ export interface ProfileHero {
   celebrateBanked: boolean;
 }
 
-/** Streak state for a given local calendar day. */
+/**
+ * Streak state for a given local calendar day.
+ * Yesterday is still at risk. A longer gap has already ended — do not
+ * offer to "keep" a count the next play will reset.
+ */
 export function streakKindFor(stats: GameStats, day: string): StreakKind {
-  if (stats.streakCurrent <= 0) return 'none';
-  if (stats.lastActiveDay === day) return 'banked';
-  return 'risk';
+  return streakHold(stats, day);
 }
 
 /**
@@ -62,11 +64,20 @@ export function buildProfileProgress(
   const kind = streakKindFor(stats, day);
   const accuracy = accuracyPct(stats);
 
-  const hello = firstRun ? 'Grow your first root 🌱' : kind === 'risk' ? 'Keep your streak' : 'Welcome back';
+  const hello = firstRun
+    ? 'Grow your first root 🌱'
+    : kind === 'risk'
+      ? 'Keep your streak'
+      : kind === 'lapsed'
+        ? 'Start a new streak'
+        : 'Welcome back';
 
   let hint: string | null = null;
   if (kind === 'risk') {
     hint = `Play today to keep your ${stats.streakCurrent}-day streak`;
+  } else if (kind === 'lapsed') {
+    const ended = endedStreakPhrase(stats.streakCurrent);
+    hint = ended ? `${ended}. Play today to start a new one.` : 'Play today to start a new streak.';
   } else if (kind === 'banked') {
     hint = 'Streak banked for today ✓';
   } else if (!firstRun) {
@@ -74,7 +85,7 @@ export function buildProfileProgress(
   }
 
   const rows: ProfileStat[] = [];
-  if (kind !== 'none') {
+  if (kind === 'risk' || kind === 'banked') {
     rows.push({
       key: 'streak',
       value: `🔥 ${stats.streakCurrent}${kind === 'banked' ? ' ✓' : ''}`,

@@ -141,6 +141,30 @@ describe('profileHeroForToday — Remember over a waiting miss', () => {
   });
 });
 
+describe('buildProfileProgress — streak already ended', () => {
+  const vm = buildProfileProgress(returningStreak('2026-09-01'), 12, TODAY);
+
+  it('does not offer to keep a count the next play will reset', () => {
+    expect(vm.streakKind).toBe('lapsed');
+    expect(vm.hello).toBe('Start a new streak');
+    expect(vm.hint).toBe('Your 7-day streak ended. Play today to start a new one.');
+    expect(vm.hint).not.toMatch(/keep your|Play today to keep/i);
+    expect(vm.stats.some((s) => s.key === 'streak')).toBe(false);
+    expect(vm.stats.map((s) => s.key)).toEqual(['roots']);
+  });
+
+  it('lets Remember stay the hero without painting the dead count as live', () => {
+    const hero = profileHeroForToday(vm, {
+      missWaiting: true,
+      missName: 'Geo',
+      missRecap: 'Remember Geo — missed in Rush',
+    });
+    expect(hero.hello).toBe('Remember Geo');
+    expect(hero.stats.some((s) => s.key === 'streak')).toBe(false);
+    expect(hero.celebrateBanked).toBe(false);
+  });
+});
+
 describe('buildProfileProgress — returning, streak banked', () => {
   const vm = buildProfileProgress(returningStreak(TODAY), 12, TODAY);
 
@@ -218,6 +242,9 @@ describe('Profile band wiring + phone layout', () => {
     expect(css).toMatch(/\.ww-profile-hint\.is-risk/);
     expect(css).toMatch(/\.ww-profile-hint\.is-banked/);
     expect(css).toMatch(/\.ww-profile-hint\.is-miss/);
+    expect(css).toMatch(/\.ww-profile-hint\.is-lapsed/);
+    expect(phone).toMatch(/\.ww-profile-hint\.is-lapsed\s*\{[^}]*display:\s*block/);
+    expect(phone).not.toMatch(/\.ww-profile-hint\.is-lapsed\s*\{[^}]*display:\s*none/);
     expect(css).toMatch(/\.ww-hello\.is-miss/);
     expect(css).toMatch(/\.ww-profile\.is-miss \.ww-stat\.streak/);
     expect(phone).toMatch(/\.ww-profile-hint\.is-miss\s*\{[^}]*display:\s*block/);
