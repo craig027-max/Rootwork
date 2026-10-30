@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { ROOTS } from '../data/roots';
 import { mulberry32 } from './daily';
-import { canon, wordContainsRoot } from './distractors';
-import { glossQuietLine, meaningSitsInAnswer } from './promptFace';
+import { canon, glossSaysMean, pickGlossDistractors, wordContainsRoot } from './distractors';
+import { glossQuietLine } from './promptFace';
 import { buildRecall, recallFromPending } from './recall';
 import { quizGloss } from './wordDef';
 import {
@@ -125,7 +125,7 @@ describe('buildRecall', () => {
     expect(biology?.opts.length).toBe(3);
     for (const opt of biology?.opts ?? []) {
       if (opt.ok) continue;
-      expect(meaningSitsInAnswer(bio.mean, opt.label), opt.label).toBe(false);
+      expect(glossSaysMean(bio.mean, opt.label), opt.label).toBe(false);
     }
 
     const scope = ROOTS.find((r) => r.root === 'Scope');
@@ -140,7 +140,7 @@ describe('buildRecall', () => {
     expect(glossQuietLine(scope.root, scope.mean, microscope?.gloss)).toBe('from Scope · look');
     for (const opt of microscope?.opts ?? []) {
       if (opt.ok) continue;
-      expect(meaningSitsInAnswer(scope.mean, opt.label), opt.label).toBe(false);
+      expect(glossSaysMean(scope.mean, opt.label), opt.label).toBe(false);
     }
 
     for (const root of ROOTS) {
@@ -160,11 +160,56 @@ describe('buildRecall', () => {
           if (hint !== root.mean && !hint.endsWith(` · ${root.mean}`)) continue;
           for (const opt of beat?.opts ?? []) {
             if (opt.ok) continue;
-            expect(meaningSitsInAnswer(root.mean, opt.label), `${item.w}: ${opt.label}`).toBe(false);
+            expect(glossSaysMean(root.mean, opt.label), `${item.w}: ${opt.label}`).toBe(false);
           }
         }
       }
     }
+  });
+
+  it('does not point a named meaning at a wrong tile that says the same idea', () => {
+    const cases = [
+      ['Macro', 'Macroeconomics', 'from Macro · large'],
+      ['Vit', 'Vitamin', 'from Vit · life'],
+      ['Spect', 'Spectator', 'from Spect · see'],
+      ['Mega', 'Megaphone', 'from Mega · huge'],
+      ['Gen', 'Generate', 'from Gen · birth'],
+    ] as const;
+    for (const [rootName, word, line] of cases) {
+      const root = ROOTS.find((item) => item.root === rootName);
+      if (!root) throw new Error(`fixture: ${rootName}`);
+      const authored = root.words.find((item) => item.w === word);
+      const gloss = authored ? quizGloss(authored.d) : null;
+      if (!gloss) throw new Error(`fixture: ${word}`);
+      expect(glossQuietLine(root.root, root.mean, gloss), word).toBe(line);
+      for (let seed = 0; seed < 12; seed++) {
+        const beat = recallFromPending({
+          root,
+          pool: ROOTS,
+          pending: { kind: 'gloss', word },
+          rng: mulberry32(seed + word.length),
+          choices: 3,
+        });
+        expect(beat?.kind, word).toBe('gloss');
+        expect(beat?.word, word).toBe(word);
+        expect(beat?.opts.length, word).toBe(3);
+        for (const opt of beat?.opts ?? []) {
+          if (opt.ok) continue;
+          expect(glossSaysMean(root.mean, opt.label), `${word}: ${opt.label}`).toBe(false);
+        }
+      }
+      const rushTiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 3, mulberry32(4));
+      expect(rushTiles, word).toHaveLength(3);
+      for (const label of rushTiles) {
+        expect(glossSaysMean(root.mean, label), `${word}: ${label}`).toBe(false);
+      }
+    }
+
+    const biography = quizGloss(bio.words.find((item) => item.w === 'Biography')!.d);
+    if (!biography) throw new Error('fixture: Biography');
+    expect(glossQuietLine(bio.root, bio.mean, biography)).toBe('from Bio');
+    const dropped = pickGlossDistractors(bio.mean, 'Biography', biography, [ROOTS], 500, mulberry32(2));
+    expect(dropped.some((label) => glossSaysMean(bio.mean, label))).toBe(true);
   });
 
   it('a Photosynthesis miss still teaches light after the hint dropped it', () => {
