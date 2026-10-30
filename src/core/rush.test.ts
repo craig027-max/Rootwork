@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ROOTS } from '../data/roots';
 import { mulberry32 } from './daily';
 import {
+  glossSaysMean,
   pickWordDistractors,
   scoreWordDistractor,
   wordContainsRoot,
@@ -187,7 +188,7 @@ describe('buildRushQuestion', () => {
       expect(q.opts).toHaveLength(4);
       for (const opt of q.opts) {
         if (opt.ok) continue;
-        expect(meaningSitsInAnswer(bio.mean, opt.label), opt.label).toBe(false);
+        expect(glossSaysMean(bio.mean, opt.label), opt.label).toBe(false);
       }
     }
     expect(sawBiology).toBe(true);
@@ -205,7 +206,7 @@ describe('buildRushQuestion', () => {
         if (q.sub !== root.mean && !q.sub.endsWith(` · ${root.mean}`)) continue;
         for (const opt of q.opts) {
           if (opt.ok) continue;
-          expect(meaningSitsInAnswer(root.mean, opt.label), `${q.glossWord}: ${opt.label}`).toBe(false);
+          expect(glossSaysMean(root.mean, opt.label), `${q.glossWord}: ${opt.label}`).toBe(false);
         }
       }
     }

@@ -28,6 +28,30 @@ for (const group of SYNONYM_GROUPS) {
   for (const word of group) SYNONYM_CANON.set(word, group[0]!);
 }
 
+function meanKey(mean: string): string {
+  return mean.replace(/\s+/g, ' ').trim().toLowerCase();
+}
+
+/** This meaning, plus any catalog synonym (life / living, see / look). */
+function meanIdeas(mean: string): readonly string[] {
+  const key = meanKey(mean);
+  if (!key) return [];
+  const group = SYNONYM_GROUPS.find((words) => words.includes(key));
+  return group ?? [key];
+}
+
+/**
+ * True when a school-word tile says this meaning, or a meaning the
+ * catalog already treats as the same idea. "living forever" says life.
+ * "a huge stone" says large. "to look closely" says see.
+ */
+export function glossSaysMean(mean: string, label: string): boolean {
+  const ideas = meanIdeas(mean);
+  const tile = label.replace(/\s+/g, ' ').trim();
+  if (ideas.length === 0 || !tile) return false;
+  return ideas.some((idea) => meaningSitsInAnswer(idea, tile));
+}
+
 /** Canonical form for dedupe: lowercase, synonym groups collapse to one key. */
 export function canon(label: string): string {
   const k = label.trim().toLowerCase();
@@ -253,9 +277,11 @@ function collectWordDefs(
  * definitions only. `maxLen` defaults to no cap so Find can still use a
  * long correct gloss's siblings; gloss beats pass the tile cap.
  *
- * `avoidMean` drops a tile that already contains that meaning. The quiet
- * line still says "from Bio · life" when the right tile does not, so a
- * wrong tile that says life would be the one the hint points at.
+ * `avoidMean` drops a tile that already says that meaning, or the same
+ * idea (living for life, huge for large, look for see). The quiet line
+ * still says "from Bio · life" when the right tile does not say life, so
+ * a wrong tile that says life — or living — would be the one the hint
+ * points at.
  */
 export function pickWordDefDistractors(
   word: string,
@@ -268,14 +294,15 @@ export function pickWordDefDistractors(
 ): string[] {
   const labels = collectWordDefs(pools, word, maxLen);
   const mean = avoidMean?.replace(/\s+/g, ' ').trim();
-  const safe = mean ? labels.filter((label) => !meaningSitsInAnswer(mean, label)) : labels;
+  const safe = mean ? labels.filter((label) => !glossSaysMean(mean, label)) : labels;
   return sampleUnique([safe], n, [correct], rng);
 }
 
 /**
  * Wrong tiles for a school-word question whose quiet line may still
  * name the root meaning. When that line has already dropped the meaning
- * (it sits in the right tile), a wrong tile may still say it.
+ * (it sits in the right tile), a wrong tile may still say it — or the
+ * same idea. While the line still says it, neither may be dealt.
  */
 export function pickGlossDistractors(
   mean: string,
