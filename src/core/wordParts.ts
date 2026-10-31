@@ -105,8 +105,10 @@ function pieceHeads(label: string): string[] {
 
 /**
  * True when two piece glosses are the same idea a kid would accept.
- * "study of" is study. "writing" is write. "makes" is make. "voice/call"
- * is voice. "break down" is not down, and "without" is not with — those
+ * "study of" is study. "writing" is write. "written" is write.
+ * "makes" is make. "voice/call" is voice, and voice is sound.
+ * "land" is earth. "meat" is flesh. "little" is small.
+ * "break down" is not down, and "without" is not with — those
  * are different choices, so they can still sit beside each other.
  */
 export function samePieceIdea(a: string, b: string): boolean {
@@ -114,7 +116,7 @@ export function samePieceIdea(a: string, b: string): boolean {
   const right = pieceHeads(b);
   for (const x of left) {
     for (const y of right) {
-      if (x === y) return true;
+      if (x === y || canon(x) === canon(y)) return true;
       if (!x.includes(' ') && !y.includes(' ') && (carriesInflection(x, y) || carriesInflection(y, x))) {
         return true;
       }

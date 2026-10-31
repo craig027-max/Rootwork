@@ -174,6 +174,16 @@ describe('buildRecall', () => {
       ['Spect', 'Spectator', 'from Spect · see'],
       ['Mega', 'Megaphone', 'from Mega · huge'],
       ['Gen', 'Generate', 'from Gen · birth'],
+      ['Terr', 'Territory', 'from Terr · earth'],
+      ['Carn', 'Carnivore', 'from Carn · flesh'],
+      ['Graph', 'Autograph', 'from Graph · write'],
+      ['Micro', 'Microchip', 'from Micro · small'],
+      ['Dict', 'Dictionary', 'from Dict · speak'],
+      ['Voc', 'Vocabulary', 'from Voc · voice'],
+      ['Ped', 'Pedestal', 'from Ped · foot'],
+      ['Mort', 'Mortal', 'from Mort · death'],
+      ['Uni', 'Unicorn', 'from Uni · one'],
+      ['Therm', 'Thermostat', 'from Therm · heat'],
     ] as const;
     for (const [rootName, word, line] of cases) {
       const root = ROOTS.find((item) => item.root === rootName);
