@@ -11,16 +11,32 @@ import { shuffleWith } from './daily';
 import { meaningSitsInAnswer } from './promptFace';
 import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
 
-/** Near-identical meanings that must never appear as rival tiles. */
+/**
+ * Near-identical meanings that must never appear as rival tiles.
+ * The extra words are the catalog's own other name for that idea:
+ * Macro's alt is big, Terr's alt is land · ground, Carn's lead says
+ * flesh or meat, Ped's alt is feet, Gram means written.
+ */
 const SYNONYM_GROUPS: string[][] = [
-  ['great', 'huge', 'large'],
+  ['great', 'huge', 'large', 'big'],
   ['feeling', 'feel'],
   ['born', 'birth'],
   ['war', 'fight'],
-  ['believe', 'faith'],
+  ['believe', 'faith', 'belief'],
   ['lead', 'leader'],
-  ['see', 'look'],
+  ['see', 'look', 'watch'],
   ['life', 'living'],
+  ['earth', 'land', 'ground'],
+  ['flesh', 'meat'],
+  ['write', 'written'],
+  ['small', 'little', 'tiny'],
+  ['speak', 'say', 'speech'],
+  ['sound', 'voice'],
+  ['foot', 'feet'],
+  ['death', 'die'],
+  ['one', 'single'],
+  ['strong', 'strength'],
+  ['heat', 'hot'],
 ];
 
 const SYNONYM_CANON = new Map<string, string>();
@@ -43,7 +59,11 @@ function meanIdeas(mean: string): readonly string[] {
 /**
  * True when a school-word tile says this meaning, or a meaning the
  * catalog already treats as the same idea. "living forever" says life.
- * "a huge stone" says large. "to look closely" says see.
+ * "a huge stone" says large. "a voice big and loud" says huge.
+ * "to look closely" says see. "watches an event" says see.
+ * "an area of land" says earth. "eats meat" says flesh.
+ * "written by hand" says write. "a single horn" says one.
+ * "a hundred feet" says foot. "able to die" says death.
  */
 export function glossSaysMean(mean: string, label: string): boolean {
   const ideas = meanIdeas(mean);
@@ -278,7 +298,8 @@ function collectWordDefs(
  * long correct gloss's siblings; gloss beats pass the tile cap.
  *
  * `avoidMean` drops a tile that already says that meaning, or the same
- * idea (living for life, huge for large, look for see). The quiet line
+ * idea (living for life, huge or big for large, look or watch for see,
+ * land for earth, meat for flesh, written for write). The quiet line
  * still says "from Bio · life" when the right tile does not say life, so
  * a wrong tile that says life — or living — would be the one the hint
  * points at.

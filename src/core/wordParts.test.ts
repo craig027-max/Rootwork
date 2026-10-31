@@ -105,6 +105,25 @@ describe('other part of a school word', () => {
   it('treats a gloss and its ending as one idea, and keeps a real rival', () => {
     expect(samePieceIdea('study of', 'study')).toBe(true);
     expect(samePieceIdea('writing', 'write')).toBe(true);
+    expect(samePieceIdea('written', 'write')).toBe(true);
+    expect(samePieceIdea('land', 'earth')).toBe(true);
+    expect(samePieceIdea('ground', 'earth')).toBe(true);
+    expect(samePieceIdea('meat', 'flesh')).toBe(true);
+    expect(samePieceIdea('speech', 'speak')).toBe(true);
+    expect(samePieceIdea('say', 'speak')).toBe(true);
+    expect(samePieceIdea('voice', 'sound')).toBe(true);
+    expect(samePieceIdea('voice/call', 'sound')).toBe(true);
+    expect(samePieceIdea('little', 'small')).toBe(true);
+    expect(samePieceIdea('tiny', 'small')).toBe(true);
+    expect(samePieceIdea('strength', 'strong')).toBe(true);
+    expect(samePieceIdea('belief', 'believe')).toBe(true);
+    expect(samePieceIdea('belief', 'faith')).toBe(true);
+    expect(samePieceIdea('feet', 'foot')).toBe(true);
+    expect(samePieceIdea('big', 'large')).toBe(true);
+    expect(samePieceIdea('watch', 'see')).toBe(true);
+    expect(samePieceIdea('single', 'one')).toBe(true);
+    expect(samePieceIdea('die', 'death')).toBe(true);
+    expect(samePieceIdea('hot', 'heat')).toBe(true);
     expect(samePieceIdea('makes', 'make')).toBe(true);
     expect(samePieceIdea('placing', 'place')).toBe(true);
     expect(samePieceIdea('full of', 'fully')).toBe(true);
@@ -150,6 +169,25 @@ describe('other part of a school word', () => {
     const study = pickPartDistractors([ROOTS], 80, ['study of'], () => 0);
     expect(study).not.toContain('study');
     expect(study).not.toContain('study of');
+    const rivals: ReadonlyArray<readonly [string, string]> = [
+      ['write', 'written'],
+      ['sound', 'voice'],
+      ['speech', 'speak'],
+      ['speech', 'say'],
+      ['little', 'small'],
+      ['strength', 'strong'],
+      ['belief', 'believe'],
+      ['land', 'earth'],
+      ['meat', 'flesh'],
+    ];
+    for (const [answer, rival] of rivals) {
+      const tiles = pickPartDistractors([ROOTS], 400, [answer], () => 0);
+      expect(tiles, answer).not.toContain(rival);
+      expect(tiles.length, answer).toBeGreaterThan(10);
+    }
+    const write = pickPartDistractors([ROOTS], 400, ['write'], () => 0);
+    expect(write).toContain('together');
+    expect(write).toContain('down');
   });
 });
 
