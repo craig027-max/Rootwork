@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { ROOTS } from '../data/roots';
 import { mulberry32 } from './daily';
-import { canon, glossSaysMean, pickGlossDistractors, wordContainsRoot } from './distractors';
+import {
+  canon,
+  glossSaysMean,
+  pickGlossDistractors,
+  pickMeaningDistractors,
+  wordContainsRoot,
+} from './distractors';
 import { glossQuietLine } from './promptFace';
 import { buildRecall, recallFromPending } from './recall';
 import { quizGloss } from './wordDef';
@@ -220,6 +226,58 @@ describe('buildRecall', () => {
     expect(glossQuietLine(bio.root, bio.mean, biography)).toBe('from Bio');
     const dropped = pickGlossDistractors(bio.mean, 'Biography', biography, [ROOTS], 500, mulberry32(2));
     expect(dropped.some((label) => glossSaysMean(bio.mean, label))).toBe(true);
+  });
+
+  it('does not point the card’s other name at a wrong tile', () => {
+    const glossOf = (rootName: string, word: string): string => {
+      const root = ROOTS.find((item) => item.root === rootName);
+      const authored = root?.words.find((item) => item.w === word);
+      const gloss = authored ? quizGloss(authored.d) : null;
+      if (!root || !gloss) throw new Error(`fixture: ${rootName} ${word}`);
+      return gloss;
+    };
+    const cases = [
+      ['Therm', 'Thermometer', 'from Therm · heat', 'Therm', 'Thermostat'],
+      ['Super', 'Supervise', 'from Super · above', 'Hyper', 'Hyperbole'],
+      ['Lith', 'Lithosphere', 'from Lith · stone', 'Geo', 'Geology'],
+      ['Soph', 'Sophisticated', 'from Soph · wisdom', 'Soph', 'Sophomore'],
+      ['Volv', 'Revolve', 'from Volv · roll', 'Vert', 'Convert'],
+      ['Cycl', 'Bicycle', 'from Cycl · circle', 'Uni', 'Unicycle'],
+      ['Graph', 'Graphic', 'from Graph · write', 'Cede', 'Recede'],
+      ['Dys', 'Dysphoria', 'from Dys · bad', 'Caco', 'Cacodemon'],
+      ['Vert', 'Vertigo', 'from Vert · turn', 'Cycl', 'Cyclone'],
+    ] as const;
+    for (const [rootName, word, line, rivalRoot, rivalWord] of cases) {
+      const root = ROOTS.find((item) => item.root === rootName);
+      if (!root) throw new Error(`fixture: ${rootName}`);
+      const gloss = glossOf(rootName, word);
+      const rival = glossOf(rivalRoot, rivalWord);
+      expect(glossQuietLine(root.root, root.mean, gloss), word).toBe(line);
+      expect(glossSaysMean(root.mean, rival), `${word} ~ ${rivalWord}`).toBe(true);
+      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 500, mulberry32(1));
+      expect(tiles.length, word).toBeGreaterThan(10);
+      expect(tiles, word).not.toContain(rival);
+      for (const label of tiles) {
+        expect(glossSaysMean(root.mean, label), `${word}: ${label}`).toBe(false);
+      }
+    }
+
+    const superRoot = ROOTS.find((item) => item.root === 'Super');
+    const volv = ROOTS.find((item) => item.root === 'Volv');
+    const pyr = ROOTS.find((item) => item.root === 'Pyr');
+    const lev = ROOTS.find((item) => item.root === 'Lev');
+    if (!superRoot || !volv || !pyr || !lev) throw new Error('fixture: meaning roots');
+    const above = pickMeaningDistractors(superRoot, [ROOTS], 400, () => 0);
+    expect(above).not.toContain('over');
+    expect(above).toContain('under');
+    expect(above.length).toBeGreaterThan(20);
+    const roll = pickMeaningDistractors(volv, [ROOTS], 400, () => 0);
+    expect(roll).not.toContain('turn');
+    expect(roll).toContain('throw');
+    const fire = pickMeaningDistractors(pyr, [ROOTS], 400, () => 0);
+    expect(fire).toContain('heat');
+    const lift = pickMeaningDistractors(lev, [ROOTS], 400, () => 0);
+    expect(lift).toContain('light');
   });
 
   it('a Photosynthesis miss still teaches light after the hint dropped it', () => {

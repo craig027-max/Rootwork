@@ -124,6 +124,24 @@ describe('other part of a school word', () => {
     expect(samePieceIdea('single', 'one')).toBe(true);
     expect(samePieceIdea('die', 'death')).toBe(true);
     expect(samePieceIdea('hot', 'heat')).toBe(true);
+    expect(samePieceIdea('temperature', 'heat')).toBe(true);
+    expect(samePieceIdea('temperature', 'hot')).toBe(true);
+    expect(samePieceIdea('draw', 'write')).toBe(true);
+    expect(samePieceIdea('record', 'written')).toBe(true);
+    expect(samePieceIdea('call', 'voice')).toBe(true);
+    expect(samePieceIdea('call', 'sound')).toBe(true);
+    expect(samePieceIdea('form', 'shape')).toBe(true);
+    expect(samePieceIdea('figure', 'shape')).toBe(true);
+    expect(samePieceIdea('burst', 'break')).toBe(true);
+    expect(samePieceIdea('shatter', 'break')).toBe(true);
+    expect(samePieceIdea('evil', 'bad')).toBe(true);
+    expect(samePieceIdea('wheel', 'circle')).toBe(true);
+    expect(samePieceIdea('ring', 'circle')).toBe(true);
+    expect(samePieceIdea('wise', 'wisdom')).toBe(true);
+    expect(samePieceIdea('over', 'above')).toBe(true);
+    expect(samePieceIdea('roll', 'turn')).toBe(true);
+    expect(samePieceIdea('spin', 'turn')).toBe(true);
+    expect(samePieceIdea('rock', 'stone')).toBe(true);
     expect(samePieceIdea('makes', 'make')).toBe(true);
     expect(samePieceIdea('placing', 'place')).toBe(true);
     expect(samePieceIdea('full of', 'fully')).toBe(true);
@@ -133,6 +151,7 @@ describe('other part of a school word', () => {
     expect(samePieceIdea('nature of', 'nature')).toBe(true);
     expect(samePieceIdea('break down', 'down')).toBe(false);
     expect(samePieceIdea('break down', 'break')).toBe(false);
+    expect(samePieceIdea('break down', 'burst')).toBe(false);
     expect(samePieceIdea('putting together', 'together')).toBe(false);
     expect(samePieceIdea('without', 'with')).toBe(false);
     expect(samePieceIdea('underworld', 'under')).toBe(false);
@@ -179,6 +198,20 @@ describe('other part of a school word', () => {
       ['belief', 'believe'],
       ['land', 'earth'],
       ['meat', 'flesh'],
+      ['write', 'draw'],
+      ['write', 'record'],
+      ['sound', 'call'],
+      ['voice', 'call'],
+      ['shape', 'form'],
+      ['break', 'burst'],
+      ['bad', 'evil'],
+      ['circle', 'wheel'],
+      ['wisdom', 'wise'],
+      ['above', 'over'],
+      ['turn', 'roll'],
+      ['turn', 'spin'],
+      ['stone', 'rock'],
+      ['heat', 'temperature'],
     ];
     for (const [answer, rival] of rivals) {
       const tiles = pickPartDistractors([ROOTS], 400, [answer], () => 0);
@@ -188,6 +221,29 @@ describe('other part of a school word', () => {
     const write = pickPartDistractors([ROOTS], 400, ['write'], () => 0);
     expect(write).toContain('together');
     expect(write).toContain('down');
+  });
+
+  it('does not offer the catalog’s other name for the piece they were asked', () => {
+    const asked: ReadonlyArray<readonly [string, string, string, readonly string[]]> = [
+      ['Tele', 'Telephone', 'sound', ['call', 'voice']],
+      ['Min', 'Miniature', 'form', ['shape', 'figure']],
+      ['Hemo', 'Hemorrhage', 'burst', ['break', 'shatter']],
+      ['Uni', 'Unicycle', 'wheel', ['circle', 'ring']],
+      ['Photo', 'Photograph', 'record', ['write', 'draw', 'written']],
+      ['Phil', 'Philosophy', 'wisdom', ['wise']],
+      ['Ann', 'Anniversary', 'turn', ['roll', 'spin']],
+    ];
+    for (const [rootName, word, mean, rivals] of asked) {
+      const root = ROOTS.find((item) => item.root === rootName);
+      if (!root) throw new Error(`fixture: ${rootName}`);
+      const part = otherPartsForRoot(root).find((item) => item.word === word && item.mean === mean);
+      expect(part, `${word} ${mean}`).toBeTruthy();
+      const tiles = pickPartDistractors([ROOTS], 400, [part!.mean, root.mean], () => 0);
+      expect(tiles.length, word).toBeGreaterThan(10);
+      for (const rival of rivals) {
+        expect(tiles, `${word} ~ ${rival}`).not.toContain(rival);
+      }
+    }
   });
 });
 
