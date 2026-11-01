@@ -15,7 +15,11 @@ import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
  * Near-identical meanings that must never appear as rival tiles.
  * The extra words are the catalog's own other name for that idea:
  * Macro's alt is big, Terr's alt is land · ground, Carn's lead says
- * flesh or meat, Ped's alt is feet, Gram means written.
+ * flesh or meat, Ped's alt is feet, Gram means written, Therm's alt
+ * is temperature, Graph's alt is draw · record, Cycl's alt is wheel,
+ * Super's alt is over, Volv's alt is turn, Lith's alt is rock,
+ * Voc's alt is call, Soph's alt is wise, Mal's lead says evil.
+ * Cold is not heat, and fire is not heat — those stay different tiles.
  */
 const SYNONYM_GROUPS: string[][] = [
   ['great', 'huge', 'large', 'big'],
@@ -28,15 +32,23 @@ const SYNONYM_GROUPS: string[][] = [
   ['life', 'living'],
   ['earth', 'land', 'ground'],
   ['flesh', 'meat'],
-  ['write', 'written'],
+  ['write', 'written', 'draw', 'record'],
   ['small', 'little', 'tiny'],
   ['speak', 'say', 'speech'],
-  ['sound', 'voice'],
+  ['sound', 'voice', 'call'],
   ['foot', 'feet'],
   ['death', 'die'],
   ['one', 'single'],
   ['strong', 'strength'],
-  ['heat', 'hot'],
+  ['heat', 'hot', 'temperature'],
+  ['shape', 'form', 'figure'],
+  ['break', 'burst', 'shatter'],
+  ['bad', 'evil'],
+  ['circle', 'wheel', 'ring'],
+  ['wisdom', 'wise'],
+  ['above', 'over'],
+  ['turn', 'roll', 'spin'],
+  ['stone', 'rock'],
 ];
 
 const SYNONYM_CANON = new Map<string, string>();
@@ -64,6 +76,10 @@ function meanIdeas(mean: string): readonly string[] {
  * "an area of land" says earth. "eats meat" says flesh.
  * "written by hand" says write. "a single horn" says one.
  * "a hundred feet" says foot. "able to die" says death.
+ * "a room's temperature" says heat. "solid rock" says stone.
+ * "two wheels" says circle. "a wise fool" says wisdom.
+ * "to turn around" says roll. "watch over" says above.
+ * "an evil spirit" says bad. "a picture, drawing" says write.
  */
 export function glossSaysMean(mean: string, label: string): boolean {
   const ideas = meanIdeas(mean);
@@ -299,7 +315,8 @@ function collectWordDefs(
  *
  * `avoidMean` drops a tile that already says that meaning, or the same
  * idea (living for life, huge or big for large, look or watch for see,
- * land for earth, meat for flesh, written for write). The quiet line
+ * land for earth, meat for flesh, written for write, temperature for
+ * heat, rock for stone, wheel for circle, over for above). The quiet line
  * still says "from Bio · life" when the right tile does not say life, so
  * a wrong tile that says life — or living — would be the one the hint
  * points at.
