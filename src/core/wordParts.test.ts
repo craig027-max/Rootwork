@@ -157,6 +157,13 @@ describe('other part of a school word', () => {
     expect(samePieceIdea('trust', 'believe')).toBe(true);
     expect(samePieceIdea('built', 'build')).toBe(true);
     expect(samePieceIdea('spirit', 'life')).toBe(false);
+    expect(samePieceIdea('touch', 'feel')).toBe(true);
+    expect(samePieceIdea('carry', 'bear')).toBe(true);
+    expect(samePieceIdea('body', 'flesh')).toBe(true);
+    expect(samePieceIdea('nerve', 'brain')).toBe(true);
+    expect(samePieceIdea('head', 'brain')).toBe(false);
+    expect(samePieceIdea('lift', 'raise')).toBe(true);
+    expect(samePieceIdea('lift', 'light')).toBe(false);
     expect(samePieceIdea('putting together', 'together')).toBe(false);
     expect(samePieceIdea('without', 'with')).toBe(false);
     expect(samePieceIdea('underworld', 'under')).toBe(false);
@@ -245,6 +252,14 @@ describe('other part of a school word', () => {
       ['send', 'sent'],
       ['mind', 'spirit'],
       ['straight', 'correct'],
+      ['touch', 'feel'],
+      ['feel', 'touch'],
+      ['carry', 'bear'],
+      ['body', 'flesh'],
+      ['body', 'meat'],
+      ['nerve', 'brain'],
+      ['all', 'every'],
+      ['lift', 'raise'],
     ];
     for (const [answer, rival] of rivals) {
       const tiles = pickPartDistractors([ROOTS], 400, [answer], () => 0);
@@ -268,6 +283,9 @@ describe('other part of a school word', () => {
       ['Ject', 'Reject', 'back', ['again']],
       ['Vit', 'Revitalize', 'again', ['back']],
       ['Aero', 'Aerodynamic', 'force', ['power', 'energy']],
+      ['Chrom', 'Chromosome', 'body', ['flesh', 'meat']],
+      ['Trans', 'Transfer', 'carry', ['bear']],
+      ['Eu', 'Euphoria', 'carry', ['bear']],
     ];
     for (const [rootName, word, mean, rivals] of asked) {
       const root = ROOTS.find((item) => item.root === rootName);

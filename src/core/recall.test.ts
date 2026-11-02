@@ -338,6 +338,85 @@ describe('buildRecall', () => {
     expect(glossSaysMean('fire', 'Heat energy from the earth')).toBe(false);
   });
 
+  it('does not point feel, brain, every, body, or raised at a wrong tile', () => {
+    const glossOf = (rootName: string, word: string): string => {
+      const root = ROOTS.find((item) => item.root === rootName);
+      const authored = root?.words.find((item) => item.w === word);
+      const gloss = authored ? quizGloss(authored.d) : null;
+      if (!root || !gloss) throw new Error(`fixture: ${rootName} ${word}`);
+      return gloss;
+    };
+    const cases = [
+      ['Neuro', 'Neurotic', 'from Neuro · nerve', 'Cephal', 'Encephalitis'],
+      ['Omni', 'Omnipresent', 'from Omni · all', 'Cent', 'Percent'],
+      ['Omni', 'Omnipresent', 'from Omni · all', 'Ann', 'Annual'],
+      ['Omni', 'Omnipresent', 'from Omni · all', 'Uni', 'Uniform'],
+      ['Lev', 'Levity', 'from Lev · lift', 'Terr', 'Terrace'],
+      ['Carn', 'Carnival', 'from Carn · flesh', 'Corp', 'Corporation'],
+      ['Carn', 'Carnival', 'from Carn · flesh', 'Phys', 'Physician'],
+      ['Carn', 'Reincarnate', 'from Carn · flesh', 'Chrom', 'Chromosome'],
+      ['Fer', 'Conifer', 'from Fer · carry', 'Fer', 'Conifer'],
+    ] as const;
+    for (const [rootName, word, line, rivalRoot, rivalWord] of cases) {
+      const root = ROOTS.find((item) => item.root === rootName);
+      if (!root) throw new Error(`fixture: ${rootName}`);
+      const gloss = glossOf(rootName, word);
+      const rival = glossOf(rivalRoot, rivalWord);
+      expect(glossQuietLine(root.root, root.mean, gloss), word).toBe(line);
+      expect(glossSaysMean(root.mean, rival), `${word} ~ ${rivalWord}`).toBe(true);
+      if (rivalWord === word) continue;
+      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 500, mulberry32(1));
+      expect(tiles.length, word).toBeGreaterThan(10);
+      expect(tiles, word).not.toContain(rival);
+      for (const label of tiles) {
+        expect(glossSaysMean(root.mean, label), `${word}: ${label}`).toBe(false);
+      }
+    }
+
+    const lev = ROOTS.find((item) => item.root === 'Lev');
+    const tang = ROOTS.find((item) => item.root === 'Tang');
+    const sent = ROOTS.find((item) => item.root === 'Sent');
+    const corp = ROOTS.find((item) => item.root === 'Corp');
+    const carn = ROOTS.find((item) => item.root === 'Carn');
+    const neuro = ROOTS.find((item) => item.root === 'Neuro');
+    const cephal = ROOTS.find((item) => item.root === 'Cephal');
+    const pyr = ROOTS.find((item) => item.root === 'Pyr');
+    const phys = ROOTS.find((item) => item.root === 'Phys');
+    if (!lev || !tang || !sent || !corp || !carn || !neuro || !cephal || !pyr || !phys) {
+      throw new Error('fixture: meaning roots');
+    }
+    const lift = pickMeaningDistractors(lev, [ROOTS], 400, () => 0);
+    expect(lift).not.toContain('raise');
+    expect(lift).toContain('light');
+    const touch = pickMeaningDistractors(tang, [ROOTS], 400, () => 0);
+    expect(touch).not.toContain('feel');
+    expect(touch).not.toContain('feeling');
+    expect(touch).toContain('throw');
+    const feel = pickMeaningDistractors(sent, [ROOTS], 400, () => 0);
+    expect(feel).not.toContain('touch');
+    const body = pickMeaningDistractors(corp, [ROOTS], 400, () => 0);
+    expect(body).not.toContain('flesh');
+    expect(body).not.toContain('meat');
+    const flesh = pickMeaningDistractors(carn, [ROOTS], 400, () => 0);
+    expect(flesh).not.toContain('body');
+    const nerve = pickMeaningDistractors(neuro, [ROOTS], 400, () => 0);
+    expect(nerve).toContain('head');
+    const head = pickMeaningDistractors(cephal, [ROOTS], 400, () => 0);
+    expect(head).toContain('nerve');
+    const fire = pickMeaningDistractors(pyr, [ROOTS], 400, () => 0);
+    expect(fire).toContain('heat');
+    const nature = pickMeaningDistractors(phys, [ROOTS], 400, () => 0);
+    expect(nature).toContain('flesh');
+    expect(nature).not.toContain('body');
+
+    const levity = glossOf('Lev', 'Levity');
+    const lightTiles = pickGlossDistractors(lev.mean, 'Levity', levity, [ROOTS], 500, mulberry32(1));
+    expect(lightTiles).toContain(glossOf('Photo', 'Photograph'));
+    expect(lightTiles).not.toContain(glossOf('Terr', 'Terrace'));
+    expect(glossSaysMean('head', 'Swelling of the brain inside the head')).toBe(true);
+    expect(glossSaysMean('nerve', 'The head-foot creature')).toBe(false);
+  });
+
   it('a Photosynthesis miss still teaches light after the hint dropped it', () => {
     const photo = ROOTS.find((r) => r.root === 'Photo');
     if (!photo) throw new Error('fixture: Photo');
