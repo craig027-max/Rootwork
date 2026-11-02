@@ -109,6 +109,7 @@ function pieceHeads(label: string): string[] {
  * "makes" is make. "voice/call" is voice, and voice is sound.
  * "land" is earth. "meat" is flesh. "little" is small.
  * "built" is build. "back" is again. "trust" is believe.
+ * "feel" is touch. "bear" is carry. "brain" is nerve, not head.
  * "break down" is not down, and not broken. "without" is not with.
  * Those stay different choices, so they can still sit beside each other.
  */

@@ -18,13 +18,15 @@ import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
  * Macro's alt is big, Terr's alt is land · ground, built is build,
  * made is make, sent is send, teeth is tooth, true is truth,
  * remember is memory, talk and spoken are speak, trust is believe,
- * back is again, put is place, asleep is sleep, foreign is stranger.
- * Cold is not heat, fire is not heat, and lift is not light —
- * those stay different tiles. Spirit is mind, not life.
+ * back is again, put is place, asleep is sleep, foreign is stranger,
+ * feel is touch, body is flesh, brain is nerve, every is all,
+ * bear is carry, raise is lift.
+ * Cold is not heat, fire is not heat, and lift is not light.
+ * Head is not brain. Those stay different tiles. Spirit is mind, not life.
  */
 const SYNONYM_GROUPS: string[][] = [
   ['great', 'huge', 'large', 'big'],
-  ['feeling', 'feel'],
+  ['feeling', 'feel', 'touch'],
   ['born', 'birth'],
   ['war', 'fight'],
   ['believe', 'faith', 'belief', 'trust'],
@@ -32,7 +34,7 @@ const SYNONYM_GROUPS: string[][] = [
   ['see', 'look', 'watch', 'seen'],
   ['life', 'living'],
   ['earth', 'land', 'ground'],
-  ['flesh', 'meat'],
+  ['flesh', 'meat', 'body'],
   ['write', 'written', 'draw', 'record'],
   ['small', 'little', 'tiny'],
   ['speak', 'say', 'speech', 'talk', 'spoken'],
@@ -70,6 +72,10 @@ const SYNONYM_GROUPS: string[][] = [
   ['sleep', 'asleep'],
   ['mind', 'spirit'],
   ['straight', 'correct'],
+  ['nerve', 'brain'],
+  ['all', 'every'],
+  ['carry', 'bear'],
+  ['lift', 'raise'],
 ];
 
 const SYNONYM_CANON = new Map<string, string>();
@@ -112,7 +118,11 @@ function meanIdeas(mean: string): readonly string[] {
  * "into a crowd" says flock. "a craze" says madness.
  * "many languages" says tongue. "beautiful" says beauty.
  * "among many" says between. "the correct spelling" says straight.
+ * "the sense of touch" says feel. "one body" says flesh.
+ * "swelling of the brain" says nerve. "every year" says all.
+ * "bears cones" says carry. "a raised area" says lift.
  * A cold wind does not say heat, and sunlight does not say lift.
+ * The head does not say nerve.
  */
 export function glossSaysMean(mean: string, label: string): boolean {
   const ideas = meanIdeas(mean);
@@ -350,7 +360,8 @@ function collectWordDefs(
  * idea (living for life, huge or big for large, look or watch for see,
  * land for earth, meat for flesh, written for write, temperature for
  * heat, rock for stone, wheel for circle, over for above, built for
- * build, made for make, back for again, teeth for tooth). The quiet line
+ * build, made for make, back for again, teeth for tooth, brain for
+ * nerve, every for all, body for flesh, raised for lift). The quiet line
  * still says "from Bio · life" when the right tile does not say life, so
  * a wrong tile that says life — or living — would be the one the hint
  * points at.
