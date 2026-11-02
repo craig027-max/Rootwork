@@ -152,6 +152,11 @@ describe('other part of a school word', () => {
     expect(samePieceIdea('break down', 'down')).toBe(false);
     expect(samePieceIdea('break down', 'break')).toBe(false);
     expect(samePieceIdea('break down', 'burst')).toBe(false);
+    expect(samePieceIdea('break down', 'broken')).toBe(false);
+    expect(samePieceIdea('back', 'again')).toBe(true);
+    expect(samePieceIdea('trust', 'believe')).toBe(true);
+    expect(samePieceIdea('built', 'build')).toBe(true);
+    expect(samePieceIdea('spirit', 'life')).toBe(false);
     expect(samePieceIdea('putting together', 'together')).toBe(false);
     expect(samePieceIdea('without', 'with')).toBe(false);
     expect(samePieceIdea('underworld', 'under')).toBe(false);
@@ -212,6 +217,34 @@ describe('other part of a school word', () => {
       ['turn', 'spin'],
       ['stone', 'rock'],
       ['heat', 'temperature'],
+      ['again', 'back'],
+      ['back', 'again'],
+      ['believe', 'trust'],
+      ['faith', 'trust'],
+      ['memory', 'remember'],
+      ['stranger', 'foreign'],
+      ['force', 'power'],
+      ['power', 'energy'],
+      ['speak', 'spoken'],
+      ['speak', 'talk'],
+      ['build', 'built'],
+      ['make', 'made'],
+      ['sleep', 'asleep'],
+      ['tooth', 'teeth'],
+      ['truth', 'true'],
+      ['beauty', 'beautiful'],
+      ['tongue', 'language'],
+      ['madness', 'craze'],
+      ['between', 'among'],
+      ['judge', 'decide'],
+      ['wrong', 'badly'],
+      ['flock', 'crowd'],
+      ['place', 'put'],
+      ['see', 'seen'],
+      ['break', 'broken'],
+      ['send', 'sent'],
+      ['mind', 'spirit'],
+      ['straight', 'correct'],
     ];
     for (const [answer, rival] of rivals) {
       const tiles = pickPartDistractors([ROOTS], 400, [answer], () => 0);
@@ -232,6 +265,9 @@ describe('other part of a school word', () => {
       ['Photo', 'Photograph', 'record', ['write', 'draw', 'written']],
       ['Phil', 'Philosophy', 'wisdom', ['wise']],
       ['Ann', 'Anniversary', 'turn', ['roll', 'spin']],
+      ['Ject', 'Reject', 'back', ['again']],
+      ['Vit', 'Revitalize', 'again', ['back']],
+      ['Aero', 'Aerodynamic', 'force', ['power', 'energy']],
     ];
     for (const [rootName, word, mean, rivals] of asked) {
       const root = ROOTS.find((item) => item.root === rootName);

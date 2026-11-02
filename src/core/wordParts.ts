@@ -108,8 +108,9 @@ function pieceHeads(label: string): string[] {
  * "study of" is study. "writing" is write. "written" is write.
  * "makes" is make. "voice/call" is voice, and voice is sound.
  * "land" is earth. "meat" is flesh. "little" is small.
- * "break down" is not down, and "without" is not with — those
- * are different choices, so they can still sit beside each other.
+ * "built" is build. "back" is again. "trust" is believe.
+ * "break down" is not down, and not broken. "without" is not with.
+ * Those stay different choices, so they can still sit beside each other.
  */
 export function samePieceIdea(a: string, b: string): boolean {
   const left = pieceHeads(a);

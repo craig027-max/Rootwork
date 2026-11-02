@@ -13,28 +13,29 @@ import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
 
 /**
  * Near-identical meanings that must never appear as rival tiles.
- * The extra words are the catalog's own other name for that idea:
- * Macro's alt is big, Terr's alt is land · ground, Carn's lead says
- * flesh or meat, Ped's alt is feet, Gram means written, Therm's alt
- * is temperature, Graph's alt is draw · record, Cycl's alt is wheel,
- * Super's alt is over, Volv's alt is turn, Lith's alt is rock,
- * Voc's alt is call, Soph's alt is wise, Mal's lead says evil.
- * Cold is not heat, and fire is not heat — those stay different tiles.
+ * The extra words are the catalog's own other name for that idea,
+ * including irregular forms the hint still treats as a different word:
+ * Macro's alt is big, Terr's alt is land · ground, built is build,
+ * made is make, sent is send, teeth is tooth, true is truth,
+ * remember is memory, talk and spoken are speak, trust is believe,
+ * back is again, put is place, asleep is sleep, foreign is stranger.
+ * Cold is not heat, fire is not heat, and lift is not light —
+ * those stay different tiles. Spirit is mind, not life.
  */
 const SYNONYM_GROUPS: string[][] = [
   ['great', 'huge', 'large', 'big'],
   ['feeling', 'feel'],
   ['born', 'birth'],
   ['war', 'fight'],
-  ['believe', 'faith', 'belief'],
+  ['believe', 'faith', 'belief', 'trust'],
   ['lead', 'leader'],
-  ['see', 'look', 'watch'],
+  ['see', 'look', 'watch', 'seen'],
   ['life', 'living'],
   ['earth', 'land', 'ground'],
   ['flesh', 'meat'],
   ['write', 'written', 'draw', 'record'],
   ['small', 'little', 'tiny'],
-  ['speak', 'say', 'speech'],
+  ['speak', 'say', 'speech', 'talk', 'spoken'],
   ['sound', 'voice', 'call'],
   ['foot', 'feet'],
   ['death', 'die'],
@@ -42,13 +43,33 @@ const SYNONYM_GROUPS: string[][] = [
   ['strong', 'strength'],
   ['heat', 'hot', 'temperature'],
   ['shape', 'form', 'figure'],
-  ['break', 'burst', 'shatter'],
+  ['break', 'burst', 'shatter', 'broken'],
   ['bad', 'evil'],
   ['circle', 'wheel', 'ring'],
   ['wisdom', 'wise'],
   ['above', 'over'],
   ['turn', 'roll', 'spin'],
   ['stone', 'rock'],
+  ['tooth', 'teeth'],
+  ['build', 'built'],
+  ['make', 'made'],
+  ['send', 'sent'],
+  ['truth', 'true'],
+  ['memory', 'remember'],
+  ['beauty', 'beautiful'],
+  ['tongue', 'language'],
+  ['madness', 'craze'],
+  ['between', 'among'],
+  ['stranger', 'foreign'],
+  ['judge', 'decide'],
+  ['wrong', 'badly'],
+  ['power', 'force', 'energy'],
+  ['again', 'back'],
+  ['flock', 'herd', 'crowd'],
+  ['place', 'put'],
+  ['sleep', 'asleep'],
+  ['mind', 'spirit'],
+  ['straight', 'correct'],
 ];
 
 const SYNONYM_CANON = new Map<string, string>();
@@ -79,7 +100,19 @@ function meanIdeas(mean: string): readonly string[] {
  * "a room's temperature" says heat. "solid rock" says stone.
  * "two wheels" says circle. "a wise fool" says wisdom.
  * "to turn around" says roll. "watch over" says above.
- * "an evil spirit" says bad. "a picture, drawing" says write.
+ * "an evil spirit" says bad, and also mind — not life.
+ * "a picture, drawing" says write. "was built" says build.
+ * "things are made" says make. "is sent" says send.
+ * "straightens teeth" says tooth. "is true" says truth.
+ * "helps you remember" says memory. "words spoken" says speak.
+ * "to trust" says believe. "wind back" says again.
+ * "to put" says place. "fall asleep" says sleep.
+ * "foreigners" says stranger. "who decide" says judge.
+ * "work badly" says wrong. "heat energy" says power.
+ * "into a crowd" says flock. "a craze" says madness.
+ * "many languages" says tongue. "beautiful" says beauty.
+ * "among many" says between. "the correct spelling" says straight.
+ * A cold wind does not say heat, and sunlight does not say lift.
  */
 export function glossSaysMean(mean: string, label: string): boolean {
   const ideas = meanIdeas(mean);
@@ -316,7 +349,8 @@ function collectWordDefs(
  * `avoidMean` drops a tile that already says that meaning, or the same
  * idea (living for life, huge or big for large, look or watch for see,
  * land for earth, meat for flesh, written for write, temperature for
- * heat, rock for stone, wheel for circle, over for above). The quiet line
+ * heat, rock for stone, wheel for circle, over for above, built for
+ * build, made for make, back for again, teeth for tooth). The quiet line
  * still says "from Bio · life" when the right tile does not say life, so
  * a wrong tile that says life — or living — would be the one the hint
  * points at.

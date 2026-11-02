@@ -280,6 +280,64 @@ describe('buildRecall', () => {
     expect(lift).toContain('light');
   });
 
+  it('does not point an irregular or the card’s other name at a wrong tile', () => {
+    const glossOf = (rootName: string, word: string): string => {
+      const root = ROOTS.find((item) => item.root === rootName);
+      const authored = root?.words.find((item) => item.w === word);
+      const gloss = authored ? quizGloss(authored.d) : null;
+      if (!root || !gloss) throw new Error(`fixture: ${rootName} ${word}`);
+      return gloss;
+    };
+    const cases = [
+      ['Struct', 'Structure', 'from Struct · build', 'Geo', 'Geology'],
+      ['Fac', 'Factory', 'from Fac · make', 'Photo', 'Photograph'],
+      ['Miss', 'Mission', 'from Miss · send', 'Gram', 'Telegram'],
+      ['Odont', 'Orthodontist', 'from Odont · tooth', 'Odont', 'Mastodon'],
+      ['Ver', 'Verify', 'from Ver · truth', 'Bio', 'Biography'],
+      ['Mnem', 'Amnesty', 'from Mnem · memory', 'Mnem', 'Mnemonic'],
+      ['Calli', 'Calligraphy', 'from Calli · beauty', 'Loqu', 'Eloquent'],
+      ['Gloss', 'Glossary', 'from Gloss · tongue', 'Bi', 'Bilingual'],
+      ['Mania', 'Kleptomania', 'from Mania · madness', 'Mania', 'Megalomania'],
+      ['Inter', 'Interact', 'from Inter · between', 'Dem', 'Epidemic'],
+      ['Xeno', 'Xenophobia', 'from Xeno · stranger', 'Xeno', 'Xenophile'],
+      ['Jud', 'Judge', 'from Jud · judge', 'Jur', 'Jury'],
+      ['Mis', 'Misbehave', 'from Mis · wrong', 'Mal', 'Malfunction'],
+      ['Dyna', 'Dynamic', 'from Dyna · power', 'Geo', 'Geothermal'],
+      ['Dyna', 'Dynamic', 'from Dyna · power', 'Ject', 'Inject'],
+      ['Re', 'Return', 'from Re · again', 'Re', 'Rewind'],
+      ['Greg', 'Congregate', 'from Greg · flock', 'Agog', 'Demagogue'],
+      ['Pos', 'Compose', 'from Pos · place', 'Sub', 'Submerge'],
+      ['Somn', 'Insomnia', 'from Somn · sleep', 'Somn', 'Somnambulist'],
+      ['Vis', 'Visible', 'from Vis · see', 'Macro', 'Macro'],
+      ['Fract', 'Fraction', 'from Fract · break', 'Bio', 'Biodegradable'],
+      ['Loqu', 'Soliloquy', 'from Loqu · speak', 'Log', 'Dialogue'],
+      ['Dict', 'Dictionary', 'from Dict · speak', 'Loqu', 'Loquacious'],
+      ['Phren', 'Frenetic', 'from Phren · mind', 'Caco', 'Cacodemon'],
+      ['Ortho', 'Orthodox', 'from Ortho · straight', 'Ortho', 'Orthography'],
+      ['Cred', 'Credit', 'from Cred · believe', 'Fid', 'Confide'],
+      ['Fid', 'Confide', 'from Fid · faith', 'Cred', 'Credit'],
+    ] as const;
+    for (const [rootName, word, line, rivalRoot, rivalWord] of cases) {
+      const root = ROOTS.find((item) => item.root === rootName);
+      if (!root) throw new Error(`fixture: ${rootName}`);
+      const gloss = glossOf(rootName, word);
+      const rival = glossOf(rivalRoot, rivalWord);
+      expect(glossQuietLine(root.root, root.mean, gloss), word).toBe(line);
+      expect(glossSaysMean(root.mean, rival), `${word} ~ ${rivalWord}`).toBe(true);
+      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 500, mulberry32(1));
+      expect(tiles.length, word).toBeGreaterThan(10);
+      expect(tiles, word).not.toContain(rival);
+      for (const label of tiles) {
+        expect(glossSaysMean(root.mean, label), `${word}: ${label}`).toBe(false);
+      }
+    }
+
+    expect(glossSaysMean('life', 'An evil spirit or nightmare')).toBe(false);
+    expect(glossSaysMean('heat', 'A cold wind')).toBe(false);
+    expect(glossSaysMean('lift', 'A picture made by capturing light')).toBe(false);
+    expect(glossSaysMean('fire', 'Heat energy from the earth')).toBe(false);
+  });
+
   it('a Photosynthesis miss still teaches light after the hint dropped it', () => {
     const photo = ROOTS.find((r) => r.root === 'Photo');
     if (!photo) throw new Error('fixture: Photo');
