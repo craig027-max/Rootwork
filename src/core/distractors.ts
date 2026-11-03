@@ -20,10 +20,13 @@ import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
  * remember is memory, talk and spoken are speak, trust is believe,
  * back is again, put is place, asleep is sleep, foreign is stranger,
  * feel is touch, body is flesh, brain is nerve, every is all,
- * bear is carry, raise is lift, writing and letter are write,
- * alone is one, closed is shut, world is universe, art is skill.
+ * bear is carry, raise and lighten are lift, writing and letter are write,
+ * alone is one, closed is shut, world is universe, art is skill,
+ * free is loosen, well is good, harsh is bad, distance is far,
+ * chief and ruler are rule.
  * Cold is not heat, fire is not heat, and lift is not light.
  * Head is not brain. Close is not shut — "up close" is still near.
+ * Power is not rule, and a beginning is not a ruler.
  * Those stay different tiles. Spirit is mind, not life.
  */
 const SYNONYM_GROUPS: string[][] = [
@@ -48,7 +51,7 @@ const SYNONYM_GROUPS: string[][] = [
   ['heat', 'hot', 'temperature'],
   ['shape', 'form', 'figure'],
   ['break', 'burst', 'shatter', 'broken'],
-  ['bad', 'evil'],
+  ['bad', 'evil', 'harsh'],
   ['circle', 'wheel', 'ring'],
   ['wisdom', 'wise'],
   ['above', 'over'],
@@ -77,7 +80,11 @@ const SYNONYM_GROUPS: string[][] = [
   ['nerve', 'brain'],
   ['all', 'every'],
   ['carry', 'bear'],
-  ['lift', 'raise'],
+  ['lift', 'raise', 'lighten'],
+  ['loosen', 'free'],
+  ['good', 'well'],
+  ['far', 'distance'],
+  ['rule', 'chief', 'ruler'],
   ['shut', 'closed'],
   ['universe', 'world'],
   ['skill', 'art', 'craft'],
@@ -129,8 +136,12 @@ function meanIdeas(mean: string): readonly string[] {
  * "in writing" says write. "a letter" says write.
  * "standing alone" says one. "closed-in" says shut.
  * "natural world" says universe. "the art of" says skill.
+ * "to lighten" says lift. "to free" says loosen.
+ * "equally well" says good. "a harsh clash" says bad.
+ * "across a distance" says far. "a ruler" and "the chief" say rule.
  * A cold wind does not say heat, and sunlight does not say lift.
  * The head does not say nerve. "Up close" does not say shut.
+ * "All power" does not say rule. "The beginning" does not say rule.
  */
 export function glossSaysMean(mean: string, label: string): boolean {
   const ideas = meanIdeas(mean);
@@ -369,7 +380,9 @@ function collectWordDefs(
  * land for earth, meat for flesh, written for write, temperature for
  * heat, rock for stone, wheel for circle, over for above, built for
  * build, made for make, back for again, teeth for tooth, brain for
- * nerve, every for all, body for flesh, raised for lift). The quiet line
+ * nerve, every for all, body for flesh, raised or lighten for lift,
+ * free for loosen, well for good, harsh for bad, distance for far,
+ * chief or ruler for rule). The quiet line
  * still says "from Bio · life" when the right tile does not say life, so
  * a wrong tile that says life — or living — would be the one the hint
  * points at.
