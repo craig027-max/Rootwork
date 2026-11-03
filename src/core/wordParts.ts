@@ -111,9 +111,11 @@ function pieceHeads(label: string): string[] {
  * "built" is build. "back" is again. "trust" is believe.
  * "feel" is touch. "bear" is carry. "brain" is nerve, not head.
  * "writing" is record, and letter. "alone" is one. "closed" is shut.
- * "world" is universe. "art" is skill. "break down" is not down,
- * and not broken. "without" is not with. "underworld" is not under,
- * and not world. "up close" is not shut.
+ * "world" is universe. "art" is skill. "free" is loosen.
+ * "chief" is rule, and "ruler" is rule. "harsh" is bad.
+ * "break down" is not down, and not broken. "without" is not with.
+ * "underworld" is not under, and not world. "up close" is not shut.
+ * "light" is not lift. "power" is not rule.
  * Those stay different choices, so they can still sit beside each other.
  */
 export function samePieceIdea(a: string, b: string): boolean {

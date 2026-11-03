@@ -163,7 +163,16 @@ describe('other part of a school word', () => {
     expect(samePieceIdea('nerve', 'brain')).toBe(true);
     expect(samePieceIdea('head', 'brain')).toBe(false);
     expect(samePieceIdea('lift', 'raise')).toBe(true);
+    expect(samePieceIdea('lift', 'lighten')).toBe(true);
     expect(samePieceIdea('lift', 'light')).toBe(false);
+    expect(samePieceIdea('free', 'loosen')).toBe(true);
+    expect(samePieceIdea('chief', 'rule')).toBe(true);
+    expect(samePieceIdea('ruler', 'rule')).toBe(true);
+    expect(samePieceIdea('harsh', 'bad')).toBe(true);
+    expect(samePieceIdea('well', 'good')).toBe(true);
+    expect(samePieceIdea('distance', 'far')).toBe(true);
+    expect(samePieceIdea('power', 'rule')).toBe(false);
+    expect(samePieceIdea('beginning', 'rule')).toBe(false);
     expect(samePieceIdea('writing', 'record')).toBe(true);
     expect(samePieceIdea('writing', 'letter')).toBe(true);
     expect(samePieceIdea('writing', 'written')).toBe(true);
@@ -285,6 +294,17 @@ describe('other part of a school word', () => {
       ['art', 'skill'],
       ['skill', 'art'],
       ['craft', 'skill'],
+      ['loosen', 'free'],
+      ['free', 'loosen'],
+      ['rule', 'chief'],
+      ['chief', 'rule'],
+      ['rule', 'ruler'],
+      ['ruler', 'rule'],
+      ['bad', 'harsh'],
+      ['harsh', 'bad'],
+      ['lift', 'lighten'],
+      ['good', 'well'],
+      ['far', 'distance'],
     ];
     for (const [answer, rival] of rivals) {
       const tiles = pickPartDistractors([ROOTS], 400, [answer], () => 0);
@@ -318,6 +338,9 @@ describe('other part of a school word', () => {
       ['Phobia', 'Claustrophobia', 'closed', ['shut']],
       ['Macro', 'Macrocosm', 'world', ['universe']],
       ['Pyr', 'Pyrotechnics', 'art', ['skill', 'craft']],
+      ['Cata', 'Catalyst', 'loosen', ['free']],
+      ['Dem', 'Democracy', 'rule', ['chief', 'ruler']],
+      ['Mater', 'Matriarch', 'ruler', ['chief', 'rule']],
     ];
     for (const [rootName, word, mean, rivals] of asked) {
       const root = ROOTS.find((item) => item.root === rootName);

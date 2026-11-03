@@ -477,6 +477,84 @@ describe('buildRecall', () => {
     expect(glossSaysMean('write', 'The rules for putting written words together')).toBe(true);
   });
 
+  it('does not point lighten, free, well, harsh, distance, or chief at a wrong tile', () => {
+    const glossOf = (rootName: string, word: string): string => {
+      const root = ROOTS.find((item) => item.root === rootName);
+      const authored = root?.words.find((item) => item.w === word);
+      const gloss = authored ? quizGloss(authored.d) : null;
+      if (!root || !gloss) throw new Error(`fixture: ${rootName} ${word}`);
+      return gloss;
+    };
+    const cases = [
+      ['Lev', 'Levity', 'from Lev · lift', 'Lev', 'Alleviate'],
+      ['Eu', 'Euphoria', 'from Eu · good', 'Ambi', 'Ambidextrous'],
+      ['Eu', 'Euphemism', 'from Eu · good', 'Ambi', 'Ambidextrous'],
+      ['Mal', 'Malfunction', 'from Mal · bad', 'Caco', 'Cacophony'],
+      ['Mal', 'Malfunction', 'from Mal · bad', 'Eu', 'Euphemism'],
+      ['Dys', 'Dysfunction', 'from Dys · bad', 'Caco', 'Cacophony'],
+      ['Tele', 'Television', 'from Tele · far', 'Phon', 'Telephone'],
+      ['Tele', 'Television', 'from Tele · far', 'Miss', 'Transmit'],
+      ['Tele', 'Television', 'from Tele · far', 'Circum', 'Circumference'],
+      ['Arch', 'Architect', 'from Arch · rule', 'Crat', 'Autocrat'],
+      ['Crat', 'Autocrat', 'from Crat · rule', 'Arch', 'Architect'],
+    ] as const;
+    for (const [rootName, word, line, rivalRoot, rivalWord] of cases) {
+      const root = ROOTS.find((item) => item.root === rootName);
+      if (!root) throw new Error(`fixture: ${rootName}`);
+      const gloss = glossOf(rootName, word);
+      const rival = glossOf(rivalRoot, rivalWord);
+      expect(glossQuietLine(root.root, root.mean, gloss), word).toBe(line);
+      expect(glossSaysMean(root.mean, rival), `${word} ~ ${rivalWord}`).toBe(true);
+      if (rivalWord === word) continue;
+      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 500, mulberry32(1));
+      expect(tiles.length, word).toBeGreaterThan(10);
+      expect(tiles, word).not.toContain(rival);
+      for (const label of tiles) {
+        expect(glossSaysMean(root.mean, label), `${word}: ${label}`).toBe(false);
+      }
+    }
+
+    const lev = ROOTS.find((item) => item.root === 'Lev');
+    const solv = ROOTS.find((item) => item.root === 'Solv');
+    const crat = ROOTS.find((item) => item.root === 'Crat');
+    const pyr = ROOTS.find((item) => item.root === 'Pyr');
+    if (!lev || !solv || !crat || !pyr) throw new Error('fixture: meaning roots');
+
+    const lift = pickGlossDistractors(lev.mean, 'Levity', glossOf('Lev', 'Levity'), [ROOTS], 500, mulberry32(1));
+    expect(lift).toContain(glossOf('Photo', 'Photograph'));
+    expect(lift).not.toContain(glossOf('Lev', 'Alleviate'));
+    const loosen = pickGlossDistractors(solv.mean, 'Absolve', glossOf('Solv', 'Absolve'), [ROOTS], 500, mulberry32(1));
+    expect(loosen).not.toContain(glossOf('Solv', 'Absolve'));
+    expect(loosen.length).toBeGreaterThan(10);
+    const rule = pickGlossDistractors(crat.mean, 'Autocrat', glossOf('Crat', 'Autocrat'), [ROOTS], 500, mulberry32(1));
+    expect(rule).toContain(glossOf('Omni', 'Omnipotent'));
+    expect(rule).toContain(glossOf('Gen', 'Genesis'));
+    expect(rule).not.toContain(glossOf('Arch', 'Architect'));
+
+    const light = pickMeaningDistractors(lev, [ROOTS], 400, () => 0);
+    expect(light).toContain('light');
+    expect(light).not.toContain('raise');
+    const fire = pickMeaningDistractors(pyr, [ROOTS], 400, () => 0);
+    expect(fire).toContain('heat');
+    const power = pickMeaningDistractors(crat, [ROOTS], 400, () => 0);
+    expect(power).toContain('power');
+
+    expect(glossSaysMean('lift', 'To lighten or ease a burden.')).toBe(true);
+    expect(glossSaysMean('lift', 'A picture made by capturing light')).toBe(false);
+    expect(glossSaysMean('lift', 'Light, cheerful humor')).toBe(false);
+    expect(glossSaysMean('loosen', 'To free someone from blame.')).toBe(true);
+    expect(glossSaysMean('good', 'Able to use both hands equally well.')).toBe(true);
+    expect(glossSaysMean('bad', 'A harsh, jarring clash of sounds.')).toBe(true);
+    expect(glossSaysMean('bad', 'A soft word used in place of a harsh one.')).toBe(true);
+    expect(glossSaysMean('far', 'To send across a distance.')).toBe(true);
+    expect(glossSaysMean('far', 'The distance carried all the way around a circle.')).toBe(true);
+    expect(glossSaysMean('rule', 'A ruler who holds total power alone.')).toBe(true);
+    expect(glossSaysMean('rule', 'The chief builder who designs a building.')).toBe(true);
+    expect(glossSaysMean('rule', 'The beginning or birth of something')).toBe(false);
+    expect(glossSaysMean('rule', 'Having all power; almighty')).toBe(false);
+    expect(glossSaysMean('heat', 'A pile of wood built for a fire.')).toBe(false);
+  });
+
   it('a Photosynthesis miss still teaches light after the hint dropped it', () => {
     const photo = ROOTS.find((r) => r.root === 'Photo');
     if (!photo) throw new Error('fixture: Photo');
