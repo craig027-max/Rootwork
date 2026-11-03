@@ -20,9 +20,11 @@ import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
  * remember is memory, talk and spoken are speak, trust is believe,
  * back is again, put is place, asleep is sleep, foreign is stranger,
  * feel is touch, body is flesh, brain is nerve, every is all,
- * bear is carry, raise is lift.
+ * bear is carry, raise is lift, writing and letter are write,
+ * alone is one, closed is shut, world is universe, art is skill.
  * Cold is not heat, fire is not heat, and lift is not light.
- * Head is not brain. Those stay different tiles. Spirit is mind, not life.
+ * Head is not brain. Close is not shut — "up close" is still near.
+ * Those stay different tiles. Spirit is mind, not life.
  */
 const SYNONYM_GROUPS: string[][] = [
   ['great', 'huge', 'large', 'big'],
@@ -35,13 +37,13 @@ const SYNONYM_GROUPS: string[][] = [
   ['life', 'living'],
   ['earth', 'land', 'ground'],
   ['flesh', 'meat', 'body'],
-  ['write', 'written', 'draw', 'record'],
+  ['write', 'written', 'draw', 'record', 'writing', 'letter'],
   ['small', 'little', 'tiny'],
   ['speak', 'say', 'speech', 'talk', 'spoken'],
   ['sound', 'voice', 'call'],
   ['foot', 'feet'],
   ['death', 'die'],
-  ['one', 'single'],
+  ['one', 'single', 'alone'],
   ['strong', 'strength'],
   ['heat', 'hot', 'temperature'],
   ['shape', 'form', 'figure'],
@@ -76,6 +78,9 @@ const SYNONYM_GROUPS: string[][] = [
   ['all', 'every'],
   ['carry', 'bear'],
   ['lift', 'raise'],
+  ['shut', 'closed'],
+  ['universe', 'world'],
+  ['skill', 'art', 'craft'],
 ];
 
 const SYNONYM_CANON = new Map<string, string>();
@@ -121,8 +126,11 @@ function meanIdeas(mean: string): readonly string[] {
  * "the sense of touch" says feel. "one body" says flesh.
  * "swelling of the brain" says nerve. "every year" says all.
  * "bears cones" says carry. "a raised area" says lift.
+ * "in writing" says write. "a letter" says write.
+ * "standing alone" says one. "closed-in" says shut.
+ * "natural world" says universe. "the art of" says skill.
  * A cold wind does not say heat, and sunlight does not say lift.
- * The head does not say nerve.
+ * The head does not say nerve. "Up close" does not say shut.
  */
 export function glossSaysMean(mean: string, label: string): boolean {
   const ideas = meanIdeas(mean);

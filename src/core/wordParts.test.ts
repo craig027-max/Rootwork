@@ -164,6 +164,18 @@ describe('other part of a school word', () => {
     expect(samePieceIdea('head', 'brain')).toBe(false);
     expect(samePieceIdea('lift', 'raise')).toBe(true);
     expect(samePieceIdea('lift', 'light')).toBe(false);
+    expect(samePieceIdea('writing', 'record')).toBe(true);
+    expect(samePieceIdea('writing', 'letter')).toBe(true);
+    expect(samePieceIdea('writing', 'written')).toBe(true);
+    expect(samePieceIdea('letter', 'write')).toBe(true);
+    expect(samePieceIdea('alone', 'one')).toBe(true);
+    expect(samePieceIdea('alone', 'single')).toBe(true);
+    expect(samePieceIdea('closed', 'shut')).toBe(true);
+    expect(samePieceIdea('close', 'shut')).toBe(false);
+    expect(samePieceIdea('world', 'universe')).toBe(true);
+    expect(samePieceIdea('underworld', 'world')).toBe(false);
+    expect(samePieceIdea('art', 'skill')).toBe(true);
+    expect(samePieceIdea('craft', 'skill')).toBe(true);
     expect(samePieceIdea('putting together', 'together')).toBe(false);
     expect(samePieceIdea('without', 'with')).toBe(false);
     expect(samePieceIdea('underworld', 'under')).toBe(false);
@@ -260,6 +272,19 @@ describe('other part of a school word', () => {
       ['nerve', 'brain'],
       ['all', 'every'],
       ['lift', 'raise'],
+      ['writing', 'record'],
+      ['writing', 'letter'],
+      ['record', 'writing'],
+      ['letter', 'writing'],
+      ['alone', 'one'],
+      ['one', 'alone'],
+      ['closed', 'shut'],
+      ['shut', 'closed'],
+      ['world', 'universe'],
+      ['universe', 'world'],
+      ['art', 'skill'],
+      ['skill', 'art'],
+      ['craft', 'skill'],
     ];
     for (const [answer, rival] of rivals) {
       const tiles = pickPartDistractors([ROOTS], 400, [answer], () => 0);
@@ -286,6 +311,13 @@ describe('other part of a school word', () => {
       ['Chrom', 'Chromosome', 'body', ['flesh', 'meat']],
       ['Trans', 'Transfer', 'carry', ['bear']],
       ['Eu', 'Euphoria', 'carry', ['bear']],
+      ['Bio', 'Biography', 'writing', ['record', 'letter', 'write', 'draw', 'written']],
+      ['Photo', 'Photograph', 'record', ['writing', 'letter']],
+      ['Loqu', 'Soliloquy', 'alone', ['one', 'single']],
+      ['Anim', 'Unanimous', 'one', ['alone']],
+      ['Phobia', 'Claustrophobia', 'closed', ['shut']],
+      ['Macro', 'Macrocosm', 'world', ['universe']],
+      ['Pyr', 'Pyrotechnics', 'art', ['skill', 'craft']],
     ];
     for (const [rootName, word, mean, rivals] of asked) {
       const root = ROOTS.find((item) => item.root === rootName);
