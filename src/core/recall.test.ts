@@ -417,6 +417,66 @@ describe('buildRecall', () => {
     expect(glossSaysMean('nerve', 'The head-foot creature')).toBe(false);
   });
 
+  it('does not point writing, alone, closed, world, or art at a wrong tile', () => {
+    const glossOf = (rootName: string, word: string): string => {
+      const root = ROOTS.find((item) => item.root === rootName);
+      const authored = root?.words.find((item) => item.w === word);
+      const gloss = authored ? quizGloss(authored.d) : null;
+      if (!root || !gloss) throw new Error(`fixture: ${rootName} ${word}`);
+      return gloss;
+    };
+    const cases = [
+      ['Uni', 'Unicorn', 'from Uni · one', 'Loqu', 'Soliloquy'],
+      ['Uni', 'Unicorn', 'from Uni · one', 'Crat', 'Autocrat'],
+      ['Cosm', 'Cosmopolitan', 'from Cosm · universe', 'Phys', 'Physical'],
+      ['Cosm', 'Cosmopolitan', 'from Cosm · universe', 'Dys', 'Dystopia'],
+      ['Cosm', 'Cosmopolitan', 'from Cosm · universe', 'Cata', 'Cataclysm'],
+    ] as const;
+    for (const [rootName, word, line, rivalRoot, rivalWord] of cases) {
+      const root = ROOTS.find((item) => item.root === rootName);
+      if (!root) throw new Error(`fixture: ${rootName}`);
+      const gloss = glossOf(rootName, word);
+      const rival = glossOf(rivalRoot, rivalWord);
+      expect(glossQuietLine(root.root, root.mean, gloss), word).toBe(line);
+      expect(glossSaysMean(root.mean, rival), `${word} ~ ${rivalWord}`).toBe(true);
+      if (rivalWord === word) continue;
+      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 500, mulberry32(1));
+      expect(tiles.length, word).toBeGreaterThan(10);
+      expect(tiles, word).not.toContain(rival);
+      for (const label of tiles) {
+        expect(glossSaysMean(root.mean, label), `${word}: ${label}`).toBe(false);
+      }
+    }
+
+    const uni = ROOTS.find((item) => item.root === 'Uni');
+    const cosm = ROOTS.find((item) => item.root === 'Cosm');
+    if (!uni || !cosm) throw new Error('fixture: meaning roots');
+    const one = pickGlossDistractors(uni.mean, 'Unicorn', glossOf('Uni', 'Unicorn'), [ROOTS], 500, mulberry32(1));
+    expect(one).toContain(glossOf('Scope', 'Microscope'));
+    expect(one).not.toContain(glossOf('Loqu', 'Soliloquy'));
+    expect(one).not.toContain(glossOf('Mono', 'Monolith'));
+    const universe = pickGlossDistractors(
+      cosm.mean,
+      'Cosmopolitan',
+      glossOf('Cosm', 'Cosmopolitan'),
+      [ROOTS],
+      500,
+      mulberry32(1),
+    );
+    expect(universe).toContain(glossOf('Photo', 'Photograph'));
+    expect(universe).not.toContain(glossOf('Phys', 'Physical'));
+    expect(universe).not.toContain(glossOf('Cosm', 'Microcosm'));
+    expect(universe).not.toContain(glossOf('Chthon', 'Chthonic'));
+
+    expect(glossSaysMean('shut', 'A tool to see very tiny things up close')).toBe(false);
+    expect(glossSaysMean('shut', 'The fear of closed-in spaces')).toBe(true);
+    expect(glossSaysMean('universe', 'Belonging to the underworld')).toBe(true);
+    expect(glossSaysMean('skill', 'A craft lifted by spiraling wings')).toBe(true);
+    expect(glossSaysMean('skill', 'The art of beautiful handwriting')).toBe(true);
+    expect(glossSaysMean('one', 'A speech made alone, to oneself')).toBe(true);
+    expect(glossSaysMean('write', 'The rules for putting written words together')).toBe(true);
+  });
+
   it('a Photosynthesis miss still teaches light after the hint dropped it', () => {
     const photo = ROOTS.find((r) => r.root === 'Photo');
     if (!photo) throw new Error('fixture: Photo');
