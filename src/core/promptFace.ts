@@ -170,11 +170,17 @@ function meaningCarriesIn(mean: string, answer: string): boolean {
  * "stars". "living things" does not contain the word life, and
  * "start" does not contain the word star. A piece of a longer
  * meaning counts too: "half" sits in "foot-and-a-half".
+ * "go" sits in "to go forward". "going" does not — the letters
+ * after go make a different word.
  */
 export function meaningSitsInAnswer(mean: string, answer: string): boolean {
   const spoken = clean(mean);
   const tile = clean(answer);
   if (!spoken || !tile) return false;
+  if (spoken.length === 2) {
+    const escaped = spoken.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if (new RegExp(`(?:^|[^A-Za-z])${escaped}(?:[^A-Za-z]|$)`, 'i').test(tile)) return true;
+  }
   if (spellsChoice(tile, spoken) || meaningCarriesIn(spoken, tile)) return true;
   for (const word of spoken.split(/[^A-Za-z]+/)) {
     if (word.length >= 4 && (spellsChoice(tile, word) || meaningCarriesIn(word, tile))) return true;

@@ -26,29 +26,34 @@ import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
  * chief and ruler are rule, larger and bigger are large,
  * thrown is throw, strange is stranger, better is good,
  * worst is bad, and sail and ship are sailor.
+ * Dead is death, sight is see, same is equal, through is across,
+ * yield, going, and gone are go, underworld is earth, higher is above,
+ * differ and difference are different, please is calm, limit is end,
+ * sacred is holy, fatherland is father, and warlike is war.
  * Cold is not heat, fire is not heat, and lift is not light.
  * Kinship and worship end in -ship, a condition, not a boat.
  * Head is not brain. Close is not shut — "up close" is still near.
  * Power is not rule, and a beginning is not a ruler.
+ * A safe level is not equal, and self is not same. Higher is not lift.
  * Those stay different tiles. Spirit is mind, not life.
  */
 const SYNONYM_GROUPS: string[][] = [
   ['great', 'huge', 'large', 'big', 'larger', 'bigger'],
   ['feeling', 'feel', 'touch'],
   ['born', 'birth'],
-  ['war', 'fight'],
+  ['war', 'fight', 'warlike'],
   ['believe', 'faith', 'belief', 'trust'],
   ['lead', 'leader'],
-  ['see', 'look', 'watch', 'seen'],
+  ['see', 'look', 'watch', 'seen', 'sight'],
   ['life', 'living'],
-  ['earth', 'land', 'ground'],
+  ['earth', 'land', 'ground', 'underworld'],
   ['flesh', 'meat', 'body'],
   ['write', 'written', 'draw', 'record', 'writing', 'letter'],
   ['small', 'little', 'tiny'],
   ['speak', 'say', 'speech', 'talk', 'spoken'],
   ['sound', 'voice', 'call'],
   ['foot', 'feet'],
-  ['death', 'die'],
+  ['death', 'die', 'dead'],
   ['one', 'single', 'alone'],
   ['strong', 'strength'],
   ['heat', 'hot', 'temperature'],
@@ -57,7 +62,7 @@ const SYNONYM_GROUPS: string[][] = [
   ['bad', 'evil', 'harsh', 'worst'],
   ['circle', 'wheel', 'ring'],
   ['wisdom', 'wise'],
-  ['above', 'over'],
+  ['above', 'over', 'higher'],
   ['turn', 'roll', 'spin'],
   ['stone', 'rock'],
   ['tooth', 'teeth'],
@@ -90,6 +95,14 @@ const SYNONYM_GROUPS: string[][] = [
   ['rule', 'chief', 'ruler'],
   ['throw', 'thrown'],
   ['sailor', 'sail', 'ship'],
+  ['equal', 'same'],
+  ['across', 'through'],
+  ['go', 'yield', 'going', 'gone'],
+  ['different', 'differ', 'difference'],
+  ['calm', 'please'],
+  ['end', 'limit'],
+  ['holy', 'sacred'],
+  ['father', 'fatherland'],
   ['shut', 'closed'],
   ['universe', 'world'],
   ['skill', 'art', 'craft'],
@@ -147,9 +160,16 @@ function meanIdeas(mean: string): readonly string[] {
  * "look larger" and "something bigger" say large. "thrown" says throw.
  * "a strange gas" says stranger. "better" says good. "the worst" says bad.
  * "to sail" and "a ship" say sailor. Kinship does not, and worship does not.
+ * "the dead" says death. "from sight" says see. "the same" says equal.
+ * "straight through" says across. "yield" and "gone" say go.
+ * "the underworld" says earth. "a higher place" says above.
+ * "the difference" says different. "pleased" says calm. "limits" says end.
+ * "sacred" says holy. "fatherland" says father. "warlike" says war.
  * A cold wind does not say heat, and sunlight does not say lift.
  * The head does not say nerve. "Up close" does not say shut.
  * "All power" does not say rule. "The beginning" does not say rule.
+ * "A safe level" does not say equal. "By itself" does not say same.
+ * "Higher or better" does not say lift.
  */
 export function glossSaysMean(mean: string, label: string): boolean {
   const ideas = meanIdeas(mean);
@@ -392,7 +412,10 @@ function collectWordDefs(
  * free for loosen, well for good, harsh for bad, distance for far,
  * chief or ruler for rule, larger or bigger for large, thrown for
  * throw, strange for stranger, better for good, worst for bad, sail
- * or ship for sailor). The quiet line
+ * or ship for sailor, dead for death, sight for see, same for equal,
+ * through for across, yield for go, underworld for earth, higher for
+ * above, difference for different, please for calm, limit for end,
+ * sacred for holy, fatherland for father, warlike for war). The quiet line
  * still says "from Bio · life" when the right tile does not say life, so
  * a wrong tile that says life — or living — would be the one the hint
  * points at.

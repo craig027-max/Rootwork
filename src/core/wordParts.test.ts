@@ -186,6 +186,31 @@ describe('other part of a school word', () => {
     expect(samePieceIdea('worship', 'sailor')).toBe(false);
     expect(samePieceIdea('power', 'rule')).toBe(false);
     expect(samePieceIdea('beginning', 'rule')).toBe(false);
+    expect(samePieceIdea('dead', 'death')).toBe(true);
+    expect(samePieceIdea('dead', 'die')).toBe(true);
+    expect(samePieceIdea('sight', 'see')).toBe(true);
+    expect(samePieceIdea('sight', 'look')).toBe(true);
+    expect(samePieceIdea('same', 'equal')).toBe(true);
+    expect(samePieceIdea('through', 'across')).toBe(true);
+    expect(samePieceIdea('yield', 'go')).toBe(true);
+    expect(samePieceIdea('going', 'go')).toBe(true);
+    expect(samePieceIdea('gone', 'go')).toBe(true);
+    expect(samePieceIdea('underworld', 'earth')).toBe(true);
+    expect(samePieceIdea('underworld', 'land')).toBe(true);
+    expect(samePieceIdea('higher', 'above')).toBe(true);
+    expect(samePieceIdea('higher', 'over')).toBe(true);
+    expect(samePieceIdea('differ', 'different')).toBe(true);
+    expect(samePieceIdea('difference', 'different')).toBe(true);
+    expect(samePieceIdea('please', 'calm')).toBe(true);
+    expect(samePieceIdea('limit', 'end')).toBe(true);
+    expect(samePieceIdea('sacred', 'holy')).toBe(true);
+    expect(samePieceIdea('fatherland', 'father')).toBe(true);
+    expect(samePieceIdea('warlike', 'war')).toBe(true);
+    expect(samePieceIdea('warlike', 'fight')).toBe(true);
+    expect(samePieceIdea('self', 'same')).toBe(false);
+    expect(samePieceIdea('self', 'equal')).toBe(false);
+    expect(samePieceIdea('level', 'equal')).toBe(false);
+    expect(samePieceIdea('higher', 'lift')).toBe(false);
     expect(samePieceIdea('writing', 'record')).toBe(true);
     expect(samePieceIdea('writing', 'letter')).toBe(true);
     expect(samePieceIdea('writing', 'written')).toBe(true);
@@ -320,6 +345,20 @@ describe('other part of a school word', () => {
       ['far', 'distance'],
       ['sail', 'sailor'],
       ['sailor', 'sail'],
+      ['earth', 'underworld'],
+      ['underworld', 'earth'],
+      ['equal', 'same'],
+      ['same', 'equal'],
+      ['across', 'through'],
+      ['through', 'across'],
+      ['calm', 'please'],
+      ['please', 'calm'],
+      ['end', 'limit'],
+      ['limit', 'end'],
+      ['holy', 'sacred'],
+      ['sacred', 'holy'],
+      ['father', 'fatherland'],
+      ['fatherland', 'father'],
       ['strange', 'stranger'],
       ['stranger', 'strange'],
       ['strange', 'foreign'],
@@ -359,6 +398,9 @@ describe('other part of a school word', () => {
       ['Cata', 'Catalyst', 'loosen', ['free']],
       ['Dem', 'Democracy', 'rule', ['chief', 'ruler']],
       ['Mater', 'Matriarch', 'ruler', ['chief', 'rule']],
+      ['Gram', 'Diagram', 'through', ['across']],
+      ['Metr', 'Diameter', 'across', ['through']],
+      ['Luc', 'Translucent', 'through', ['across']],
     ];
     for (const [rootName, word, mean, rivals] of asked) {
       const root = ROOTS.find((item) => item.root === rootName);
