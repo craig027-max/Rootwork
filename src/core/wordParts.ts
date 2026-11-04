@@ -115,10 +115,15 @@ function pieceHeads(label: string): string[] {
  * "chief" is rule, and "ruler" is rule. "harsh" is bad.
  * "larger" is large. "thrown" is throw. "strange" is stranger.
  * "better" is good. "worst" is bad. "sail" and "ship" are sailor.
+ * "dead" is death. "sight" is see. "same" is equal. "through" is across.
+ * "yield" is go. "underworld" is earth. "higher" is above.
+ * "difference" is different. "please" is calm. "limit" is end.
+ * "sacred" is holy. "fatherland" is father. "warlike" is war.
  * "break down" is not down, and not broken. "without" is not with.
  * "kinship" is not a ship, and "worship" is not a ship.
  * "underworld" is not under, and not world. "up close" is not shut.
  * "light" is not lift. "power" is not rule.
+ * "a safe level" is not equal. "self" is not same. "higher" is not lift.
  * Those stay different choices, so they can still sit beside each other.
  */
 export function samePieceIdea(a: string, b: string): boolean {

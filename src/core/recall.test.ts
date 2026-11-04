@@ -653,6 +653,149 @@ describe('buildRecall', () => {
     expect(glossSaysMean('fire', 'Heat energy from the earth')).toBe(false);
   });
 
+  it('does not point dead, sight, same, through, yield, or underworld at a wrong tile', () => {
+    const glossOf = (rootName: string, word: string): string => {
+      const root = ROOTS.find((item) => item.root === rootName);
+      const authored = root?.words.find((item) => item.w === word);
+      const gloss = authored ? quizGloss(authored.d) : null;
+      if (!root || !gloss) throw new Error(`fixture: ${rootName} ${word}`);
+      return gloss;
+    };
+    const cases = [
+      ['Necro', 'Necropolis', 'from Necro · death', 'Corp', 'Corpse'],
+      ['Necro', 'Necropolis', 'from Necro · death', 'Eu', 'Eulogy'],
+      ['Necro', 'Necromancy', 'from Necro · death', 'Corp', 'Corpse'],
+      ['Spect', 'Spectator', 'from Spect · see', 'Dis', 'Disappear'],
+      ['Spect', 'Inspect', 'from Spect · see', 'Dis', 'Disappear'],
+      ['Spect', 'Spectacle', 'from Spect · see', 'Dis', 'Disappear'],
+      ['Vis', 'Video', 'from Vis · see', 'Dis', 'Disappear'],
+      ['Vis', 'Visible', 'from Vis · see', 'Dis', 'Disappear'],
+      ['Equ', 'Equal', 'from Equ · equal', 'Homo', 'Homogeneous'],
+      ['Equ', 'Equal', 'from Equ · equal', 'Homo', 'Homophone'],
+      ['Equ', 'Equal', 'from Equ · equal', 'Uni', 'Uniform'],
+      ['Trans', 'Transfer', 'from Trans · across', 'Trans', 'Transparent'],
+      ['Trans', 'Transfer', 'from Trans · across', 'Bi', 'Binoculars'],
+      ['Trans', 'Transfer', 'from Trans · across', 'Luc', 'Translucent'],
+      ['Cede', 'Concede', 'from Cede · go', 'Derm', 'Hypodermic'],
+      ['Cede', 'Concede', 'from Cede · go', 'Stat', 'Stagnant'],
+      ['Cede', 'Concede', 'from Cede · go', 'Dys', 'Dystopia'],
+      ['Chthon', 'Autochthonous', 'from Chthon · earth', 'Chthon', 'Chthonic'],
+      ['Super', 'Superior', 'from Super · above', 'Lev', 'Elevate'],
+      ['Hetero', 'Heterodox', 'from Hetero · different', 'Contra', 'Contrast'],
+      ['Bel', 'Rebel', 'from Bel · war', 'Bel', 'Bellicose'],
+      ['Bel', 'Belligerent', 'from Bel · war', 'Bel', 'Bellicose'],
+      ['Plac', 'Complacent', 'from Plac · calm', 'Plac', 'Complacent'],
+      ['Fin', 'Define', 'from Fin · end', 'Fin', 'Define'],
+    ] as const;
+    for (const [rootName, word, line, rivalRoot, rivalWord] of cases) {
+      const root = ROOTS.find((item) => item.root === rootName);
+      if (!root) throw new Error(`fixture: ${rootName}`);
+      const gloss = glossOf(rootName, word);
+      const rival = glossOf(rivalRoot, rivalWord);
+      expect(glossQuietLine(root.root, root.mean, gloss), word).toBe(line);
+      expect(glossSaysMean(root.mean, rival), `${word} ~ ${rivalWord}`).toBe(true);
+      if (rivalWord === word) continue;
+      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 800, mulberry32(1));
+      expect(tiles.length, word).toBeGreaterThan(10);
+      expect(tiles, word).not.toContain(rival);
+      for (const label of tiles) {
+        expect(glossSaysMean(root.mean, label), `${word}: ${label}`).toBe(false);
+      }
+    }
+
+    const necro = ROOTS.find((item) => item.root === 'Necro');
+    const equ = ROOTS.find((item) => item.root === 'Equ');
+    const trans = ROOTS.find((item) => item.root === 'Trans');
+    const cede = ROOTS.find((item) => item.root === 'Cede');
+    const chthon = ROOTS.find((item) => item.root === 'Chthon');
+    if (!necro || !equ || !trans || !cede || !chthon) throw new Error('fixture: meaning roots');
+
+    const dead = pickGlossDistractors(
+      necro.mean,
+      'Necropolis',
+      glossOf('Necro', 'Necropolis'),
+      [ROOTS],
+      800,
+      mulberry32(1),
+    );
+    expect(dead).toContain(glossOf('Photo', 'Photograph'));
+    expect(dead).not.toContain(glossOf('Corp', 'Corpse'));
+    expect(dead).not.toContain(glossOf('Eu', 'Eulogy'));
+    expect(dead).not.toContain(glossOf('Necro', 'Necromancy'));
+
+    const same = pickGlossDistractors(equ.mean, 'Equal', glossOf('Equ', 'Equal'), [ROOTS], 800, mulberry32(1));
+    expect(same).toContain(glossOf('Photo', 'Photograph'));
+    expect(same).not.toContain(glossOf('Homo', 'Homogeneous'));
+    expect(same).not.toContain(glossOf('Homo', 'Homophone'));
+    expect(same).not.toContain(glossOf('Uni', 'Uniform'));
+    expect(same).not.toContain(glossOf('Co', 'Coexist'));
+
+    const through = pickGlossDistractors(
+      trans.mean,
+      'Transfer',
+      glossOf('Trans', 'Transfer'),
+      [ROOTS],
+      800,
+      mulberry32(1),
+    );
+    expect(through).toContain(glossOf('Photo', 'Photograph'));
+    expect(through).not.toContain(glossOf('Trans', 'Transparent'));
+    expect(through).not.toContain(glossOf('Bi', 'Binoculars'));
+    expect(through).not.toContain(glossOf('Tang', 'Tactile'));
+
+    const yielded = pickGlossDistractors(
+      cede.mean,
+      'Concede',
+      glossOf('Cede', 'Concede'),
+      [ROOTS],
+      800,
+      mulberry32(1),
+    );
+    expect(yielded).toContain(glossOf('Photo', 'Photograph'));
+    expect(yielded).not.toContain(glossOf('Derm', 'Hypodermic'));
+    expect(yielded).not.toContain(glossOf('Stat', 'Stagnant'));
+    expect(yielded).not.toContain(glossOf('Dys', 'Dystopia'));
+
+    const earth = pickGlossDistractors(
+      chthon.mean,
+      'Autochthonous',
+      glossOf('Chthon', 'Autochthonous'),
+      [ROOTS],
+      800,
+      mulberry32(1),
+    );
+    expect(earth).toContain(glossOf('Photo', 'Photograph'));
+    expect(earth).not.toContain(glossOf('Chthon', 'Chthonic'));
+
+    expect(glossQuietLine('Cede', 'go', glossOf('Cede', 'Proceed'))).toBe('from Cede');
+    expect(glossQuietLine('Cede', 'go', glossOf('Cede', 'Recede'))).toBe('from Cede');
+
+    expect(glossSaysMean('death', 'A dead body')).toBe(true);
+    expect(glossSaysMean('death', 'Good words spoken to honor the dead')).toBe(true);
+    expect(glossSaysMean('see', 'To go away from sight')).toBe(true);
+    expect(glossSaysMean('equal', 'Made of the same kind all the way through')).toBe(true);
+    expect(glossSaysMean('across', 'Clear enough to see straight through')).toBe(true);
+    expect(glossSaysMean('across', 'Felt through the sense of touch')).toBe(true);
+    expect(glossSaysMean('go', 'To give in and yield a point')).toBe(true);
+    expect(glossSaysMean('go', 'Standing still and going stale')).toBe(true);
+    expect(glossSaysMean('go', 'An imagined world gone terribly wrong')).toBe(true);
+    expect(glossSaysMean('earth', 'Belonging to the underworld')).toBe(true);
+    expect(glossSaysMean('above', 'To lift up to a higher place')).toBe(true);
+    expect(glossSaysMean('different', 'To set things against each other to show the difference')).toBe(true);
+    expect(glossSaysMean('war', 'Warlike and aggressive')).toBe(true);
+    expect(glossSaysMean('calm', 'So pleased with yourself you stop trying')).toBe(true);
+    expect(glossSaysMean('end', "To set the limits of a word's meaning")).toBe(true);
+    expect(glossSaysMean('father', 'One who loves their fatherland')).toBe(true);
+    expect(glossSaysMean('holy', 'So holy it must never be touched')).toBe(true);
+    expect(glossSaysMean('life', 'A dead body')).toBe(false);
+    expect(glossSaysMean('equal', 'Body heat that has fallen under the safe level')).toBe(false);
+    expect(glossSaysMean('self', 'The same in amount or value')).toBe(false);
+    expect(glossSaysMean('lift', 'Higher or better than something else')).toBe(false);
+    expect(glossSaysMean('universe', 'Belonging to the underworld')).toBe(true);
+    expect(glossSaysMean('fire', 'Heat energy from the earth')).toBe(false);
+    expect(glossSaysMean('rule', 'Having all power; almighty')).toBe(false);
+  });
+
   it('a Photosynthesis miss still teaches light after the hint dropped it', () => {
     const photo = ROOTS.find((r) => r.root === 'Photo');
     if (!photo) throw new Error('fixture: Photo');

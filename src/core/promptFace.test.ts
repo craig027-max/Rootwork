@@ -177,6 +177,13 @@ describe('glossQuietLine', () => {
     expect(meaningSitsInAnswer('form', 'information about the topic')).toBe(false);
     expect(meaningSitsInAnswer('light', 'How green plants use sunlight')).toBe(true);
     expect(meaningSitsInAnswer('know', 'Knowledge gained by study')).toBe(true);
+
+    const cede = ROOTS.find((r) => r.root === 'Cede')!;
+    expect(meaningSitsInAnswer('go', glossOf(cede, 'Proceed'))).toBe(true);
+    expect(meaningSitsInAnswer('go', 'Going under the skin')).toBe(false);
+    expect(glossQuietLine(cede.root, cede.mean, glossOf(cede, 'Proceed'))).toBe('from Cede');
+    expect(glossQuietLine(cede.root, cede.mean, glossOf(cede, 'Recede'))).toBe('from Cede');
+    expect(glossQuietLine(cede.root, cede.mean, glossOf(cede, 'Concede'))).toBe('from Cede · go');
   });
 
   it('drops half inside a longer meaning, and keeps the meaning when it is absent', () => {
