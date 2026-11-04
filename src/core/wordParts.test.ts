@@ -171,6 +171,19 @@ describe('other part of a school word', () => {
     expect(samePieceIdea('harsh', 'bad')).toBe(true);
     expect(samePieceIdea('well', 'good')).toBe(true);
     expect(samePieceIdea('distance', 'far')).toBe(true);
+    expect(samePieceIdea('larger', 'large')).toBe(true);
+    expect(samePieceIdea('bigger', 'big')).toBe(true);
+    expect(samePieceIdea('thrown', 'throw')).toBe(true);
+    expect(samePieceIdea('strange', 'stranger')).toBe(true);
+    expect(samePieceIdea('strange', 'foreign')).toBe(true);
+    expect(samePieceIdea('better', 'good')).toBe(true);
+    expect(samePieceIdea('better', 'well')).toBe(true);
+    expect(samePieceIdea('worst', 'bad')).toBe(true);
+    expect(samePieceIdea('worst', 'harsh')).toBe(true);
+    expect(samePieceIdea('sail', 'sailor')).toBe(true);
+    expect(samePieceIdea('ship', 'sailor')).toBe(true);
+    expect(samePieceIdea('kinship', 'sailor')).toBe(false);
+    expect(samePieceIdea('worship', 'sailor')).toBe(false);
     expect(samePieceIdea('power', 'rule')).toBe(false);
     expect(samePieceIdea('beginning', 'rule')).toBe(false);
     expect(samePieceIdea('writing', 'record')).toBe(true);
@@ -305,6 +318,11 @@ describe('other part of a school word', () => {
       ['lift', 'lighten'],
       ['good', 'well'],
       ['far', 'distance'],
+      ['sail', 'sailor'],
+      ['sailor', 'sail'],
+      ['strange', 'stranger'],
+      ['stranger', 'strange'],
+      ['strange', 'foreign'],
     ];
     for (const [answer, rival] of rivals) {
       const tiles = pickPartDistractors([ROOTS], 400, [answer], () => 0);

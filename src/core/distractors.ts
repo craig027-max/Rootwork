@@ -23,14 +23,17 @@ import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
  * bear is carry, raise and lighten are lift, writing and letter are write,
  * alone is one, closed is shut, world is universe, art is skill,
  * free is loosen, well is good, harsh is bad, distance is far,
- * chief and ruler are rule.
+ * chief and ruler are rule, larger and bigger are large,
+ * thrown is throw, strange is stranger, better is good,
+ * worst is bad, and sail and ship are sailor.
  * Cold is not heat, fire is not heat, and lift is not light.
+ * Kinship and worship end in -ship, a condition, not a boat.
  * Head is not brain. Close is not shut — "up close" is still near.
  * Power is not rule, and a beginning is not a ruler.
  * Those stay different tiles. Spirit is mind, not life.
  */
 const SYNONYM_GROUPS: string[][] = [
-  ['great', 'huge', 'large', 'big'],
+  ['great', 'huge', 'large', 'big', 'larger', 'bigger'],
   ['feeling', 'feel', 'touch'],
   ['born', 'birth'],
   ['war', 'fight'],
@@ -51,7 +54,7 @@ const SYNONYM_GROUPS: string[][] = [
   ['heat', 'hot', 'temperature'],
   ['shape', 'form', 'figure'],
   ['break', 'burst', 'shatter', 'broken'],
-  ['bad', 'evil', 'harsh'],
+  ['bad', 'evil', 'harsh', 'worst'],
   ['circle', 'wheel', 'ring'],
   ['wisdom', 'wise'],
   ['above', 'over'],
@@ -67,7 +70,7 @@ const SYNONYM_GROUPS: string[][] = [
   ['tongue', 'language'],
   ['madness', 'craze'],
   ['between', 'among'],
-  ['stranger', 'foreign'],
+  ['stranger', 'foreign', 'strange'],
   ['judge', 'decide'],
   ['wrong', 'badly'],
   ['power', 'force', 'energy'],
@@ -82,9 +85,11 @@ const SYNONYM_GROUPS: string[][] = [
   ['carry', 'bear'],
   ['lift', 'raise', 'lighten'],
   ['loosen', 'free'],
-  ['good', 'well'],
+  ['good', 'well', 'better'],
   ['far', 'distance'],
   ['rule', 'chief', 'ruler'],
+  ['throw', 'thrown'],
+  ['sailor', 'sail', 'ship'],
   ['shut', 'closed'],
   ['universe', 'world'],
   ['skill', 'art', 'craft'],
@@ -139,6 +144,9 @@ function meanIdeas(mean: string): readonly string[] {
  * "to lighten" says lift. "to free" says loosen.
  * "equally well" says good. "a harsh clash" says bad.
  * "across a distance" says far. "a ruler" and "the chief" say rule.
+ * "look larger" and "something bigger" say large. "thrown" says throw.
+ * "a strange gas" says stranger. "better" says good. "the worst" says bad.
+ * "to sail" and "a ship" say sailor. Kinship does not, and worship does not.
  * A cold wind does not say heat, and sunlight does not say lift.
  * The head does not say nerve. "Up close" does not say shut.
  * "All power" does not say rule. "The beginning" does not say rule.
@@ -382,7 +390,9 @@ function collectWordDefs(
  * build, made for make, back for again, teeth for tooth, brain for
  * nerve, every for all, body for flesh, raised or lighten for lift,
  * free for loosen, well for good, harsh for bad, distance for far,
- * chief or ruler for rule). The quiet line
+ * chief or ruler for rule, larger or bigger for large, thrown for
+ * throw, strange for stranger, better for good, worst for bad, sail
+ * or ship for sailor). The quiet line
  * still says "from Bio · life" when the right tile does not say life, so
  * a wrong tile that says life — or living — would be the one the hint
  * points at.
