@@ -555,6 +555,104 @@ describe('buildRecall', () => {
     expect(glossSaysMean('heat', 'A pile of wood built for a fire.')).toBe(false);
   });
 
+  it('does not point larger, thrown, strange, better, worst, or sail at a wrong tile', () => {
+    const glossOf = (rootName: string, word: string): string => {
+      const root = ROOTS.find((item) => item.root === rootName);
+      const authored = root?.words.find((item) => item.w === word);
+      const gloss = authored ? quizGloss(authored.d) : null;
+      if (!root || !gloss) throw new Error(`fixture: ${rootName} ${word}`);
+      return gloss;
+    };
+    const cases = [
+      ['Macro', 'Macroeconomics', 'from Macro · large', 'Magn', 'Magnify'],
+      ['Macro', 'Macroeconomics', 'from Macro · large', 'Min', 'Miniature'],
+      ['Macro', 'Macroeconomics', 'from Macro · large', 'Cosm', 'Microcosm'],
+      ['Magn', 'Magnificent', 'from Magn · great', 'Magn', 'Magnify'],
+      ['Magn', 'Magnify', 'from Magn · great', 'Min', 'Miniature'],
+      ['Mega', 'Megaphone', 'from Mega · huge', 'Magn', 'Magnify'],
+      ['Mega', 'Megaphone', 'from Mega · huge', 'Cosm', 'Microcosm'],
+      ['Ject', 'Inject', 'from Ject · throw', 'Hyper', 'Hyperbole'],
+      ['Xeno', 'Xenophile', 'from Xeno · stranger', 'Xeno', 'Xenon'],
+      ['Xeno', 'Xenophile', 'from Xeno · stranger', 'Tort', 'Contort'],
+      ['Xeno', 'Xenophobia', 'from Xeno · stranger', 'Xeno', 'Xenon'],
+      ['Eu', 'Euphoria', 'from Eu · good', 'Super', 'Superior'],
+      ['Eu', 'Euphemism', 'from Eu · good', 'Form', 'Reform'],
+      ['Mal', 'Malfunction', 'from Mal · bad', 'Cata', 'Catastrophe'],
+      ['Dys', 'Dysfunction', 'from Dys · bad', 'Cata', 'Catastrophe'],
+      ['Dys', 'Dystopia', 'from Dys · bad', 'Cata', 'Catastrophe'],
+      ['Caco', 'Cacophony', 'from Caco · bad', 'Cata', 'Catastrophe'],
+      ['Naut', 'Aeronautics', 'from Naut · sailor', 'Circum', 'Circumnavigate'],
+      ['Naut', 'Aeronautics', 'from Naut · sailor', 'Sub', 'Submarine'],
+    ] as const;
+    for (const [rootName, word, line, rivalRoot, rivalWord] of cases) {
+      const root = ROOTS.find((item) => item.root === rootName);
+      if (!root) throw new Error(`fixture: ${rootName}`);
+      const gloss = glossOf(rootName, word);
+      const rival = glossOf(rivalRoot, rivalWord);
+      expect(glossQuietLine(root.root, root.mean, gloss), word).toBe(line);
+      expect(glossSaysMean(root.mean, rival), `${word} ~ ${rivalWord}`).toBe(true);
+      if (rivalWord === word) continue;
+      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 800, mulberry32(1));
+      expect(tiles.length, word).toBeGreaterThan(10);
+      expect(tiles, word).not.toContain(rival);
+      for (const label of tiles) {
+        expect(glossSaysMean(root.mean, label), `${word}: ${label}`).toBe(false);
+      }
+    }
+
+    const macro = ROOTS.find((item) => item.root === 'Macro');
+    const ject = ROOTS.find((item) => item.root === 'Ject');
+    const naut = ROOTS.find((item) => item.root === 'Naut');
+    if (!macro || !ject || !naut) throw new Error('fixture: meaning roots');
+
+    const large = pickGlossDistractors(
+      macro.mean,
+      'Macroeconomics',
+      glossOf('Macro', 'Macroeconomics'),
+      [ROOTS],
+      800,
+      mulberry32(1),
+    );
+    expect(large).toContain(glossOf('Photo', 'Photograph'));
+    expect(large).not.toContain(glossOf('Magn', 'Magnify'));
+    expect(large).not.toContain(glossOf('Min', 'Miniature'));
+    expect(large).not.toContain(glossOf('Cosm', 'Microcosm'));
+
+    const thrown = pickGlossDistractors(ject.mean, 'Inject', glossOf('Ject', 'Inject'), [ROOTS], 800, mulberry32(1));
+    expect(thrown).toContain(glossOf('Photo', 'Photograph'));
+    expect(thrown).not.toContain(glossOf('Hyper', 'Hyperbole'));
+
+    const sailor = pickGlossDistractors(
+      naut.mean,
+      'Aeronautics',
+      glossOf('Naut', 'Aeronautics'),
+      [ROOTS],
+      800,
+      mulberry32(1),
+    );
+    expect(sailor).toContain(glossOf('Photo', 'Photograph'));
+    expect(sailor).not.toContain(glossOf('Circum', 'Circumnavigate'));
+    expect(sailor).not.toContain(glossOf('Sub', 'Submarine'));
+    expect(sailor).toContain(glossOf('Sangu', 'Consanguinity'));
+    expect(sailor).toContain(glossOf('Agog', 'Synagogue'));
+
+    expect(glossSaysMean('large', 'To make something look larger.')).toBe(true);
+    expect(glossSaysMean('great', 'A tiny copy of something bigger.')).toBe(true);
+    expect(glossSaysMean('huge', 'A tiny world that mirrors a bigger one.')).toBe(true);
+    expect(glossSaysMean('throw', 'An over-the-top exaggeration, thrown past the truth.')).toBe(true);
+    expect(glossSaysMean('stranger', 'A rare "strange" gas found in the air.')).toBe(true);
+    expect(glossSaysMean('stranger', 'To twist into a strange shape.')).toBe(true);
+    expect(glossSaysMean('good', 'Higher or better than something else.')).toBe(true);
+    expect(glossSaysMean('good', 'To shape something again, and make it better.')).toBe(true);
+    expect(glossSaysMean('bad', 'A turn for the worst; a disaster.')).toBe(true);
+    expect(glossSaysMean('sailor', 'To sail all the way around something.')).toBe(true);
+    expect(glossSaysMean('sailor', 'A ship that travels under the sea.')).toBe(true);
+    expect(glossSaysMean('sailor', 'Sharing the same blood; kinship.')).toBe(false);
+    expect(glossSaysMean('sailor', 'A place that leads people together to worship.')).toBe(false);
+    expect(glossSaysMean('lift', 'A picture made by capturing light')).toBe(false);
+    expect(glossSaysMean('fire', 'Heat energy from the earth')).toBe(false);
+  });
+
   it('a Photosynthesis miss still teaches light after the hint dropped it', () => {
     const photo = ROOTS.find((r) => r.root === 'Photo');
     if (!photo) throw new Error('fixture: Photo');

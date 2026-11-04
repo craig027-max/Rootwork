@@ -113,7 +113,10 @@ function pieceHeads(label: string): string[] {
  * "writing" is record, and letter. "alone" is one. "closed" is shut.
  * "world" is universe. "art" is skill. "free" is loosen.
  * "chief" is rule, and "ruler" is rule. "harsh" is bad.
+ * "larger" is large. "thrown" is throw. "strange" is stranger.
+ * "better" is good. "worst" is bad. "sail" and "ship" are sailor.
  * "break down" is not down, and not broken. "without" is not with.
+ * "kinship" is not a ship, and "worship" is not a ship.
  * "underworld" is not under, and not world. "up close" is not shut.
  * "light" is not lift. "power" is not rule.
  * Those stay different choices, so they can still sit beside each other.

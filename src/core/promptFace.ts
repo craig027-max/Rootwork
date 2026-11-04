@@ -141,12 +141,14 @@ export function carriesInflection(word: string, stem: string): boolean {
  * True when `word` is this meaning plus an ending or a compound.
  * "sunlight" carries light. "hands" carries hand. "knowledge" carries
  * know. "moving" carries move (the e drops). "living" does not carry
- * life, and "start" does not carry star.
+ * life, and "start" does not carry star. "kinship" and "worship"
+ * end in -ship, a condition, not a boat.
  */
 function wordCarriesMeaning(word: string, mean: string): boolean {
   if (mean.length < 4 || word.length <= mean.length) return false;
   const spoken = word.toLowerCase();
   const stem = mean.toLowerCase();
+  if (stem === 'ship' && (spoken === 'kinship' || spoken === 'worship')) return false;
   if (spoken.startsWith(stem)) {
     const rest = spoken.slice(stem.length);
     return MEANING_INFLECTION.test(rest) || rest.length >= 3;
