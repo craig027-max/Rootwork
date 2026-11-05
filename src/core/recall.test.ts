@@ -796,6 +796,128 @@ describe('buildRecall', () => {
     expect(glossSaysMean('rule', 'Having all power; almighty')).toBe(false);
   });
 
+  it('does not point dying, judgment, natural, lives, or high at a wrong tile', () => {
+    const glossOf = (rootName: string, word: string): string => {
+      const root = ROOTS.find((item) => item.root === rootName);
+      const authored = root?.words.find((item) => item.w === word);
+      const gloss = authored ? quizGloss(authored.d) : null;
+      if (!root || !gloss) throw new Error(`fixture: ${rootName} ${word}`);
+      return gloss;
+    };
+    const cases = [
+      ['Necro', 'Necropolis', 'from Necro · death', 'Mort', 'Immortal'],
+      ['Necro', 'Necromancy', 'from Necro · death', 'Mort', 'Immortal'],
+      ['Jud', 'Judge', 'from Jud · judge', 'Jud', 'Prejudice'],
+      ['Jud', 'Judge', 'from Jud · judge', 'Ver', 'Verdict'],
+      ['Phys', 'Physician', 'from Phys · nature', 'Phys', 'Physical'],
+      ['Bio', 'Biology', 'from Bio · life', 'Ambi', 'Amphibian'],
+      ['Bio', 'Biodegradable', 'from Bio · life', 'Ambi', 'Amphibian'],
+      ['Vit', 'Vitamin', 'from Vit · life', 'Ambi', 'Amphibian'],
+      ['Super', 'Superior', 'from Super · above', 'Polis', 'Acropolis'],
+      ['Super', 'Supervise', 'from Super · above', 'Polis', 'Acropolis'],
+    ] as const;
+    for (const [rootName, word, line, rivalRoot, rivalWord] of cases) {
+      const root = ROOTS.find((item) => item.root === rootName);
+      if (!root) throw new Error(`fixture: ${rootName}`);
+      const gloss = glossOf(rootName, word);
+      const rival = glossOf(rivalRoot, rivalWord);
+      expect(glossQuietLine(root.root, root.mean, gloss), word).toBe(line);
+      expect(glossSaysMean(root.mean, rival), `${word} ~ ${rivalWord}`).toBe(true);
+      if (rivalWord === word) continue;
+      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 800, mulberry32(1));
+      expect(tiles.length, word).toBeGreaterThan(10);
+      expect(tiles, word).not.toContain(rival);
+      for (const label of tiles) {
+        expect(glossSaysMean(root.mean, label), `${word}: ${label}`).toBe(false);
+      }
+    }
+
+    const necro = ROOTS.find((item) => item.root === 'Necro');
+    const jud = ROOTS.find((item) => item.root === 'Jud');
+    const phys = ROOTS.find((item) => item.root === 'Phys');
+    const bioRoot = ROOTS.find((item) => item.root === 'Bio');
+    const superRoot = ROOTS.find((item) => item.root === 'Super');
+    if (!necro || !jud || !phys || !bioRoot || !superRoot) throw new Error('fixture: meaning roots');
+
+    const dying = pickGlossDistractors(
+      necro.mean,
+      'Necropolis',
+      glossOf('Necro', 'Necropolis'),
+      [ROOTS],
+      800,
+      mulberry32(1),
+    );
+    expect(dying).toContain(glossOf('Photo', 'Photograph'));
+    expect(dying).not.toContain(glossOf('Mort', 'Immortal'));
+    expect(dying).not.toContain(glossOf('Corp', 'Corpse'));
+
+    const judgment = pickGlossDistractors(
+      jud.mean,
+      'Judge',
+      glossOf('Jud', 'Judge'),
+      [ROOTS],
+      800,
+      mulberry32(1),
+    );
+    expect(judgment).toContain(glossOf('Photo', 'Photograph'));
+    expect(judgment).not.toContain(glossOf('Jud', 'Prejudice'));
+    expect(judgment).not.toContain(glossOf('Ver', 'Verdict'));
+    expect(judgment).not.toContain(glossOf('Jud', 'Judicial'));
+
+    const natural = pickGlossDistractors(
+      phys.mean,
+      'Physician',
+      glossOf('Phys', 'Physician'),
+      [ROOTS],
+      800,
+      mulberry32(1),
+    );
+    expect(natural).toContain(glossOf('Photo', 'Photograph'));
+    expect(natural).not.toContain(glossOf('Phys', 'Physical'));
+    expect(natural).not.toContain(glossOf('Phys', 'Physics'));
+
+    const lives = pickGlossDistractors(
+      bioRoot.mean,
+      'Biology',
+      glossOf('Bio', 'Biology'),
+      [ROOTS],
+      800,
+      mulberry32(1),
+    );
+    expect(lives).toContain(glossOf('Photo', 'Photograph'));
+    expect(lives).not.toContain(glossOf('Ambi', 'Amphibian'));
+    expect(lives).not.toContain(glossOf('Anim', 'Animal'));
+    expect(lives).not.toContain(glossOf('Aqua', 'Aquatic'));
+
+    const high = pickGlossDistractors(
+      superRoot.mean,
+      'Superior',
+      glossOf('Super', 'Superior'),
+      [ROOTS],
+      800,
+      mulberry32(1),
+    );
+    expect(high).toContain(glossOf('Photo', 'Photograph'));
+    expect(high).not.toContain(glossOf('Polis', 'Acropolis'));
+    expect(high).not.toContain(glossOf('Lev', 'Elevate'));
+
+    expect(glossSaysMean('death', 'Never dying')).toBe(true);
+    expect(glossSaysMean('death', 'Never dying; living forever')).toBe(true);
+    expect(glossSaysMean('life', 'Never dying')).toBe(false);
+    expect(glossSaysMean('life', 'Never dying; living forever')).toBe(true);
+    expect(glossSaysMean('judge', 'A judgment made before you know the facts')).toBe(true);
+    expect(glossSaysMean('judge', 'A decision that states the truth')).toBe(true);
+    expect(glossSaysMean('truth', 'A decision')).toBe(false);
+    expect(glossSaysMean('nature', 'Of the body or the natural world')).toBe(true);
+    expect(glossSaysMean('flesh', 'the natural world')).toBe(false);
+    expect(glossSaysMean('life', 'An animal that lives both in water and on land')).toBe(true);
+    expect(glossSaysMean('life', 'A dead body')).toBe(false);
+    expect(glossSaysMean('above', 'The high fortified part of an ancient city')).toBe(true);
+    expect(glossSaysMean('lift', 'The high fortified part of an ancient city')).toBe(false);
+    expect(glossSaysMean('lift', 'Higher or better than something else')).toBe(false);
+    expect(glossSaysMean('ball', 'The round that is halfway to the final')).toBe(false);
+  });
+
   it('a Photosynthesis miss still teaches light after the hint dropped it', () => {
     const photo = ROOTS.find((r) => r.root === 'Photo');
     if (!photo) throw new Error('fixture: Photo');

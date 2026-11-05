@@ -119,6 +119,8 @@ function pieceHeads(label: string): string[] {
  * "yield" is go. "underworld" is earth. "higher" is above.
  * "difference" is different. "please" is calm. "limit" is end.
  * "sacred" is holy. "fatherland" is father. "warlike" is war.
+ * "dying" is death. "judgment" and "decision" are judge.
+ * "natural" is nature. "lives" is life. "high" is above.
  * "break down" is not down, and not broken. "without" is not with.
  * "kinship" is not a ship, and "worship" is not a ship.
  * "underworld" is not under, and not world. "up close" is not shut.
