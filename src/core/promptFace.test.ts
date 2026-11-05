@@ -181,6 +181,16 @@ describe('glossQuietLine', () => {
     const cede = ROOTS.find((r) => r.root === 'Cede')!;
     expect(meaningSitsInAnswer('go', glossOf(cede, 'Proceed'))).toBe(true);
     expect(meaningSitsInAnswer('go', 'Going under the skin')).toBe(false);
+    expect(meaningSitsInAnswer('bad', 'To work badly, or fail to work.')).toBe(true);
+    expect(meaningSitsInAnswer('law', 'living together with laws and cities')).toBe(true);
+    expect(meaningSitsInAnswer('carry', 'Carries sound across a distance')).toBe(true);
+    expect(meaningSitsInAnswer('carry', 'A carried-away feeling of joy')).toBe(true);
+    expect(meaningSitsInAnswer('put', 'To build by putting parts together.')).toBe(true);
+    expect(meaningSitsInAnswer('sun', 'How green plants use sunlight')).toBe(false);
+    expect(meaningSitsInAnswer('new', 'the news')).toBe(false);
+    expect(meaningSitsInAnswer('see', 'a seed')).toBe(false);
+    expect(meaningSitsInAnswer('war', 'a ward')).toBe(false);
+    expect(meaningSitsInAnswer('all', 'an ally')).toBe(false);
     expect(glossQuietLine(cede.root, cede.mean, glossOf(cede, 'Proceed'))).toBe('from Cede');
     expect(glossQuietLine(cede.root, cede.mean, glossOf(cede, 'Recede'))).toBe('from Cede');
     expect(glossQuietLine(cede.root, cede.mean, glossOf(cede, 'Concede'))).toBe('from Cede · go');

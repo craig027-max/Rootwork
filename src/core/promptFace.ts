@@ -138,22 +138,65 @@ export function carriesInflection(word: string, stem: string): boolean {
 }
 
 /**
+ * Grammatical endings for a 3-letter meaning.
+ * "badly" is bad. "laws" is law. "seeing" is see.
+ * A bare "d" is not one of them: "ward" is not war, and "seed" is not see.
+ * "y" is not one of them: "ally" is not all.
+ */
+const SHORT_INFLECTION = /^(?:s|es|ed|ing|er|est|ly)$/;
+
+/**
+ * True when `word` is `stem` with y changed to i.
+ * "carries" and "carried" are carry. "cities" is city.
+ * "saying" is not this — the y stays, and "say" plus -ing covers it.
+ */
+function yChangesToI(word: string, stem: string): boolean {
+  if (stem.length < 4 || !stem.endsWith('y')) return false;
+  const prev = stem.at(-2) ?? '';
+  if (!prev || 'aeiou'.includes(prev)) return false;
+  const base = stem.slice(0, -1);
+  if (!word.startsWith(base)) return false;
+  return /^(?:ies|ied|ier|iest)$/.test(word.slice(base.length));
+}
+
+/**
+ * True when a 3-letter stem doubles its last letter before -ing, -ed, -er, or -est.
+ * "putting" is put. "bigger" is big.
+ * "sunny" is not this, and "warring" is not a compound like "warm".
+ */
+function doubledConsonant(word: string, stem: string): boolean {
+  if (stem.length !== 3 || word.length <= stem.length) return false;
+  const last = stem.at(-1) ?? '';
+  const prev = stem.at(-2) ?? '';
+  if (!last || !prev || 'aeiouwxy'.includes(last) || !'aeiou'.includes(prev)) return false;
+  if (!word.startsWith(stem + last)) return false;
+  return /^(?:ing|ed|er|est)$/.test(word.slice(stem.length + 1));
+}
+
+/**
  * True when `word` is this meaning plus an ending or a compound.
  * "sunlight" carries light. "hands" carries hand. "knowledge" carries
  * know. "moving" carries move (the e drops). "living" does not carry
  * life, and "start" does not carry star. "kinship" and "worship"
  * end in -ship, a condition, not a boat.
+ * "badly" carries bad. "laws" carries law. "carries" and "carried"
+ * carry carry. "putting" carries put.
+ * "sunlight" does not carry sun. "news" does not carry new.
+ * "ward" does not carry war, and "seed" does not carry see.
  */
 function wordCarriesMeaning(word: string, mean: string): boolean {
-  if (mean.length < 4 || word.length <= mean.length) return false;
+  if (mean.length < 3 || word.length <= mean.length) return false;
   const spoken = word.toLowerCase();
   const stem = mean.toLowerCase();
   if (stem === 'ship' && (spoken === 'kinship' || spoken === 'worship')) return false;
+  if (stem === 'new' && spoken === 'news') return false;
+  if (yChangesToI(spoken, stem) || doubledConsonant(spoken, stem)) return true;
   if (spoken.startsWith(stem)) {
     const rest = spoken.slice(stem.length);
+    if (stem.length < 4) return SHORT_INFLECTION.test(rest);
     return MEANING_INFLECTION.test(rest) || rest.length >= 3;
   }
-  if (spoken.endsWith(stem) && spoken.length - stem.length >= 2) return true;
+  if (stem.length >= 4 && spoken.endsWith(stem) && spoken.length - stem.length >= 2) return true;
   return carriesInflection(spoken, stem);
 }
 
@@ -172,6 +215,9 @@ function meaningCarriesIn(mean: string, answer: string): boolean {
  * meaning counts too: "half" sits in "foot-and-a-half".
  * "go" sits in "to go forward". "going" does not — the letters
  * after go make a different word.
+ * "bad" sits in "badly". "law" sits in "laws". "carry" sits in
+ * "carries" and "carried". "put" sits in "putting".
+ * "sun" does not sit in "sunlight", and "new" does not sit in "news".
  */
 export function meaningSitsInAnswer(mean: string, answer: string): boolean {
   const spoken = clean(mean);
