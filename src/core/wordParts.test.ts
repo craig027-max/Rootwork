@@ -207,6 +207,19 @@ describe('other part of a school word', () => {
     expect(samePieceIdea('fatherland', 'father')).toBe(true);
     expect(samePieceIdea('warlike', 'war')).toBe(true);
     expect(samePieceIdea('warlike', 'fight')).toBe(true);
+    expect(samePieceIdea('dying', 'death')).toBe(true);
+    expect(samePieceIdea('dying', 'die')).toBe(true);
+    expect(samePieceIdea('dying', 'dead')).toBe(true);
+    expect(samePieceIdea('lives', 'life')).toBe(true);
+    expect(samePieceIdea('lives', 'living')).toBe(true);
+    expect(samePieceIdea('natural', 'nature')).toBe(true);
+    expect(samePieceIdea('judgment', 'judge')).toBe(true);
+    expect(samePieceIdea('decision', 'judge')).toBe(true);
+    expect(samePieceIdea('decision', 'decide')).toBe(true);
+    expect(samePieceIdea('high', 'above')).toBe(true);
+    expect(samePieceIdea('high', 'over')).toBe(true);
+    expect(samePieceIdea('high', 'higher')).toBe(true);
+    expect(samePieceIdea('high', 'lift')).toBe(false);
     expect(samePieceIdea('self', 'same')).toBe(false);
     expect(samePieceIdea('self', 'equal')).toBe(false);
     expect(samePieceIdea('level', 'equal')).toBe(false);
@@ -362,6 +375,10 @@ describe('other part of a school word', () => {
       ['strange', 'stranger'],
       ['stranger', 'strange'],
       ['strange', 'foreign'],
+      ['high', 'above'],
+      ['high', 'over'],
+      ['above', 'high'],
+      ['over', 'high'],
     ];
     for (const [answer, rival] of rivals) {
       const tiles = pickPartDistractors([ROOTS], 400, [answer], () => 0);
@@ -401,6 +418,7 @@ describe('other part of a school word', () => {
       ['Gram', 'Diagram', 'through', ['across']],
       ['Metr', 'Diameter', 'across', ['through']],
       ['Luc', 'Translucent', 'through', ['across']],
+      ['Polis', 'Acropolis', 'high', ['above', 'over']],
     ];
     for (const [rootName, word, mean, rivals] of asked) {
       const root = ROOTS.find((item) => item.root === rootName);

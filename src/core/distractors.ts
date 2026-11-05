@@ -30,6 +30,8 @@ import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
  * yield, going, and gone are go, underworld is earth, higher is above,
  * differ and difference are different, please is calm, limit is end,
  * sacred is holy, fatherland is father, and warlike is war.
+ * Dying is death. Judgment and decision are judge. Natural is nature.
+ * Lives is life. High is above.
  * Cold is not heat, fire is not heat, and lift is not light.
  * Kinship and worship end in -ship, a condition, not a boat.
  * Head is not brain. Close is not shut — "up close" is still near.
@@ -45,7 +47,7 @@ const SYNONYM_GROUPS: string[][] = [
   ['believe', 'faith', 'belief', 'trust'],
   ['lead', 'leader'],
   ['see', 'look', 'watch', 'seen', 'sight'],
-  ['life', 'living'],
+  ['life', 'living', 'lives'],
   ['earth', 'land', 'ground', 'underworld'],
   ['flesh', 'meat', 'body'],
   ['write', 'written', 'draw', 'record', 'writing', 'letter'],
@@ -53,7 +55,7 @@ const SYNONYM_GROUPS: string[][] = [
   ['speak', 'say', 'speech', 'talk', 'spoken'],
   ['sound', 'voice', 'call'],
   ['foot', 'feet'],
-  ['death', 'die', 'dead'],
+  ['death', 'die', 'dead', 'dying'],
   ['one', 'single', 'alone'],
   ['strong', 'strength'],
   ['heat', 'hot', 'temperature'],
@@ -62,7 +64,7 @@ const SYNONYM_GROUPS: string[][] = [
   ['bad', 'evil', 'harsh', 'worst'],
   ['circle', 'wheel', 'ring'],
   ['wisdom', 'wise'],
-  ['above', 'over', 'higher'],
+  ['above', 'over', 'higher', 'high'],
   ['turn', 'roll', 'spin'],
   ['stone', 'rock'],
   ['tooth', 'teeth'],
@@ -76,7 +78,7 @@ const SYNONYM_GROUPS: string[][] = [
   ['madness', 'craze'],
   ['between', 'among'],
   ['stranger', 'foreign', 'strange'],
-  ['judge', 'decide'],
+  ['judge', 'decide', 'judgment', 'decision'],
   ['wrong', 'badly'],
   ['power', 'force', 'energy'],
   ['again', 'back'],
@@ -106,6 +108,7 @@ const SYNONYM_GROUPS: string[][] = [
   ['shut', 'closed'],
   ['universe', 'world'],
   ['skill', 'art', 'craft'],
+  ['nature', 'natural'],
 ];
 
 const SYNONYM_CANON = new Map<string, string>();
@@ -165,6 +168,9 @@ function meanIdeas(mean: string): readonly string[] {
  * "the underworld" says earth. "a higher place" says above.
  * "the difference" says different. "pleased" says calm. "limits" says end.
  * "sacred" says holy. "fatherland" says father. "warlike" says war.
+ * "never dying" says death. "a judgment" and "a decision" say judge.
+ * "the natural world" says nature. "an animal that lives" says life.
+ * "the high part" says above.
  * A cold wind does not say heat, and sunlight does not say lift.
  * The head does not say nerve. "Up close" does not say shut.
  * "All power" does not say rule. "The beginning" does not say rule.
@@ -415,7 +421,9 @@ function collectWordDefs(
  * or ship for sailor, dead for death, sight for see, same for equal,
  * through for across, yield for go, underworld for earth, higher for
  * above, difference for different, please for calm, limit for end,
- * sacred for holy, fatherland for father, warlike for war). The quiet line
+ * sacred for holy, fatherland for father, warlike for war, dying for
+ * death, judgment or decision for judge, natural for nature, lives for
+ * life, high for above). The quiet line
  * still says "from Bio · life" when the right tile does not say life, so
  * a wrong tile that says life — or living — would be the one the hint
  * points at.
