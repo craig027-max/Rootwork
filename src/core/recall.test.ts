@@ -489,9 +489,9 @@ describe('buildRecall', () => {
       ['Lev', 'Levity', 'from Lev · lift', 'Lev', 'Alleviate'],
       ['Eu', 'Euphoria', 'from Eu · good', 'Ambi', 'Ambidextrous'],
       ['Eu', 'Euphemism', 'from Eu · good', 'Ambi', 'Ambidextrous'],
-      ['Mal', 'Malfunction', 'from Mal · bad', 'Caco', 'Cacophony'],
-      ['Mal', 'Malfunction', 'from Mal · bad', 'Eu', 'Euphemism'],
-      ['Dys', 'Dysfunction', 'from Dys · bad', 'Caco', 'Cacophony'],
+      ['Dys', 'Dystopia', 'from Dys · bad', 'Caco', 'Cacophony'],
+      ['Dys', 'Dysphoria', 'from Dys · bad', 'Eu', 'Euphemism'],
+      ['Caco', 'Cacodemon', 'from Caco · bad', 'Caco', 'Cacophony'],
       ['Tele', 'Television', 'from Tele · far', 'Phon', 'Telephone'],
       ['Tele', 'Television', 'from Tele · far', 'Miss', 'Transmit'],
       ['Tele', 'Television', 'from Tele · far', 'Circum', 'Circumference'],
@@ -577,8 +577,8 @@ describe('buildRecall', () => {
       ['Xeno', 'Xenophobia', 'from Xeno · stranger', 'Xeno', 'Xenon'],
       ['Eu', 'Euphoria', 'from Eu · good', 'Super', 'Superior'],
       ['Eu', 'Euphemism', 'from Eu · good', 'Form', 'Reform'],
-      ['Mal', 'Malfunction', 'from Mal · bad', 'Cata', 'Catastrophe'],
-      ['Dys', 'Dysfunction', 'from Dys · bad', 'Cata', 'Catastrophe'],
+      ['Dys', 'Dysphoria', 'from Dys · bad', 'Cata', 'Catastrophe'],
+      ['Caco', 'Cacophony', 'from Caco · bad', 'Cata', 'Catastrophe'],
       ['Dys', 'Dystopia', 'from Dys · bad', 'Cata', 'Catastrophe'],
       ['Caco', 'Cacophony', 'from Caco · bad', 'Cata', 'Catastrophe'],
       ['Naut', 'Aeronautics', 'from Naut · sailor', 'Circum', 'Circumnavigate'],
@@ -916,6 +916,131 @@ describe('buildRecall', () => {
     expect(glossSaysMean('lift', 'The high fortified part of an ancient city')).toBe(false);
     expect(glossSaysMean('lift', 'Higher or better than something else')).toBe(false);
     expect(glossSaysMean('ball', 'The round that is halfway to the final')).toBe(false);
+  });
+
+  it('does not point carries, putting, badly, or laws at a wrong tile', () => {
+    const glossOf = (rootName: string, word: string): string => {
+      const root = ROOTS.find((item) => item.root === rootName);
+      const authored = root?.words.find((item) => item.w === word);
+      const gloss = authored ? quizGloss(authored.d) : null;
+      if (!root || !gloss) throw new Error(`fixture: ${rootName} ${word}`);
+      return gloss;
+    };
+    const cases = [
+      ['Port', 'Import', 'from Port · carry', 'Phon', 'Telephone'],
+      ['Port', 'Import', 'from Port · carry', 'Tele', 'Telephone'],
+      ['Port', 'Import', 'from Port · carry', 'Circum', 'Circumference'],
+      ['Port', 'Import', 'from Port · carry', 'Chrom', 'Chromosome'],
+      ['Port', 'Import', 'from Port · carry', 'Neuro', 'Neuron'],
+      ['Port', 'Import', 'from Port · carry', 'Hemo', 'Hemoglobin'],
+      ['Port', 'Import', 'from Port · carry', 'Eu', 'Euphoria'],
+      ['Fer', 'Conifer', 'from Fer · carry', 'Phon', 'Telephone'],
+      ['Pos', 'Compose', 'from Pos · place', 'Struct', 'Construct'],
+      ['Pos', 'Compose', 'from Pos · place', 'Gram', 'Grammar'],
+      ['Pos', 'Deposit', 'from Pos · place', 'Struct', 'Construct'],
+      ['Dys', 'Dystopia', 'from Dys · bad', 'Mal', 'Malfunction'],
+      ['Dys', 'Dystopia', 'from Dys · bad', 'Dys', 'Dysfunction'],
+      ['Dys', 'Dysphoria', 'from Dys · bad', 'Mis', 'Misbehave'],
+      ['Caco', 'Cacophony', 'from Caco · bad', 'Mal', 'Malfunction'],
+      ['Caco', 'Cacodemon', 'from Caco · bad', 'Dys', 'Dysfunction'],
+      ['Jur', 'Juror', 'from Jur · law', 'Civ', 'Civilization'],
+    ] as const;
+    for (const [rootName, word, line, rivalRoot, rivalWord] of cases) {
+      const root = ROOTS.find((item) => item.root === rootName);
+      if (!root) throw new Error(`fixture: ${rootName}`);
+      const gloss = glossOf(rootName, word);
+      const rival = glossOf(rivalRoot, rivalWord);
+      expect(glossQuietLine(root.root, root.mean, gloss), word).toBe(line);
+      expect(glossSaysMean(root.mean, rival), `${word} ~ ${rivalWord}`).toBe(true);
+      if (rivalWord === word) continue;
+      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 800, mulberry32(1));
+      expect(tiles.length, word).toBeGreaterThan(10);
+      expect(tiles, word).not.toContain(rival);
+      for (const label of tiles) {
+        expect(glossSaysMean(root.mean, label), `${word}: ${label}`).toBe(false);
+      }
+    }
+
+    const port = ROOTS.find((item) => item.root === 'Port');
+    const pos = ROOTS.find((item) => item.root === 'Pos');
+    const dys = ROOTS.find((item) => item.root === 'Dys');
+    const jur = ROOTS.find((item) => item.root === 'Jur');
+    const mal = ROOTS.find((item) => item.root === 'Mal');
+    if (!port || !pos || !dys || !jur || !mal) throw new Error('fixture: meaning roots');
+
+    const carried = pickGlossDistractors(
+      port.mean,
+      'Import',
+      glossOf('Port', 'Import'),
+      [ROOTS],
+      800,
+      mulberry32(1),
+    );
+    expect(carried).toContain(glossOf('Photo', 'Photograph'));
+    expect(carried).not.toContain(glossOf('Phon', 'Telephone'));
+    expect(carried).not.toContain(glossOf('Tele', 'Telephone'));
+    expect(carried).not.toContain(glossOf('Circum', 'Circumference'));
+    expect(carried).not.toContain(glossOf('Eu', 'Euphoria'));
+    expect(carried).not.toContain(glossOf('Fer', 'Conifer'));
+
+    const putting = pickGlossDistractors(
+      pos.mean,
+      'Compose',
+      glossOf('Pos', 'Compose'),
+      [ROOTS],
+      800,
+      mulberry32(1),
+    );
+    expect(putting).toContain(glossOf('Photo', 'Photograph'));
+    expect(putting).not.toContain(glossOf('Struct', 'Construct'));
+    expect(putting).not.toContain(glossOf('Gram', 'Grammar'));
+    expect(putting).not.toContain(glossOf('Sub', 'Submerge'));
+
+    const badly = pickGlossDistractors(
+      dys.mean,
+      'Dystopia',
+      glossOf('Dys', 'Dystopia'),
+      [ROOTS],
+      800,
+      mulberry32(1),
+    );
+    expect(badly).toContain(glossOf('Photo', 'Photograph'));
+    expect(badly).not.toContain(glossOf('Mal', 'Malfunction'));
+    expect(badly).not.toContain(glossOf('Dys', 'Dysfunction'));
+    expect(badly).not.toContain(glossOf('Mis', 'Misbehave'));
+
+    const laws = pickGlossDistractors(
+      jur.mean,
+      'Juror',
+      glossOf('Jur', 'Juror'),
+      [ROOTS],
+      800,
+      mulberry32(1),
+    );
+    expect(laws).toContain(glossOf('Photo', 'Photograph'));
+    expect(laws).not.toContain(glossOf('Civ', 'Civilization'));
+
+    expect(glossQuietLine(mal.root, mal.mean, glossOf('Mal', 'Malfunction'))).toBe('from Mal');
+    expect(glossQuietLine('Dys', 'bad', glossOf('Dys', 'Dysfunction'))).toBe('from Dys');
+    expect(glossQuietLine(port.root, port.mean, glossOf('Port', 'Transport'))).toBe('from Port');
+    expect(glossQuietLine('Fer', 'carry', glossOf('Fer', 'Conifer'))).toBe('from Fer · carry');
+    expect(glossQuietLine('Pos', 'place', glossOf('Pos', 'Position'))).toBe('from Pos');
+
+    expect(glossSaysMean('carry', 'Carries your voice across a far distance')).toBe(true);
+    expect(glossSaysMean('carry', 'The distance carried all the way around a circle.')).toBe(true);
+    expect(glossSaysMean('carry', 'A "colored body" that carries genes.')).toBe(true);
+    expect(glossSaysMean('place', 'To build by putting parts together.')).toBe(true);
+    expect(glossSaysMean('place', 'The rules for putting written words together.')).toBe(true);
+    expect(glossSaysMean('bad', 'To work badly, or fail to work.')).toBe(true);
+    expect(glossSaysMean('bad', 'Working badly, or not at all.')).toBe(true);
+    expect(glossSaysMean('bad', 'To behave badly.')).toBe(true);
+    expect(glossSaysMean('law', 'A society of citizens living together with laws and cities.')).toBe(true);
+    expect(glossSaysMean('new', 'the news')).toBe(false);
+    expect(glossSaysMean('sun', 'How green plants use sunlight to make their own food.')).toBe(false);
+    expect(glossSaysMean('see', 'a seed')).toBe(false);
+    expect(glossSaysMean('war', 'a ward')).toBe(false);
+    expect(glossSaysMean('lift', 'A picture made by capturing light')).toBe(false);
+    expect(glossSaysMean('go', 'The study of God and religion')).toBe(false);
   });
 
   it('a Photosynthesis miss still teaches light after the hint dropped it', () => {

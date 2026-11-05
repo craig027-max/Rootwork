@@ -32,6 +32,8 @@ import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
  * sacred is holy, fatherland is father, and warlike is war.
  * Dying is death. Judgment and decision are judge. Natural is nature.
  * Lives is life. High is above.
+ * Carries and carried are carry. Putting is put. Badly is bad.
+ * Laws is law. News is not new, and sunlight is not sun.
  * Cold is not heat, fire is not heat, and lift is not light.
  * Kinship and worship end in -ship, a condition, not a boat.
  * Head is not brain. Close is not shut — "up close" is still near.
@@ -171,6 +173,8 @@ function meanIdeas(mean: string): readonly string[] {
  * "never dying" says death. "a judgment" and "a decision" say judge.
  * "the natural world" says nature. "an animal that lives" says life.
  * "the high part" says above.
+ * "carries" and "carried" say carry. "putting" says place.
+ * "badly" says bad. "laws" says law. "the news" does not say new.
  * A cold wind does not say heat, and sunlight does not say lift.
  * The head does not say nerve. "Up close" does not say shut.
  * "All power" does not say rule. "The beginning" does not say rule.
@@ -423,7 +427,8 @@ function collectWordDefs(
  * above, difference for different, please for calm, limit for end,
  * sacred for holy, fatherland for father, warlike for war, dying for
  * death, judgment or decision for judge, natural for nature, lives for
- * life, high for above). The quiet line
+ * life, high for above, carries or carried for carry, putting for
+ * place, badly for bad, laws for law). The quiet line
  * still says "from Bio · life" when the right tile does not say life, so
  * a wrong tile that says life — or living — would be the one the hint
  * points at.
