@@ -123,6 +123,8 @@ function pieceHeads(label: string): string[] {
  * "natural" is nature. "lives" is life. "high" is above.
  * "actor" and "acting" are act. "forward" is forth. "joint" is join.
  * "person" is people. "view" is see, and look. "can be" is able to be.
+ * "best" is good. "million" is huge. "doer" is doing. "healing" is cure.
+ * "doing" is not make, and a doer is not make.
  * "break down" is not down, and not broken. "without" is not with.
  * "human" is not people, and "together" is not joint.
  * "kinship" is not a ship, and "worship" is not a ship.

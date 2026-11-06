@@ -1081,6 +1081,31 @@ describe('buildRecall', () => {
     }
   });
 
+  it('does not point a good hint at best, or a huge hint at million', () => {
+    expect(glossSaysMean('good', 'best')).toBe(true);
+    expect(glossSaysMean('good', 'the best')).toBe(true);
+    expect(glossSaysMean('huge', 'a million')).toBe(true);
+    expect(glossSaysMean('great', 'million')).toBe(true);
+    expect(glossSaysMean('healing', 'A single cure for all troubles.')).toBe(true);
+    expect(glossSaysMean('make', 'To break into what someone is doing.')).toBe(false);
+    expect(glossSaysMean('make', 'A skilled way of doing something.')).toBe(false);
+    expect(glossSaysMean('make', 'A person who does good by giving help.')).toBe(false);
+    expect(glossSaysMean('make', 'To make goods by hand or machine.')).toBe(true);
+
+    const fac = ROOTS.find((item) => item.root === 'Fac');
+    if (!fac) throw new Error('fixture: Fac');
+    const faculty = fac.words.find((item) => item.w === 'Faculty');
+    const facultyGloss = faculty ? quizGloss(faculty.d) : null;
+    if (!facultyGloss) throw new Error('fixture: Faculty');
+    expect(glossQuietLine(fac.root, fac.mean, facultyGloss)).toBe('from Fac · make');
+    const tiles = pickGlossDistractors(fac.mean, 'Faculty', facultyGloss, [ROOTS], 800, mulberry32(1));
+    expect(tiles).toContain('To break into what someone is doing');
+    expect(tiles).toContain('A skilled way of doing something');
+    for (const label of tiles) {
+      expect(glossSaysMean('make', label), label).toBe(false);
+    }
+  });
+
   it('a Photosynthesis miss still teaches light after the hint dropped it', () => {
     const photo = ROOTS.find((r) => r.root === 'Photo');
     if (!photo) throw new Error('fixture: Photo');
