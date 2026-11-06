@@ -1043,6 +1043,44 @@ describe('buildRecall', () => {
     expect(glossSaysMean('go', 'The study of God and religion')).toBe(false);
   });
 
+  it('does not point a see hint at a view, or deal the same piece idea twice', () => {
+    const glossOf = (rootName: string, word: string): string => {
+      const root = ROOTS.find((item) => item.root === rootName);
+      const authored = root?.words.find((item) => item.w === word);
+      const gloss = authored ? quizGloss(authored.d) : null;
+      if (!root || !gloss) throw new Error(`fixture: ${rootName} ${word}`);
+      return gloss;
+    };
+    const view = glossOf('Pan', 'Panorama');
+    const translucent = glossOf('Luc', 'Translucent');
+    expect(glossSaysMean('see', view)).toBe(true);
+    expect(glossSaysMean('look', view)).toBe(true);
+    expect(glossSaysMean('see', translucent)).toBe(true);
+    expect(glossSaysMean('people', 'A person traveling on foot.')).toBe(true);
+    expect(glossSaysMean('people', 'Looking or acting like a human.')).toBe(false);
+    expect(glossSaysMean('human', 'Government ruled by the people.')).toBe(false);
+    expect(glossSaysMean('join', 'A wearing-down of the bone joints.')).toBe(true);
+    expect(glossSaysMean('together', 'A wearing-down of the bone joints.')).toBe(false);
+    expect(glossSaysMean('act', 'The first and leading character.')).toBe(false);
+
+    const cases = [
+      ['Spect', 'Spectator', 'from Spect · see', 'Pan', 'Panorama'],
+      ['Spect', 'Inspect', 'from Spect · see', 'Luc', 'Translucent'],
+      ['Vis', 'Visible', 'from Vis · see', 'Pan', 'Panorama'],
+      ['Scope', 'Microscope', 'from Scope · look', 'Pan', 'Panorama'],
+    ] as const;
+    for (const [rootName, word, line, rivalRoot, rivalWord] of cases) {
+      const root = ROOTS.find((item) => item.root === rootName);
+      if (!root) throw new Error(`fixture: ${rootName}`);
+      const gloss = glossOf(rootName, word);
+      const rival = glossOf(rivalRoot, rivalWord);
+      expect(glossQuietLine(root.root, root.mean, gloss), word).toBe(line);
+      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 800, mulberry32(1));
+      expect(tiles.length, word).toBeGreaterThan(10);
+      expect(tiles, `${word} ~ ${rivalWord}`).not.toContain(rival);
+    }
+  });
+
   it('a Photosynthesis miss still teaches light after the hint dropped it', () => {
     const photo = ROOTS.find((r) => r.root === 'Photo');
     if (!photo) throw new Error('fixture: Photo');

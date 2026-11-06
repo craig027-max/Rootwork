@@ -34,6 +34,9 @@ import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
  * Lives is life. High is above.
  * Carries and carried are carry. Putting is put. Badly is bad.
  * Laws is law. News is not new, and sunlight is not sun.
+ * Actor and acting are act. Forward is forth. Joint is join.
+ * Person is people. A view is see. "Able to be" is "can be".
+ * A human is not people, and together is not joint.
  * Cold is not heat, fire is not heat, and lift is not light.
  * Kinship and worship end in -ship, a condition, not a boat.
  * Head is not brain. Close is not shut — "up close" is still near.
@@ -48,7 +51,7 @@ const SYNONYM_GROUPS: string[][] = [
   ['war', 'fight', 'warlike'],
   ['believe', 'faith', 'belief', 'trust'],
   ['lead', 'leader'],
-  ['see', 'look', 'watch', 'seen', 'sight'],
+  ['see', 'look', 'watch', 'seen', 'sight', 'view'],
   ['life', 'living', 'lives'],
   ['earth', 'land', 'ground', 'underworld'],
   ['flesh', 'meat', 'body'],
@@ -111,6 +114,11 @@ const SYNONYM_GROUPS: string[][] = [
   ['universe', 'world'],
   ['skill', 'art', 'craft'],
   ['nature', 'natural'],
+  ['act', 'actor', 'acting'],
+  ['forth', 'forward'],
+  ['join', 'joint'],
+  ['people', 'person'],
+  ['able to be', 'can be'],
 ];
 
 const SYNONYM_CANON = new Map<string, string>();
@@ -175,6 +183,10 @@ function meanIdeas(mean: string): readonly string[] {
  * "the high part" says above.
  * "carries" and "carried" say carry. "putting" says place.
  * "badly" says bad. "laws" says law. "the news" does not say new.
+ * "an actor" and "acting" say act. "forward" says forth.
+ * "the bone joints" say join. "a person" says people.
+ * "a wide view" says see. "able to be" says "can be".
+ * "a human" does not say people, and "together" does not say joint.
  * A cold wind does not say heat, and sunlight does not say lift.
  * The head does not say nerve. "Up close" does not say shut.
  * "All power" does not say rule. "The beginning" does not say rule.
@@ -428,7 +440,9 @@ function collectWordDefs(
  * sacred for holy, fatherland for father, warlike for war, dying for
  * death, judgment or decision for judge, natural for nature, lives for
  * life, high for above, carries or carried for carry, putting for
- * place, badly for bad, laws for law). The quiet line
+ * place, badly for bad, laws for law, actor or acting for act,
+ * forward for forth, joint for join, person for people, view for
+ * see, able to be for can be). The quiet line
  * still says "from Bio · life" when the right tile does not say life, so
  * a wrong tile that says life — or living — would be the one the hint
  * points at.

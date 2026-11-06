@@ -241,6 +241,19 @@ describe('other part of a school word', () => {
     expect(samePieceIdea('underworld', 'under')).toBe(false);
     expect(samePieceIdea('remove', 'move')).toBe(false);
     expect(samePieceIdea('particle', 'part')).toBe(false);
+    expect(samePieceIdea('actor', 'act')).toBe(true);
+    expect(samePieceIdea('actor', 'acting')).toBe(true);
+    expect(samePieceIdea('acting', 'act')).toBe(true);
+    expect(samePieceIdea('forward', 'forth')).toBe(true);
+    expect(samePieceIdea('joint', 'join')).toBe(true);
+    expect(samePieceIdea('joint', 'together')).toBe(false);
+    expect(samePieceIdea('person', 'people')).toBe(true);
+    expect(samePieceIdea('can be', 'able to be')).toBe(true);
+    expect(samePieceIdea('view', 'see')).toBe(true);
+    expect(samePieceIdea('view', 'look')).toBe(true);
+    expect(samePieceIdea('view', 'watch')).toBe(true);
+    expect(samePieceIdea('human', 'people')).toBe(false);
+    expect(samePieceIdea('human', 'person')).toBe(false);
   });
 
   it('never deals study beside study of, and still deals a real rival', () => {
@@ -379,6 +392,15 @@ describe('other part of a school word', () => {
       ['high', 'over'],
       ['above', 'high'],
       ['over', 'high'],
+      ['act', 'actor'],
+      ['act', 'acting'],
+      ['actor', 'acting'],
+      ['forth', 'forward'],
+      ['join', 'joint'],
+      ['people', 'person'],
+      ['able to be', 'can be'],
+      ['see', 'view'],
+      ['look', 'view'],
     ];
     for (const [answer, rival] of rivals) {
       const tiles = pickPartDistractors([ROOTS], 400, [answer], () => 0);
@@ -419,6 +441,16 @@ describe('other part of a school word', () => {
       ['Metr', 'Diameter', 'across', ['through']],
       ['Luc', 'Translucent', 'through', ['across']],
       ['Polis', 'Acropolis', 'high', ['above', 'over']],
+      ['Aud', 'Audible', 'able to be', ['can be']],
+      ['Port', 'Portable', 'can be', ['able to be']],
+      ['Proto', 'Protagonist', 'actor', ['act', 'acting']],
+      ['Auto', 'Automatic', 'acting', ['act', 'actor']],
+      ['Mot', 'Promote', 'forward', ['forth']],
+      ['Voc', 'Provoke', 'forth', ['forward']],
+      ['Osteo', 'Osteoarthritis', 'joint', ['join']],
+      ['Ped', 'Pedestrian', 'person', ['people']],
+      ['Aud', 'Audience', 'people', ['person']],
+      ['Pan', 'Panorama', 'view', ['look', 'see', 'watch', 'sight']],
     ];
     for (const [rootName, word, mean, rivals] of asked) {
       const root = ROOTS.find((item) => item.root === rootName);
