@@ -36,6 +36,8 @@ import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
  * Laws is law. News is not new, and sunlight is not sun.
  * Actor and acting are act. Forward is forth. Joint is join.
  * Person is people. A view is see. "Able to be" is "can be".
+ * Best is good. A million is huge. Healing is a cure.
+ * A doer is doing. Doing something is not make, and a doer is not make.
  * A human is not people, and together is not joint.
  * Cold is not heat, fire is not heat, and lift is not light.
  * Kinship and worship end in -ship, a condition, not a boat.
@@ -45,7 +47,7 @@ import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
  * Those stay different tiles. Spirit is mind, not life.
  */
 const SYNONYM_GROUPS: string[][] = [
-  ['great', 'huge', 'large', 'big', 'larger', 'bigger'],
+  ['great', 'huge', 'large', 'big', 'larger', 'bigger', 'million'],
   ['feeling', 'feel', 'touch'],
   ['born', 'birth'],
   ['war', 'fight', 'warlike'],
@@ -75,6 +77,8 @@ const SYNONYM_GROUPS: string[][] = [
   ['tooth', 'teeth'],
   ['build', 'built'],
   ['make', 'made'],
+  ['doer', 'doing'],
+  ['cure', 'healing'],
   ['send', 'sent'],
   ['truth', 'true'],
   ['memory', 'remember'],
@@ -97,7 +101,7 @@ const SYNONYM_GROUPS: string[][] = [
   ['carry', 'bear'],
   ['lift', 'raise', 'lighten'],
   ['loosen', 'free'],
-  ['good', 'well', 'better'],
+  ['good', 'well', 'better', 'best'],
   ['far', 'distance'],
   ['rule', 'chief', 'ruler'],
   ['throw', 'thrown'],
@@ -186,6 +190,8 @@ function meanIdeas(mean: string): readonly string[] {
  * "an actor" and "acting" say act. "forward" says forth.
  * "the bone joints" say join. "a person" says people.
  * "a wide view" says see. "able to be" says "can be".
+ * "the best" says good. "a million" says huge. "a cure" says healing.
+ * "what someone is doing" does not say make, and "a doer" does not.
  * "a human" does not say people, and "together" does not say joint.
  * A cold wind does not say heat, and sunlight does not say lift.
  * The head does not say nerve. "Up close" does not say shut.
@@ -442,7 +448,8 @@ function collectWordDefs(
  * life, high for above, carries or carried for carry, putting for
  * place, badly for bad, laws for law, actor or acting for act,
  * forward for forth, joint for join, person for people, view for
- * see, able to be for can be). The quiet line
+ * see, able to be for can be, best for good, million for huge,
+ * healing for cure). "Is doing" is not make. The quiet line
  * still says "from Bio · life" when the right tile does not say life, so
  * a wrong tile that says life — or living — would be the one the hint
  * points at.

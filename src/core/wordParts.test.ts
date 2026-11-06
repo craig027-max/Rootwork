@@ -254,6 +254,17 @@ describe('other part of a school word', () => {
     expect(samePieceIdea('view', 'watch')).toBe(true);
     expect(samePieceIdea('human', 'people')).toBe(false);
     expect(samePieceIdea('human', 'person')).toBe(false);
+    expect(samePieceIdea('doer', 'doing')).toBe(true);
+    expect(samePieceIdea('doer', 'make')).toBe(false);
+    expect(samePieceIdea('doing', 'make')).toBe(false);
+    expect(samePieceIdea('doing', 'made')).toBe(false);
+    expect(samePieceIdea('best', 'good')).toBe(true);
+    expect(samePieceIdea('best', 'better')).toBe(true);
+    expect(samePieceIdea('best', 'well')).toBe(true);
+    expect(samePieceIdea('million', 'huge')).toBe(true);
+    expect(samePieceIdea('million', 'great')).toBe(true);
+    expect(samePieceIdea('million', 'large')).toBe(true);
+    expect(samePieceIdea('healing', 'cure')).toBe(true);
   });
 
   it('never deals study beside study of, and still deals a real rival', () => {
@@ -401,6 +412,16 @@ describe('other part of a school word', () => {
       ['able to be', 'can be'],
       ['see', 'view'],
       ['look', 'view'],
+      ['doer', 'doing'],
+      ['doing', 'doer'],
+      ['good', 'best'],
+      ['best', 'good'],
+      ['best', 'better'],
+      ['great', 'million'],
+      ['huge', 'million'],
+      ['million', 'large'],
+      ['healing', 'cure'],
+      ['cure', 'healing'],
     ];
     for (const [answer, rival] of rivals) {
       const tiles = pickPartDistractors([ROOTS], 400, [answer], () => 0);
@@ -410,6 +431,13 @@ describe('other part of a school word', () => {
     const write = pickPartDistractors([ROOTS], 400, ['write'], () => 0);
     expect(write).toContain('together');
     expect(write).toContain('down');
+    const make = pickPartDistractors([ROOTS], 400, ['make'], () => 0);
+    expect(make).toContain('doing');
+    expect(make).not.toContain('doer');
+    const mega = ROOTS.find((item) => item.root === 'Mega');
+    expect(mega).toBeTruthy();
+    expect(otherPartsForRoot(mega!).some((part) => part.word === 'Megabyte')).toBe(false);
+    expect(otherPartsForRoot(mega!).some((part) => part.mean === 'sound')).toBe(true);
   });
 
   it('does not offer the catalog’s other name for the piece they were asked', () => {
@@ -451,6 +479,13 @@ describe('other part of a school word', () => {
       ['Ped', 'Pedestrian', 'person', ['people']],
       ['Aud', 'Audience', 'people', ['person']],
       ['Pan', 'Panorama', 'view', ['look', 'see', 'watch', 'sight']],
+      ['Bene', 'Benefactor', 'doer', ['doing']],
+      ['Flu', 'Fluent', 'doing', ['doer']],
+      ['Psych', 'Psychiatry', 'healing', ['cure']],
+      ['Pan', 'Panacea', 'cure', ['healing']],
+      ['Crat', 'Aristocrat', 'best', ['good', 'well', 'better']],
+      ['Fid', 'Bonafide', 'good', ['best', 'better', 'well']],
+      ['Mania', 'Megalomania', 'great', ['million', 'huge', 'large', 'big']],
     ];
     for (const [rootName, word, mean, rivals] of asked) {
       const root = ROOTS.find((item) => item.root === rootName);
