@@ -121,7 +121,10 @@ function pieceHeads(label: string): string[] {
  * "sacred" is holy. "fatherland" is father. "warlike" is war.
  * "dying" is death. "judgment" and "decision" are judge.
  * "natural" is nature. "lives" is life. "high" is above.
+ * "actor" and "acting" are act. "forward" is forth. "joint" is join.
+ * "person" is people. "view" is see, and look. "can be" is able to be.
  * "break down" is not down, and not broken. "without" is not with.
+ * "human" is not people, and "together" is not joint.
  * "kinship" is not a ship, and "worship" is not a ship.
  * "underworld" is not under, and not world. "up close" is not shut.
  * "light" is not lift. "power" is not rule.
