@@ -38,7 +38,11 @@ import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
  * Person is people. A view is see. "Able to be" is "can be".
  * Best is good. A million is huge. Healing is a cure.
  * A doer is doing. Doing something is not make, and a doer is not make.
+ * Grand is great. Study and reason are word.
  * A human is not people, and together is not joint.
+ * "With" is together only as a whole piece tile. "As with a needle" stays.
+ * "Away" is apart only as a whole piece tile. "Far away" stays.
+ * "Without" is not, and "without" is not with. "Not" is not apart.
  * Cold is not heat, fire is not heat, and lift is not light.
  * Kinship and worship end in -ship, a condition, not a boat.
  * Head is not brain. Close is not shut — "up close" is still near.
@@ -47,7 +51,8 @@ import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
  * Those stay different tiles. Spirit is mind, not life.
  */
 const SYNONYM_GROUPS: string[][] = [
-  ['great', 'huge', 'large', 'big', 'larger', 'bigger', 'million'],
+  ['great', 'huge', 'large', 'big', 'larger', 'bigger', 'million', 'grand'],
+  ['word', 'words', 'study', 'reason'],
   ['feeling', 'feel', 'touch'],
   ['born', 'birth'],
   ['war', 'fight', 'warlike'],
@@ -191,7 +196,10 @@ function meanIdeas(mean: string): readonly string[] {
  * "the bone joints" say join. "a person" says people.
  * "a wide view" says see. "able to be" says "can be".
  * "the best" says good. "a million" says huge. "a cure" says healing.
+ * "grand" says great. "the study of" and "in order to study" say word.
+ * "reasoned" says word. "The study of God" does not say go.
  * "what someone is doing" does not say make, and "a doer" does not.
+ * "as with a needle" does not say together. "far away" does not say apart.
  * "a human" does not say people, and "together" does not say joint.
  * A cold wind does not say heat, and sunlight does not say lift.
  * The head does not say nerve. "Up close" does not say shut.
@@ -409,16 +417,18 @@ function collectWordDefs(
   const skip = skipWord.replace(/\s+/g, ' ').trim().toLowerCase();
   const out: string[] = [];
   const seen = new Set<string>();
+  const seenWords = new Set<string>();
   for (const pool of pools) {
     for (const root of pool) {
       for (const item of root.words) {
         const name = item.w.replace(/\s+/g, ' ').trim().toLowerCase();
-        if (name === skip) continue;
+        if (name === skip || seenWords.has(name)) continue;
         const gloss = quizGloss(item.d, maxLen);
         if (!gloss) continue;
         const key = canon(gloss);
         if (seen.has(key)) continue;
         seen.add(key);
+        seenWords.add(name);
         out.push(gloss);
       }
     }
@@ -449,7 +459,10 @@ function collectWordDefs(
  * place, badly for bad, laws for law, actor or acting for act,
  * forward for forth, joint for join, person for people, view for
  * see, able to be for can be, best for good, million for huge,
- * healing for cure). "Is doing" is not make. The quiet line
+ * healing for cure, grand for great, study or reason for word).
+ * "Is doing" is not make. "As with" is not together.
+ * "Far away" is not apart. One school word keeps one gloss.
+ * The quiet line
  * still says "from Bio · life" when the right tile does not say life, so
  * a wrong tile that says life — or living — would be the one the hint
  * points at.

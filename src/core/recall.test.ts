@@ -1106,6 +1106,76 @@ describe('buildRecall', () => {
     }
   });
 
+  it('does not point a great hint at grand, or a word hint at study', () => {
+    const glossOf = (rootName: string, word: string): string => {
+      const root = ROOTS.find((item) => item.root === rootName);
+      const authored = root?.words.find((item) => item.w === word);
+      const gloss = authored ? quizGloss(authored.d) : null;
+      if (!root || !gloss) throw new Error(`fixture: ${rootName} ${word}`);
+      return gloss;
+    };
+    const magnify = glossOf('Magn', 'Magnify');
+    const magnificent = glossOf('Magn', 'Magnificent');
+    const logic = glossOf('Log', 'Logic');
+    const theology = glossOf('Theo', 'Theology');
+    const dissect = glossOf('Sect', 'Dissect');
+    const rolls = glossOf('Bi', 'Bicycle');
+    const wheels = glossOf('Cycl', 'Bicycle');
+    expect(glossQuietLine('Magn', 'great', magnify)).toBe('from Magn · great');
+    expect(glossQuietLine('Log', 'word', logic)).toBe('from Log · word');
+    expect(glossSaysMean('great', magnificent)).toBe(true);
+    expect(glossSaysMean('large', magnificent)).toBe(true);
+    expect(glossSaysMean('huge', magnificent)).toBe(true);
+    expect(glossSaysMean('word', theology)).toBe(true);
+    expect(glossSaysMean('word', dissect)).toBe(true);
+    expect(glossSaysMean('word', logic)).toBe(true);
+    expect(glossSaysMean('go', theology)).toBe(false);
+    expect(glossSaysMean('together', 'To force a liquid in, as with a needle')).toBe(false);
+    expect(glossSaysMean('apart', 'A tool that lets you see things very far away')).toBe(false);
+    expect(glossSaysMean('apart', 'To send away')).toBe(false);
+    expect(glossSaysMean('life', 'Grand, splendid, and impressive')).toBe(false);
+
+    const great = pickGlossDistractors('great', 'Magnify', magnify, [ROOTS], 800, mulberry32(1));
+    expect(great.length).toBeGreaterThan(10);
+    expect(great).not.toContain(magnificent);
+    for (const label of great) expect(glossSaysMean('great', label), label).toBe(false);
+
+    const word = pickGlossDistractors('word', 'Logic', logic, [ROOTS], 800, mulberry32(1));
+    expect(word.length).toBeGreaterThan(10);
+    expect(word).not.toContain(theology);
+    expect(word).not.toContain(dissect);
+    for (const label of word) expect(glossSaysMean('word', label), label).toBe(false);
+
+    const life = pickGlossDistractors('life', 'Biography', glossOf('Bio', 'Biography'), [ROOTS], 800, mulberry32(1));
+    const bicycle = [rolls, wheels].filter((label) => life.includes(label));
+    expect(bicycle).toHaveLength(1);
+    expect(life).toContain(magnificent);
+
+    const magn = ROOTS.find((item) => item.root === 'Magn');
+    const log = ROOTS.find((item) => item.root === 'Log');
+    if (!magn || !log) throw new Error('fixture: Magn Log');
+    const magnBeat = recallFromPending({
+      root: magn,
+      pool: ROOTS,
+      pending: { kind: 'gloss', word: 'Magnify' },
+      rng: mulberry32(2),
+      choices: 3,
+    });
+    expect(magnBeat?.kind).toBe('gloss');
+    expect(magnBeat?.teach).toContain('magn (great)');
+    expect(magnBeat?.opts.some((opt) => opt.label === magnificent)).toBe(false);
+    const logBeat = recallFromPending({
+      root: log,
+      pool: ROOTS,
+      pending: { kind: 'gloss', word: 'Logic' },
+      rng: mulberry32(3),
+      choices: 3,
+    });
+    expect(logBeat?.kind).toBe('gloss');
+    expect(logBeat?.teach).toContain('log (reason)');
+    expect(logBeat?.opts.some((opt) => opt.label === theology)).toBe(false);
+  });
+
   it('a Photosynthesis miss still teaches light after the hint dropped it', () => {
     const photo = ROOTS.find((r) => r.root === 'Photo');
     if (!photo) throw new Error('fixture: Photo');

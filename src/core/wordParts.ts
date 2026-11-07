@@ -91,6 +91,22 @@ export function otherPartsForRoot(root: Root): OtherPart[] {
 
 const PIECE_GLUE = new Set(['of', 'that']);
 
+/**
+ * Whole piece tiles that are one idea, and too common inside a gloss
+ * to share the catalog synonym list. "as with a needle" is not together.
+ * "far away" is not apart. "without" is not with, and "not" is not apart.
+ */
+const PIECE_ONLY_GROUPS: string[][] = [
+  ['together', 'with'],
+  ['not', 'without'],
+  ['apart', 'away'],
+];
+
+const PIECE_ONLY = new Map<string, string>();
+for (const group of PIECE_ONLY_GROUPS) {
+  for (const word of group) PIECE_ONLY.set(word, group[0]!);
+}
+
 function pieceHeads(label: string): string[] {
   return label
     .toLowerCase()
@@ -124,8 +140,12 @@ function pieceHeads(label: string): string[] {
  * "actor" and "acting" are act. "forward" is forth. "joint" is join.
  * "person" is people. "view" is see, and look. "can be" is able to be.
  * "best" is good. "million" is huge. "doer" is doing. "healing" is cure.
+ * "grand" is great. "words" is study, and reason. "study of" is study.
+ * "with" is together. "without" is not. "away" is apart.
  * "doing" is not make, and a doer is not make.
  * "break down" is not down, and not broken. "without" is not with.
+ * "not" is not apart. "putting together" is not together.
+ * "as with a needle" is not a piece tile, and "far away" is not one.
  * "human" is not people, and "together" is not joint.
  * "kinship" is not a ship, and "worship" is not a ship.
  * "underworld" is not under, and not world. "up close" is not shut.
@@ -139,6 +159,8 @@ export function samePieceIdea(a: string, b: string): boolean {
   for (const x of left) {
     for (const y of right) {
       if (x === y || canon(x) === canon(y)) return true;
+      const leftIdea = PIECE_ONLY.get(x);
+      if (leftIdea && leftIdea === PIECE_ONLY.get(y)) return true;
       if (!x.includes(' ') && !y.includes(' ') && (carriesInflection(x, y) || carriesInflection(y, x))) {
         return true;
       }

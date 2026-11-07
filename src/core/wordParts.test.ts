@@ -265,6 +265,19 @@ describe('other part of a school word', () => {
     expect(samePieceIdea('million', 'great')).toBe(true);
     expect(samePieceIdea('million', 'large')).toBe(true);
     expect(samePieceIdea('healing', 'cure')).toBe(true);
+    expect(samePieceIdea('grand', 'great')).toBe(true);
+    expect(samePieceIdea('grand', 'large')).toBe(true);
+    expect(samePieceIdea('words', 'study')).toBe(true);
+    expect(samePieceIdea('words', 'study of')).toBe(true);
+    expect(samePieceIdea('reason', 'word')).toBe(true);
+    expect(samePieceIdea('reason', 'study')).toBe(true);
+    expect(samePieceIdea('with', 'together')).toBe(true);
+    expect(samePieceIdea('without', 'not')).toBe(true);
+    expect(samePieceIdea('without', 'with')).toBe(false);
+    expect(samePieceIdea('away', 'apart')).toBe(true);
+    expect(samePieceIdea('not', 'apart')).toBe(false);
+    expect(samePieceIdea('not', 'away')).toBe(false);
+    expect(samePieceIdea('putting together', 'with')).toBe(false);
   });
 
   it('never deals study beside study of, and still deals a real rival', () => {
@@ -422,6 +435,15 @@ describe('other part of a school word', () => {
       ['million', 'large'],
       ['healing', 'cure'],
       ['cure', 'healing'],
+      ['words', 'study'],
+      ['words', 'study of'],
+      ['reason', 'study'],
+      ['with', 'together'],
+      ['together', 'with'],
+      ['not', 'without'],
+      ['without', 'not'],
+      ['away', 'apart'],
+      ['apart', 'away'],
     ];
     for (const [answer, rival] of rivals) {
       const tiles = pickPartDistractors([ROOTS], 400, [answer], () => 0);
@@ -485,7 +507,15 @@ describe('other part of a school word', () => {
       ['Pan', 'Panacea', 'cure', ['healing']],
       ['Crat', 'Aristocrat', 'best', ['good', 'well', 'better']],
       ['Fid', 'Bonafide', 'good', ['best', 'better', 'well']],
-      ['Mania', 'Megalomania', 'great', ['million', 'huge', 'large', 'big']],
+      ['Mania', 'Megalomania', 'great', ['million', 'huge', 'large', 'big', 'grand']],
+      ['Sangu', 'Consanguinity', 'with', ['together']],
+      ['Path', 'Sympathy', 'with', ['together']],
+      ['Sequ', 'Consecutive', 'with', ['together']],
+      ['Eu', 'Eulogy', 'words', ['study', 'study of', 'reason']],
+      ['Fin', 'Infinite', 'not', ['without']],
+      ['Miss', 'Dismiss', 'away', ['apart']],
+      ['Mnem', 'Amnesty', 'not', ['without']],
+      ['Theo', 'Atheist', 'without', ['not']],
     ];
     for (const [rootName, word, mean, rivals] of asked) {
       const root = ROOTS.find((item) => item.root === rootName);
