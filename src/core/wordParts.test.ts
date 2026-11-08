@@ -62,7 +62,7 @@ describe('other part of a school word', () => {
 
   it('asks the other piece of Biology — not bio, and not a bare angle', () => {
     const parts = otherPartsForRoot(bio);
-    expect(parts.map((p) => p.letters)).toEqual(['-logy', '-graphy', 'degrade']);
+    expect(parts.map((p) => p.letters)).toEqual(['-logy', '-graphy', 'degrad']);
     expect(parts.map((p) => p.mean)).toEqual(['study of', 'writing', 'break down']);
     expect(parts.some((p) => p.mean === bio.mean)).toBe(false);
 

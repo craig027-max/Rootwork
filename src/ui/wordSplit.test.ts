@@ -15,7 +15,7 @@ describe('word part-split (authored `b`)', () => {
   it('uses the existing breakdown, not a new etymology scheme', () => {
     expect(wordPartSplit(word('Biology'))).toBe('bio (life) + -logy (study of)');
     expect(wordPartSplit(word('Biography'))).toBe('bio (life) + -graphy (writing)');
-    expect(wordPartSplit(word('Biodegradable'))).toBe('bio (life) + degrade (break down)');
+    expect(wordPartSplit(word('Biodegradable'))).toBe('bio (life) + degrad (break down)');
   });
 
   it('keeps highlight letters (`hl`) as they already appear on the word', () => {

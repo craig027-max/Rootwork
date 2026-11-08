@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { parseWordSplit } from '../core/wordParts';
 import { PALETTES, ROOTS, rootId } from './roots';
 import { SCENES } from '../ui/scenes';
 
@@ -62,6 +63,20 @@ describe('curriculum shape (content lift must not break the model)', () => {
   it('has unique root ids', () => {
     const ids = ROOTS.map((r) => rootId(r));
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('names only letters a kid can find in the example word', () => {
+    for (const r of ROOTS) {
+      for (const w of r.words) {
+        const spelled = w.w.toLowerCase();
+        expect(spelled.includes(w.hl.toLowerCase()), `${w.w} highlight ${w.hl}`).toBe(true);
+        for (const piece of parseWordSplit(w.b)) {
+          const letters = piece.letters.replace(/[^a-z]/gi, '').toLowerCase();
+          expect(letters.length, `${w.w} ${w.b}`).toBeGreaterThan(0);
+          expect(spelled.includes(letters), `${w.w} names ${piece.letters}`).toBe(true);
+        }
+      }
+    }
   });
 
   it('highlights letters that actually appear in each new school-list example word', () => {
