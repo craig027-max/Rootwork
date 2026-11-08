@@ -142,7 +142,7 @@ describe('Study quiz hero names the thing being asked', () => {
       deckQuizHero({ root: 'Photo', mean: 'light', kind: 'gloss', word: 'Photosynthesis' })?.titleClass,
     ).toBe('is-gloss is-long');
     expect(
-      deckQuizHero({ root: 'Bio', mean: 'life', kind: 'part', part: 'degrade', word: 'Biodegradable' })
+      deckQuizHero({ root: 'Bio', mean: 'life', kind: 'part', part: 'degrad', word: 'Biodegradable' })
         ?.titleClass,
     ).toBe('is-part');
     expect(
@@ -150,7 +150,7 @@ describe('Study quiz hero names the thing being asked', () => {
         root: 'Bio',
         mean: 'life',
         kind: 'build',
-        split: 'bio (life) + degrade (break down)',
+        split: 'bio (life) + degrad (break down)',
       })?.titleClass,
     ).toBe('is-build');
     expect(
