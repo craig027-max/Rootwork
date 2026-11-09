@@ -80,6 +80,36 @@ describe('other part of a school word', () => {
     expect(duct).toMatchObject({ letters: 'duct', mean: 'lead' });
   });
 
+  it('does not ask a piece meaning the letters do not carry', () => {
+    const banned: Array<[string, string, string]> = [
+      ['Cent', 'Century', 'span'],
+      ['Ped', 'Pedestal', 'stand'],
+      ['Min', 'Minor', 'more'],
+      ['Aud', 'Audience', 'people'],
+      ['Terr', 'Terrain', 'nature of'],
+      ['Voc', 'Vocabulary', 'collection'],
+      ['Micro', 'Microbe', 'life'],
+      ['Jur', 'Jury', 'people'],
+      ['Odont', 'Mastodon', 'breast'],
+    ];
+    for (const [rootName, word, mean] of banned) {
+      const root = ROOTS.find((item) => item.root === rootName);
+      expect(root, rootName).toBeTruthy();
+      const asked = otherPartsForRoot(root!).filter((part) => part.word === word);
+      expect(asked.some((part) => part.mean.toLowerCase() === mean), `${word} ${mean}`).toBe(false);
+    }
+    const odont = ROOTS.find((item) => item.root === 'Odont')!;
+    expect(otherPartsForRoot(odont).find((part) => part.word === 'Mastodon')).toMatchObject({
+      letters: 'mast',
+      mean: 'bump',
+    });
+    const cent = ROOTS.find((item) => item.root === 'Cent')!;
+    const century = buildPicksForRoot(cent).find((pick) => pick.word === 'Century');
+    expect(buildAsk(century!.split)).toBe('Which word is built from cent + -ury?');
+    const superior = ROOTS.find((item) => item.root === 'Super')!;
+    expect(otherPartsForRoot(superior).some((part) => part.mean === 'more')).toBe(true);
+  });
+
   it('copy names the piece, not the root', () => {
     expect(partAsk('Biology', '-logy')).toBe('In Biology, what does -logy mean?');
     expect(partAsk('Biology', '-logy')).not.toMatch(/What does Biology mean/);
@@ -499,7 +529,7 @@ describe('other part of a school word', () => {
       ['Voc', 'Provoke', 'forth', ['forward']],
       ['Osteo', 'Osteoarthritis', 'joint', ['join']],
       ['Ped', 'Pedestrian', 'person', ['people']],
-      ['Aud', 'Audience', 'people', ['person']],
+      ['Pan', 'Pandemic', 'people', ['person']],
       ['Pan', 'Panorama', 'view', ['look', 'see', 'watch', 'sight']],
       ['Bene', 'Benefactor', 'doer', ['doing']],
       ['Flu', 'Fluent', 'doing', ['doer']],

@@ -93,6 +93,46 @@ describe('curriculum shape (content lift must not break the model)', () => {
     }
   });
 
+  it('does not quiz a meaning the letters do not carry', () => {
+    const by = Object.fromEntries(ROOTS.map((r) => [r.root, r]));
+    const cases: Array<[string, string, string]> = [
+      ['Cent', 'Century', 'span'],
+      ['Ped', 'Pedestal', 'stand'],
+      ['Min', 'Minor', 'more'],
+      ['Aud', 'Audience', 'people'],
+      ['Terr', 'Terrain', 'nature of'],
+      ['Voc', 'Vocabulary', 'collection'],
+      ['Micro', 'Microbe', 'life'],
+      ['Jur', 'Jury', 'people'],
+      ['Odont', 'Mastodon', 'breast'],
+    ];
+    for (const [name, word, mean] of cases) {
+      const item = by[name]!.words.find((w) => w.w === word);
+      expect(item, word).toBeDefined();
+      expect(item!.b.toLowerCase(), `${word} breakdown`).not.toContain(`(${mean})`);
+      expect(
+        parseWordSplit(item!.b).some((piece) => piece.mean?.toLowerCase() === mean),
+        `${word} piece ${mean}`,
+      ).toBe(false);
+    }
+    const microbe = by.Micro!.words.find((w) => w.w === 'Microbe')!;
+    expect(microbe.d).toContain('joins small and life');
+    expect(microbe.b).toBe('micro (small) + be');
+    const mastodon = by.Odont!.words.find((w) => w.w === 'Mastodon')!;
+    expect(mastodon.b).toContain('mast (bump)');
+  });
+
+  it('lights every letter of chthon that the breakdown names', () => {
+    const chthon = ROOTS.find((r) => r.root === 'Chthon');
+    expect(chthon).toBeDefined();
+    for (const w of chthon!.words) {
+      const word = w.w.toLowerCase();
+      const hl = w.hl.toLowerCase();
+      expect(hl, w.w).toBe('chthon');
+      expect(word.indexOf(hl), w.w).toBe(word.indexOf('chthon'));
+    }
+  });
+
   it('includes high-frequency school-list combining forms that were missing', () => {
     const by = Object.fromEntries(ROOTS.map((r) => [r.root, r]));
     for (const name of SCHOOL_LIST_GAPS) {
