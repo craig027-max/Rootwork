@@ -105,6 +105,13 @@ describe('curriculum shape (content lift must not break the model)', () => {
       ['Micro', 'Microbe', 'life'],
       ['Jur', 'Jury', 'people'],
       ['Odont', 'Mastodon', 'breast'],
+      ['Dict', 'Dictionary', 'collection'],
+      ['Min', 'Minimum', 'most'],
+      ['Mar', 'Mariner', 'person'],
+      ['Junct', 'Junction', 'place'],
+      ['Fort', 'Fortress', 'place'],
+      ['Terr', 'Terrace', 'place'],
+      ['Junct', 'Juncture', 'point'],
     ];
     for (const [name, word, mean] of cases) {
       const item = by[name]!.words.find((w) => w.w === word);
@@ -120,6 +127,35 @@ describe('curriculum shape (content lift must not break the model)', () => {
     expect(microbe.b).toBe('micro (small) + be');
     const mastodon = by.Odont!.words.find((w) => w.w === 'Mastodon')!;
     expect(mastodon.b).toContain('mast (bump)');
+    expect(by.Dict!.words.find((w) => w.w === 'Dictionary')!.b).toBe('dict (say) + -ionary');
+    expect(by.Min!.words.find((w) => w.w === 'Minimum')!.b).toBe('min (small) + -imum');
+    expect(by.Mar!.words.find((w) => w.w === 'Mariner')!.b).toBe('mar (sea) + -er');
+    expect(by.Junct!.words.find((w) => w.w === 'Junction')!.b).toBe('junct (join) + -ion');
+    expect(by.Fort!.words.find((w) => w.w === 'Fortress')!.b).toBe('fort (strong) + -ress');
+    expect(by.Terr!.words.find((w) => w.w === 'Terrace')!.b).toBe('terr (land) + -ace');
+    expect(by.Junct!.words.find((w) => w.w === 'Juncture')!.b).toBe('junct (join) + -ure');
+    expect(by.Aqua!.words.find((w) => w.w === 'Aquarium')!.b).toContain('-arium (place)');
+    expect(by.Terr!.words.find((w) => w.w === 'Territory')!.b).toContain('-itory (place)');
+    expect(by.Super!.words.find((w) => w.w === 'Superior')!.b).toContain('-ior (more)');
+  });
+
+  it('highlights a piece the breakdown names', () => {
+    for (const r of ROOTS) {
+      for (const w of r.words) {
+        const hl = w.hl.replace(/[^a-z]/gi, '').toLowerCase();
+        const pieces = parseWordSplit(w.b).map((piece) =>
+          piece.letters.replace(/[^a-z]/gi, '').toLowerCase(),
+        );
+        expect(pieces, `${w.w} highlight ${w.hl}`).toContain(hl);
+      }
+    }
+    const card = ROOTS.find((r) => r.root === 'Card');
+    expect(card).toBeDefined();
+    expect(card!.words.map((w) => [w.w, w.hl])).toEqual([
+      ['Cardiac', 'cardi'],
+      ['Cardiology', 'cardio'],
+      ['Cardiovascular', 'cardio'],
+    ]);
   });
 
   it('lights every letter of chthon that the breakdown names', () => {

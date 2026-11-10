@@ -91,6 +91,13 @@ describe('other part of a school word', () => {
       ['Micro', 'Microbe', 'life'],
       ['Jur', 'Jury', 'people'],
       ['Odont', 'Mastodon', 'breast'],
+      ['Dict', 'Dictionary', 'collection'],
+      ['Min', 'Minimum', 'most'],
+      ['Mar', 'Mariner', 'person'],
+      ['Junct', 'Junction', 'place'],
+      ['Fort', 'Fortress', 'place'],
+      ['Terr', 'Terrace', 'place'],
+      ['Junct', 'Juncture', 'point'],
     ];
     for (const [rootName, word, mean] of banned) {
       const root = ROOTS.find((item) => item.root === rootName);
@@ -108,6 +115,14 @@ describe('other part of a school word', () => {
     expect(buildAsk(century!.split)).toBe('Which word is built from cent + -ury?');
     const superior = ROOTS.find((item) => item.root === 'Super')!;
     expect(otherPartsForRoot(superior).some((part) => part.mean === 'more')).toBe(true);
+    const mar = ROOTS.find((item) => item.root === 'Mar')!;
+    const mariner = buildPicksForRoot(mar).find((pick) => pick.word === 'Mariner');
+    expect(buildAsk(mariner!.split)).toBe('Which word is built from mar + -er?');
+    expect(otherPartsForRoot(mar).some((part) => part.word === 'Mariner')).toBe(false);
+    const aquaPlace = otherPartsForRoot(ROOTS.find((item) => item.root === 'Aqua')!).find(
+      (part) => part.word === 'Aquarium',
+    );
+    expect(aquaPlace).toMatchObject({ letters: '-arium', mean: 'place' });
   });
 
   it('copy names the piece, not the root', () => {
