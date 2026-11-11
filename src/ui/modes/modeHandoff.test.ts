@@ -336,7 +336,7 @@ describe('Daily / Rush overlay wiring + phone layout', () => {
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(183);
+    expect(ROOTS.length).toBe(195);
   });
 
   it('keeps done recap + next-action taps readable at phone width', () => {

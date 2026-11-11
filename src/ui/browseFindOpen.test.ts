@@ -105,6 +105,6 @@ describe('Browse find tap opens the school word — not a closed chip', () => {
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(183);
+    expect(ROOTS.length).toBe(195);
   });
 });

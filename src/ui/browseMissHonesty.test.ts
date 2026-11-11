@@ -89,7 +89,7 @@ describe('Browse after a miss is Remember — not All Roots / Bio ✓ over Geo',
       `Missed ${geo.root}`,
     );
     expect(indexSub([geo.root, photo.root])).toBe(`Missed ${geo.root} · then ${photo.root}`);
-    expect(indexSub([geo.root])).not.toMatch(/183 roots|5 tiers/);
+    expect(indexSub([geo.root])).not.toMatch(/195 roots|5 tiers/);
     expect(indexHeading([])).toBe('All Roots');
     expect(indexSub([], { rootCount: ROOTS.length, tierCount: 5 })).toBe(
       `${ROOTS.length} roots · 5 tiers`,
@@ -233,6 +233,6 @@ describe('Browse after a miss is Remember — not All Roots / Bio ✓ over Geo',
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(183);
+    expect(ROOTS.length).toBe(195);
   });
 });

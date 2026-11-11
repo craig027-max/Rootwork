@@ -302,7 +302,7 @@ describe('Daily peek after a miss is Remember — not today\'s five ✓ over Geo
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(183);
+    expect(ROOTS.length).toBe(195);
     expect(first.root).toBe('Bio');
   });
 });

@@ -55,6 +55,18 @@ describe('scene registry', () => {
     expect(byRoot.Mort).toBe('death');
     expect(byRoot.Rupt).toBe('breakx');
     expect(byRoot.Fract).toBe('breakx');
+    expect(byRoot.Quad).toBe('four');
+    expect(byRoot.Pent).toBe('five');
+    expect(byRoot.Hex).toBe('six');
+    expect(byRoot.Sept).toBe('seven');
+    expect(byRoot.Oct).toBe('eight');
+    expect(byRoot.Dec).toBe('ten');
+    expect(byRoot.Mill).toBe('thousand');
+    expect(byRoot.Gon).toBe('angle');
+    expect(byRoot.Later).toBe('side');
+    expect(byRoot.Rect).toBe('straight');
+    expect(byRoot.Prim).toBe('before');
+    expect(byRoot.Post).toBe('after');
   });
 
   it('keeps breakx for break-roots only', () => {

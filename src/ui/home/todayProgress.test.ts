@@ -705,7 +705,7 @@ describe('Today checklist wiring + phone layout', () => {
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(183);
+    expect(ROOTS.length).toBe(195);
   });
 
   it('keeps the checklist and Continue tap readable at phone width', () => {
