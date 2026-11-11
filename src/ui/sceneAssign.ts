@@ -894,3 +894,95 @@ export const different: SceneFn = (x, W, H, t, pal) => {
   rr(x, W * 0.68 - s, cy - s - bob, s * 2, s * 2, 6);
   x.stroke();
 };
+
+/** A counter that runs up to 1000 — a thousand, not a hundred. */
+export const thousand: SceneFn = (x, W, H, t, pal) => {
+  const count = Math.min(1000, Math.floor((t * 90) % 1050));
+  const cx = W / 2;
+  const barW = Math.min(W * 0.72, 280);
+  const barX = cx - barW / 2;
+  const barY = H * 0.62;
+  x.fillStyle = `rgba(${p0(pal)},0.15)`;
+  rr(x, barX, barY, barW, 14, 7);
+  x.fill();
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  rr(x, barX, barY, Math.max(8, barW * (count / 1000)), 14, 7);
+  x.fill();
+  x.fillStyle = `rgba(${p0(pal)},0.95)`;
+  x.font = '700 42px ui-rounded, system-ui, sans-serif';
+  x.textAlign = 'center';
+  x.textBaseline = 'middle';
+  x.fillText(String(count), cx, H * 0.4);
+  glow(x, cx, H * 0.4, 36, p1(pal), 0.18);
+};
+
+/** Two rays and the wedge between them — an angle, not a full circle. */
+export const angle: SceneFn = (x, W, H, t, pal) => {
+  const ox = W * 0.28;
+  const oy = H * 0.72;
+  const len = Math.min(W, H) * 0.48;
+  const sweep = 0.35 + (0.5 + 0.5 * Math.sin(t * 1.1)) * 0.9;
+  x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+  x.lineWidth = 6;
+  x.lineCap = 'round';
+  line(x, ox, oy, ox + len, oy);
+  line(x, ox, oy, ox + Math.cos(-sweep) * len, oy + Math.sin(-sweep) * len);
+  x.fillStyle = `rgba(${p1(pal)},0.35)`;
+  x.beginPath();
+  x.moveTo(ox, oy);
+  x.arc(ox, oy, len * 0.38, -sweep, 0);
+  x.closePath();
+  x.fill();
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 2.5;
+  x.beginPath();
+  x.arc(ox, oy, len * 0.38, -sweep, 0);
+  x.stroke();
+};
+
+/** A square whose edges light one at a time — a side, not the whole shape. */
+export const side: SceneFn = (x, W, H, t, pal) => {
+  const s = Math.min(W, H) * 0.42;
+  const x0 = (W - s) / 2;
+  const y0 = (H - s) / 2 + 6;
+  const edges: Array<[number, number, number, number]> = [
+    [x0, y0, x0 + s, y0],
+    [x0 + s, y0, x0 + s, y0 + s],
+    [x0 + s, y0 + s, x0, y0 + s],
+    [x0, y0 + s, x0, y0],
+  ];
+  const hot = Math.floor(t * 0.8) % 4;
+  x.strokeStyle = `rgba(${p0(pal)},0.28)`;
+  x.lineWidth = 8;
+  x.lineCap = 'round';
+  for (const [a, b, c, d] of edges) line(x, a, b, c, d);
+  const [a, b, c, d] = edges[hot] ?? edges[0]!;
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 10;
+  line(x, a, b, c, d);
+  glow(x, (a + c) / 2, (b + d) / 2, 22, p1(pal), 0.28);
+};
+
+/** Tokens on a line; the last one glows — after, not first. */
+export const after: SceneFn = (x, W, H, t, pal) => {
+  const y = H * 0.55;
+  const xs = [W * 0.22, W * 0.5, W * 0.78];
+  x.strokeStyle = `rgba(${p0(pal)},0.4)`;
+  x.lineWidth = 3;
+  line(x, W * 0.1, y, W * 0.9, y);
+  const pulse = 0.5 + 0.5 * Math.sin(t * 2);
+  xs.forEach((px, i) => {
+    const last = i === xs.length - 1;
+    const r = last ? 18 + pulse * 3 : 12;
+    disc(x, px, y, r, `rgba(${last ? p1(pal) : p0(pal)},${last ? 0.95 : 0.45})`);
+    x.fillStyle = 'rgba(255,255,255,0.9)';
+    x.font = '700 13px ui-rounded, system-ui, sans-serif';
+    x.textAlign = 'center';
+    x.textBaseline = 'middle';
+    x.fillText(String(i + 1), px, y);
+  });
+  const lastX = xs[2] ?? W * 0.78;
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  x.font = '600 12px ui-rounded, system-ui, sans-serif';
+  x.fillText('after', lastX, y - 36);
+};

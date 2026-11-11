@@ -183,6 +183,6 @@ describe('Find leftover: title / means / nav name the school word', () => {
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(183);
+    expect(ROOTS.length).toBe(195);
   });
 });

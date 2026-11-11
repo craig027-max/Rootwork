@@ -532,12 +532,16 @@ function tokens(n: number, scatter = false): SceneFn {
         const a = -Math.PI / 2 + (i / 3) * TAU;
         px = cx + Math.cos(a) * R;
         py = cy + Math.sin(a) * R * 0.9;
+      } else if (n >= 4 && n <= 10) {
+        const a = -Math.PI / 2 + (i / n) * TAU;
+        px = cx + Math.cos(a) * R;
+        py = cy + Math.sin(a) * R * 0.88;
       } else {
         px = cx + Math.cos(i * 2.4 + t * 0.1) * R * (0.4 + (i % 5) * 0.12);
         py = cy + Math.sin(i * 1.7 + t * 0.1) * R * (0.4 + (i % 4) * 0.12);
       }
       const col = i % 2 ? p1(pal) : p0(pal);
-      const s = scatter ? 8 : 16;
+      const s = scatter ? 8 : n >= 8 ? 11 : n >= 6 ? 13 : 16;
       disc(x, px, py, s, `rgba(${col},0.9)`);
       disc(x, px - s * 0.3, py - s * 0.3, s * 0.25, 'rgba(255,255,255,0.55)');
     }
@@ -547,6 +551,12 @@ function tokens(n: number, scatter = false): SceneFn {
 export const one = tokens(1);
 export const two = tokens(2);
 export const three = tokens(3);
+export const four = tokens(4);
+export const five = tokens(5);
+export const six = tokens(6);
+export const seven = tokens(7);
+export const eight = tokens(8);
+export const ten = tokens(10);
 export const many = tokens(12, true);
 
 /** Horseshoe magnet pulling nails (pull). */

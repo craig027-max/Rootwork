@@ -412,7 +412,7 @@ describe('Remember replays the missed question — not Photo means light over -g
       expect(block).not.toMatch(/\.ww-caption\.is-quiz\s*\{[^}]*display:\s*none/);
       expect(block).not.toMatch(/\.ww-root\.is-part\s*\{[^}]*display:\s*none/);
     }
-    expect(ROOTS.length).toBe(183);
+    expect(ROOTS.length).toBe(195);
   });
 });
 

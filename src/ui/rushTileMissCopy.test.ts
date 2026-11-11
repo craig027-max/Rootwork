@@ -231,6 +231,6 @@ describe('Home Rush after a miss is Remember — not a giant grade / Best so far
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(183);
+    expect(ROOTS.length).toBe(195);
   });
 });

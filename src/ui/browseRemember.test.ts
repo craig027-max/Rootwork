@@ -109,6 +109,6 @@ describe('Browse roots / See all / index is Remember — not a Bio → Geo dump'
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(183);
+    expect(ROOTS.length).toBe(195);
   });
 });

@@ -150,6 +150,6 @@ describe('Rush result after a miss is Remember — not a giant grade / NEW BEST 
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(183);
+    expect(ROOTS.length).toBe(195);
   });
 });
