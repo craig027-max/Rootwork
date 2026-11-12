@@ -1,6 +1,6 @@
 /* Meaning-true scenes added so a kid reading the picture gets that root’s idea. */
 
-import { TAU, disc, glow, line, p0, p1, person, rr, type SceneFn } from './sceneUtil';
+import { TAU, cloud as puff, disc, glow, leaf, line, p0, p1, person, rr, type SceneFn } from './sceneUtil';
 
 /** A box sliding under a shelf — under, not water. */
 export const under: SceneFn = (x, W, H, t, pal) => {
@@ -985,4 +985,254 @@ export const after: SceneFn = (x, W, H, t, pal) => {
   x.fillStyle = `rgba(${p1(pal)},0.9)`;
   x.font = '600 12px ui-rounded, system-ui, sans-serif';
   x.fillText('after', lastX, y - 36);
+};
+
+const GREEN = '64,196,72';
+
+/** Petals opening around a center — a flower, not a leaf. */
+export const flower: SceneFn = (x, W, H, t, pal) => {
+  const cx = W / 2;
+  const cy = H * 0.46;
+  const open = 0.82 + 0.18 * (0.5 + 0.5 * Math.sin(t * 1.2));
+  x.strokeStyle = `rgba(${p0(pal)},0.8)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  line(x, cx, cy + 16, cx, H * 0.88);
+  leaf(x, cx + 22, H * 0.7, 0.8, 22, `rgba(${p0(pal)},0.75)`, 'rgba(255,255,255,0.45)');
+  const n = 6;
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * TAU - Math.PI / 2;
+    const px = cx + Math.cos(a) * 28 * open;
+    const py = cy + Math.sin(a) * 28 * open;
+    x.fillStyle = `rgba(${i % 2 ? p1(pal) : p0(pal)},0.9)`;
+    x.beginPath();
+    x.ellipse(px, py, 16 * open, 10, a, 0, TAU);
+    x.fill();
+  }
+  disc(x, cx, cy, 10, `rgba(${p1(pal)},0.95)`);
+  glow(x, cx, cy, 36, p1(pal), 0.18);
+};
+
+/** A sprout rising out of the soil — a plant, not a flower. */
+export const plant: SceneFn = (x, W, H, t, pal) => {
+  const cx = W / 2;
+  const ground = H * 0.78;
+  const grow = 0.72 + 0.28 * (0.5 + 0.5 * Math.sin(t * 1.1));
+  x.strokeStyle = `rgba(${p0(pal)},0.45)`;
+  x.lineWidth = 3;
+  line(x, W * 0.12, ground, W * 0.88, ground);
+  x.strokeStyle = `rgba(${GREEN},0.95)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  line(x, cx, ground, cx, ground - 70 * grow);
+  leaf(x, cx - 6, ground - 48 * grow, -0.9, 26 * grow, `rgba(${GREEN},0.9)`, 'rgba(255,255,255,0.5)');
+  leaf(x, cx + 6, ground - 64 * grow, 0.9, 22 * grow, `rgba(${p1(pal)},0.9)`, 'rgba(255,255,255,0.5)');
+  disc(x, cx, ground - 74 * grow, 5, `rgba(${GREEN},0.95)`);
+};
+
+/** One vivid green leaf between two dull discs — green, not just a plant. */
+export const green: SceneFn = (x, W, H, t, pal) => {
+  const pulse = 0.75 + 0.25 * (0.5 + 0.5 * Math.sin(t * 1.5));
+  disc(x, W * 0.22, H * 0.55, 26, `rgba(${p0(pal)},0.28)`);
+  disc(x, W * 0.78, H * 0.55, 26, `rgba(${p0(pal)},0.28)`);
+  leaf(
+    x,
+    W / 2,
+    H * 0.52,
+    -0.35,
+    58,
+    `rgba(${GREEN},${pulse})`,
+    'rgba(255,255,255,0.75)',
+  );
+  glow(x, W / 2, H * 0.42, 48, GREEN, 0.22);
+};
+
+/** Trunk plus a round crown — a tree, not a sprout. */
+export const tree: SceneFn = (x, W, H, t, pal) => {
+  const cx = W / 2;
+  const ground = H * 0.86;
+  const sway = Math.sin(t * 0.8) * 3;
+  x.strokeStyle = `rgba(${p0(pal)},0.35)`;
+  x.lineWidth = 2;
+  line(x, W * 0.1, ground, W * 0.9, ground);
+  x.fillStyle = `rgba(${p0(pal)},0.85)`;
+  rr(x, cx - 10 + sway * 0.2, H * 0.48, 20, ground - H * 0.48, 4);
+  x.fill();
+  disc(x, cx + sway, H * 0.4, 46, `rgba(${GREEN},0.88)`);
+  disc(x, cx - 28 + sway, H * 0.46, 28, `rgba(${p1(pal)},0.75)`);
+  disc(x, cx + 30 + sway, H * 0.48, 26, `rgba(${GREEN},0.8)`);
+  glow(x, cx, H * 0.4, 30, GREEN, 0.12);
+};
+
+/** A mouth closing on a bite — eat, not a smile. */
+export const eat: SceneFn = (x, W, H, t, pal) => {
+  const cx = W / 2;
+  const cy = H * 0.52;
+  const bite = 0.5 + 0.5 * Math.sin(t * 2.4);
+  const gap = 8 + bite * 22;
+  x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+  x.lineWidth = 8;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.arc(cx, cy - gap * 0.15, 48, Math.PI * 0.15, Math.PI * 0.85, true);
+  x.stroke();
+  x.beginPath();
+  x.arc(cx, cy + gap * 0.15, 48, Math.PI * 1.15, Math.PI * 1.85, true);
+  x.stroke();
+  const food = 8 + (1 - bite) * 8;
+  disc(x, cx + 8, cy, food, `rgba(${p1(pal)},0.95)`);
+  glow(x, cx, cy, 20, p1(pal), 0.12);
+};
+
+/** A bird in flight — a body and flapping wings, not a single feather. */
+export const bird: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.48;
+  const cy = H * 0.5 + Math.sin(t * 1.6) * 6;
+  const flap = Math.sin(t * 3) * 0.6;
+  x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+  x.lineWidth = 5;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.moveTo(cx, cy);
+  x.quadraticCurveTo(cx - 50, cy - 40 * flap, cx - 78, cy - 10 * flap);
+  x.stroke();
+  x.beginPath();
+  x.moveTo(cx, cy);
+  x.quadraticCurveTo(cx + 46, cy - 36 * flap, cx + 74, cy - 8 * flap);
+  x.stroke();
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  x.beginPath();
+  x.ellipse(cx + 8, cy, 28, 14, -0.2, 0, TAU);
+  x.fill();
+  disc(x, cx + 32, cy - 4, 8, `rgba(${p0(pal)},0.95)`);
+  line(x, cx + 38, cy - 2, cx + 52, cy + 2);
+  line(x, cx - 8, cy + 10, cx - 16, cy + 28);
+};
+
+/** A side-view lizard — four legs and a tail, not a snake. */
+export const lizard: SceneFn = (x, W, H, t, pal) => {
+  const bob = Math.sin(t * 2) * 3;
+  const y = H * 0.55 + bob;
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 5;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.moveTo(W * 0.42, y);
+  x.quadraticCurveTo(W * 0.22, y + 20, W * 0.1, y - 8);
+  x.stroke();
+  x.fillStyle = `rgba(${p0(pal)},0.9)`;
+  x.beginPath();
+  x.ellipse(W * 0.55, y, 52, 16, 0, 0, TAU);
+  x.fill();
+  disc(x, W * 0.78, y - 6, 14, `rgba(${p1(pal)},0.95)`);
+  disc(x, W * 0.84, y - 8, 2.5, 'rgba(8,7,15,0.8)');
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 3;
+  const step = Math.sin(t * 3) * 6;
+  line(x, W * 0.46, y + 10, W * 0.4, y + 28 + step);
+  line(x, W * 0.58, y + 12, W * 0.64, y + 30 - step);
+  line(x, W * 0.66, y + 8, W * 0.7, y + 26 + step);
+  line(x, W * 0.74, y + 6, W * 0.8, y + 24 - step);
+};
+
+/** A crescent — the moon, not a whole disc. */
+export const moon: SceneFn = (x, W, H, t, pal) => {
+  const cx = W / 2;
+  const cy = H * 0.5;
+  const R = Math.min(W, H) * 0.28;
+  const pulse = 0.5 + 0.5 * Math.sin(t * 1.1);
+  glow(x, cx, cy, R * 1.6, p1(pal), 0.16 + pulse * 0.08);
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  x.beginPath();
+  x.arc(cx, cy, R, 0.6, -0.6, true);
+  x.arc(cx + R * 0.42, cy, R * 0.78, -0.55, 0.55, false);
+  x.fill();
+};
+
+/** A dark sky, a crescent, and a horizon — night, not a star chart. */
+export const night: SceneFn = (x, W, H, t, pal) => {
+  x.fillStyle = 'rgba(8,10,28,0.55)';
+  rr(x, W * 0.08, H * 0.12, W * 0.84, H * 0.62, 16);
+  x.fill();
+  const tw = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(t * 2));
+  const stars: Array<[number, number]> = [
+    [0.22, 0.28],
+    [0.7, 0.24],
+    [0.58, 0.4],
+    [0.34, 0.48],
+  ];
+  for (const [sx, sy] of stars) {
+    disc(x, W * sx, H * sy, 2.2, `rgba(255,255,255,${tw})`);
+  }
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  x.beginPath();
+  x.arc(W * 0.72, H * 0.34, 16, 0.5, -0.5, true);
+  x.arc(W * 0.78, H * 0.34, 13, -0.5, 0.5, false);
+  x.fill();
+  x.strokeStyle = `rgba(${p0(pal)},0.45)`;
+  x.lineWidth = 3;
+  line(x, W * 0.1, H * 0.78, W * 0.9, H * 0.78);
+};
+
+/** A cloud letting rain fall — a cloud, not a puff of smoke. */
+export const cloud: SceneFn = (x, W, H, t, pal) => {
+  const cx = W / 2;
+  const cy = H * 0.38;
+  puff(x, cx, cy, 78, `rgba(${p1(pal)},0.9)`);
+  glow(x, cx, cy, 30, p0(pal), 0.12);
+  x.strokeStyle = `rgba(${p0(pal)},0.8)`;
+  x.lineWidth = 2;
+  x.lineCap = 'round';
+  for (let i = 0; i < 6; i++) {
+    const drop = (t * 0.45 + i * 0.16) % 1;
+    const px = cx - 50 + i * 18;
+    const py = cy + 36 + drop * (H * 0.42);
+    line(x, px, py, px - 2, py + 12);
+  }
+};
+
+/** An egg, white around a yolk — white, not a blank page. */
+export const white: SceneFn = (x, W, H, t, pal) => {
+  const cx = W / 2;
+  const cy = H * 0.52;
+  const pulse = 0.5 + 0.5 * Math.sin(t * 1.2);
+  glow(x, cx, cy, 80, '255,255,255', 0.16 + pulse * 0.08);
+  x.fillStyle = 'rgba(255,255,255,0.96)';
+  x.beginPath();
+  x.ellipse(cx, cy, 74, 50, -0.15, 0, TAU);
+  x.fill();
+  x.strokeStyle = `rgba(${p0(pal)},0.35)`;
+  x.lineWidth = 2;
+  x.stroke();
+  disc(x, cx + 6, cy + 2, 16, `rgba(${p1(pal)},0.95)`);
+};
+
+/** A house shaking on a cracked line — a quake, not a still building. */
+export const quake: SceneFn = (x, W, H, t, pal) => {
+  const j = Math.sin(t * 14) * 4;
+  const ground = H * 0.78;
+  x.strokeStyle = `rgba(${p0(pal)},0.85)`;
+  x.lineWidth = 3;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.moveTo(W * 0.08, ground);
+  x.lineTo(W * 0.32, ground + j);
+  x.lineTo(W * 0.48, ground - 8);
+  x.lineTo(W * 0.62, ground + 6);
+  x.lineTo(W * 0.92, ground + j * 0.4);
+  x.stroke();
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 2;
+  line(x, W * 0.4, ground - 4, W * 0.36, ground + 18);
+  const hx = W * 0.58 + j;
+  x.fillStyle = `rgba(${p0(pal)},0.88)`;
+  rr(x, hx, ground - 52, 48, 44, 3);
+  x.fill();
+  x.beginPath();
+  x.moveTo(hx - 6, ground - 52);
+  x.lineTo(hx + 24, ground - 74);
+  x.lineTo(hx + 54, ground - 52);
+  x.closePath();
+  x.fill();
+  glow(x, W * 0.42, ground, 16, p1(pal), 0.2);
 };

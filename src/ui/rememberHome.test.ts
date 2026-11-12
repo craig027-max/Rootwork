@@ -74,6 +74,6 @@ describe('Remember {root}: one-beat visit, then Home', () => {
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(195);
+    expect(ROOTS.length).toBe(207);
   });
 });

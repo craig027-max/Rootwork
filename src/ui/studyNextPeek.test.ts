@@ -151,7 +151,7 @@ describe('Study Yes names the question Next will open', () => {
         expect(buildBig(pick.split).toLowerCase(), pick.word).not.toBe(pick.word.toLowerCase());
       }
     }
-    expect(ROOTS.length).toBe(195);
+    expect(ROOTS.length).toBe(207);
   });
 
   it('keeps the next-question line readable on a phone and a short screen', () => {

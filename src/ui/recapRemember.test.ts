@@ -68,6 +68,6 @@ describe('Done Daily / Learned recap is Remember — not Geo', () => {
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(195);
+    expect(ROOTS.length).toBe(207);
   });
 });

@@ -299,6 +299,6 @@ describe('Scholar after a miss is Remember — not Play Bene / Your progress ove
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(195);
+    expect(ROOTS.length).toBe(207);
   });
 });

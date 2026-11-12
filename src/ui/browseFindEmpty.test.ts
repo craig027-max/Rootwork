@@ -41,7 +41,7 @@ describe('Find empty-state leftover: honest miss, school-word forms', () => {
   it('names a true miss as we do not have that word — not No roots match', () => {
     expect(indexSearchSub('dinosaur', 0)).toBe("We don't have dinosaur.");
     expect(indexSearchSub('xyzzyqq', 0)).toBe("We don't have xyzzyqq.");
-    expect(indexSearchSub('dinosaur', 0)).not.toMatch(/No roots match|195 roots/i);
+    expect(indexSearchSub('dinosaur', 0)).not.toMatch(/No roots match|207 roots/i);
     expect(indexSearchEmptyHint()).toBe(
       'Try a root (Bio), a meaning (life), or a word we teach (biology).',
     );
@@ -56,7 +56,7 @@ describe('Find empty-state leftover: honest miss, school-word forms', () => {
     expect(indexFocusWord(indexRootMatch(bio, 'biologist'))).toBe('Biology');
     expect(indexFocusWord(indexRootMatch(photo, 'photographer'))).toBe('Photograph');
     expect(indexMatchCount(buildIndexBrowseSections({ query: 'biologist' }))).toBeGreaterThan(0);
-    expect(indexMatchCount(buildIndexBrowseSections({ query: 'dinosaur' }))).toBe(0);
+    expect(indexMatchCount(buildIndexBrowseSections({ query: 'platypus' }))).toBe(0);
   });
 
   it('does not invent Capture / important from a form, and does not grow the catalog', () => {
@@ -76,7 +76,7 @@ describe('Find empty-state leftover: honest miss, school-word forms', () => {
         );
       }
     }
-    expect(ROOTS.length).toBe(195);
+    expect(ROOTS.length).toBe(207);
   });
 
   it('wires the empty copy and keeps it readable on a phone', () => {

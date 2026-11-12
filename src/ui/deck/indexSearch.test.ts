@@ -88,7 +88,7 @@ describe('Browse find — a root, meaning, or word; not a 183-chip scroll', () =
     expect(sections.every((s) => s.roots.length > 0)).toBe(true);
     expect(sections.some((s) => s.roots.some((r) => r.root === 'Photo'))).toBe(true);
     expect(indexSearchSub('photograph', indexMatchCount(sections))).toMatch(/match/);
-    expect(indexSearchSub('photograph', indexMatchCount(sections))).not.toMatch(/195 roots|5 tiers/);
+    expect(indexSearchSub('photograph', indexMatchCount(sections))).not.toMatch(/207 roots|5 tiers/);
 
     const empty = buildIndexBrowseSections({ query: 'xyzzyqq' });
     expect(empty).toEqual([]);
@@ -219,7 +219,7 @@ describe('Browse find — a root, meaning, or word; not a 183-chip scroll', () =
     const photoHit = filterIndexRoots(starter, 'photosynthesis');
     expect(photoHit.map((r) => r.root)).toEqual(['Photo']);
     expect(photoHit.map((r) => r.root)).not.toContain(aqua.root);
-    expect(ROOTS.length).toBe(195);
+    expect(ROOTS.length).toBe(207);
   });
 
   it('finds Bio-logy and BY-oh without opening a definition that merely mentions the letters', () => {
@@ -271,7 +271,7 @@ describe('Browse find — a root, meaning, or word; not a 183-chip scroll', () =
     expect(filterIndexRoots(ROOTS, 'water').map((r) => r.root)).toEqual(
       expect.arrayContaining(['Aqua', 'Hydro']),
     );
-    expect(ROOTS.length).toBe(195);
+    expect(ROOTS.length).toBe(207);
   });
 
   it('treats one or two letters as a root-name typeahead, not every chip that contains them', () => {
@@ -293,6 +293,6 @@ describe('Browse find — a root, meaning, or word; not a 183-chip scroll', () =
     expect(biHits).toEqual(expect.arrayContaining(['Bio', 'Bi']));
     expect(biHits).not.toContain('Bene');
     expect(biHits.every((name) => name.toLowerCase().startsWith('bi'))).toBe(true);
-    expect(ROOTS.length).toBe(195);
+    expect(ROOTS.length).toBe(207);
   });
 });
