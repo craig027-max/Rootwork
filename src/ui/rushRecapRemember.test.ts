@@ -210,6 +210,6 @@ describe('Rush recap is Remember — not a grade-only / Bio → Geo dump', () =>
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(195);
+    expect(ROOTS.length).toBe(207);
   });
 });

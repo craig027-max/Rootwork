@@ -91,6 +91,13 @@ export const SPEAKABLE_SYLLABLES: Readonly<Record<string, string>> = {
   vyt: 'vite',
   yoo: 'you',
   zoh: 'zoe',
+  flor: 'floor',
+  herb: 'hurb',
+  klor: 'clore',
+  nokt: 'knocked',
+  sor: 'sore',
+  syz: 'size',
+  vor: 'vore',
 };
 
 /**

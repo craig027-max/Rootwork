@@ -268,6 +268,6 @@ describe('Daily after a miss is Remember — not Keep going / Play again over Ge
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(195);
+    expect(ROOTS.length).toBe(207);
   });
 });

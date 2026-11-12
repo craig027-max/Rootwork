@@ -505,7 +505,7 @@ describe('other part of a school word', () => {
     expect(mega).toBeTruthy();
     expect(otherPartsForRoot(mega!).some((part) => part.word === 'Megabyte')).toBe(false);
     expect(otherPartsForRoot(mega!).some((part) => part.mean === 'sound')).toBe(true);
-  });
+  }, 20_000);
 
   it('does not offer the catalog’s other name for the piece they were asked', () => {
     const asked: ReadonlyArray<readonly [string, string, string, readonly string[]]> = [

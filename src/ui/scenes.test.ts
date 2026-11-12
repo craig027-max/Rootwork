@@ -67,6 +67,18 @@ describe('scene registry', () => {
     expect(byRoot.Rect).toBe('straight');
     expect(byRoot.Prim).toBe('before');
     expect(byRoot.Post).toBe('after');
+    expect(byRoot.Flor).toBe('flower');
+    expect(byRoot.Herb).toBe('plant');
+    expect(byRoot.Chlor).toBe('green');
+    expect(byRoot.Dendr).toBe('tree');
+    expect(byRoot.Vor).toBe('eat');
+    expect(byRoot.Avi).toBe('bird');
+    expect(byRoot.Saur).toBe('lizard');
+    expect(byRoot.Luna).toBe('moon');
+    expect(byRoot.Noct).toBe('night');
+    expect(byRoot.Nimb).toBe('cloud');
+    expect(byRoot.Alb).toBe('white');
+    expect(byRoot.Seism).toBe('quake');
   });
 
   it('keeps breakx for break-roots only', () => {
