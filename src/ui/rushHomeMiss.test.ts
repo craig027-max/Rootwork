@@ -256,7 +256,7 @@ describe('Rush / Deck Home after a miss is Remember — not Home → over Geo', 
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(207);
+    expect(ROOTS.length).toBe(219);
     expect(first.root).toBe('Bio');
   });
 });

@@ -333,7 +333,7 @@ describe('Today row names the missed question — not Photo · light over -graph
     const phone = mediaBlock(css, 'max-width: 860px');
     expect(phone).toMatch(/\.ww-today-item\.is-miss\s*\{[^}]*display:\s*inline-flex/);
     expect(phone).not.toMatch(/\.ww-today-item\.is-miss\s*\{[^}]*display:\s*none/);
-    expect(ROOTS.length).toBe(207);
+    expect(ROOTS.length).toBe(219);
   });
 
   it('names every catalog question on the fat tap and still opens the root', () => {

@@ -230,6 +230,6 @@ describe('Starter after a miss is Remember — not every root owned / Remember B
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(207);
+    expect(ROOTS.length).toBe(219);
   });
 });

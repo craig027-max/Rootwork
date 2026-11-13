@@ -193,6 +193,6 @@ describe('Rush start after a miss is Remember — not Play again over Geo', () =
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(207);
+    expect(ROOTS.length).toBe(219);
   });
 });

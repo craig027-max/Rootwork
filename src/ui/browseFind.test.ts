@@ -44,7 +44,7 @@ describe('Browse find is wired — not a 183-chip scroll', () => {
     expect(INDEX_SEARCH_PLACEHOLDER).toMatch(/root/i);
     expect(indexSearchHeading()).toBe('Find');
     expect(indexSearchSub('photograph', 1)).toBe('1 match');
-    expect(indexSearchSub('photograph', 1)).not.toMatch(/207 roots/);
+    expect(indexSearchSub('photograph', 1)).not.toMatch(/219 roots/);
   });
 
   it('keeps the find field readable on a phone', () => {
@@ -66,6 +66,6 @@ describe('Browse find is wired — not a 183-chip scroll', () => {
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(207);
+    expect(ROOTS.length).toBe(219);
   });
 });

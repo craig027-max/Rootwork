@@ -78,7 +78,7 @@ describe('Deck after a miss is Remember — not Starter / Card 02 / 183 over Geo
     ).toBe(`Missed ${geo.root}`);
     expect(
       deckStripCount({ missed: true, missName: geo.root, position: 2, total: ROOTS.length }),
-    ).not.toMatch(/Card |\/ 207|02/);
+    ).not.toMatch(/Card |\/ 219|02/);
     expect(
       deckNavMeta({
         missed: true,
@@ -96,7 +96,7 @@ describe('Deck after a miss is Remember — not Starter / Card 02 / 183 over Geo
         position: 2,
         total: ROOTS.length,
       }),
-    ).not.toMatch(/Starter|\/ 207/);
+    ).not.toMatch(/Starter|\/ 219/);
     expect(deckIndexAria({ missed: true })).toBe('Remember');
     expect(deckIndexAria({ missed: true })).not.toMatch(/All roots/);
   });
@@ -181,6 +181,6 @@ describe('Deck after a miss is Remember — not Starter / Card 02 / 183 over Geo
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(207);
+    expect(ROOTS.length).toBe(219);
   });
 });
