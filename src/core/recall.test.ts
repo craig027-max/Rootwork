@@ -402,7 +402,10 @@ describe('buildRecall', () => {
     const nerve = pickMeaningDistractors(neuro, [ROOTS], 400, () => 0);
     expect(nerve).toContain('head');
     const head = pickMeaningDistractors(cephal, [ROOTS], 400, () => 0);
-    expect(head).toContain('nerve');
+    // Cerebr means brain, and brain is the same idea as nerve, so the
+    // head list keeps one of those strings — head is still not that idea.
+    const nerveIdea = head.filter((mean) => mean === 'nerve' || mean === 'brain');
+    expect(nerveIdea).toHaveLength(1);
     const fire = pickMeaningDistractors(pyr, [ROOTS], 400, () => 0);
     expect(fire).toContain('heat');
     const nature = pickMeaningDistractors(phys, [ROOTS], 400, () => 0);

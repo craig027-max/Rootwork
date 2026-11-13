@@ -53,6 +53,6 @@ describe('Daily hold is today\'s Remember + play-today streak', () => {
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(207);
+    expect(ROOTS.length).toBe(219);
   });
 });

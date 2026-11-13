@@ -1236,3 +1236,230 @@ export const quake: SceneFn = (x, W, H, t, pal) => {
   x.fill();
   glow(x, W * 0.42, ground, 16, p1(pal), 0.2);
 };
+
+/** A side-view ear with a sound arc — an ear, not a speaker. */
+export const ear: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.52;
+  const cy = H * 0.5;
+  const pulse = 0.5 + 0.5 * Math.sin(t * 2.2);
+  x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+  x.lineWidth = 8;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.arc(cx, cy, 52, 0.5, Math.PI * 1.7, false);
+  x.stroke();
+  x.lineWidth = 5;
+  x.beginPath();
+  x.arc(cx + 6, cy, 28, 0.7, Math.PI * 1.55, false);
+  x.stroke();
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  x.beginPath();
+  x.ellipse(cx + 10, cy + 4, 8, 16, 0.4, 0, TAU);
+  x.fill();
+  disc(x, cx + 18, cy + 18, 5, `rgba(${p0(pal)},0.95)`);
+  x.strokeStyle = `rgba(${p1(pal)},${0.25 + pulse * 0.45})`;
+  x.lineWidth = 2;
+  x.beginPath();
+  x.arc(cx - 28, cy, 18 + pulse * 16, -0.8, 0.8);
+  x.stroke();
+  glow(x, cx, cy, 30, p0(pal), 0.12);
+};
+
+/** A tongue coming out of a mouth — the tongue, not a bite of food. */
+export const tongue: SceneFn = (x, W, H, t, pal) => {
+  const cx = W / 2;
+  const cy = H * 0.42;
+  const wave = Math.sin(t * 2.4) * 6;
+  x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+  x.lineWidth = 7;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.arc(cx, cy, 46, Math.PI * 0.15, Math.PI * 0.85, true);
+  x.stroke();
+  x.beginPath();
+  x.arc(cx, cy + 8, 46, Math.PI * 1.15, Math.PI * 1.85, true);
+  x.stroke();
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  x.beginPath();
+  x.moveTo(cx - 22, cy + 10);
+  x.quadraticCurveTo(cx - 18, cy + 58 + wave, cx, cy + 70 + wave);
+  x.quadraticCurveTo(cx + 18, cy + 58 - wave, cx + 22, cy + 10);
+  x.closePath();
+  x.fill();
+  x.strokeStyle = 'rgba(255,255,255,0.45)';
+  x.lineWidth = 2;
+  line(x, cx, cy + 18, cx, cy + 58 + wave * 0.4);
+  glow(x, cx, cy + 40, 18, p1(pal), 0.16);
+};
+
+/** A spoon carrying a drop to a small mouth — taste, not a bite. */
+export const taste: SceneFn = (x, W, H, t, pal) => {
+  const bob = Math.sin(t * 1.8) * 8;
+  const sx = W * 0.34;
+  const sy = H * 0.48 + bob;
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  line(x, sx - 36, sy + 28, sx + 4, sy + 4);
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  x.beginPath();
+  x.ellipse(sx + 16, sy - 4, 22, 14, -0.4, 0, TAU);
+  x.fill();
+  disc(x, sx + 16, sy - 4, 5, 'rgba(255,255,255,0.7)');
+  const mx = W * 0.72;
+  const my = H * 0.52;
+  x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+  x.lineWidth = 6;
+  x.beginPath();
+  x.arc(mx, my, 28, 0.2, Math.PI - 0.2);
+  x.stroke();
+  const sparks = [0, 1, 2];
+  for (const i of sparks) {
+    const a = t * 1.4 + i * 2.1;
+    const px = mx - 20 + Math.cos(a) * (16 + i * 6);
+    const py = my - 36 + Math.sin(a) * 8;
+    disc(x, px, py, 4, `rgba(${i % 2 ? p1(pal) : p0(pal)},0.9)`);
+  }
+  glow(x, sx + 16, sy - 4, 16, p1(pal), 0.18);
+};
+
+/** A head with hair, face, and neck — a head, not a brain. */
+export const head: SceneFn = (x, W, H, t, pal) => {
+  const cx = W / 2;
+  const nod = Math.sin(t * 1.2) * 4;
+  const cy = H * 0.42 + nod;
+  x.strokeStyle = `rgba(${p0(pal)},0.7)`;
+  x.lineWidth = 8;
+  x.lineCap = 'round';
+  line(x, cx, cy + 48, cx, cy + 86);
+  line(x, cx - 36, cy + 78, cx + 36, cy + 78);
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  x.beginPath();
+  x.arc(cx, cy, 46, Math.PI * 1.05, Math.PI * 1.95, false);
+  x.fill();
+  x.fillStyle = `rgba(${p0(pal)},0.92)`;
+  x.beginPath();
+  x.arc(cx, cy + 6, 40, 0, TAU);
+  x.fill();
+  disc(x, cx - 14, cy + 2, 4, 'rgba(20,16,28,0.85)');
+  disc(x, cx + 14, cy + 2, 4, 'rgba(20,16,28,0.85)');
+  x.strokeStyle = 'rgba(20,16,28,0.55)';
+  x.lineWidth = 2;
+  x.beginPath();
+  x.arc(cx, cy + 14, 12, 0.2, Math.PI - 0.2);
+  x.stroke();
+  glow(x, cx, cy, 24, p1(pal), 0.12);
+};
+
+/** An arm bending at the elbow — an arm, not an open hand. */
+export const arm: SceneFn = (x, W, H, t, pal) => {
+  const bend = 0.4 + 0.35 * Math.sin(t * 1.6);
+  const sx = W * 0.28;
+  const sy = H * 0.72;
+  const ex = W * 0.5;
+  const ey = H * 0.38;
+  const hx = ex + Math.cos(bend) * 78;
+  const hy = ey + Math.sin(bend) * 70;
+  x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+  x.lineWidth = 16;
+  x.lineCap = 'round';
+  x.lineJoin = 'round';
+  x.beginPath();
+  x.moveTo(sx, sy);
+  x.lineTo(ex, ey);
+  x.lineTo(hx, hy);
+  x.stroke();
+  disc(x, ex, ey, 10, `rgba(${p1(pal)},0.95)`);
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  x.beginPath();
+  x.ellipse(hx, hy, 14, 10, bend, 0, TAU);
+  x.fill();
+  glow(x, ex, ey, 18, p1(pal), 0.16);
+};
+
+/** One pointing finger — a finger, not a whole hand. */
+export const finger: SceneFn = (x, W, H, t, pal) => {
+  const cx = W / 2;
+  const lift = Math.sin(t * 1.7) * 6;
+  const top = H * 0.22 + lift;
+  const base = H * 0.78;
+  x.strokeStyle = `rgba(${p0(pal)},0.35)`;
+  x.lineWidth = 3;
+  line(x, W * 0.2, base, W * 0.8, base);
+  x.fillStyle = `rgba(${p0(pal)},0.92)`;
+  rr(x, cx - 14, top + 28, 28, base - top - 36, 14);
+  x.fill();
+  disc(x, cx, top + 22, 16, `rgba(${p1(pal)},0.95)`);
+  x.strokeStyle = 'rgba(255,255,255,0.55)';
+  x.lineWidth = 2;
+  line(x, cx, top + 40, cx, base - 18);
+  glow(x, cx, top + 22, 20, p1(pal), 0.2);
+};
+
+/** A torso with a swelling belly — the stomach, not the whole body. */
+export const stomach: SceneFn = (x, W, H, t, pal) => {
+  const cx = W / 2;
+  const swell = 1 + 0.08 * Math.sin(t * 1.5);
+  x.strokeStyle = `rgba(${p0(pal)},0.55)`;
+  x.lineWidth = 3;
+  x.beginPath();
+  x.moveTo(cx - 46, H * 0.22);
+  x.quadraticCurveTo(cx - 70, H * 0.55, cx - 36, H * 0.84);
+  x.lineTo(cx + 36, H * 0.84);
+  x.quadraticCurveTo(cx + 70, H * 0.55, cx + 46, H * 0.22);
+  x.stroke();
+  x.fillStyle = `rgba(${p1(pal)},${0.35 + 0.15 * Math.sin(t * 1.5)})`;
+  x.beginPath();
+  x.ellipse(cx, H * 0.58, 28 * swell, 22 * swell, 0, 0, TAU);
+  x.fill();
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 3;
+  x.stroke();
+  glow(x, cx, H * 0.58, 26, p1(pal), 0.2);
+};
+
+/** Two lungs breathing — lungs, not a gust of wind. */
+export const lung: SceneFn = (x, W, H, t, pal) => {
+  const cx = W / 2;
+  const breath = 0.82 + 0.18 * (0.5 + 0.5 * Math.sin(t * 1.6));
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 6;
+  x.lineCap = 'round';
+  line(x, cx, H * 0.16, cx, H * 0.42);
+  x.fillStyle = `rgba(${p0(pal)},0.88)`;
+  x.beginPath();
+  x.ellipse(cx - 36 * breath, H * 0.58, 28 * breath, 48 * breath, -0.15, 0, TAU);
+  x.fill();
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  x.beginPath();
+  x.ellipse(cx + 36 * breath, H * 0.58, 28 * breath, 48 * breath, 0.15, 0, TAU);
+  x.fill();
+  x.strokeStyle = 'rgba(255,255,255,0.35)';
+  x.lineWidth = 2;
+  line(x, cx, H * 0.4, cx - 20 * breath, H * 0.5);
+  line(x, cx, H * 0.4, cx + 20 * breath, H * 0.5);
+  glow(x, cx, H * 0.58, 36, p1(pal), 0.12);
+};
+
+/** One foot tapping — a foot, not a trail of steps. */
+export const foot: SceneFn = (x, W, H, t, pal) => {
+  const tap = Math.max(0, Math.sin(t * 3));
+  const cx = W / 2;
+  const gy = H * 0.72 - tap * 14;
+  x.strokeStyle = `rgba(${p0(pal)},0.4)`;
+  x.lineWidth = 3;
+  line(x, W * 0.12, H * 0.78, W * 0.88, H * 0.78);
+  x.save();
+  x.translate(cx, gy);
+  x.rotate(-0.15 - tap * 0.2);
+  x.fillStyle = `rgba(${p0(pal)},0.92)`;
+  x.beginPath();
+  x.ellipse(8, 8, 46, 18, 0, 0, TAU);
+  x.fill();
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  x.beginPath();
+  x.ellipse(-28, -2, 16, 20, -0.4, 0, TAU);
+  x.fill();
+  x.restore();
+  glow(x, cx, H * 0.78, 16, p1(pal), 0.08 + tap * 0.12);
+};

@@ -79,6 +79,18 @@ describe('scene registry', () => {
     expect(byRoot.Nimb).toBe('cloud');
     expect(byRoot.Alb).toBe('white');
     expect(byRoot.Seism).toBe('quake');
+    expect(byRoot.Ocul).toBe('eye');
+    expect(byRoot.Aur).toBe('ear');
+    expect(byRoot.Lingu).toBe('tongue');
+    expect(byRoot.Gust).toBe('taste');
+    expect(byRoot.Capit).toBe('head');
+    expect(byRoot.Cerebr).toBe('mind');
+    expect(byRoot.Dent).toBe('tooth');
+    expect(byRoot.Brachi).toBe('arm');
+    expect(byRoot.Digit).toBe('finger');
+    expect(byRoot.Gastr).toBe('stomach');
+    expect(byRoot.Pulmo).toBe('lung');
+    expect(byRoot.Pod).toBe('foot');
   });
 
   it('keeps breakx for break-roots only', () => {

@@ -41,7 +41,7 @@ describe('Find empty-state leftover: honest miss, school-word forms', () => {
   it('names a true miss as we do not have that word — not No roots match', () => {
     expect(indexSearchSub('dinosaur', 0)).toBe("We don't have dinosaur.");
     expect(indexSearchSub('xyzzyqq', 0)).toBe("We don't have xyzzyqq.");
-    expect(indexSearchSub('dinosaur', 0)).not.toMatch(/No roots match|207 roots/i);
+    expect(indexSearchSub('dinosaur', 0)).not.toMatch(/No roots match|219 roots/i);
     expect(indexSearchEmptyHint()).toBe(
       'Try a root (Bio), a meaning (life), or a word we teach (biology).',
     );
@@ -76,7 +76,7 @@ describe('Find empty-state leftover: honest miss, school-word forms', () => {
         );
       }
     }
-    expect(ROOTS.length).toBe(207);
+    expect(ROOTS.length).toBe(219);
   });
 
   it('wires the empty copy and keeps it readable on a phone', () => {

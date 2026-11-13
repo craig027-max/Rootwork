@@ -31,6 +31,7 @@ export const SPEAKABLE_SYLLABLES: Readonly<Record<string, string>> = {
   dook: 'duke',
   dy: 'dye',
   dek: 'deck',
+  dij: 'didge',
   ek: 'eck',
   fak: 'fack',
   fil: 'fill',

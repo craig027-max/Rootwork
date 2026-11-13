@@ -191,6 +191,6 @@ describe('Named peek / Replay is a real Continue or Remember tap', () => {
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(207);
+    expect(ROOTS.length).toBe(219);
   });
 });

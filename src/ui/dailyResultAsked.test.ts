@@ -55,6 +55,6 @@ describe('Daily result names the question — not Bio / life over Biography', ()
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(207);
+    expect(ROOTS.length).toBe(219);
   });
 });

@@ -61,6 +61,7 @@ SPEAKABLE_SYLLABLES = {
     "dook": "duke",
     "dy": "dye",
     "dek": "deck",
+    "dij": "didge",
     "ek": "eck",
     "fak": "fack",
     "fil": "fill",
