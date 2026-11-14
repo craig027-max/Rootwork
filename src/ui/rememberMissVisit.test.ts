@@ -128,6 +128,6 @@ describe('Remember visit after a miss is honest — not You already own / Tap co
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(219);
+    expect(ROOTS.length).toBe(231);
   });
 });

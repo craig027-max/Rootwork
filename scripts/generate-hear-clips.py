@@ -129,6 +129,10 @@ SPEAKABLE_SYLLABLES = {
     "sor": "sore",
     "syz": "size",
     "vor": "vore",
+    "pak": "pack",
+    "dok": "dock",
+    "skol": "skole",
+    "vy": "vye",
 }
 
 

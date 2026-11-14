@@ -49,6 +49,9 @@ import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
  * Power is not rule, and a beginning is not a ruler.
  * A safe level is not equal, and self is not same. Higher is not lift.
  * Those stay different tiles. Spirit is mind, not life.
+ * Home is house. Household is family. Elder is old.
+ * Youth and youthful are young. A route is a road.
+ * Center is middle. Health is healthy. Ocean is sea.
  */
 const SYNONYM_GROUPS: string[][] = [
   ['great', 'huge', 'large', 'big', 'larger', 'bigger', 'million', 'grand'],
@@ -128,6 +131,14 @@ const SYNONYM_GROUPS: string[][] = [
   ['join', 'joint'],
   ['people', 'person'],
   ['able to be', 'can be'],
+  ['house', 'home'],
+  ['family', 'household'],
+  ['old', 'elder', 'elders'],
+  ['young', 'youth', 'youthful'],
+  ['road', 'route'],
+  ['middle', 'center'],
+  ['healthy', 'health'],
+  ['sea', 'ocean'],
 ];
 
 const SYNONYM_CANON = new Map<string, string>();
@@ -206,6 +217,9 @@ function meanIdeas(mean: string): readonly string[] {
  * "All power" does not say rule. "The beginning" does not say rule.
  * "A safe level" does not say equal. "By itself" does not say same.
  * "Higher or better" does not say lift.
+ * "At home" says house. "A household" says family. "An elder" says old.
+ * "Youth" says young. "A route" says road. "The center" says middle.
+ * "In health" says healthy. "The ocean" says sea.
  */
 export function glossSaysMean(mean: string, label: string): boolean {
   const ideas = meanIdeas(mean);

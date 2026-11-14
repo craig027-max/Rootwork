@@ -145,6 +145,6 @@ describe('Rush continues a live Daily mid-run', () => {
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(219);
+    expect(ROOTS.length).toBe(231);
   });
 });

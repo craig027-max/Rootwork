@@ -192,6 +192,6 @@ describe('Rush recap is honest — ✓ only on hits, not an all-done dump', () =
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(219);
+    expect(ROOTS.length).toBe(231);
   });
 });

@@ -227,6 +227,6 @@ describe('Browse / Deck after a miss stay Remember — not Starter / Prev → Bi
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(219);
+    expect(ROOTS.length).toBe(231);
   });
 });

@@ -91,6 +91,18 @@ describe('scene registry', () => {
     expect(byRoot.Gastr).toBe('stomach');
     expect(byRoot.Pulmo).toBe('lung');
     expect(byRoot.Pod).toBe('foot');
+    expect(byRoot.Dom).toBe('house');
+    expect(byRoot.Famil).toBe('family');
+    expect(byRoot.Frater).toBe('brother');
+    expect(byRoot.Sen).toBe('old');
+    expect(byRoot.Juven).toBe('young');
+    expect(byRoot.Ami).toBe('friend');
+    expect(byRoot.Pac).toBe('peace');
+    expect(byRoot.Doc).toBe('teach');
+    expect(byRoot.Schol).toBe('school');
+    expect(byRoot.Via).toBe('road');
+    expect(byRoot.Medi).toBe('middle');
+    expect(byRoot.San).toBe('healthy');
   });
 
   it('keeps breakx for break-roots only', () => {
