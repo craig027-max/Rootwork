@@ -181,6 +181,6 @@ describe('Deck after a miss is Remember — not Starter / Card 02 / 183 over Geo
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(219);
+    expect(ROOTS.length).toBe(231);
   });
 });

@@ -233,6 +233,6 @@ describe('Home list after a miss is Remember — not Tier 1 · Starter over Geo'
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(219);
+    expect(ROOTS.length).toBe(231);
   });
 });

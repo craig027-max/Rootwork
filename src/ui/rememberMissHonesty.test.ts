@@ -124,6 +124,6 @@ describe('Today Remember after Rush is honest — Missed Geo, not stale Bio', ()
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(219);
+    expect(ROOTS.length).toBe(231);
   });
 });

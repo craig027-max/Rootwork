@@ -171,6 +171,6 @@ describe('Daily done copy is a recap — not a fresh-start pitch', () => {
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(219);
+    expect(ROOTS.length).toBe(231);
   });
 });

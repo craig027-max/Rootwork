@@ -266,6 +266,6 @@ describe('Rush / Daily list after a miss is Remember — not Root Rush / Daily C
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(219);
+    expect(ROOTS.length).toBe(231);
   });
 });

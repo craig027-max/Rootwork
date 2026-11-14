@@ -271,7 +271,7 @@ describe('Rush / Daily overlay close after a miss is Remember — not Close quiz
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(219);
+    expect(ROOTS.length).toBe(231);
     expect(first.root).toBe('Bio');
   });
 });

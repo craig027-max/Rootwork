@@ -233,6 +233,6 @@ describe('Browse after a miss is Remember — not All Roots / Bio ✓ over Geo',
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(219);
+    expect(ROOTS.length).toBe(231);
   });
 });

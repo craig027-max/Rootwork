@@ -66,6 +66,6 @@ describe('Browse find is wired — not a 183-chip scroll', () => {
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(219);
+    expect(ROOTS.length).toBe(231);
   });
 });

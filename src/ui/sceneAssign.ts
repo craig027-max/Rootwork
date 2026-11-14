@@ -1463,3 +1463,275 @@ export const foot: SceneFn = (x, W, H, t, pal) => {
   x.restore();
   glow(x, cx, H * 0.78, 16, p1(pal), 0.08 + tap * 0.12);
 };
+
+function groundLine(x: CanvasRenderingContext2D, W: number, H: number, pal: string[]): number {
+  const ground = H * 0.82;
+  x.strokeStyle = `rgba(${p0(pal)},0.35)`;
+  x.lineWidth = 2;
+  line(x, W * 0.08, ground, W * 0.92, ground);
+  return ground;
+}
+
+/** A still house with a puff of chimney smoke — a house, not a quake. */
+export const house: SceneFn = (x, W, H, t, pal) => {
+  const ground = groundLine(x, W, H, pal);
+  const hx = W * 0.3;
+  const hy = ground - 78;
+  x.fillStyle = `rgba(${p0(pal)},0.9)`;
+  rr(x, hx, hy, 92, 78, 4);
+  x.fill();
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  x.beginPath();
+  x.moveTo(hx - 10, hy);
+  x.lineTo(hx + 46, hy - 40);
+  x.lineTo(hx + 102, hy);
+  x.closePath();
+  x.fill();
+  x.fillStyle = `rgba(255,220,120,0.9)`;
+  rr(x, hx + 16, hy + 18, 22, 18, 2);
+  x.fill();
+  x.fillStyle = `rgba(${p1(pal)},0.85)`;
+  rr(x, hx + 54, hy + 36, 20, 42, 2);
+  x.fill();
+  const puffY = ((t * 18) % 50);
+  puff(x, hx + 78, hy - 16 - puffY, 16, `rgba(${p1(pal)},${0.35 + (1 - puffY / 50) * 0.4})`);
+  glow(x, hx + 27, hy + 27, 12, '255,220,120', 0.25);
+};
+
+/** Three figures, tall and small, holding hands — a family, not a crowd. */
+export const family: SceneFn = (x, W, H, t, pal) => {
+  const ground = groundLine(x, W, H, pal);
+  const bob = Math.sin(t * 1.4) * 2;
+  const spots = [W * 0.32, W * 0.5, W * 0.68];
+  const scales = [1.05, 0.62, 0.95];
+  x.strokeStyle = `rgba(${p1(pal)},0.85)`;
+  x.lineWidth = 3;
+  x.lineCap = 'round';
+  line(x, spots[0]! + 8, ground - 36, spots[1]! - 6, ground - 22 + bob);
+  line(x, spots[1]! + 6, ground - 22 + bob, spots[2]! - 8, ground - 34);
+  spots.forEach((px, i) => {
+    x.save();
+    x.translate(px, ground);
+    x.scale(scales[i] ?? 1, scales[i] ?? 1);
+    person(x, 0, bob, i === 1 ? p1(pal) : p0(pal), t * 1.2 + i);
+    x.restore();
+  });
+};
+
+/** Two matching figures, one arm across — brothers, not a class. */
+export const brother: SceneFn = (x, W, H, t, pal) => {
+  const ground = groundLine(x, W, H, pal);
+  const lean = Math.sin(t * 1.1) * 3;
+  person(x, W * 0.4, ground, p0(pal), t);
+  person(x, W * 0.6, ground, p1(pal), t + 0.4);
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  line(x, W * 0.4 + 10, ground - 34, W * 0.6 - 8, ground - 40 + lean);
+  glow(x, W * 0.5, ground - 36, 16, p1(pal), 0.15);
+};
+
+/** A stooped figure with a cane — old, not a standing column. */
+export const old: SceneFn = (x, W, H, t, pal) => {
+  const ground = groundLine(x, W, H, pal);
+  const cx = W * 0.48;
+  const sway = Math.sin(t * 0.7) * 2;
+  x.save();
+  x.translate(cx, ground - 20);
+  x.rotate(0.35);
+  person(x, sway, 20, p0(pal), t * 0.6);
+  x.restore();
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 3;
+  x.lineCap = 'round';
+  line(x, cx + 28, ground - 46, cx + 40, ground);
+  disc(x, cx + 40, ground - 2, 3, `rgba(${p1(pal)},0.9)`);
+};
+
+/** A small figure with a high hop — young, not a stooped walk. */
+export const young: SceneFn = (x, W, H, t, pal) => {
+  const ground = groundLine(x, W, H, pal);
+  const hop = Math.abs(Math.sin(t * 2.4)) * 28;
+  x.save();
+  x.translate(W * 0.5, ground);
+  x.scale(0.72, 0.72);
+  person(x, 0, -hop, p1(pal), t * 2);
+  x.restore();
+  if (hop < 4) glow(x, W * 0.5, ground, 18, p1(pal), 0.25);
+};
+
+/** Two figures facing, hands meeting — friends, not a gem in a fist. */
+export const friend: SceneFn = (x, W, H, t, pal) => {
+  const ground = groundLine(x, W, H, pal);
+  const pulse = 0.5 + 0.5 * Math.sin(t * 1.8);
+  person(x, W * 0.36, ground, p0(pal), t);
+  person(x, W * 0.64, ground, p1(pal), t + 1);
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 3;
+  line(x, W * 0.36 + 12, ground - 32, W * 0.5 - 6, ground - 36);
+  line(x, W * 0.64 - 12, ground - 32, W * 0.5 + 6, ground - 36);
+  disc(x, W * 0.5, ground - 36, 5 + pulse * 2, `rgba(${p1(pal)},0.95)`);
+  glow(x, W * 0.5, ground - 36, 20, p1(pal), 0.12 + pulse * 0.12);
+};
+
+/** A small dove with an olive twig — peace, not a flapping bird. */
+export const peace: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.48;
+  const cy = H * 0.48 + Math.sin(t * 0.8) * 4;
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  x.beginPath();
+  x.ellipse(cx, cy, 26, 12, -0.1, 0, TAU);
+  x.fill();
+  disc(x, cx + 24, cy - 2, 7, `rgba(${p0(pal)},0.95)`);
+  line(x, cx + 30, cy - 1, cx + 42, cy + 1);
+  x.strokeStyle = `rgba(${p0(pal)},0.85)`;
+  x.lineWidth = 3;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.moveTo(cx - 4, cy);
+  x.quadraticCurveTo(cx - 28, cy - 10, cx - 46, cy - 4);
+  x.stroke();
+  x.beginPath();
+  x.moveTo(cx - 4, cy);
+  x.quadraticCurveTo(cx + 10, cy - 16, cx + 8, cy - 28);
+  x.stroke();
+  x.strokeStyle = `rgba(80,170,70,0.95)`;
+  x.lineWidth = 2;
+  line(x, cx - 8, cy + 8, cx - 22, cy + 22);
+  disc(x, cx - 22, cy + 24, 3, 'rgba(80,170,70,0.95)');
+  disc(x, cx - 16, cy + 16, 2.5, 'rgba(80,170,70,0.9)');
+  glow(x, cx, cy, 22, p1(pal), 0.12);
+};
+
+/** A board and a moving pointer — teach, not a blank wall. */
+export const teach: SceneFn = (x, W, H, t, pal) => {
+  const bx = W * 0.22;
+  const by = H * 0.22;
+  const bw = W * 0.56;
+  const bh = H * 0.46;
+  x.fillStyle = `rgba(${p0(pal)},0.25)`;
+  rr(x, bx, by, bw, bh, 6);
+  x.fill();
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 3;
+  rr(x, bx, by, bw, bh, 6);
+  x.stroke();
+  x.strokeStyle = `rgba(${p1(pal)},0.85)`;
+  x.lineWidth = 2;
+  for (let i = 0; i < 3; i++) line(x, bx + 16, by + 22 + i * 22, bx + bw - 28, by + 22 + i * 22);
+  const slide = (t * 0.35) % 1;
+  const px = bx + 20 + slide * (bw - 50);
+  const py = by + bh - 8;
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  line(x, px, py + 36, px + 8, py);
+  disc(x, px + 8, py, 4, `rgba(${p1(pal)},0.95)`);
+  glow(x, px + 8, py, 12, p1(pal), 0.2);
+};
+
+/** A house with a swinging bell — a school, not a plain home. */
+export const school: SceneFn = (x, W, H, t, pal) => {
+  const ground = groundLine(x, W, H, pal);
+  const hx = W * 0.28;
+  const hy = ground - 70;
+  x.fillStyle = `rgba(${p0(pal)},0.88)`;
+  rr(x, hx, hy, 100, 70, 3);
+  x.fill();
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  x.beginPath();
+  x.moveTo(hx - 8, hy);
+  x.lineTo(hx + 50, hy - 34);
+  x.lineTo(hx + 108, hy);
+  x.closePath();
+  x.fill();
+  rr(x, hx + 58, hy - 62, 22, 30, 2);
+  x.fill();
+  const swing = Math.sin(t * 2.2) * 0.45;
+  x.save();
+  x.translate(hx + 69, hy - 58);
+  x.rotate(swing);
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 2;
+  line(x, 0, 0, 0, 16);
+  disc(x, 0, 22, 7, `rgba(${p1(pal)},0.95)`);
+  x.restore();
+  x.fillStyle = `rgba(${p1(pal)},0.8)`;
+  rr(x, hx + 40, hy + 32, 18, 38, 2);
+  x.fill();
+  glow(x, hx + 69, hy - 30, 14, p1(pal), 0.15);
+};
+
+/** A road narrowing to the horizon, dashes moving — a road, not an arrow. */
+export const road: SceneFn = (x, W, H, t, pal) => {
+  const y0 = H * 0.9;
+  const y1 = H * 0.28;
+  x.fillStyle = `rgba(${p0(pal)},0.35)`;
+  x.beginPath();
+  x.moveTo(W * 0.08, y0);
+  x.lineTo(W * 0.46, y1);
+  x.lineTo(W * 0.54, y1);
+  x.lineTo(W * 0.92, y0);
+  x.closePath();
+  x.fill();
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 3;
+  x.lineCap = 'round';
+  const shift = (t * 0.4) % 1;
+  for (let i = 0; i < 5; i++) {
+    const p = (i / 5 + shift) % 1;
+    const y = y0 - p * (y0 - y1);
+    const half = 6 * (1 - p);
+    line(x, W * 0.5 - half, y, W * 0.5 + half, y - 10 * (1 - p));
+  }
+  glow(x, W * 0.5, y1, 16, p1(pal), 0.2);
+};
+
+/** A span with a marker that settles in the center — middle, not two ends. */
+export const middle: SceneFn = (x, W, H, t, pal) => {
+  const y = H * 0.55;
+  const x0 = W * 0.16;
+  const x1 = W * 0.84;
+  x.strokeStyle = `rgba(${p0(pal)},0.8)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  line(x, x0, y, x1, y);
+  disc(x, x0, y, 7, `rgba(${p0(pal)},0.9)`);
+  disc(x, x1, y, 7, `rgba(${p0(pal)},0.9)`);
+  const cycle = (t * 0.25) % 1;
+  const travel = cycle < 0.7 ? cycle / 0.7 : 1;
+  const mx = x0 + (x1 - x0) * (0.15 + travel * 0.35);
+  const pulse = 0.5 + 0.5 * Math.sin(t * 2);
+  glow(x, (x0 + x1) / 2, y, 22, p1(pal), 0.12);
+  disc(x, mx, y, 9 + pulse * 2, `rgba(${p1(pal)},0.95)`);
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  x.font = '700 13px ui-rounded, system-ui, sans-serif';
+  x.textAlign = 'center';
+  x.fillText('mid', (x0 + x1) / 2, y - 28);
+};
+
+/** An upright figure and a steady pulse — healthy, not a still column. */
+export const healthy: SceneFn = (x, W, H, t, pal) => {
+  const ground = groundLine(x, W, H, pal);
+  person(x, W * 0.42, ground, p0(pal), t * 1.3);
+  const pulse = (t * 0.7) % 1;
+  x.strokeStyle = `rgba(${p1(pal)},${1 - pulse})`;
+  x.lineWidth = 2;
+  x.beginPath();
+  x.arc(W * 0.42, ground - 36, 16 + pulse * 28, 0, TAU);
+  x.stroke();
+  const ax = W * 0.68;
+  const ay = H * 0.48;
+  x.fillStyle = 'rgba(220,60,50,0.92)';
+  x.beginPath();
+  x.arc(ax, ay + 6, 14, 0, TAU);
+  x.fill();
+  x.beginPath();
+  x.arc(ax - 8, ay - 2, 8, 0, TAU);
+  x.arc(ax + 8, ay - 2, 8, 0, TAU);
+  x.fill();
+  x.strokeStyle = 'rgba(90,140,40,0.95)';
+  x.lineWidth = 3;
+  line(x, ax, ay - 8, ax, ay - 22);
+  glow(x, ax, ay, 16, '220,60,50', 0.15);
+};

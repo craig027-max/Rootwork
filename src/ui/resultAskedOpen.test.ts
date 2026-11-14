@@ -66,6 +66,6 @@ describe('Result chip opens the asked word — then Home, not the root quiz', ()
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(219);
+    expect(ROOTS.length).toBe(231);
   });
 });

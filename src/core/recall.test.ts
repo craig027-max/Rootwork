@@ -529,7 +529,7 @@ describe('buildRecall', () => {
     const loosen = pickGlossDistractors(solv.mean, 'Absolve', glossOf('Solv', 'Absolve'), [ROOTS], 500, mulberry32(1));
     expect(loosen).not.toContain(glossOf('Solv', 'Absolve'));
     expect(loosen.length).toBeGreaterThan(10);
-    const rule = pickGlossDistractors(crat.mean, 'Autocrat', glossOf('Crat', 'Autocrat'), [ROOTS], 500, mulberry32(1));
+    const rule = pickGlossDistractors(crat.mean, 'Autocrat', glossOf('Crat', 'Autocrat'), [ROOTS], 2000, mulberry32(1));
     expect(rule).toContain(glossOf('Omni', 'Omnipotent'));
     expect(rule).toContain(glossOf('Gen', 'Genesis'));
     expect(rule).not.toContain(glossOf('Arch', 'Architect'));

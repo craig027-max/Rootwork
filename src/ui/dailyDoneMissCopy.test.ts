@@ -244,6 +244,6 @@ describe('Daily done after a miss is Remember — not Done for today / Streak ba
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(219);
+    expect(ROOTS.length).toBe(231);
   });
 });

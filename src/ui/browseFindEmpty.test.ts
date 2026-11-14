@@ -76,7 +76,7 @@ describe('Find empty-state leftover: honest miss, school-word forms', () => {
         );
       }
     }
-    expect(ROOTS.length).toBe(219);
+    expect(ROOTS.length).toBe(231);
   });
 
   it('wires the empty copy and keeps it readable on a phone', () => {
