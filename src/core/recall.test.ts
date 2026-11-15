@@ -224,7 +224,7 @@ describe('buildRecall', () => {
     const biography = quizGloss(bio.words.find((item) => item.w === 'Biography')!.d);
     if (!biography) throw new Error('fixture: Biography');
     expect(glossQuietLine(bio.root, bio.mean, biography)).toBe('from Bio');
-    const dropped = pickGlossDistractors(bio.mean, 'Biography', biography, [ROOTS], 500, mulberry32(2));
+    const dropped = pickGlossDistractors(bio.mean, 'Biography', biography, [ROOTS], 900, mulberry32(2));
     expect(dropped.some((label) => glossSaysMean(bio.mean, label))).toBe(true);
   });
 
@@ -254,7 +254,7 @@ describe('buildRecall', () => {
       const rival = glossOf(rivalRoot, rivalWord);
       expect(glossQuietLine(root.root, root.mean, gloss), word).toBe(line);
       expect(glossSaysMean(root.mean, rival), `${word} ~ ${rivalWord}`).toBe(true);
-      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 500, mulberry32(1));
+      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 900, mulberry32(1));
       expect(tiles.length, word).toBeGreaterThan(10);
       expect(tiles, word).not.toContain(rival);
       for (const label of tiles) {
@@ -324,7 +324,7 @@ describe('buildRecall', () => {
       const rival = glossOf(rivalRoot, rivalWord);
       expect(glossQuietLine(root.root, root.mean, gloss), word).toBe(line);
       expect(glossSaysMean(root.mean, rival), `${word} ~ ${rivalWord}`).toBe(true);
-      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 500, mulberry32(1));
+      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 900, mulberry32(1));
       expect(tiles.length, word).toBeGreaterThan(10);
       expect(tiles, word).not.toContain(rival);
       for (const label of tiles) {
@@ -365,7 +365,7 @@ describe('buildRecall', () => {
       expect(glossQuietLine(root.root, root.mean, gloss), word).toBe(line);
       expect(glossSaysMean(root.mean, rival), `${word} ~ ${rivalWord}`).toBe(true);
       if (rivalWord === word) continue;
-      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 500, mulberry32(1));
+      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 900, mulberry32(1));
       expect(tiles.length, word).toBeGreaterThan(10);
       expect(tiles, word).not.toContain(rival);
       for (const label of tiles) {
@@ -413,7 +413,7 @@ describe('buildRecall', () => {
     expect(nature).not.toContain('body');
 
     const levity = glossOf('Lev', 'Levity');
-    const lightTiles = pickGlossDistractors(lev.mean, 'Levity', levity, [ROOTS], 500, mulberry32(1));
+    const lightTiles = pickGlossDistractors(lev.mean, 'Levity', levity, [ROOTS], 900, mulberry32(1));
     expect(lightTiles).toContain(glossOf('Photo', 'Photograph'));
     expect(lightTiles).not.toContain(glossOf('Terr', 'Terrace'));
     expect(glossSaysMean('head', 'Swelling of the brain inside the head')).toBe(true);
@@ -443,7 +443,7 @@ describe('buildRecall', () => {
       expect(glossQuietLine(root.root, root.mean, gloss), word).toBe(line);
       expect(glossSaysMean(root.mean, rival), `${word} ~ ${rivalWord}`).toBe(true);
       if (rivalWord === word) continue;
-      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 500, mulberry32(1));
+      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 900, mulberry32(1));
       expect(tiles.length, word).toBeGreaterThan(10);
       expect(tiles, word).not.toContain(rival);
       for (const label of tiles) {
@@ -454,7 +454,7 @@ describe('buildRecall', () => {
     const uni = ROOTS.find((item) => item.root === 'Uni');
     const cosm = ROOTS.find((item) => item.root === 'Cosm');
     if (!uni || !cosm) throw new Error('fixture: meaning roots');
-    const one = pickGlossDistractors(uni.mean, 'Unicorn', glossOf('Uni', 'Unicorn'), [ROOTS], 500, mulberry32(1));
+    const one = pickGlossDistractors(uni.mean, 'Unicorn', glossOf('Uni', 'Unicorn'), [ROOTS], 900, mulberry32(1));
     expect(one).toContain(glossOf('Scope', 'Microscope'));
     expect(one).not.toContain(glossOf('Loqu', 'Soliloquy'));
     expect(one).not.toContain(glossOf('Mono', 'Monolith'));
@@ -463,7 +463,7 @@ describe('buildRecall', () => {
       'Cosmopolitan',
       glossOf('Cosm', 'Cosmopolitan'),
       [ROOTS],
-      500,
+      900,
       mulberry32(1),
     );
     expect(universe).toContain(glossOf('Photo', 'Photograph'));
@@ -509,7 +509,7 @@ describe('buildRecall', () => {
       expect(glossQuietLine(root.root, root.mean, gloss), word).toBe(line);
       expect(glossSaysMean(root.mean, rival), `${word} ~ ${rivalWord}`).toBe(true);
       if (rivalWord === word) continue;
-      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 500, mulberry32(1));
+      const tiles = pickGlossDistractors(root.mean, word, gloss, [ROOTS], 900, mulberry32(1));
       expect(tiles.length, word).toBeGreaterThan(10);
       expect(tiles, word).not.toContain(rival);
       for (const label of tiles) {
@@ -523,10 +523,10 @@ describe('buildRecall', () => {
     const pyr = ROOTS.find((item) => item.root === 'Pyr');
     if (!lev || !solv || !crat || !pyr) throw new Error('fixture: meaning roots');
 
-    const lift = pickGlossDistractors(lev.mean, 'Levity', glossOf('Lev', 'Levity'), [ROOTS], 500, mulberry32(1));
+    const lift = pickGlossDistractors(lev.mean, 'Levity', glossOf('Lev', 'Levity'), [ROOTS], 900, mulberry32(1));
     expect(lift).toContain(glossOf('Photo', 'Photograph'));
     expect(lift).not.toContain(glossOf('Lev', 'Alleviate'));
-    const loosen = pickGlossDistractors(solv.mean, 'Absolve', glossOf('Solv', 'Absolve'), [ROOTS], 500, mulberry32(1));
+    const loosen = pickGlossDistractors(solv.mean, 'Absolve', glossOf('Solv', 'Absolve'), [ROOTS], 900, mulberry32(1));
     expect(loosen).not.toContain(glossOf('Solv', 'Absolve'));
     expect(loosen.length).toBeGreaterThan(10);
     const rule = pickGlossDistractors(crat.mean, 'Autocrat', glossOf('Crat', 'Autocrat'), [ROOTS], 2000, mulberry32(1));

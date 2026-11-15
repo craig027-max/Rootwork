@@ -103,6 +103,7 @@ export const SPEAKABLE_SYLLABLES: Readonly<Record<string, string>> = {
   dok: 'dock',
   skol: 'skole',
   vy: 'vye',
+  korn: 'corn',
 };
 
 /**

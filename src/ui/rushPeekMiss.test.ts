@@ -377,7 +377,7 @@ describe('Rush peek after a miss is Remember — not last-run Photo ✓ Bio ✓ 
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(231);
+    expect(ROOTS.length).toBe(243);
     expect(first.root).toBe('Bio');
   });
 });
