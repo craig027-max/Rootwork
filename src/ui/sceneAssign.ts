@@ -1735,3 +1735,298 @@ export const healthy: SceneFn = (x, W, H, t, pal) => {
   line(x, ax, ay - 8, ax, ay - 22);
   glow(x, ax, ay, 16, '220,60,50', 0.15);
 };
+
+/** A dog with a wagging tail — a dog, not a walking person. */
+export const dog: SceneFn = (x, W, H, t, pal) => {
+  const ground = groundLine(x, W, H, pal);
+  const cx = W * 0.48;
+  const cy = ground - 36;
+  const wag = Math.sin(t * 5) * 0.7;
+  x.fillStyle = `rgba(${p0(pal)},0.92)`;
+  x.beginPath();
+  x.ellipse(cx, cy, 42, 22, 0, 0, TAU);
+  x.fill();
+  disc(x, cx + 36, cy - 16, 16, `rgba(${p0(pal)},0.95)`);
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  x.beginPath();
+  x.ellipse(cx + 26, cy - 28, 7, 12, -0.4, 0, TAU);
+  x.fill();
+  disc(x, cx + 42, cy - 16, 2.2, 'rgba(10,10,26,0.9)');
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  x.save();
+  x.translate(cx - 40, cy - 8);
+  x.rotate(wag);
+  line(x, 0, 0, -22, -16);
+  x.restore();
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 3;
+  line(x, cx - 18, cy + 18, cx - 22, ground);
+  line(x, cx + 16, cy + 18, cx + 20, ground);
+  glow(x, cx + 36, cy - 16, 14, p1(pal), 0.15);
+};
+
+/** A sitting cat with a curling tail — a cat, not a lion's mane. */
+export const cat: SceneFn = (x, W, H, t, pal) => {
+  const ground = groundLine(x, W, H, pal);
+  const cx = W * 0.5;
+  const bob = Math.sin(t * 1.4) * 2;
+  x.fillStyle = `rgba(${p0(pal)},0.92)`;
+  x.beginPath();
+  x.ellipse(cx, ground - 28 + bob, 28, 22, 0, 0, TAU);
+  x.fill();
+  disc(x, cx + 4, ground - 58 + bob, 16, `rgba(${p0(pal)},0.95)`);
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  x.beginPath();
+  x.moveTo(cx - 8, ground - 70 + bob);
+  x.lineTo(cx - 2, ground - 52 + bob);
+  x.lineTo(cx + 6, ground - 68 + bob);
+  x.fill();
+  x.beginPath();
+  x.moveTo(cx + 10, ground - 68 + bob);
+  x.lineTo(cx + 8, ground - 50 + bob);
+  x.lineTo(cx + 18, ground - 64 + bob);
+  x.fill();
+  disc(x, cx + 10, ground - 58 + bob, 2, 'rgba(10,10,26,0.9)');
+  const curl = Math.sin(t * 1.6) * 6;
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.moveTo(cx - 24, ground - 30 + bob);
+  x.quadraticCurveTo(cx - 48, ground - 50 + curl, cx - 36, ground - 18);
+  x.stroke();
+  glow(x, cx, ground - 48, 16, p1(pal), 0.12);
+};
+
+/** A horse in profile, one hoof lifting — a horse, not a rider. */
+export const horse: SceneFn = (x, W, H, t, pal) => {
+  const ground = groundLine(x, W, H, pal);
+  const cx = W * 0.46;
+  const lift = Math.max(0, Math.sin(t * 2.4)) * 16;
+  x.fillStyle = `rgba(${p0(pal)},0.92)`;
+  x.beginPath();
+  x.ellipse(cx, ground - 48, 48, 22, 0, 0, TAU);
+  x.fill();
+  x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+  x.lineWidth = 10;
+  x.lineCap = 'round';
+  line(x, cx + 36, ground - 52, cx + 52, ground - 78);
+  disc(x, cx + 58, ground - 84, 12, `rgba(${p0(pal)},0.95)`);
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 3;
+  line(x, cx + 48, ground - 78, cx + 40, ground - 64);
+  line(x, cx + 52, ground - 80, cx + 46, ground - 66);
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 4;
+  line(x, cx - 16, ground - 30, cx - 18, ground);
+  line(x, cx + 18, ground - 30, cx + 22, ground - lift);
+  glow(x, cx + 58, ground - 84, 14, p1(pal), 0.15);
+};
+
+/** A round pig with a snout — a pig, not a round ball. */
+export const pig: SceneFn = (x, W, H, t, pal) => {
+  const ground = groundLine(x, W, H, pal);
+  const cx = W * 0.5;
+  const bob = Math.sin(t * 1.5) * 3;
+  x.fillStyle = `rgba(${p0(pal)},0.92)`;
+  x.beginPath();
+  x.ellipse(cx, ground - 36 + bob, 40, 26, 0, 0, TAU);
+  x.fill();
+  disc(x, cx + 36, ground - 40 + bob, 16, `rgba(${p1(pal)},0.95)`);
+  x.fillStyle = 'rgba(255,170,180,0.95)';
+  x.beginPath();
+  x.ellipse(cx + 48, ground - 38 + bob, 8, 6, 0, 0, TAU);
+  x.fill();
+  disc(x, cx + 45, ground - 38 + bob, 1.4, 'rgba(80,30,40,0.8)');
+  disc(x, cx + 51, ground - 38 + bob, 1.4, 'rgba(80,30,40,0.8)');
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 3;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.arc(cx - 36, ground - 28 + bob, 10, 0.4, 2.4);
+  x.stroke();
+  x.strokeStyle = `rgba(${p0(pal)},0.85)`;
+  x.lineWidth = 3;
+  line(x, cx - 14, ground - 14, cx - 16, ground);
+  line(x, cx + 12, ground - 14, cx + 14, ground);
+  glow(x, cx, ground - 36, 18, p1(pal), 0.12);
+};
+
+/** A goat with two horns and a beard — a goat, not a bull. */
+export const goat: SceneFn = (x, W, H, t, pal) => {
+  const ground = groundLine(x, W, H, pal);
+  const cx = W * 0.48;
+  const nod = Math.sin(t * 1.8) * 4;
+  x.fillStyle = `rgba(${p0(pal)},0.92)`;
+  x.beginPath();
+  x.ellipse(cx - 8, ground - 40, 36, 20, 0, 0, TAU);
+  x.fill();
+  disc(x, cx + 28, ground - 58 + nod, 14, `rgba(${p0(pal)},0.95)`);
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 3;
+  x.lineCap = 'round';
+  line(x, cx + 22, ground - 68 + nod, cx + 14, ground - 86 + nod);
+  line(x, cx + 34, ground - 68 + nod, cx + 42, ground - 86 + nod);
+  x.strokeStyle = `rgba(${p0(pal)},0.8)`;
+  line(x, cx + 28, ground - 46 + nod, cx + 28, ground - 34 + nod);
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 4;
+  line(x, cx - 16, ground - 22, cx - 18, ground);
+  line(x, cx + 8, ground - 22, cx + 12, ground);
+  glow(x, cx + 28, ground - 70, 12, p1(pal), 0.16);
+};
+
+/** A bull head with a pair of horns — a bull, not a goat. */
+export const bull: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  const cy = H * 0.52;
+  const paw = Math.sin(t * 2.2) * 3;
+  x.fillStyle = `rgba(${p0(pal)},0.92)`;
+  x.beginPath();
+  x.ellipse(cx, cy + 8, 36, 30, 0, 0, TAU);
+  x.fill();
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 6;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.moveTo(cx - 28, cy - 8);
+  x.quadraticCurveTo(cx - 52, cy - 28 + paw, cx - 18, cy - 22);
+  x.stroke();
+  x.beginPath();
+  x.moveTo(cx + 28, cy - 8);
+  x.quadraticCurveTo(cx + 52, cy - 28 - paw, cx + 18, cy - 22);
+  x.stroke();
+  disc(x, cx - 12, cy + 2, 3, 'rgba(10,10,26,0.9)');
+  disc(x, cx + 12, cy + 2, 3, 'rgba(10,10,26,0.9)');
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  x.beginPath();
+  x.ellipse(cx, cy + 18, 10, 7, 0, 0, TAU);
+  x.fill();
+  glow(x, cx, cy, 24, p1(pal), 0.12);
+};
+
+/** A striped bee with beating wings — a bee, not a bird. */
+export const bee: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5 + Math.sin(t * 1.3) * 18;
+  const cy = H * 0.48 + Math.cos(t * 1.7) * 10;
+  const flap = 0.35 + Math.abs(Math.sin(t * 8)) * 0.65;
+  x.fillStyle = `rgba(${p1(pal)},${0.35 + flap * 0.4})`;
+  x.beginPath();
+  x.ellipse(cx - 8, cy - 16 * flap, 16, 10 * flap, -0.6, 0, TAU);
+  x.fill();
+  x.beginPath();
+  x.ellipse(cx + 10, cy - 16 * flap, 16, 10 * flap, 0.6, 0, TAU);
+  x.fill();
+  x.fillStyle = `rgba(${p0(pal)},0.95)`;
+  x.beginPath();
+  x.ellipse(cx, cy, 16, 22, 0.4, 0, TAU);
+  x.fill();
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 3;
+  line(x, cx - 8, cy - 6, cx + 8, cy + 4);
+  line(x, cx - 6, cy + 6, cx + 10, cy + 14);
+  x.strokeStyle = `rgba(${p0(pal)},0.8)`;
+  x.lineWidth = 1.5;
+  line(x, cx + 10, cy - 12, cx + 20, cy - 22);
+  line(x, cx + 6, cy - 14, cx + 12, cy - 26);
+  glow(x, cx, cy, 18, p1(pal), 0.15);
+};
+
+/** A heavy bear on all fours — a bear, not a cat. */
+export const bear: SceneFn = (x, W, H, t, pal) => {
+  const ground = groundLine(x, W, H, pal);
+  const cx = W * 0.48;
+  const step = Math.sin(t * 1.6) * 4;
+  x.fillStyle = `rgba(${p0(pal)},0.92)`;
+  x.beginPath();
+  x.ellipse(cx, ground - 40, 46, 26, 0, 0, TAU);
+  x.fill();
+  disc(x, cx + 40, ground - 52, 20, `rgba(${p0(pal)},0.95)`);
+  disc(x, cx + 30, ground - 68, 7, `rgba(${p1(pal)},0.9)`);
+  disc(x, cx + 48, ground - 66, 7, `rgba(${p1(pal)},0.9)`);
+  disc(x, cx + 48, ground - 52, 2.2, 'rgba(10,10,26,0.85)');
+  x.fillStyle = `rgba(${p1(pal)},0.55)`;
+  x.beginPath();
+  x.ellipse(cx + 52, ground - 44, 8, 6, 0, 0, TAU);
+  x.fill();
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 6;
+  x.lineCap = 'round';
+  line(x, cx - 22, ground - 20, cx - 24, ground - step);
+  line(x, cx + 10, ground - 20, cx + 14, ground + step);
+  glow(x, cx + 40, ground - 52, 16, p1(pal), 0.12);
+};
+
+/** A cat body under a round mane — a lion, not a house cat. */
+export const lion: SceneFn = (x, W, H, t, pal) => {
+  const ground = groundLine(x, W, H, pal);
+  const cx = W * 0.5;
+  const pulse = 0.92 + 0.08 * Math.sin(t * 1.4);
+  x.fillStyle = `rgba(${p1(pal)},0.85)`;
+  disc(x, cx + 18, ground - 58, 28 * pulse, `rgba(${p1(pal)},0.75)`);
+  x.fillStyle = `rgba(${p0(pal)},0.95)`;
+  disc(x, cx + 18, ground - 58, 16, `rgba(${p0(pal)},0.95)`);
+  x.beginPath();
+  x.ellipse(cx - 16, ground - 36, 36, 18, 0, 0, TAU);
+  x.fill();
+  disc(x, cx + 26, ground - 58, 2, 'rgba(10,10,26,0.9)');
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 3;
+  x.lineCap = 'round';
+  const flick = Math.sin(t * 2) * 8;
+  line(x, cx - 48, ground - 36, cx - 64, ground - 20 + flick);
+  glow(x, cx + 18, ground - 58, 22, p1(pal), 0.16);
+};
+
+/** An egg with a crack that opens — an egg, not a plain oval. */
+export const egg: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  const cy = H * 0.52;
+  const rock = Math.sin(t * 1.5) * 0.06;
+  const open = (Math.sin(t * 1.2) + 1) / 2;
+  x.save();
+  x.translate(cx, cy);
+  x.rotate(rock);
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  x.beginPath();
+  x.ellipse(0, 6, 32, 40, 0, 0, TAU);
+  x.fill();
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 3;
+  x.beginPath();
+  x.moveTo(-8, -18);
+  x.lineTo(0, -6 - open * 6);
+  x.lineTo(10, -16);
+  x.stroke();
+  if (open > 0.55) {
+    disc(x, 2, -8, 4, `rgba(${p0(pal)},0.9)`);
+  }
+  x.restore();
+  glow(x, cx, cy, 28, p1(pal), 0.14);
+};
+
+/** A curved horn with a traveling gleam — a horn, not a whole animal. */
+export const horn: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.42;
+  const cy = H * 0.72;
+  x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+  x.lineWidth = 16;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.moveTo(cx, cy);
+  x.quadraticCurveTo(cx + 20, cy - 80, cx + 70, cy - 90);
+  x.stroke();
+  x.strokeStyle = `rgba(${p1(pal)},0.85)`;
+  x.lineWidth = 5;
+  x.beginPath();
+  x.moveTo(cx + 6, cy - 8);
+  x.quadraticCurveTo(cx + 24, cy - 72, cx + 64, cy - 84);
+  x.stroke();
+  const gleam = (t * 0.35) % 1;
+  const gx = cx + gleam * 60;
+  const gy = cy - gleam * 84;
+  glow(x, gx, gy, 16, p1(pal), 0.35);
+  disc(x, cx + 70, cy - 90, 5, `rgba(${p1(pal)},0.95)`);
+};

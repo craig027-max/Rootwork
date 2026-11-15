@@ -103,6 +103,18 @@ describe('scene registry', () => {
     expect(byRoot.Via).toBe('road');
     expect(byRoot.Medi).toBe('middle');
     expect(byRoot.San).toBe('healthy');
+    expect(byRoot.Can).toBe('dog');
+    expect(byRoot.Fel).toBe('cat');
+    expect(byRoot.Hipp).toBe('horse');
+    expect(byRoot.Porc).toBe('pig');
+    expect(byRoot.Capr).toBe('goat');
+    expect(byRoot.Taur).toBe('bull');
+    expect(byRoot.Api).toBe('bee');
+    expect(byRoot.Pisc).toBe('fish');
+    expect(byRoot.Urs).toBe('bear');
+    expect(byRoot.Leon).toBe('lion');
+    expect(byRoot.Ovi).toBe('egg');
+    expect(byRoot.Corn).toBe('horn');
   });
 
   it('keeps breakx for break-roots only', () => {

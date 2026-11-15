@@ -133,6 +133,7 @@ SPEAKABLE_SYLLABLES = {
     "dok": "dock",
     "skol": "skole",
     "vy": "vye",
+    "korn": "corn",
 }
 
 
