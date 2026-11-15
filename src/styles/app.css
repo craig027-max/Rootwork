@@ -518,6 +518,16 @@
   .ww-home-grid.is-resume {
     display: flex;
     flex-direction: column;
+    /* The grid's align-items:start would shrink these to their text
+       once the preview scene no longer has a 16/9 minimum width. */
+    align-items: stretch;
+  }
+  .ww-home-grid.is-first .ww-home-preview,
+  .ww-home-grid.is-resume .ww-home-preview,
+  .ww-home-grid.is-first .ww-home-list,
+  .ww-home-grid.is-resume .ww-home-list {
+    width: 100%;
+    min-width: 0;
   }
   .ww-home-grid.is-first .ww-home-preview,
   .ww-home-grid.is-resume .ww-home-preview {
@@ -1464,11 +1474,15 @@ button.ww-schip:focus-visible {
   .ww-detail.has-scene {
     min-height: 0;
   }
+  /* Fill the column. aspect-ratio + max-height was shrinking the used
+     width to ~150×16/9, so a tablet-portrait preview stayed a 267px tile. */
   .ww-detail-scene {
-    height: auto;
-    aspect-ratio: 16 / 9;
+    width: 100%;
+    align-self: stretch;
+    height: clamp(150px, 28svh, 180px);
     min-height: 150px;
-    max-height: min(180px, 28svh);
+    max-height: none;
+    aspect-ratio: auto;
   }
   .ww-detail-scene-cap.is-miss {
     display: inline-block;
@@ -2356,10 +2370,15 @@ button.ww-schip:focus-visible {
   border: none;
   color: var(--text-primary);
 }
+.ww-nav-cur .r,
+.ww-nav-cur .meta {
+  display: block;
+}
 .ww-nav-cur .r {
   font-family: var(--font-game);
   font-weight: 800;
   font-size: 0.95rem;
+  overflow-wrap: anywhere;
 }
 .ww-nav-cur .r b {
   color: var(--text-secondary);
@@ -2589,11 +2608,16 @@ button.ww-schip:focus-visible {
     grid-template-columns: 1fr;
     grid-template-areas: 'scene' 'text';
   }
+  /* Stacked lesson: the scene row uses the card width. aspect-ratio was
+     resolving against max-height and freezing the picture near 356px. */
   .ww-scene2 {
+    width: 100%;
+    justify-self: stretch;
+    min-width: 0;
     min-height: 140px;
-    height: auto;
-    aspect-ratio: 16 / 9;
-    max-height: min(200px, 26svh);
+    height: clamp(140px, 26svh, 200px);
+    max-height: none;
+    aspect-ratio: auto;
     border-left: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
   }
@@ -3284,6 +3308,16 @@ button.ww-schip:focus-visible {
 }
 
 @media (max-width: 400px) {
+  /* Keep "CARD 01 / 183" one phrase. If the tier pill takes the row,
+     the whole count wraps instead of breaking after "01". */
+  .ww-strip {
+    flex-wrap: wrap;
+    row-gap: 2px;
+  }
+  .ww-strip .count {
+    white-space: nowrap;
+    flex: none;
+  }
   .ww-brand span:not(.ww-mark) {
     font-size: 0.92rem;
   }
@@ -3343,6 +3377,55 @@ button.ww-schip:focus-visible {
   .btn-sm {
     min-height: 44px;
     padding: 10px 14px;
+  }
+}
+
+/* Short windows (phone landscape, a short tablet split). Portrait phones
+   are taller than this, so their fixed nav and safe-area padding stay.
+   The nav joins the card in normal flow so it cannot cover the word tiles,
+   and the scene gives that height back to the actions. */
+@media (max-height: 520px) {
+  .ww-decknav {
+    position: static;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    transform: none;
+    width: max-content;
+    max-width: calc(100% - 16px);
+    margin: 10px auto calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+  .ww-deck-wrap {
+    padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px));
+  }
+  .ww-scene2 {
+    width: 100%;
+    justify-self: stretch;
+    min-width: 0;
+    min-height: 0;
+    height: 72px;
+    max-height: 72px;
+    aspect-ratio: auto;
+  }
+  .ww-root {
+    font-size: clamp(1.7rem, 4.2vw, 2.3rem);
+    margin: 0;
+  }
+  .ww-hero-text {
+    padding-top: 4px;
+    padding-bottom: 2px;
+  }
+  .ww-words {
+    padding-top: 4px;
+    padding-bottom: 2px;
+  }
+  .ww-word {
+    min-height: 0;
+    padding: 6px 8px;
+  }
+  .ww-card-actions {
+    padding-top: 4px;
+    padding-bottom: 4px;
   }
 }
 

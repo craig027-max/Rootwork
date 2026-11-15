@@ -608,3 +608,36 @@ button.q-daily-chip:hover { background: rgba(var(--qc), 0.16); transform: transl
   .q-opt:hover, .q-go:hover, .q-next:hover { transform: none; }
   .q-big, .q-grade { filter: none; }
 }
+
+/* Very short windows: keep the question and every answer on screen.
+   The scene stays, shorter, so the wording and the four tiles are reachable
+   without the stage running past the fold. Portrait phones are taller. */
+@media (max-height: 520px) {
+  .q-scene {
+    width: 100%;
+    min-height: 0;
+    height: 64px;
+    max-height: 64px;
+    aspect-ratio: auto;
+    margin-top: 6px;
+  }
+  .q-play {
+    padding: 8px 12px 8px;
+  }
+  .q-prompt {
+    padding: 2px 0 4px;
+  }
+  .q-ask {
+    margin-top: 4px;
+  }
+  .q-options {
+    gap: 6px;
+  }
+  .q-opt {
+    min-height: 44px;
+    padding: 6px 12px;
+  }
+  .q-prog {
+    margin: 6px 0 0;
+  }
+}
