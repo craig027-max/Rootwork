@@ -561,12 +561,15 @@ export function afterHearNextTap(opts: {
   hearFinished: boolean;
   entry: DeckEntry;
   won: boolean;
+  /** Intro beat — the one tap is Show the questions, not Next or Rush. */
+  intro?: boolean;
 }): AfterHearNextTap {
   const stay = opts.entry === 'remember' || opts.entry === 'find' || opts.entry === 'asked';
   const afterHear = opts.hearFinished || isRecallEntry(opts.entry);
+  const holdIntro = opts.intro === true;
   return {
-    showRush: !opts.nextPlay && !stay,
-    showNextRoot: !opts.won && !stay && !(opts.nextPlay && afterHear),
+    showRush: !opts.nextPlay && !stay && !holdIntro,
+    showNextRoot: !opts.won && !stay && !holdIntro && !(opts.nextPlay && afterHear),
   };
 }
 
