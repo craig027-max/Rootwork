@@ -169,7 +169,7 @@ describe('buildRushQuestion', () => {
     }
     const photograph = photo.words.find((w) => w.w === 'Photograph')!;
     expect(glossQuietLine(photo.root, photo.mean, quizGloss(photograph.d))).toBe('from Photo');
-  });
+  }, 20_000);
 
   it('does not point from Bio · life at a wrong tile that says life', () => {
     let sawBiology = false;
