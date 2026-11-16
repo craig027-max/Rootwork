@@ -327,6 +327,6 @@ describe('dealt questions leave the tile off the prompt', () => {
     expect(deck).toContain('whichWordPrompt');
     expect(deck).toContain('meaningPrompt');
     expect(deck).toContain("{root.say} &nbsp;·&nbsp; <span className=\"origin\">from {root.org}</span>");
-    expect(deck).toContain('answer: finding ? undefined : quizAnswer');
+    expect(deck).toContain('answer: finding || introducing ? undefined : quizAnswer');
   });
 });

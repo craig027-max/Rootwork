@@ -12,6 +12,11 @@ import {
   type Root,
 } from '../data/roots';
 import {
+  cardIntroCopy,
+  INTRO_CONTINUE_LABEL,
+  introIsShowing,
+} from '../core/cardIntro';
+import {
   afterCorrectRecall,
   afterHearNextTap,
   afterYesNextLabel,
@@ -152,6 +157,8 @@ export function Deck() {
   const [listening, setListening] = useState(false);
   const [listenKind, setListenKind] = useState<'hear' | 'yes' | null>(null);
   const [hearBeat, setHearBeat] = useState<0 | 1 | 2>(0);
+  /** This visit only. A remount before the tap shows the intro again — never a quiz with no question. */
+  const [introDismissed, setIntroDismissed] = useState(false);
   const hearGen = useRef(0);
   const missRememberVisit = useRef<string | null>(null);
   const [recall, setRecall] = useState<{
@@ -196,7 +203,8 @@ export function Deck() {
     setListening(false);
     setListenKind(null);
     setHearBeat(0);
-  }, [currentRootId, deckFocusWord]);
+    setIntroDismissed(false);
+  }, [currentRootId, deckFocusWord, deckEntry]);
 
   useEffect(() => {
     if (recall?.picked == null || recall.win) return;
@@ -359,6 +367,15 @@ export function Deck() {
   const winLine = winLineOnCard(lesson);
   const won = Boolean(winLine);
   const studying = isLessonStudying(lesson);
+  // New teach / find / recall: meaning and origin first. Remember, asked,
+  // a learned root, and a Yes remount stay on the beat they already had.
+  const introducing = introIsShowing({
+    entry: deckEntry,
+    learned: done,
+    won,
+    dismissed: introDismissed,
+  });
+  const faceStudying = studying && !introducing;
   const examples = showExampleWords(lesson);
   const nextPlay = isNextPlayHome(completed, entitled, { choseMode: hasChosenMode(stats) });
   const nextTap = afterHearNextTap({
@@ -366,6 +383,7 @@ export function Deck() {
     hearFinished,
     entry: deckEntry,
     won,
+    intro: introducing,
   });
   const card = root;
   const hearBeats =
@@ -386,11 +404,11 @@ export function Deck() {
   // A find card asks the school word and keeps its own hold.
   const quizAnswer = quizRecall?.beat.opts.find((o) => o.ok)?.label ?? '';
   const wordPrompt =
-    !finding && quizRecall?.beat.kind === 'word'
+    !finding && !introducing && quizRecall?.beat.kind === 'word'
       ? whichWordPrompt(root, quizAnswer || quizRecall.beat.word || '')
       : null;
   const meanPromptFace =
-    !finding && quizRecall?.beat.kind === 'mean' ? meaningPrompt(root) : null;
+    !finding && !introducing && quizRecall?.beat.kind === 'mean' ? meaningPrompt(root) : null;
   const quizPron = wordPrompt
     ? {
         say: wordPrompt.say,
@@ -406,16 +424,18 @@ export function Deck() {
     won,
     say: card.say,
     mean: card.mean,
-    askingMean: hearHoldHidesMean({
-      finding,
-      kind: quizRecall?.beat.kind,
-      mean: card.mean,
-      answer: quizAnswer,
-    }),
-    answer: finding ? undefined : quizAnswer,
+    askingMean: introducing
+      ? false
+      : hearHoldHidesMean({
+          finding,
+          kind: quizRecall?.beat.kind,
+          mean: card.mean,
+          answer: quizAnswer,
+        }),
+    answer: finding || introducing ? undefined : quizAnswer,
   });
   const cardRecall = recall && recall.rootId === id ? recall : null;
-  const quizHero = finding
+  const quizHero = finding || introducing
     ? null
     : deckQuizHero({
         root: root.root,
@@ -430,6 +450,15 @@ export function Deck() {
   const findDef = finding ? wordDefForOpen(root.words, findWord) : null;
   const findSplit = findWord ? splitForOpenWord(root.words, findWord) : null;
   const alsoRoots = findWord ? otherRootsForWord(findWord, id) : [];
+  const introCopy = cardIntroCopy({
+    entry: deckEntry,
+    root: root.root,
+    mean: root.mean,
+    org: root.org,
+    words: root.words,
+    word: findWord,
+    def: findDef,
+  });
   // Study tap — name Biology, not Bio means life. Find already has its line.
   const chipLesson =
     finding || !openWord
@@ -534,6 +563,19 @@ export function Deck() {
     });
   }
 
+  function continueFromIntro() {
+    if (listen.disableKnowThis) return;
+    // Recall already dealt this question (the Yes peek named it). Revealing
+    // it must not roll a new one. Teach and find deal on this tap.
+    if (isRecallEntry(deckEntry)) {
+      if (!recall || recall.rootId !== id || recall.win) return;
+      setIntroDismissed(true);
+      return;
+    }
+    startRecall();
+    setIntroDismissed(true);
+  }
+
   function startRecall() {
     if (listen.disableKnowThis) return;
     const wordBeat =
@@ -603,7 +645,7 @@ export function Deck() {
     <>
       <div className="ww-deck-wrap">
         <article
-          className={`ww-card2${remembering ? ' is-remember' : ''}${finding ? ' is-find' : ''}`}
+          className={`ww-card2${remembering ? ' is-remember' : ''}${introducing ? ' is-intro' : ''}${finding ? ' is-find' : ''}`}
           style={paletteVars(p.c1rgb, p.grad)}
         >
           <div className={`ww-strip${missRemember ? ' is-miss' : ''}${finding ? ' is-find' : ''}`}>
@@ -641,7 +683,7 @@ export function Deck() {
                   alt: root.alt,
                   remembering,
                   missed: missRemember,
-                  studying,
+                  studying: faceStudying,
                   findWord: findWord ?? undefined,
                   quizTitle: quizHero?.title,
                   missAsked: askedReplay,
@@ -751,7 +793,7 @@ export function Deck() {
                   </p>
                 </div>
               ) : null}
-              {quizHero ? (
+              {introducing ? null : quizHero ? (
                 quizHero.hint ? (
                   <div className="ww-means is-quiz">
                     <span className="alt">{quizHero.hint}</span>
@@ -781,7 +823,13 @@ export function Deck() {
                   </span>
                 </div>
               )}
-              {finding && findWord ? (
+              {introducing ? (
+                <div className="ww-intro">
+                  {introCopy.lines.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                </div>
+              ) : finding && findWord ? (
                 <p className="ww-lead2 is-find">
                   {findLeadLine(findWord, findSplit ?? openSplit ?? '')}
                 </p>
@@ -804,7 +852,7 @@ export function Deck() {
             </div>
           </div>
 
-          {examples ? (
+          {!introducing && examples ? (
             <div className="ww-examples">
               <div className="ww-words">
                 {root.words.map((w) => (
@@ -881,7 +929,7 @@ export function Deck() {
             </div>
           ) : null}
 
-          {quizRecall ? (
+          {!introducing && quizRecall ? (
             <div className="ww-recall">
               <div
                 className={`ww-recall-ask${quizRecall.beat.kind === 'gloss' ? ' is-gloss' : ''}${
@@ -962,7 +1010,17 @@ export function Deck() {
           ) : null}
 
           <div className="ww-card-actions">
-            {won ? (
+            {introducing ? (
+              <Button
+                onClick={continueFromIntro}
+                disabled={listen.disableKnowThis || (isRecallEntry(deckEntry) && quizRecall == null)}
+                block
+                size="lg"
+                className="ww-intro-go"
+              >
+                {INTRO_CONTINUE_LABEL}
+              </Button>
+            ) : won ? (
               <Button
                 onClick={onWinNext}
                 disabled={!allowWinNextTap(correctAdvance, listening)}
@@ -1021,11 +1079,11 @@ export function Deck() {
           missAsked: askedReplay,
         })}
         meaning={deckNavMeaning({
-          meaning: studying ? '?' : root.mean,
+          meaning: faceStudying ? '?' : root.mean,
           missed: missRemember,
           findWord: findWord ?? undefined,
           findDef: findDef ?? undefined,
-          studying,
+          studying: faceStudying,
           quizTitle: quizHero?.title,
         })}
         tierName={tierName}
