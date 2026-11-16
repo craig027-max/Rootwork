@@ -230,7 +230,7 @@ describe('Profile band wiring + phone layout', () => {
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(243);
+    expect(ROOTS.length).toBe(255);
   });
 
   it('keeps the hint and slim stats readable at phone width', () => {

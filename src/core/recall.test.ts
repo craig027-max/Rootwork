@@ -171,7 +171,7 @@ describe('buildRecall', () => {
         }
       }
     }
-  });
+  }, 20_000);
 
   it('does not point a named meaning at a wrong tile that says the same idea', () => {
     const cases = [

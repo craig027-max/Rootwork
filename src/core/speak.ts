@@ -104,6 +104,11 @@ export const SPEAKABLE_SYLLABLES: Readonly<Record<string, string>> = {
   skol: 'skole',
   vy: 'vye',
   korn: 'corn',
+  lact: 'lacked',
+  sak: 'sack',
+  kand: 'canned',
+  kus: 'cuss',
+  fyoom: 'fume',
 };
 
 /**

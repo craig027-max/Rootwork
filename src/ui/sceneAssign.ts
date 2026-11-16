@@ -2030,3 +2030,273 @@ export const horn: SceneFn = (x, W, H, t, pal) => {
   glow(x, gx, gy, 16, p1(pal), 0.35);
   disc(x, cx + 70, cy - 90, 5, `rgba(${p1(pal)},0.95)`);
 };
+
+/** A glass filling with milk — milk, not a wave. */
+export const milk: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  const base = H * 0.78;
+  const fill = 0.35 + 0.45 * (0.5 + 0.5 * Math.sin(t * 1.2));
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 3;
+  x.beginPath();
+  x.moveTo(cx - 28, H * 0.28);
+  x.lineTo(cx - 36, base);
+  x.lineTo(cx + 36, base);
+  x.lineTo(cx + 28, H * 0.28);
+  x.stroke();
+  x.save();
+  x.beginPath();
+  x.moveTo(cx - 34, base - 4);
+  x.lineTo(cx + 34, base - 4);
+  x.lineTo(cx + 26, H * 0.32);
+  x.lineTo(cx - 26, H * 0.32);
+  x.closePath();
+  x.clip();
+  x.fillStyle = `rgba(245,245,250,0.92)`;
+  x.fillRect(cx - 40, base - (base - H * 0.32) * fill, 80, base);
+  x.restore();
+  const pour = (t * 0.8) % 1;
+  x.strokeStyle = `rgba(245,245,250,${0.35 + pour * 0.5})`;
+  x.lineWidth = 4;
+  line(x, cx, H * 0.12, cx, H * 0.28 + pour * 10);
+  glow(x, cx, base - 20, 18, p0(pal), 0.12);
+};
+
+/** A round apple with a leaf — fruit, not a flower. */
+export const fruit: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  const cy = H * 0.54;
+  const bob = Math.sin(t * 1.4) * 3;
+  x.fillStyle = `rgba(${p0(pal)},0.95)`;
+  x.beginPath();
+  x.ellipse(cx, cy + bob, 36, 32, 0, 0, TAU);
+  x.fill();
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 3;
+  x.lineCap = 'round';
+  line(x, cx, cy - 30 + bob, cx + 2, cy - 48 + bob);
+  leaf(x, cx + 16, cy - 46 + bob, 0.6, 14, `rgba(${p1(pal)},0.9)`, `rgba(${p0(pal)},0.5)`);
+  disc(x, cx - 10, cy - 8 + bob, 4, 'rgba(255,255,255,0.35)');
+  glow(x, cx, cy, 20, p1(pal), 0.12);
+};
+
+/** Three wheat heads swaying — grain, not a tree. */
+export const grain: SceneFn = (x, W, H, t, pal) => {
+  const ground = groundLine(x, W, H, pal);
+  const stems = [0.34, 0.5, 0.66];
+  stems.forEach((px, i) => {
+    const sway = Math.sin(t * 1.5 + i) * 0.12;
+    const x0 = W * px;
+    x.save();
+    x.translate(x0, ground);
+    x.rotate(sway);
+    x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+    x.lineWidth = 3;
+    x.lineCap = 'round';
+    line(x, 0, 0, 0, -70);
+    x.fillStyle = `rgba(${p0(pal)},0.95)`;
+    x.beginPath();
+    x.ellipse(0, -86, 8, 18, 0, 0, TAU);
+    x.fill();
+    for (let k = -2; k <= 2; k++) {
+      disc(x, k * 4, -86 + (k % 2) * 6, 2.2, `rgba(${p1(pal)},0.85)`);
+    }
+    x.restore();
+  });
+};
+
+/** A shaker spilling grains — salt, not snow. */
+export const salt: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.46;
+  const cy = H * 0.42;
+  const tip = Math.sin(t * 1.6) * 0.25;
+  x.save();
+  x.translate(cx, cy);
+  x.rotate(0.5 + tip);
+  x.fillStyle = `rgba(${p1(pal)},0.92)`;
+  rr(x, -16, -28, 32, 48, 6);
+  x.fill();
+  x.fillStyle = `rgba(${p0(pal)},0.95)`;
+  rr(x, -18, 12, 36, 10, 3);
+  x.fill();
+  x.restore();
+  for (let i = 0; i < 8; i++) {
+    const p = (t * 0.6 + i * 0.12) % 1;
+    disc(x, cx + 30 + p * 36, cy + 10 + p * 48, 1.6, `rgba(245,245,250,${1 - p})`);
+  }
+  glow(x, cx + 40, cy + 30, 12, p0(pal), 0.1);
+};
+
+/** A dipper with one slow drip — honey, not water. */
+export const honey: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.48;
+  const cy = H * 0.4;
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 5;
+  x.lineCap = 'round';
+  line(x, cx - 40, cy - 20, cx + 8, cy + 8);
+  x.fillStyle = `rgba(${p0(pal)},0.95)`;
+  x.beginPath();
+  x.ellipse(cx + 16, cy + 16, 16, 22, 0.4, 0, TAU);
+  x.fill();
+  const drip = (t * 0.45) % 1;
+  const dy = cy + 36 + drip * 48;
+  x.fillStyle = `rgba(${p0(pal)},${1 - drip * 0.3})`;
+  x.beginPath();
+  x.ellipse(cx + 16, dy, 5, 8 + drip * 6, 0, 0, TAU);
+  x.fill();
+  glow(x, cx + 16, dy, 10, p0(pal), 0.2);
+};
+
+/** A bottle laying a thick drop — oil, not a splash. */
+export const oil: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.42;
+  const cy = H * 0.48;
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  rr(x, cx - 22, cy - 36, 28, 56, 8);
+  x.fill();
+  x.fillStyle = `rgba(${p0(pal)},0.95)`;
+  rr(x, cx - 8, cy - 48, 16, 16, 4);
+  x.fill();
+  const blob = (t * 0.35) % 1;
+  x.fillStyle = `rgba(${p0(pal)},0.9)`;
+  x.beginPath();
+  x.ellipse(cx + 36, cy + 10 + blob * 40, 10 + blob * 4, 7, 0, 0, TAU);
+  x.fill();
+  x.strokeStyle = `rgba(${p0(pal)},0.8)`;
+  x.lineWidth = 4;
+  line(x, cx + 6, cy - 10, cx + 28, cy + 8);
+  glow(x, cx + 36, cy + 20, 14, p0(pal), 0.15);
+};
+
+/** Three cubes — sugar, not stone blocks. */
+export const sugar: SceneFn = (x, W, H, t, pal) => {
+  const bob = Math.sin(t * 1.5) * 3;
+  const cubes: Array<[number, number]> = [
+    [W * 0.34, H * 0.58],
+    [W * 0.5, H * 0.46 + bob],
+    [W * 0.64, H * 0.6],
+  ];
+  cubes.forEach(([px, py], i) => {
+    x.fillStyle = `rgba(245,245,250,0.95)`;
+    rr(x, px - 18, py - 18, 36, 36, 4);
+    x.fill();
+    x.strokeStyle = `rgba(${i % 2 ? p1(pal) : p0(pal)},0.85)`;
+    x.lineWidth = 2;
+    rr(x, px - 18, py - 18, 36, 36, 4);
+    x.stroke();
+  });
+  glow(x, W * 0.5, H * 0.5, 20, p1(pal), 0.12);
+};
+
+/** A bare tongue of fire — flame, not a sun. */
+export const flame: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  const base = H * 0.78;
+  const flick = Math.sin(t * 6) * 6;
+  const lean = Math.sin(t * 2.2) * 8;
+  x.fillStyle = `rgba(${p0(pal)},0.95)`;
+  x.beginPath();
+  x.moveTo(cx - 22, base);
+  x.quadraticCurveTo(cx - 28 + lean, H * 0.48, cx + flick, H * 0.22);
+  x.quadraticCurveTo(cx + 26 + lean, H * 0.5, cx + 20, base);
+  x.closePath();
+  x.fill();
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  x.beginPath();
+  x.moveTo(cx - 10, base - 4);
+  x.quadraticCurveTo(cx - 8, H * 0.5, cx + flick * 0.4, H * 0.36);
+  x.quadraticCurveTo(cx + 12, H * 0.52, cx + 8, base - 4);
+  x.closePath();
+  x.fill();
+  glow(x, cx, H * 0.4, 28, p1(pal), 0.2);
+};
+
+/** Puffs rising from a point — smoke, not a rain cloud. */
+export const smoke: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  for (let i = 0; i < 4; i++) {
+    const p = (t * 0.22 + i * 0.25) % 1;
+    const py = H * 0.78 - p * H * 0.62;
+    const drift = Math.sin(t + i) * 16;
+    puff(x, cx + drift, py, 18 + p * 16, `rgba(${p0(pal)},${0.15 + (1 - p) * 0.45})`);
+  }
+  disc(x, cx, H * 0.8, 4, `rgba(${p1(pal)},0.9)`);
+};
+
+/** Rings of light spreading from a wick — a glow, not a sun. */
+export const halo: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  const cy = H * 0.58;
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 4;
+  line(x, cx, cy, cx, cy + 36);
+  const pulse = (t * 0.5) % 1;
+  for (let i = 0; i < 3; i++) {
+    const p = (pulse + i * 0.33) % 1;
+    x.strokeStyle = `rgba(${p0(pal)},${0.55 * (1 - p)})`;
+    x.lineWidth = 2;
+    x.beginPath();
+    x.arc(cx, cy - 8, 12 + p * 48, 0, TAU);
+    x.stroke();
+  }
+  disc(x, cx, cy - 8, 5, `rgba(255,255,255,0.95)`);
+  glow(x, cx, cy - 8, 22, p1(pal), 0.35);
+};
+
+/** A brick arch and logs — a hearth, not an open flame. */
+export const hearth: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  const base = H * 0.78;
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  rr(x, cx - 70, H * 0.28, 140, base - H * 0.28, 8);
+  x.fill();
+  x.fillStyle = 'rgba(20,16,24,0.88)';
+  x.beginPath();
+  x.arc(cx, base - 20, 48, Math.PI, 0);
+  x.lineTo(cx + 48, base - 8);
+  x.lineTo(cx - 48, base - 8);
+  x.closePath();
+  x.fill();
+  x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+  x.lineWidth = 5;
+  x.lineCap = 'round';
+  line(x, cx - 18, base - 16, cx + 16, base - 28);
+  line(x, cx - 8, base - 12, cx + 22, base - 20);
+  const flick = 0.85 + 0.15 * Math.sin(t * 7);
+  x.fillStyle = `rgba(${p0(pal)},${flick})`;
+  x.beginPath();
+  x.moveTo(cx - 8, base - 24);
+  x.quadraticCurveTo(cx, base - 48, cx + 6, base - 26);
+  x.closePath();
+  x.fill();
+  glow(x, cx, base - 30, 18, p0(pal), 0.2);
+};
+
+/** A cup and a straw — a drink, not a milk pour. */
+export const drink: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  const base = H * 0.74;
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 3;
+  x.beginPath();
+  x.moveTo(cx - 32, H * 0.4);
+  x.lineTo(cx - 24, base);
+  x.quadraticCurveTo(cx, base + 16, cx + 24, base);
+  x.lineTo(cx + 32, H * 0.4);
+  x.stroke();
+  x.fillStyle = `rgba(${p0(pal)},0.85)`;
+  x.beginPath();
+  x.moveTo(cx - 26, H * 0.5);
+  x.lineTo(cx - 22, base - 4);
+  x.quadraticCurveTo(cx, base + 8, cx + 22, base - 4);
+  x.lineTo(cx + 26, H * 0.5);
+  x.closePath();
+  x.fill();
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 3;
+  line(x, cx + 8, H * 0.22, cx + 4, H * 0.58);
+  const bubble = (t * 0.7) % 1;
+  disc(x, cx - 6, H * 0.62 - bubble * 16, 3, `rgba(255,255,255,${0.8 - bubble * 0.5})`);
+  glow(x, cx, H * 0.56, 16, p0(pal), 0.12);
+};

@@ -134,6 +134,11 @@ SPEAKABLE_SYLLABLES = {
     "skol": "skole",
     "vy": "vye",
     "korn": "corn",
+    "lact": "lacked",
+    "sak": "sack",
+    "kand": "canned",
+    "kus": "cuss",
+    "fyoom": "fume",
 }
 
 

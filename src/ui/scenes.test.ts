@@ -115,6 +115,18 @@ describe('scene registry', () => {
     expect(byRoot.Leon).toBe('lion');
     expect(byRoot.Ovi).toBe('egg');
     expect(byRoot.Corn).toBe('horn');
+    expect(byRoot.Lact).toBe('milk');
+    expect(byRoot.Fruct).toBe('fruit');
+    expect(byRoot.Gran).toBe('grain');
+    expect(byRoot.Sal).toBe('salt');
+    expect(byRoot.Mel).toBe('honey');
+    expect(byRoot.Ole).toBe('oil');
+    expect(byRoot.Sacchar).toBe('sugar');
+    expect(byRoot.Flam).toBe('flame');
+    expect(byRoot.Fum).toBe('smoke');
+    expect(byRoot.Cand).toBe('glow');
+    expect(byRoot.Foc).toBe('hearth');
+    expect(byRoot.Bib).toBe('drink');
   });
 
   it('keeps breakx for break-roots only', () => {
