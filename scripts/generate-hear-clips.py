@@ -139,6 +139,13 @@ SPEAKABLE_SYLLABLES = {
     "kand": "canned",
     "kus": "cuss",
     "fyoom": "fume",
+    "teks": "tex",
+    "plik": "plick",
+    "sinkt": "sinct",
+    "strikt": "strict",
+    "tekt": "tect",
+    "punkt": "punct",
+    "lig": "ligg",
 }
 
 

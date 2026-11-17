@@ -127,6 +127,18 @@ describe('scene registry', () => {
     expect(byRoot.Cand).toBe('glow');
     expect(byRoot.Foc).toBe('hearth');
     expect(byRoot.Bib).toBe('drink');
+    expect(byRoot.Tex).toBe('weave');
+    expect(byRoot.Fil).toBe('thread');
+    expect(byRoot.Lin).toBe('flax');
+    expect(byRoot.Vest).toBe('clothing');
+    expect(byRoot.Plic).toBe('fold');
+    expect(byRoot.Cinct).toBe('belt');
+    expect(byRoot.Strict).toBe('tight');
+    expect(byRoot.Tect).toBe('cover');
+    expect(byRoot.Punct).toBe('point');
+    expect(byRoot.Acu).toBe('needle');
+    expect(byRoot.Lig).toBe('tie');
+    expect(byRoot.Nod).toBe('knot');
   });
 
   it('keeps breakx for break-roots only', () => {

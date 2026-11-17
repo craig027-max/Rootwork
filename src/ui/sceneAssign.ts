@@ -2300,3 +2300,257 @@ export const drink: SceneFn = (x, W, H, t, pal) => {
   disc(x, cx - 6, H * 0.62 - bubble * 16, 3, `rgba(255,255,255,${0.8 - bubble * 0.5})`);
   glow(x, cx, H * 0.56, 16, p0(pal), 0.12);
 };
+
+/** Warp threads and a shuttle — weaving, not a single strand. */
+export const weave: SceneFn = (x, W, H, t, pal) => {
+  const left = W * 0.22;
+  const right = W * 0.78;
+  const top = H * 0.22;
+  const bot = H * 0.78;
+  for (let i = 0; i < 7; i++) {
+    const px = left + ((right - left) * i) / 6;
+    x.strokeStyle = `rgba(${i % 2 ? p1(pal) : p0(pal)},0.85)`;
+    x.lineWidth = 2;
+    line(x, px, top, px, bot);
+  }
+  const pass = (t * 0.35) % 1;
+  const dir = Math.floor(t * 0.35) % 2 === 0 ? pass : 1 - pass;
+  const sy = top + 18 + (pass * 0.72) * (bot - top - 28);
+  const sx = left + dir * (right - left);
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  rr(x, sx - 16, sy - 6, 32, 12, 4);
+  x.fill();
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 3;
+  line(x, left, sy, sx, sy);
+  glow(x, sx, sy, 12, p1(pal), 0.2);
+};
+
+/** A spool feeding one strand — thread, not a loom. */
+export const thread: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.38;
+  const cy = H * 0.42;
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 8;
+  x.lineCap = 'round';
+  line(x, cx, cy - 28, cx, cy + 28);
+  disc(x, cx, cy - 28, 14, `rgba(${p0(pal)},0.95)`);
+  disc(x, cx, cy + 28, 14, `rgba(${p0(pal)},0.95)`);
+  const run = (t * 0.4) % 1;
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 2;
+  x.beginPath();
+  x.moveTo(cx + 8, cy);
+  x.quadraticCurveTo(cx + 40, cy - 20, W * 0.78, H * 0.7);
+  x.stroke();
+  disc(x, cx + 20 + run * 40, cy - 8 + run * 28, 3, `rgba(${p0(pal)},0.95)`);
+  glow(x, W * 0.72, H * 0.66, 14, p1(pal), 0.15);
+};
+
+/** Slender stems with small blossoms — flax, not wheat. */
+export const flax: SceneFn = (x, W, H, t, pal) => {
+  const ground = H * 0.82;
+  x.strokeStyle = `rgba(${p0(pal)},0.35)`;
+  x.lineWidth = 2;
+  line(x, W * 0.12, ground, W * 0.88, ground);
+  [0.34, 0.5, 0.66].forEach((px, i) => {
+    const sway = Math.sin(t * 1.3 + i) * 0.1;
+    x.save();
+    x.translate(W * px, ground);
+    x.rotate(sway);
+    x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+    x.lineWidth = 2;
+    line(x, 0, 0, 0, -78);
+    disc(x, 0, -86, 7, `rgba(${p0(pal)},0.95)`);
+    disc(x, -6, -80, 4, `rgba(${p1(pal)},0.8)`);
+    disc(x, 6, -80, 4, `rgba(${p1(pal)},0.8)`);
+    x.restore();
+  });
+};
+
+/** A tunic swaying — clothing, not a person. */
+export const clothing: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  const sway = Math.sin(t * 1.2) * 4;
+  x.save();
+  x.translate(cx + sway, H * 0.22);
+  x.fillStyle = `rgba(${p0(pal)},0.92)`;
+  x.beginPath();
+  x.moveTo(-46, 18);
+  x.lineTo(-28, 8);
+  x.quadraticCurveTo(0, 22, 28, 8);
+  x.lineTo(46, 18);
+  x.lineTo(34, 46);
+  x.lineTo(18, 36);
+  x.lineTo(16, 120);
+  x.lineTo(-16, 120);
+  x.lineTo(-18, 36);
+  x.lineTo(-34, 46);
+  x.closePath();
+  x.fill();
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 2;
+  x.stroke();
+  x.restore();
+  glow(x, cx, H * 0.55, 20, p1(pal), 0.12);
+};
+
+/** A sheet creasing in half — a fold, not a closed lid. */
+export const fold: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  const top = H * 0.28;
+  const mid = H * 0.52;
+  const bot = H * 0.76;
+  const flap = 0.5 + 0.5 * Math.sin(t * 1.4);
+  x.fillStyle = `rgba(${p1(pal)},0.85)`;
+  rr(x, cx - 54, mid, 108, bot - mid, 4);
+  x.fill();
+  x.save();
+  x.translate(cx, mid);
+  x.scale(1, 1 - flap * 0.85);
+  x.fillStyle = `rgba(${p0(pal)},0.95)`;
+  rr(x, -54, top - mid, 108, mid - top, 4);
+  x.fill();
+  x.restore();
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 3;
+  line(x, cx - 54, mid, cx + 54, mid);
+  glow(x, cx, mid, 16, p0(pal), 0.12 + flap * 0.15);
+};
+
+/** A band drawing in at a waist — a belt, not a knot. */
+export const belt: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  const cy = H * 0.52;
+  const pinch = 0.82 + 0.18 * (0.5 + 0.5 * Math.sin(t * 1.6));
+  x.strokeStyle = `rgba(${p0(pal)},0.45)`;
+  x.lineWidth = 10;
+  x.beginPath();
+  x.ellipse(cx, cy, 36, 48, 0, 0, TAU);
+  x.stroke();
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 14 * pinch;
+  x.beginPath();
+  x.ellipse(cx, cy, 40, 18, 0, 0, TAU);
+  x.stroke();
+  x.fillStyle = `rgba(${p0(pal)},0.95)`;
+  rr(x, cx - 10, cy - 12, 22, 24, 4);
+  x.fill();
+  glow(x, cx, cy, 18, p1(pal), 0.16);
+};
+
+/** Two posts pulled closer by a cord — tight, not a bow. */
+export const tight: SceneFn = (x, W, H, t, pal) => {
+  const cy = H * 0.5;
+  const gap = 70 - 28 * (0.5 + 0.5 * Math.sin(t * 1.5));
+  const left = W * 0.5 - gap;
+  const right = W * 0.5 + gap;
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 8;
+  x.lineCap = 'round';
+  line(x, left, cy - 40, left, cy + 40);
+  line(x, right, cy - 40, right, cy + 40);
+  x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+  x.lineWidth = 3;
+  line(x, left, cy, right, cy);
+  glow(x, W * 0.5, cy, 14, p0(pal), 0.2);
+};
+
+/** A lid settling onto a box — a cover, not a fold. */
+export const cover: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  const base = H * 0.74;
+  const drop = 0.5 + 0.5 * Math.sin(t * 1.3);
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  rr(x, cx - 48, base - 52, 96, 56, 6);
+  x.fill();
+  const lidY = base - 78 - (1 - drop) * 36;
+  x.fillStyle = `rgba(${p0(pal)},0.95)`;
+  rr(x, cx - 56, lidY, 112, 16, 4);
+  x.fill();
+  glow(x, cx, lidY + 8, 16, p1(pal), 0.14 + drop * 0.1);
+};
+
+/** A sharp tip and a traveling dot — a point, not a cut. */
+export const point: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.58;
+  const cy = H * 0.48;
+  x.fillStyle = `rgba(${p0(pal)},0.95)`;
+  x.beginPath();
+  x.moveTo(cx + 36, cy);
+  x.lineTo(cx - 28, cy - 16);
+  x.lineTo(cx - 28, cy + 16);
+  x.closePath();
+  x.fill();
+  const travel = (t * 0.5) % 1;
+  disc(x, cx - 40 + travel * 70, cy, 4, `rgba(${p1(pal)},0.95)`);
+  glow(x, cx + 30, cy, 14, p1(pal), 0.25);
+};
+
+/** A needle with an eye and a stitch — a needle, not a spool. */
+export const needle: SceneFn = (x, W, H, t, pal) => {
+  const bob = Math.sin(t * 2.2) * 16;
+  const cx = W * 0.48;
+  const cy = H * 0.48 + bob;
+  x.save();
+  x.translate(cx, cy);
+  x.rotate(-0.4);
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  line(x, -40, 0, 36, 0);
+  x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+  x.lineWidth = 2;
+  x.beginPath();
+  x.ellipse(-28, 0, 6, 4, 0, 0, TAU);
+  x.stroke();
+  x.restore();
+  x.strokeStyle = `rgba(${p0(pal)},0.8)`;
+  x.lineWidth = 2;
+  x.beginPath();
+  x.moveTo(cx - 18, cy);
+  x.quadraticCurveTo(cx + 10, cy + 28 - bob, cx + 24, H * 0.72);
+  x.stroke();
+  glow(x, cx + 20, cy - 8, 12, p1(pal), 0.16);
+};
+
+/** A bow drawing its loops in — a tie, not a belt. */
+export const tie: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  const cy = H * 0.5;
+  const pull = 0.75 + 0.25 * (0.5 + 0.5 * Math.sin(t * 1.5));
+  x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+  x.lineWidth = 5;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.ellipse(cx - 22 * pull, cy, 20 * pull, 14, -0.4, 0, TAU);
+  x.stroke();
+  x.beginPath();
+  x.ellipse(cx + 22 * pull, cy, 20 * pull, 14, 0.4, 0, TAU);
+  x.stroke();
+  disc(x, cx, cy, 6, `rgba(${p1(pal)},0.95)`);
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 3;
+  line(x, cx - 6, cy + 6, cx - 16, cy + 36);
+  line(x, cx + 6, cy + 6, cx + 16, cy + 36);
+  glow(x, cx, cy, 14, p0(pal), 0.16);
+};
+
+/** Overlapping loops with a traveling gleam — a knot, not a bow. */
+export const knot: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  const cy = H * 0.5;
+  x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+  x.lineWidth = 7;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.arc(cx - 8, cy, 22, 0.4, Math.PI * 1.7);
+  x.stroke();
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.beginPath();
+  x.arc(cx + 10, cy + 4, 20, Math.PI * 0.8, Math.PI * 2.3);
+  x.stroke();
+  const gleam = (t * 0.4) % 1;
+  const ang = gleam * TAU;
+  glow(x, cx + Math.cos(ang) * 18, cy + Math.sin(ang) * 16, 12, p1(pal), 0.35);
+};
