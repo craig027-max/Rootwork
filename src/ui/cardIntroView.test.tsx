@@ -11,6 +11,8 @@ import { Deck } from './Deck';
 
 const bio = ROOTS.find((r) => r.root === 'Bio') as Root;
 const sal = ROOTS.find((r) => r.root === 'Sal') as Root;
+const vest = ROOTS.find((r) => r.root === 'Vest') as Root;
+const tex = ROOTS.find((r) => r.root === 'Tex') as Root;
 
 function bodyText(): string {
   return (document.body.textContent ?? '').replace(/\s+/g, ' ').trim();
@@ -107,6 +109,58 @@ describe('what the kid sees on a new card', () => {
     expect(quiz).not.toContain('Show the questions');
     expect(quiz).toContain('SAL');
     expect(quiz).toContain('Latin sāl');
+  });
+
+  it('shows the Invest intro first, then the question, and keeps VEST', async () => {
+    useWondralStore.setState({
+      currentRootId: rootId(vest),
+      deckEntry: 'find',
+      deckFocusWord: 'Invest',
+    });
+    await show();
+
+    const intro = bodyText();
+    expect(intro).toContain('Invest means money committed so it can grow.');
+    expect(intro).toContain('It comes from Latin, from Vest — clothing.');
+    expect(intro).toContain('VEST');
+    expect(intro).toContain('Show the questions');
+    expect(intro).not.toContain('What does Invest mean?');
+    expect(intro).not.toContain('clothing on');
+    expect(document.querySelector('.ww-recall-opt')).toBeNull();
+
+    const button = showQuestions();
+    expect(button).toBeTruthy();
+    await act(async () => {
+      button?.click();
+    });
+
+    const quiz = bodyText();
+    expect(quiz).toContain('What does Invest mean?');
+    expect(quiz).toContain('Money committed so it can grow');
+    expect(document.querySelectorAll('.ww-recall-opt').length).toBeGreaterThan(1);
+    expect(quiz).not.toContain('Invest means money committed so it can grow.');
+    expect(quiz).not.toContain('Show the questions');
+    expect(quiz).toContain('VEST');
+    expect(quiz).toContain('Latin vestis');
+  });
+
+  it('shows a new Tex intro before any question', async () => {
+    useWondralStore.setState({ currentRootId: rootId(tex), deckEntry: 'teach' });
+    await show();
+
+    const intro = bodyText();
+    expect(intro).toContain('Tex means weave.');
+    expect(intro).toContain('It comes from Latin. Like Textile.');
+    expect(intro).toContain('TEKS');
+    expect(intro).not.toContain('What does');
+    expect(document.querySelector('.ww-recall-opt')).toBeNull();
+
+    await act(async () => {
+      showQuestions()?.click();
+    });
+    expect(document.querySelector('.ww-recall-opt')).not.toBeNull();
+    expect(bodyText()).not.toContain('Show the questions');
+    expect(bodyText()).not.toContain('Tex means weave.');
   });
 
   it('shows a new root intro before any question and keeps BY-oh', async () => {

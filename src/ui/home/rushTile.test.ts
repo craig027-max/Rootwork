@@ -253,7 +253,7 @@ describe('Home Root Rush tile: Continue Daily is a real tap mid-run', () => {
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(255);
+    expect(ROOTS.length).toBe(267);
   });
 });
 

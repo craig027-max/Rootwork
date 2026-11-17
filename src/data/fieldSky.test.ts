@@ -79,7 +79,7 @@ describe('Field & Sky starter set', () => {
       expect(i, name).toBeLessThan(auto);
       prev = i;
     }
-    expect(ROOTS.length).toBe(255);
+    expect(ROOTS.length).toBe(267);
   });
 
   it('keeps the classical origins and the life-science breakdowns', () => {

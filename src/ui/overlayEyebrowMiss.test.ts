@@ -265,7 +265,7 @@ describe('Rush / Daily overlay after a miss is Remember — not Root Rush / Dail
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(255);
+    expect(ROOTS.length).toBe(267);
     expect(first.root).toBe('Bio');
   });
 });
