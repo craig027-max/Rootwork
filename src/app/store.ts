@@ -56,7 +56,8 @@ export type AppView =
   | 'paywall'
   | 'grownups'
   | 'privacy'
-  | 'terms';
+  | 'terms'
+  | 'refunds';
 
 // Post-checkout banner state. A parent returning from a $49–79 payment must
 // ALWAYS see what happened: 'unlocking' while we poll for the webhook's grant,

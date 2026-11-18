@@ -16,6 +16,7 @@ import { ParentGate } from '../ui/ParentGate';
 import { AskGrownup } from '../ui/AskGrownup';
 import { ParentDashboard } from '../ui/ParentDashboard';
 import { PrivacyPolicy } from '../ui/PrivacyPolicy';
+import { RefundPolicy } from '../ui/RefundPolicy';
 import { TermsOfService } from '../ui/TermsOfService';
 import { Celebration } from '../ui/Celebration';
 import { BuildStamp } from '../ui/BuildStamp';
@@ -92,6 +93,8 @@ function Screen({ view }: { view: AppView }) {
       return <PrivacyPolicy />;
     case 'terms':
       return <TermsOfService />;
+    case 'refunds':
+      return <RefundPolicy />;
     case 'home':
     default:
       return <Home />;

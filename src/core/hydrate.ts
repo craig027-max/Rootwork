@@ -138,7 +138,8 @@ async function loadProfileIntoStore(userId?: string): Promise<void> {
       currentView !== 'auth' &&
       currentView !== 'consent' &&
       currentView !== 'privacy' &&
-      currentView !== 'terms'
+      currentView !== 'terms' &&
+      currentView !== 'refunds'
     ) {
       store.setView('consent');
     }
@@ -161,7 +162,8 @@ function routeParentLanding(students: StudentProfile[]): void {
     store.view === 'deck' ||
     store.view === 'quiz' ||
     store.view === 'privacy' ||
-    store.view === 'terms'
+    store.view === 'terms' ||
+    store.view === 'refunds'
   )
     return;
 

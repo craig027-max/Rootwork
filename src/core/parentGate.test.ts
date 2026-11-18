@@ -27,6 +27,7 @@ describe('parent gate window', () => {
     expect(needsParentGate('dashboard')).toBe(true);
     expect(needsParentGate('privacy')).toBe(false);
     expect(needsParentGate('terms')).toBe(false);
+    expect(needsParentGate('refunds')).toBe(false);
     expect(needsParentGate('home')).toBe(false);
     expect(needsParentGate('deck')).toBe(false);
     expect(needsParentGate('quiz')).toBe(false);
@@ -36,6 +37,7 @@ describe('parent gate window', () => {
   it('treats legal pages as the grown-up area so leaving them for home resets the gate', () => {
     expect(isGrownupArea('privacy')).toBe(true);
     expect(isGrownupArea('terms')).toBe(true);
+    expect(isGrownupArea('refunds')).toBe(true);
     expect(isGrownupArea('paywall')).toBe(true);
     expect(isGrownupArea('home')).toBe(false);
     expect(isGrownupArea('deck')).toBe(false);

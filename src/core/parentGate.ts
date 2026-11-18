@@ -15,6 +15,7 @@ const GROWNUP_VIEWS: ReadonlySet<AppView> = new Set([
   'dashboard',
   'privacy',
   'terms',
+  'refunds',
 ]);
 
 /**

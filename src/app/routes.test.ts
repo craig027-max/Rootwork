@@ -6,11 +6,13 @@ describe('viewForPath', () => {
   it('maps the legal deep links', () => {
     expect(viewForPath('/privacy')).toBe('privacy');
     expect(viewForPath('/terms')).toBe('terms');
+    expect(viewForPath('/refunds')).toBe('refunds');
   });
 
   it('tolerates trailing slashes (Cloudflare Pages can serve either)', () => {
     expect(viewForPath('/privacy/')).toBe('privacy');
     expect(viewForPath('/terms/')).toBe('terms');
+    expect(viewForPath('/refunds/')).toBe('refunds');
   });
 
   it('returns null for everything else', () => {
@@ -23,7 +25,7 @@ describe('viewForPath', () => {
 
 describe('pathForView', () => {
   it('is the inverse of viewForPath for routed views', () => {
-    for (const view of ['privacy', 'terms'] as AppView[]) {
+    for (const view of ['privacy', 'terms', 'refunds'] as AppView[]) {
       expect(viewForPath(pathForView(view)!)).toBe(view);
     }
   });
