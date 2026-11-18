@@ -2554,3 +2554,222 @@ export const knot: SceneFn = (x, W, H, t, pal) => {
   const ang = gleam * TAU;
   glow(x, cx + Math.cos(ang) * 18, cy + Math.sin(ang) * 16, 12, p1(pal), 0.35);
 };
+
+/** Two peaks and a drifting cloud — a mountain, not a heap of stones. */
+export const mountain: SceneFn = (x, W, H, t, pal) => {
+  const base = H * 0.78;
+  x.fillStyle = `rgba(${p0(pal)},0.9)`;
+  x.beginPath();
+  x.moveTo(W * 0.08, base);
+  x.lineTo(W * 0.34, H * 0.28);
+  x.lineTo(W * 0.52, base);
+  x.fill();
+  x.fillStyle = `rgba(${p1(pal)},0.92)`;
+  x.beginPath();
+  x.moveTo(W * 0.36, base);
+  x.lineTo(W * 0.64, H * 0.18);
+  x.lineTo(W * 0.92, base);
+  x.fill();
+  disc(x, W * 0.64, H * 0.18, 5, 'rgba(255,255,255,0.9)');
+  const drift = (t * 0.15) % 1;
+  const cx = W * 0.22 + drift * W * 0.4;
+  x.fillStyle = `rgba(255,255,255,0.75)`;
+  disc(x, cx, H * 0.22, 10, 'rgba(255,255,255,0.8)');
+  disc(x, cx + 12, H * 0.24, 8, 'rgba(255,255,255,0.7)');
+  glow(x, W * 0.64, H * 0.36, 20, p1(pal), 0.15);
+};
+
+/** Land ringed by water — an island, not a peninsula sketch. */
+export const island: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  const cy = H * 0.52;
+  x.strokeStyle = `rgba(${p1(pal)},0.55)`;
+  x.lineWidth = 2;
+  const lap = (t * 0.4) % 1;
+  x.beginPath();
+  x.ellipse(cx, cy + 8, 70 + lap * 6, 28, 0, 0, TAU);
+  x.stroke();
+  x.fillStyle = `rgba(${p0(pal)},0.92)`;
+  x.beginPath();
+  x.ellipse(cx, cy, 48, 22, 0, 0, TAU);
+  x.fill();
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 3;
+  line(x, cx, cy - 8, cx, cy - 36);
+  disc(x, cx + 8, cy - 30, 10, `rgba(${p1(pal)},0.9)`);
+  glow(x, cx, cy, 18, p0(pal), 0.18);
+};
+
+/** A stand of trunks under one canopy — woods, not a single tree. */
+export const woods: SceneFn = (x, W, H, t, pal) => {
+  const ground = H * 0.82;
+  x.strokeStyle = `rgba(${p0(pal)},0.35)`;
+  x.lineWidth = 2;
+  line(x, W * 0.1, ground, W * 0.9, ground);
+  x.fillStyle = `rgba(${p1(pal)},0.45)`;
+  x.beginPath();
+  x.ellipse(W * 0.5, H * 0.34, 78, 28, 0, 0, TAU);
+  x.fill();
+  [0.32, 0.5, 0.68].forEach((px, i) => {
+    const sway = Math.sin(t * 1.1 + i) * 2;
+    x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+    x.lineWidth = 6;
+    line(x, W * px + sway, ground, W * px, H * 0.4);
+  });
+  glow(x, W * 0.5, H * 0.34, 16, p1(pal), 0.12);
+};
+
+/** Low grass and a fence in the wind — a field, not a wheat sheaf. */
+export const field: SceneFn = (x, W, H, t, pal) => {
+  const ground = H * 0.72;
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 3;
+  line(x, W * 0.12, H * 0.42, W * 0.88, H * 0.42);
+  line(x, W * 0.2, H * 0.42, W * 0.2, ground);
+  line(x, W * 0.8, H * 0.42, W * 0.8, ground);
+  for (let i = 0; i < 9; i++) {
+    const px = W * 0.18 + i * (W * 0.08);
+    const sway = Math.sin(t * 1.6 + i * 0.4) * 4;
+    x.strokeStyle = `rgba(${i % 2 ? p1(pal) : p0(pal)},0.85)`;
+    x.lineWidth = 2;
+    line(x, px, ground, px + sway, ground - 22);
+  }
+  glow(x, W * 0.5, ground - 8, 18, p0(pal), 0.12);
+};
+
+/** A gleaming block — ice, not a spreading frost. */
+export const ice: SceneFn = (x, W, H, t, pal) => {
+  const cx = W * 0.5;
+  const cy = H * 0.52;
+  x.fillStyle = `rgba(${p1(pal)},0.55)`;
+  x.beginPath();
+  x.moveTo(cx - 46, cy + 28);
+  x.lineTo(cx - 28, cy - 36);
+  x.lineTo(cx + 40, cy - 28);
+  x.lineTo(cx + 22, cy + 36);
+  x.closePath();
+  x.fill();
+  x.strokeStyle = `rgba(255,255,255,0.85)`;
+  x.lineWidth = 2;
+  x.stroke();
+  const gleam = 0.5 + 0.5 * Math.sin(t * 1.8);
+  x.strokeStyle = `rgba(255,255,255,${0.35 + gleam * 0.5})`;
+  line(x, cx - 18, cy - 20, cx + 8, cy + 16);
+  glow(x, cx, cy, 22, p1(pal), 0.2 + gleam * 0.1);
+};
+
+/** Crystals racing over a puddle — freeze, not a block of ice. */
+export const freeze: SceneFn = (x, W, H, t, pal) => {
+  const y = H * 0.58;
+  x.strokeStyle = `rgba(${p1(pal)},0.45)`;
+  x.lineWidth = 8;
+  x.lineCap = 'round';
+  line(x, W * 0.14, y, W * 0.86, y);
+  const grow = (t * 0.35) % 1;
+  const n = 3 + Math.floor(grow * 5);
+  for (let i = 0; i < n; i++) {
+    const px = W * 0.22 + i * (W * 0.1);
+    x.strokeStyle = `rgba(${i % 2 ? p0(pal) : '255,255,255'},0.9)`;
+    x.lineWidth = 2;
+    line(x, px, y, px - 6, y - 14);
+    line(x, px, y, px + 6, y - 12);
+    line(x, px, y, px, y - 18);
+  }
+  glow(x, W * 0.3 + grow * W * 0.4, y, 14, p1(pal), 0.2);
+};
+
+/** A dark arch in a hillside — a hollow, not a heap. */
+export const hollow: SceneFn = (x, W, H, t, pal) => {
+  const base = H * 0.8;
+  x.fillStyle = `rgba(${p0(pal)},0.88)`;
+  x.beginPath();
+  x.moveTo(W * 0.12, base);
+  x.quadraticCurveTo(W * 0.5, H * 0.22, W * 0.88, base);
+  x.closePath();
+  x.fill();
+  x.fillStyle = `rgba(20,24,32,0.88)`;
+  x.beginPath();
+  x.ellipse(W * 0.5, base - 8, 28, 36, 0, Math.PI, 0);
+  x.fill();
+  const flicker = 0.35 + 0.2 * Math.sin(t * 2);
+  glow(x, W * 0.5, base - 20, 16, p1(pal), flicker);
+};
+
+/** A narrow winding stream — a brook, not the open sea. */
+export const brook: SceneFn = (x, W, H, t, pal) => {
+  const flow = (t * 0.5) % 1;
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 8;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.moveTo(W * 0.15, H * 0.28);
+  x.quadraticCurveTo(W * 0.7, H * 0.4, W * 0.35, H * 0.55);
+  x.quadraticCurveTo(W * 0.1, H * 0.68, W * 0.62, H * 0.78);
+  x.stroke();
+  disc(x, W * 0.28 + flow * 20, H * 0.4 + flow * 10, 3, 'rgba(255,255,255,0.85)');
+  glow(x, W * 0.45, H * 0.55, 14, p1(pal), 0.16);
+};
+
+/** One traveling crest — a wave, not radio rings. */
+export const ripple: SceneFn = (x, W, H, t, pal) => {
+  const shift = (t * 0.45) % 1;
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  x.beginPath();
+  for (let i = 0; i <= 24; i++) {
+    const f = i / 24;
+    const px = W * 0.12 + f * W * 0.76;
+    const py = H * 0.52 + Math.sin((f + shift) * Math.PI * 2) * 28;
+    if (i === 0) x.moveTo(px, py);
+    else x.lineTo(px, py);
+  }
+  x.stroke();
+  const crest = (shift + 0.25) % 1;
+  glow(x, W * 0.12 + crest * W * 0.76, H * 0.52 - 20, 14, p0(pal), 0.28);
+};
+
+/** A level sheet — flat, not a folded page. */
+export const flat: SceneFn = (x, W, H, t, pal) => {
+  const y = H * 0.58;
+  x.fillStyle = `rgba(${p0(pal)},0.9)`;
+  rr(x, W * 0.16, y - 10, W * 0.68, 18, 3);
+  x.fill();
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 2;
+  line(x, W * 0.16, y, W * 0.84, y);
+  const slide = (t * 0.3) % 1;
+  disc(x, W * 0.24 + slide * W * 0.48, y - 16, 7, `rgba(${p1(pal)},0.95)`);
+  glow(x, W * 0.5, y, 16, p0(pal), 0.12);
+};
+
+/** A figure moving up a slope — climb, not a lift straight up. */
+export const climb: SceneFn = (x, W, H, t, pal) => {
+  const p = (t * 0.22) % 1;
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 4;
+  line(x, W * 0.12, H * 0.82, W * 0.88, H * 0.28);
+  const px = W * 0.2 + p * W * 0.5;
+  const py = H * 0.78 - p * H * 0.42;
+  person(x, px, py, p1(pal), t * 3);
+  glow(x, px, py - 24, 14, p1(pal), 0.16);
+};
+
+/** Stones stacking — a heap, not one mountain peak. */
+export const heap: SceneFn = (x, W, H, t, pal) => {
+  const base = H * 0.78;
+  const n = 3 + Math.floor(((t * 0.4) % 1) * 3);
+  const spots = [
+    [0, 0],
+    [-22, 0],
+    [22, 0],
+    [-11, -20],
+    [12, -20],
+    [0, -40],
+  ];
+  for (let i = 0; i < n && i < spots.length; i++) {
+    const [dx = 0, dy = 0] = spots[i] ?? [0, 0];
+    disc(x, W * 0.5 + dx, base - 12 + dy, 14, `rgba(${i % 2 ? p1(pal) : p0(pal)},0.92)`);
+  }
+  glow(x, W * 0.5, base - 24, 18, p0(pal), 0.14);
+};

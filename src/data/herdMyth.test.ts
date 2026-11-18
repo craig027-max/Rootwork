@@ -82,7 +82,7 @@ describe('Herd & Myth starter set', () => {
       expect(i, name).toBeLessThan(auto);
       prev = i;
     }
-    expect(ROOTS.length).toBe(267);
+    expect(ROOTS.length).toBe(279);
   });
 
   it('keeps the classical origins and the shared piece names', () => {
