@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import type { User } from '@supabase/supabase-js';
 import { initialView } from './routes';
-import { moduleIdOfRoot } from '../data/roots';
+import { isRootOpenable, moduleIdOfRoot } from '../data/roots';
 import { signOut as libSignOut } from '../core/auth';
 import { resolveEntryView } from '../core/consentGate';
-import { canAddStudent, isEntitlementActive } from '../core/entitlement';
+import { canAddStudent, gateEntitled, isEntitlementActive } from '../core/entitlement';
+import { isGrownupArea } from '../core/parentGate';
 import {
   clearRemoteProgress,
   localProgressKey,
@@ -53,6 +54,7 @@ export type AppView =
   | 'consent'
   | 'dashboard'
   | 'paywall'
+  | 'grownups'
   | 'privacy'
   | 'terms';
 
@@ -135,6 +137,19 @@ function completedIdSet(p: RootProgress): Set<string> {
 
 function isOffline(): boolean {
   return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
+/** Same display rule as useEntitledForDisplay, so a locked tap matches the UI. */
+function displayEntitled(s: {
+  entitlement: Entitlement | null;
+  authStatus: AuthStatus;
+  entitlementLoaded: boolean;
+}): boolean {
+  return gateEntitled({
+    active: isEntitlementActive(s.entitlement),
+    authStatus: s.authStatus,
+    entitlementLoaded: s.entitlementLoaded,
+  });
 }
 
 // Gamification stats are namespaced per active student, same scheme as progress.
@@ -287,6 +302,18 @@ interface WondralStore {
    * auth / consent / paywall (or stays put) depending on state — never an error.
    */
   requestUpgrade: () => void;
+  /**
+   * When the parent gate was passed, in epoch ms. Null when locked.
+   * In-memory only: a reload locks it, leaving the grown-up area locks it,
+   * and a few minutes locks it even if they stay.
+   */
+  parentGateAt: number | null;
+  passParentGate: () => void;
+  clearParentGate: () => void;
+  /** Kid tapped locked content. An overlay — never a purchase screen. */
+  askOpen: boolean;
+  openAsk: () => void;
+  closeAsk: () => void;
   signOut: () => Promise<void>;
 
   // Post-checkout banner (driven by consumeCheckoutReturn / pollEntitlementUnlock).
@@ -375,7 +402,15 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   // Boot on /privacy or /terms when deep-linked; App.tsx keeps the URL in sync
   // as the view changes afterwards.
   view: initialView(),
-  setView: (v) => set({ view: v }),
+  setView: (v) => {
+    const s = get();
+    const keepGate = isGrownupArea(s.view) && isGrownupArea(v);
+    set({
+      view: v,
+      askOpen: false,
+      parentGateAt: keepGate ? s.parentGateAt : null,
+    });
+  },
 
   authStatus: 'loading',
   authUser: null,
@@ -405,6 +440,12 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   entitlement: null,
   entitlementLoaded: false,
   setEntitlement: (e) => set({ entitlement: e, entitlementLoaded: true }),
+  parentGateAt: null,
+  passParentGate: () => set({ parentGateAt: Date.now() }),
+  clearParentGate: () => set({ parentGateAt: null }),
+  askOpen: false,
+  openAsk: () => set({ askOpen: true }),
+  closeAsk: () => set({ askOpen: false }),
   checkoutNotice: null,
   setCheckoutNotice: (n) => set({ checkoutNotice: n }),
   requestUpgrade: () => {
@@ -418,7 +459,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       intent: 'upgrade',
     });
     if (view === 'loading') return;
-    set({ view });
+    get().setView(view);
   },
   signOut: async () => {
     await libSignOut();
@@ -444,6 +485,8 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       browseQuery: '',
       correctAdvance: null,
       queuedStudyRecall: null,
+      askOpen: false,
+      parentGateAt: null,
     });
   },
 
@@ -486,7 +529,16 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   },
 
   passwordRecovery: false,
-  beginPasswordRecovery: () => set({ passwordRecovery: true, view: 'auth' }),
+  beginPasswordRecovery: () => {
+    const s = get();
+    const keepGate = isGrownupArea(s.view);
+    set({
+      passwordRecovery: true,
+      view: 'auth',
+      askOpen: false,
+      parentGateAt: keepGate ? s.parentGateAt : null,
+    });
+  },
   endPasswordRecovery: () => set({ passwordRecovery: false }),
 
   selectedTier: null,
@@ -502,6 +554,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   setQueuedStudyRecall: (queued) => set({ queuedStudyRecall: queued }),
   openRoot: (id, opts) =>
     set((s) => {
+      if (!isRootOpenable(id, displayEntitled(s))) return { askOpen: true };
       const entry = deckEntryForOpen(opts);
       return {
         currentRootId: id,
@@ -510,6 +563,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
         deckFocusWord: opts?.focusWord?.replace(/\s+/g, ' ').trim() || null,
         browseQuery: entry === 'find' ? s.browseQuery : '',
         correctAdvance: null,
+        askOpen: false,
       };
     }),
   closeRoot: () =>
@@ -521,6 +575,8 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       browseQuery: '',
       correctAdvance: null,
       queuedStudyRecall: null,
+      askOpen: false,
+      parentGateAt: null,
     }),
   beginCorrectAdvance: (fromId, dest) => set({ correctAdvance: { fromId, dest } }),
   clearCorrectAdvance: () => set({ correctAdvance: null }),

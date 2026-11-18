@@ -22,6 +22,7 @@ export function ParentDashboard() {
   const renameStudent = useWondralStore((s) => s.renameStudent);
   const removeStudent = useWondralStore((s) => s.removeStudent);
   const setView = useWondralStore((s) => s.setView);
+  const signOut = useWondralStore((s) => s.signOut);
   const entitlement = useWondralStore((s) => s.entitlement);
   const requestUpgrade = useWondralStore((s) => s.requestUpgrade);
 
@@ -199,6 +200,9 @@ export function ParentDashboard() {
       )}
 
       <div className="ww-row">
+        <Button variant="ghost" onClick={() => void signOut()}>
+          Sign out
+        </Button>
         <Button variant="ghost" onClick={() => setView('home')}>
           Back to learning
         </Button>

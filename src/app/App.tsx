@@ -3,7 +3,7 @@ import '../styles/app.css';
 import { useWondralStore } from './store';
 import { pathForView, viewForPath } from './routes';
 import { consumeCheckoutReturn, pollEntitlementUnlock } from '../core/checkout';
-import { useShowUpgrade } from './hooks';
+import { needsParentGate, PARENT_GATE_MS } from '../core/parentGate';
 import { Home } from '../ui/Home';
 import { Deck } from '../ui/Deck';
 import { RootRush } from '../ui/RootRush';
@@ -11,6 +11,9 @@ import { DailyChallenge } from '../ui/DailyChallenge';
 import { AuthScreen } from '../ui/AuthScreen';
 import { Consent } from '../ui/Consent';
 import { Paywall } from '../ui/Paywall';
+import { Grownups } from '../ui/Grownups';
+import { ParentGate } from '../ui/ParentGate';
+import { AskGrownup } from '../ui/AskGrownup';
 import { ParentDashboard } from '../ui/ParentDashboard';
 import { PrivacyPolicy } from '../ui/PrivacyPolicy';
 import { TermsOfService } from '../ui/TermsOfService';
@@ -18,7 +21,6 @@ import { Celebration } from '../ui/Celebration';
 import { BuildStamp } from '../ui/BuildStamp';
 import { Button } from '../ui/components/Button';
 import type { AppView, CheckoutNotice } from './store';
-import { showAccountChrome } from './playChrome';
 
 function CheckoutBanner({
   notice,
@@ -63,6 +65,12 @@ function CheckoutBanner({
 }
 
 function Screen({ view }: { view: AppView }) {
+  const parentGateAt = useWondralStore((s) => s.parentGateAt);
+  // Expiry is applied by the timer in App (it clears parentGateAt). Render
+  // only reads that flag, so it stays pure.
+  if (needsParentGate(view) && parentGateAt == null) {
+    return <ParentGate />;
+  }
   switch (view) {
     case 'deck':
       return <Deck />;
@@ -76,6 +84,8 @@ function Screen({ view }: { view: AppView }) {
       return <Consent />;
     case 'paywall':
       return <Paywall />;
+    case 'grownups':
+      return <Grownups />;
     case 'dashboard':
       return <ParentDashboard />;
     case 'privacy':
@@ -92,12 +102,12 @@ export function App() {
   const view = useWondralStore((s) => s.view);
   const setView = useWondralStore((s) => s.setView);
   const closeRoot = useWondralStore((s) => s.closeRoot);
-  const authUser = useWondralStore((s) => s.authUser);
-  const requestUpgrade = useWondralStore((s) => s.requestUpgrade);
-  const signOut = useWondralStore((s) => s.signOut);
-  const showUpgrade = useShowUpgrade();
   const checkoutNotice = useWondralStore((s) => s.checkoutNotice);
   const setCheckoutNotice = useWondralStore((s) => s.setCheckoutNotice);
+  const askOpen = useWondralStore((s) => s.askOpen);
+  const closeAsk = useWondralStore((s) => s.closeAsk);
+  const parentGateAt = useWondralStore((s) => s.parentGateAt);
+  const clearParentGate = useWondralStore((s) => s.clearParentGate);
 
   // Handle a return from Stripe Checkout (?checkout=success|cancel) on first load.
   // consumeCheckoutReturn strips the URL param, so a StrictMode double-run (or a
@@ -133,54 +143,45 @@ export function App() {
     return () => window.removeEventListener('popstate', onPop);
   }, [setView]);
 
-  const signedIn = authUser && !authUser.isAnonymous;
-  const accountChrome = showAccountChrome(view);
+  // A passed gate expires even if the parent stays on the screen.
+  useEffect(() => {
+    if (!needsParentGate(view) || parentGateAt == null) return;
+    const left = PARENT_GATE_MS - (Date.now() - parentGateAt);
+    if (left <= 0) {
+      clearParentGate();
+      return;
+    }
+    const id = window.setTimeout(() => clearParentGate(), left);
+    return () => window.clearTimeout(id);
+  }, [view, parentGateAt, clearParentGate]);
 
   return (
-    <div className={`ww-app rw-ambient ww-app--${view}`}>
-      <header className="ww-topbar">
-        <button className="ww-brand" onClick={() => closeRoot()} aria-label="Wondral Words home">
-          <span className="ww-mark" aria-hidden="true">
-            🌱
-          </span>
-          <span>
-            Wondral <span className="text-gradient-hero">Words</span>
-          </span>
-        </button>
-        <div className="ww-spacer" />
-        {accountChrome && showUpgrade ? (
-          <Button size="sm" onClick={requestUpgrade}>
-            Go Premium
-          </Button>
-        ) : null}
-        {accountChrome && signedIn ? (
-          <>
-            <Button variant="ghost" size="sm" onClick={() => setView('dashboard')}>
-              Dashboard
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => void signOut()}>
-              Sign out
-            </Button>
-          </>
-        ) : null}
-        {accountChrome && !signedIn ? (
-          <Button variant="ghost" size="sm" onClick={() => setView('auth')}>
-            Sign in
-          </Button>
-        ) : null}
-      </header>
+    <>
+      <div className={`ww-app rw-ambient ww-app--${view}`} inert={askOpen ? true : undefined}>
+        <header className="ww-topbar">
+          <button className="ww-brand" onClick={() => closeRoot()} aria-label="Wondral Words home">
+            <span className="ww-mark" aria-hidden="true">
+              🌱
+            </span>
+            <span>
+              Wondral <span className="text-gradient-hero">Words</span>
+            </span>
+          </button>
+        </header>
 
-      <main className="ww-main">
-        <CheckoutBanner
-          notice={checkoutNotice}
-          onRetry={retryUnlock}
-          onDismiss={() => setCheckoutNotice(null)}
-        />
-        <Screen view={view} />
-      </main>
+        <main className="ww-main">
+          <CheckoutBanner
+            notice={checkoutNotice}
+            onRetry={retryUnlock}
+            onDismiss={() => setCheckoutNotice(null)}
+          />
+          <Screen view={view} />
+        </main>
 
-      <Celebration />
-      <BuildStamp />
-    </div>
+        <Celebration />
+        <BuildStamp />
+      </div>
+      {askOpen ? <AskGrownup onBack={closeAsk} /> : null}
+    </>
   );
 }
