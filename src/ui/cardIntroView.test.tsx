@@ -87,10 +87,12 @@ describe('what the kid sees on a new card', () => {
     await show();
 
     const intro = bodyText();
-    expect(intro).toContain('Salary means pay for work.');
-    expect(intro).toContain('It comes from Latin, from Sal — salt.');
+    expect(intro).toContain('Salary is from Latin');
     expect(intro).toContain('SAL');
     expect(intro).toContain('Show the questions');
+    expect(intro).not.toContain('Salary means pay for work.');
+    expect(intro).not.toContain('pay for work');
+    expect(intro).not.toContain('salt');
     expect(intro).not.toContain('What does Salary mean?');
     expect(intro).not.toContain('Roman');
     expect(document.querySelector('.ww-recall-opt')).toBeNull();
@@ -111,6 +113,18 @@ describe('what the kid sees on a new card', () => {
     expect(quiz).not.toContain('Show the questions');
     expect(quiz).toContain('SAL');
     expect(quiz).toContain('Latin sāl');
+
+    const choice = [...document.querySelectorAll('button')].find((button) =>
+      button.className.includes('ww-recall-opt'),
+    );
+    expect(choice).toBeTruthy();
+    await act(async () => {
+      choice?.click();
+    });
+    const told = bodyText();
+    expect(told).toContain('Salary means pay for work.');
+    expect(told).toContain('It comes from Latin, from Sal — salt.');
+    expect(told).not.toContain('Show the questions');
   });
 
   it('shows the Invest intro first, then the question, and keeps VEST', async () => {
@@ -122,10 +136,12 @@ describe('what the kid sees on a new card', () => {
     await show();
 
     const intro = bodyText();
-    expect(intro).toContain('Invest means money committed so it can grow.');
-    expect(intro).toContain('It comes from Latin, from Vest — clothing.');
+    expect(intro).toContain('Invest is from Latin');
     expect(intro).toContain('VEST');
     expect(intro).toContain('Show the questions');
+    expect(intro).not.toContain('Invest means money committed so it can grow.');
+    expect(intro).not.toContain('Money committed so it can grow');
+    expect(intro).not.toContain('clothing');
     expect(intro).not.toContain('What does Invest mean?');
     expect(intro).not.toContain('clothing on');
     expect(document.querySelector('.ww-recall-opt')).toBeNull();
@@ -155,10 +171,12 @@ describe('what the kid sees on a new card', () => {
     await show();
 
     const intro = bodyText();
-    expect(intro).toContain('Gelato means a soft Italian ice cream.');
-    expect(intro).toContain('It comes from Latin, from Gel — freeze.');
+    expect(intro).toContain('Gelato is from Latin');
     expect(intro).toContain('GEL');
     expect(intro).toContain('Show the questions');
+    expect(intro).not.toContain('Gelato means a soft Italian ice cream.');
+    expect(intro).not.toContain('soft Italian ice cream');
+    expect(intro).not.toContain('freeze');
     expect(intro).not.toContain('What does Gelato mean?');
     expect(intro).not.toContain('frozen');
     expect(document.querySelector('.ww-recall-opt')).toBeNull();
@@ -184,9 +202,10 @@ describe('what the kid sees on a new card', () => {
     await show();
 
     const intro = bodyText();
-    expect(intro).toContain('Mont means mountain.');
-    expect(intro).toContain('It comes from Latin. Like Vermont.');
+    expect(intro).toContain('Mont is from Latin');
     expect(intro).toContain('MONT');
+    expect(intro).not.toContain('mountain');
+    expect(intro).not.toContain('Vermont');
     expect(intro).not.toContain('What does');
     expect(document.querySelector('.ww-recall-opt')).toBeNull();
 
@@ -196,6 +215,14 @@ describe('what the kid sees on a new card', () => {
     expect(document.querySelector('.ww-recall-opt')).not.toBeNull();
     expect(bodyText()).not.toContain('Show the questions');
     expect(bodyText()).not.toContain('Mont means mountain.');
+    const choice = document.querySelector('.ww-recall-opt') as HTMLButtonElement | null;
+    await act(async () => {
+      choice?.click();
+    });
+    const told = bodyText();
+    expect(told).toContain('Mont means mountain.');
+    expect(told).toContain('Latin');
+    expect(told).toMatch(/Vermont|Mountain|Montane/);
   });
 
   it('shows a new Tex intro before any question', async () => {
@@ -203,9 +230,10 @@ describe('what the kid sees on a new card', () => {
     await show();
 
     const intro = bodyText();
-    expect(intro).toContain('Tex means weave.');
-    expect(intro).toContain('It comes from Latin. Like Textile.');
+    expect(intro).toContain('Tex is from Latin');
     expect(intro).toContain('TEKS');
+    expect(intro).not.toContain('weave');
+    expect(intro).not.toContain('Textile');
     expect(intro).not.toContain('What does');
     expect(document.querySelector('.ww-recall-opt')).toBeNull();
 
@@ -222,9 +250,10 @@ describe('what the kid sees on a new card', () => {
     await show();
 
     const intro = bodyText();
-    expect(intro).toContain('Bio means life.');
-    expect(intro).toContain('It comes from Greek. Like Biology.');
+    expect(intro).toContain('Bio is from Greek');
     expect(intro).toContain('BY-oh');
+    expect(intro).not.toContain('life');
+    expect(intro).not.toContain('Biology');
     expect(intro).not.toContain('What does');
     expect(document.querySelector('.ww-recall-opt')).toBeNull();
     expect(intro).not.toContain('The science of living things');
@@ -270,8 +299,9 @@ describe('what the kid sees on a new card', () => {
       queuedStudyRecall: { rootId: rootId(sal), beat },
     });
     await show();
-    expect(bodyText()).toContain('Sal means salt.');
+    expect(bodyText()).not.toContain('salt');
     expect(bodyText()).not.toContain(beat.ask);
+    expect(bodyText()).toContain('Sal is from Latin');
     expect(document.querySelector('.ww-recall-opt')).toBeNull();
 
     await act(async () => {
@@ -295,8 +325,9 @@ describe('what the kid sees on a new card', () => {
     });
     await show();
     expect(bodyText()).toContain('Yes — Salary. Pay for work');
+    expect(bodyText()).toContain('Salary means pay for work.');
+    expect(bodyText()).toContain('It comes from Latin, from Sal — salt.');
     expect(bodyText()).not.toContain('Show the questions');
-    expect(bodyText()).not.toContain('Salary means pay for work.');
     expect(document.querySelector('.ww-recall-opt')).toBeNull();
   });
 });

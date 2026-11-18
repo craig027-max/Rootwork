@@ -36,6 +36,7 @@ export function DeckNav({
   fromRoot,
   quizzing = false,
   quizLong = false,
+  meta,
 }: {
   rootLabel: string;
   meaning: string;
@@ -66,8 +67,10 @@ export function DeckNav({
   /** Gloss / piece / pieces — centre is that name, and it must fit the pill. */
   quizzing?: boolean;
   quizLong?: boolean;
+  /** Intro overrides the centre line so a tier or word name cannot be the answer. */
+  meta?: string;
 }) {
-  const meta = deckNavMeta({
+  const computed = deckNavMeta({
     missed,
     missName,
     findWord,
@@ -97,7 +100,7 @@ export function DeckNav({
           {rootLabel}
           {meaning ? <b> · {meaning}</b> : null}
         </span>
-        <span className="meta">{meta}</span>
+        <span className="meta">{meta || computed}</span>
       </button>
       {showNext ? (
         <button

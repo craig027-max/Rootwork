@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { glossSaysMean } from '../core/distractors';
-import { INTRO_CONTINUE_LABEL, rootIntroCopy, wordIntroCopy } from '../core/cardIntro';
+import {
+  INTRO_CONTINUE_LABEL,
+  introContainsAnswer,
+  rootAnswerLesson,
+  rootIntroCopy,
+  wordAnswerLesson,
+  wordIntroCopy,
+} from '../core/cardIntro';
 import { quizGloss } from '../core/wordDef';
 import { HEAR_BEAT_PAUSE, speakablePronunciation, utteranceText, yesUtteranceText } from '../core/speak';
 import { buildIndexBrowseSections, indexMatchCount } from '../ui/deck/indexSearch';
@@ -61,7 +68,7 @@ const SCENES: Record<(typeof THREAD_FOLD)[number], string> = {
   Nod: 'knot',
 };
 
-/** First clause a new word says before the questions. */
+/** First clause the feedback says after the kid answers. */
 const WORD_INTRO: Record<string, string> = {
   Textile: 'Textile means a cloth made on a loom.',
   Texture: 'Texture means how a surface feels.',
@@ -262,30 +269,45 @@ describe('Thread & Fold starter set', () => {
     expect(glossSaysMean('build', 'A cloth made on a loom')).toBe(false);
   });
 
-  it('tells each new word what it means before the questions', () => {
+  it('keeps the meaning off the intro and teaches it after the answer', () => {
     for (const name of THREAD_FOLD) {
       const root = by[name]!;
-      expect(rootIntroCopy(root).lines).toEqual([
-        `${name} means ${root.mean}.`,
-        `It comes from Latin. Like ${root.words[0]!.w}.`,
-      ]);
-      expect(rootIntroCopy(root).continueLabel).toBe(INTRO_CONTINUE_LABEL);
-      expect(rootIntroCopy(root).lines.join(' ')).not.toContain(root.say);
+      const intro = rootIntroCopy(root);
+      const introText = intro.lines.join(' ');
+      expect(intro.continueLabel).toBe(INTRO_CONTINUE_LABEL);
+      expect(introText).toContain('is from Latin');
+      expect(introContainsAnswer(introText, root.mean), name).toBe(false);
+      for (const word of root.words) {
+        expect(introContainsAnswer(introText, word.w), word.w).toBe(false);
+      }
+      const lesson = rootAnswerLesson(root);
+      expect(lesson).toContain(`${name} means ${root.mean}.`);
+      expect(lesson).toContain('It comes from Latin.');
       for (const word of root.words) {
         const copy = wordIntroCopy({
           word: word.w,
           def: word.d,
           root: root.root,
+          say: root.say,
           mean: root.mean,
           org: root.org,
         });
-        expect(copy.lines, word.w).toEqual([
-          WORD_INTRO[word.w],
-          `It comes from Latin, from ${root.root} — ${root.mean}.`,
-        ]);
+        const shown = copy.lines.join(' ');
+        const gloss = WORD_INTRO[word.w]!.replace(/^.*?means /, '').replace(/\.$/, '');
         expect(copy.continueLabel, word.w).toBe('Show the questions');
-        expect(copy.lines.join(' '), word.w).not.toContain('<');
-        expect(copy.lines[0], word.w).not.toContain('—');
+        expect(shown, word.w).not.toContain('<');
+        expect(introContainsAnswer(shown, gloss), word.w).toBe(false);
+        expect(introContainsAnswer(shown, root.mean), word.w).toBe(false);
+        expect(
+          wordAnswerLesson({
+            word: word.w,
+            def: word.d,
+            root: root.root,
+            mean: root.mean,
+            org: root.org,
+          }),
+          word.w,
+        ).toBe(`${WORD_INTRO[word.w]} It comes from Latin, from ${root.root} — ${root.mean}.`);
       }
     }
   });

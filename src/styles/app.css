@@ -2041,6 +2041,19 @@ button.ww-schip:focus-visible {
   letter-spacing: 0;
   overflow-wrap: anywhere;
 }
+.ww-recall-win p.ww-answer-lesson,
+.ww-recall-teach p.ww-answer-lesson {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-weight: 650;
+  font-size: 1rem;
+  line-height: 1.35;
+  letter-spacing: 0;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
 .ww-recall-win p.ww-next-peek {
   margin-top: 6px;
   font-family: var(--font-game);
@@ -2658,6 +2671,11 @@ button.ww-schip:focus-visible {
   .ww-intro p {
     display: block;
   }
+  .ww-recall-win p.ww-answer-lesson,
+  .ww-recall-teach p.ww-answer-lesson {
+    display: block;
+    white-space: normal;
+  }
   /* Compact wrapping chips: the word stays fully visible. A forced 3-col
      grid is only ~100px per chip on a 375px phone and crushes Photosynthesis. */
   .ww-words {
@@ -2808,6 +2826,11 @@ button.ww-schip:focus-visible {
     display: block;
     -webkit-line-clamp: unset;
     overflow: visible;
+  }
+  .ww-recall-win p.ww-answer-lesson,
+  .ww-recall-teach p.ww-answer-lesson {
+    display: block;
+    white-space: normal;
   }
   .ww-card-actions .btn.ww-intro-go {
     display: inline-flex;
@@ -3381,6 +3404,11 @@ button.ww-schip:focus-visible {
   .ww-intro,
   .ww-intro p {
     display: block;
+  }
+  .ww-recall-win p.ww-answer-lesson,
+  .ww-recall-teach p.ww-answer-lesson {
+    display: block;
+    white-space: normal;
   }
   .ww-card-actions .btn.ww-intro-go {
     display: inline-flex;

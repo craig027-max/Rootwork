@@ -12,7 +12,8 @@ import {
   type Root,
 } from '../data/roots';
 import {
-  cardIntroCopy,
+  cardAnswerLesson,
+  cardIntroSurface,
   INTRO_CONTINUE_LABEL,
   introIsShowing,
 } from '../core/cardIntro';
@@ -367,8 +368,9 @@ export function Deck() {
   const winLine = winLineOnCard(lesson);
   const won = Boolean(winLine);
   const studying = isLessonStudying(lesson);
-  // New teach / find / recall: meaning and origin first. Remember, asked,
-  // a learned root, and a Yes remount stay on the beat they already had.
+  // New teach / find / recall: origin and a hook first, never the answer.
+  // Remember, asked, a learned root, and a Yes remount stay on the beat
+  // they already had.
   const introducing = introIsShowing({
     entry: deckEntry,
     learned: done,
@@ -450,15 +452,47 @@ export function Deck() {
   const findDef = finding ? wordDefForOpen(root.words, findWord) : null;
   const findSplit = findWord ? splitForOpenWord(root.words, findWord) : null;
   const alsoRoots = findWord ? otherRootsForWord(findWord, id) : [];
-  const introCopy = cardIntroCopy({
+  const introSurface = cardIntroSurface({
     entry: deckEntry,
     root: root.root,
+    say: root.say,
     mean: root.mean,
     org: root.org,
     words: root.words,
     word: findWord,
     def: findDef,
+    tier: root.t,
+    tierName,
+    position,
+    total: ROOTS.length,
   });
+  const introCopy = {
+    lines: introSurface.lines,
+    continueLabel: introSurface.continueLabel,
+  };
+  const answerLesson =
+    !introducing &&
+    (deckEntry === 'teach' || deckEntry === 'find' || deckEntry === 'recall') &&
+    (won || quizRecall?.picked != null)
+      ? cardAnswerLesson({
+          entry: deckEntry,
+          root: root.root,
+          mean: root.mean,
+          org: root.org,
+          words: root.words,
+          word: findWord,
+          def: findDef,
+        })
+      : '';
+  const holdText = !hearHold.line
+    ? null
+    : introducing
+      ? introSurface.hearLine || null
+      : finding && findWord
+        ? wordRootHearHold(root.root, root.say, root.mean)
+        : hearHold.line;
+  const shownFindWord =
+    introducing && findWord && introSurface.title !== findWord ? undefined : (findWord ?? undefined);
   // Study tap — name Biology, not Bio means life. Find already has its line.
   const chipLesson =
     finding || !openWord
@@ -552,6 +586,7 @@ export function Deck() {
   }
 
   function onHear() {
+    if (introducing && introSurface.blocksHear) return;
     speakRoot(card.root, card.say);
     watchCurrentClip(true, 'hear');
   }
@@ -654,17 +689,17 @@ export function Deck() {
               className={`ww-deck-back${missRemember ? ' is-miss' : ''}${finding ? ' is-find' : ''}`}
               onClick={onDeckBack}
             >
-              {backLabel}
+              {introducing ? introSurface.backLabel : backLabel}
             </button>
             <span className="badge2" aria-hidden="true">
               {emoji}
             </span>
             <span className="title">Wondral Words</span>
             <span className={`tier${missRemember ? ' is-miss' : ''}${finding ? ' is-find' : ''}`}>
-              {stripTier}
+              {introducing ? introSurface.strip : stripTier}
             </span>
             <span className={`count${missRemember ? ' is-miss' : ''}${finding ? ' is-find' : ''}`}>
-              {stripCount}
+              {introducing ? introSurface.count : stripCount}
             </span>
           </div>
 
@@ -676,18 +711,20 @@ export function Deck() {
                   missRemember ? ' is-remember-miss' : ''
                 }${quizHero ? ' is-quiz' : ''}`}
               >
-                {deckCaption({
-                  emoji,
-                  root: labelRoot,
-                  mean: root.mean,
-                  alt: root.alt,
-                  remembering,
-                  missed: missRemember,
-                  studying: faceStudying,
-                  findWord: findWord ?? undefined,
-                  quizTitle: quizHero?.title,
-                  missAsked: askedReplay,
-                })}
+                {introducing
+                  ? `${emoji} ${introSurface.caption}`
+                  : deckCaption({
+                      emoji,
+                      root: labelRoot,
+                      mean: root.mean,
+                      alt: root.alt,
+                      remembering,
+                      missed: missRemember,
+                      studying: faceStudying,
+                      findWord: findWord ?? undefined,
+                      quizTitle: quizHero?.title,
+                      missAsked: askedReplay,
+                    })}
               </span>
             </div>
             <div className="ww-hero-text">
@@ -697,16 +734,18 @@ export function Deck() {
                 }${quizHero ? ' is-quiz' : ''}`}
               >
                 <span className="ww-eyebrow-dot" aria-hidden="true" />
-                {deckEyebrow({
-                  root: labelRoot,
-                  lang,
-                  remembering,
-                  missed: missRemember,
-                  findWord: findWord ?? undefined,
-                  asked: askedVisit,
-                  quizKind: quizHero?.kind,
-                  missAsked: askedReplay,
-                })}
+                {introducing
+                  ? introSurface.eyebrow
+                  : deckEyebrow({
+                      root: labelRoot,
+                      lang,
+                      remembering,
+                      missed: missRemember,
+                      findWord: findWord ?? undefined,
+                      asked: askedVisit,
+                      quizKind: quizHero?.kind,
+                      missAsked: askedReplay,
+                    })}
               </span>
               <div
                 className={`ww-root${finding ? ' is-find' : ''}${quizHero ? ` ${quizHero.titleClass}` : ''}${
@@ -715,21 +754,26 @@ export function Deck() {
               >
                 {quizHero
                   ? quizHero.title
-                  : wordPrompt
-                    ? wordPrompt.big
-                    : deckFindTitle({ root: root.root, findWord: findWord ?? undefined })}
+                  : introducing
+                    ? introSurface.title
+                    : wordPrompt
+                      ? wordPrompt.big
+                      : deckFindTitle({ root: root.root, findWord: findWord ?? undefined })}
               </div>
               {quizHero ? null : (
                 <div className="ww-pron">
+                  {introducing && introSurface.blocksHear ? null : (
                   <button
                     type="button"
                     className={`ww-hear${listen.hearActive ? ' is-listening' : ''}`}
                     aria-label={
-                      finding && findWord
-                        ? wordRootHearLabel(root.root)
-                        : wordPrompt?.namedByMeaning
-                          ? 'Hear this root'
-                          : `Hear ${root.root}`
+                      introducing
+                        ? 'Hear this root'
+                        : finding && findWord
+                          ? wordRootHearLabel(root.root)
+                          : wordPrompt?.namedByMeaning
+                            ? 'Hear this root'
+                            : `Hear ${root.root}`
                     }
                     aria-pressed={listen.hearActive}
                     onClick={onHear}
@@ -741,8 +785,17 @@ export function Deck() {
                       />
                     </svg>
                   </button>
+                  )}
                   <span>
-                    {finding && findWord ? (
+                    {introducing ? (
+                      <>
+                        {introSurface.say ? introSurface.say : null}
+                        {introSurface.say && introSurface.origin ? <>&nbsp;·&nbsp;</> : null}
+                        {introSurface.origin ? (
+                          <span className="origin">{introSurface.origin}</span>
+                        ) : null}
+                      </>
+                    ) : finding && findWord ? (
                       <>
                         {wordRootSayLine(root.root, root.say)}
                         {' · '}
@@ -784,13 +837,9 @@ export function Deck() {
                     </p>
                   ) : null}
                 </div>
-              ) : hearHold.line ? (
+              ) : holdText ? (
                 <div className="ww-listen ww-listen-hold" role="status" aria-live="polite">
-                  <p className="ww-listen-line">
-                    {finding && findWord
-                      ? wordRootHearHold(root.root, root.say, root.mean)
-                      : hearHold.line}
-                  </p>
+                  <p className="ww-listen-line">{holdText}</p>
                 </div>
               ) : null}
               {introducing ? null : quizHero ? (
@@ -964,6 +1013,7 @@ export function Deck() {
                         ? findMissLine(findWord, findDef)
                         : quizRecall.beat.teach}
                   </p>
+                  {answerLesson ? <p className="ww-answer-lesson">{answerLesson}</p> : null}
                   {remembering ? (
                     <Button
                       onClick={closeRoot}
@@ -1001,6 +1051,7 @@ export function Deck() {
               >
                 {winLine}
               </p>
+              {answerLesson ? <p className="ww-answer-lesson">{answerLesson}</p> : null}
               {nextPeekLine ? (
                 <p className={`ww-next-peek${studyNextPeekLong(nextPeekLine) ? ' is-long' : ''}`}>
                   {nextPeekLine}
@@ -1071,21 +1122,29 @@ export function Deck() {
       </div>
 
       <DeckNav
-        rootLabel={deckNavRoot({
-          root: labelRoot,
-          missed: missRemember,
-          findWord: findWord ?? undefined,
-          quizTitle: quizHero?.title,
-          missAsked: askedReplay,
-        })}
-        meaning={deckNavMeaning({
-          meaning: faceStudying ? '?' : root.mean,
-          missed: missRemember,
-          findWord: findWord ?? undefined,
-          findDef: findDef ?? undefined,
-          studying: faceStudying,
-          quizTitle: quizHero?.title,
-        })}
+        rootLabel={
+          introducing
+            ? introSurface.title
+            : deckNavRoot({
+                root: labelRoot,
+                missed: missRemember,
+                findWord: findWord ?? undefined,
+                quizTitle: quizHero?.title,
+                missAsked: askedReplay,
+              })
+        }
+        meaning={
+          introducing
+            ? ''
+            : deckNavMeaning({
+                meaning: faceStudying ? '?' : root.mean,
+                missed: missRemember,
+                findWord: findWord ?? undefined,
+                findDef: findDef ?? undefined,
+                studying: faceStudying,
+                quizTitle: quizHero?.title,
+              })
+        }
         tierName={tierName}
         position={position}
         total={ROOTS.length}
@@ -1100,7 +1159,8 @@ export function Deck() {
         missed={missRemember}
         missName={askedReplay || labelRoot}
         finding={finding}
-        findWord={findWord ?? undefined}
+        findWord={shownFindWord}
+        meta={introducing ? introSurface.navMeta : undefined}
         asked={askedVisit}
         fromRoot={root.root}
         quizzing={Boolean(quizHero)}
