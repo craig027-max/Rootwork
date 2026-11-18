@@ -348,11 +348,11 @@ export function Deck() {
       <div className="ww-center ww-stack">
         <Badge variant="outline">🔒 Premium root</Badge>
         <h1 className="text-gradient-hero">{root.root}</h1>
-        <p className="ww-muted">This root is part of the full curriculum.</p>
+        <p className="ww-muted">This root is part of the full curriculum. A grown-up can unlock it.</p>
         <div className="ww-row">
-          <Button onClick={requestUpgrade}>Go Premium</Button>
-          <Button variant="ghost" onClick={closeRoot}>
-            Back
+          <Button onClick={closeRoot}>Back</Button>
+          <Button variant="ghost" onClick={requestUpgrade}>
+            Ask a grown-up to unlock
           </Button>
         </div>
       </div>
