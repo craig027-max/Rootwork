@@ -18,6 +18,7 @@ import { Celebration } from '../ui/Celebration';
 import { BuildStamp } from '../ui/BuildStamp';
 import { Button } from '../ui/components/Button';
 import type { AppView, CheckoutNotice } from './store';
+import { showAccountChrome } from './playChrome';
 
 function CheckoutBanner({
   notice,
@@ -133,6 +134,7 @@ export function App() {
   }, [setView]);
 
   const signedIn = authUser && !authUser.isAnonymous;
+  const accountChrome = showAccountChrome(view);
 
   return (
     <div className={`ww-app rw-ambient ww-app--${view}`}>
@@ -146,12 +148,12 @@ export function App() {
           </span>
         </button>
         <div className="ww-spacer" />
-        {showUpgrade ? (
+        {accountChrome && showUpgrade ? (
           <Button size="sm" onClick={requestUpgrade}>
             Go Premium
           </Button>
         ) : null}
-        {signedIn ? (
+        {accountChrome && signedIn ? (
           <>
             <Button variant="ghost" size="sm" onClick={() => setView('dashboard')}>
               Dashboard
@@ -160,11 +162,12 @@ export function App() {
               Sign out
             </Button>
           </>
-        ) : (
+        ) : null}
+        {accountChrome && !signedIn ? (
           <Button variant="ghost" size="sm" onClick={() => setView('auth')}>
             Sign in
           </Button>
-        )}
+        ) : null}
       </header>
 
       <main className="ww-main">
