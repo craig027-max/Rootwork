@@ -139,6 +139,18 @@ describe('scene registry', () => {
     expect(byRoot.Acu).toBe('needle');
     expect(byRoot.Lig).toBe('tie');
     expect(byRoot.Nod).toBe('knot');
+    expect(byRoot.Mont).toBe('mountain');
+    expect(byRoot.Insul).toBe('island');
+    expect(byRoot.Sylv).toBe('woods');
+    expect(byRoot.Agr).toBe('field');
+    expect(byRoot.Glac).toBe('ice');
+    expect(byRoot.Gel).toBe('freeze');
+    expect(byRoot.Cav).toBe('hollow');
+    expect(byRoot.Riv).toBe('brook');
+    expect(byRoot.Und).toBe('ripple');
+    expect(byRoot.Plan).toBe('flat');
+    expect(byRoot.Scend).toBe('climb');
+    expect(byRoot.Cumul).toBe('heap');
   });
 
   it('keeps breakx for break-roots only', () => {

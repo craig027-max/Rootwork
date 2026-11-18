@@ -13,6 +13,8 @@ const bio = ROOTS.find((r) => r.root === 'Bio') as Root;
 const sal = ROOTS.find((r) => r.root === 'Sal') as Root;
 const vest = ROOTS.find((r) => r.root === 'Vest') as Root;
 const tex = ROOTS.find((r) => r.root === 'Tex') as Root;
+const gel = ROOTS.find((r) => r.root === 'Gel') as Root;
+const mont = ROOTS.find((r) => r.root === 'Mont') as Root;
 
 function bodyText(): string {
   return (document.body.textContent ?? '').replace(/\s+/g, ' ').trim();
@@ -142,6 +144,58 @@ describe('what the kid sees on a new card', () => {
     expect(quiz).not.toContain('Show the questions');
     expect(quiz).toContain('VEST');
     expect(quiz).toContain('Latin vestis');
+  });
+
+  it('shows the Gelato intro first, then the question, and keeps GEL', async () => {
+    useWondralStore.setState({
+      currentRootId: rootId(gel),
+      deckEntry: 'find',
+      deckFocusWord: 'Gelato',
+    });
+    await show();
+
+    const intro = bodyText();
+    expect(intro).toContain('Gelato means a soft Italian ice cream.');
+    expect(intro).toContain('It comes from Latin, from Gel — freeze.');
+    expect(intro).toContain('GEL');
+    expect(intro).toContain('Show the questions');
+    expect(intro).not.toContain('What does Gelato mean?');
+    expect(intro).not.toContain('frozen');
+    expect(document.querySelector('.ww-recall-opt')).toBeNull();
+
+    const button = showQuestions();
+    expect(button).toBeTruthy();
+    await act(async () => {
+      button?.click();
+    });
+
+    const quiz = bodyText();
+    expect(quiz).toContain('What does Gelato mean?');
+    expect(quiz).toContain('A soft Italian ice cream');
+    expect(document.querySelectorAll('.ww-recall-opt').length).toBeGreaterThan(1);
+    expect(quiz).not.toContain('Gelato means a soft Italian ice cream.');
+    expect(quiz).not.toContain('Show the questions');
+    expect(quiz).toContain('GEL');
+    expect(quiz).toContain('Latin gelāre');
+  });
+
+  it('shows a new Mont intro before any question', async () => {
+    useWondralStore.setState({ currentRootId: rootId(mont), deckEntry: 'teach' });
+    await show();
+
+    const intro = bodyText();
+    expect(intro).toContain('Mont means mountain.');
+    expect(intro).toContain('It comes from Latin. Like Vermont.');
+    expect(intro).toContain('MONT');
+    expect(intro).not.toContain('What does');
+    expect(document.querySelector('.ww-recall-opt')).toBeNull();
+
+    await act(async () => {
+      showQuestions()?.click();
+    });
+    expect(document.querySelector('.ww-recall-opt')).not.toBeNull();
+    expect(bodyText()).not.toContain('Show the questions');
+    expect(bodyText()).not.toContain('Mont means mountain.');
   });
 
   it('shows a new Tex intro before any question', async () => {
