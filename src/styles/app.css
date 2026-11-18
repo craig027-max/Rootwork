@@ -3528,3 +3528,76 @@ button.ww-schip:focus-visible {
   }
 }
 
+/* Ask-a-grown-up — a full screen, never a store. */
+.ww-ask {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg-primary);
+  text-align: center;
+}
+.ww-ask-card {
+  display: grid;
+  gap: 16px;
+  justify-items: center;
+  max-width: 28rem;
+}
+.ww-ask-card h1 {
+  margin: 0;
+  font-size: clamp(1.8rem, 5vw, 2.6rem);
+}
+.ww-ask-card p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 1.05rem;
+  line-height: 1.45;
+}
+.ww-ask .btn {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Quiet parent door on Home only. */
+.ww-for-grownups {
+  display: flex;
+  justify-content: center;
+  padding: 4px 16px 0;
+}
+.ww-for-grownups button {
+  appearance: none;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 12px;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(255, 255, 255, 0.28);
+}
+.ww-for-grownups button:hover,
+.ww-for-grownups button:focus-visible {
+  color: var(--text-secondary);
+}
+
+.ww-gate-label {
+  font-family: var(--font-body);
+  font-size: 1.15rem;
+  font-weight: 650;
+  text-align: left;
+}
+.ww-gate .ww-input {
+  min-height: 44px;
+}
+.ww-grownups-panel {
+  max-width: 640px;
+  margin: 0 auto;
+}
+

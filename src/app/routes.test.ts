@@ -29,7 +29,7 @@ describe('pathForView', () => {
   });
 
   it('returns null for in-app views so their URLs stay at /', () => {
-    for (const view of ['home', 'deck', 'quiz', 'daily', 'auth', 'consent', 'dashboard', 'paywall'] as AppView[]) {
+    for (const view of ['home', 'deck', 'quiz', 'daily', 'auth', 'consent', 'dashboard', 'paywall', 'grownups'] as AppView[]) {
       expect(pathForView(view)).toBeNull();
     }
   });

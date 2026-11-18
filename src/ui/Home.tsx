@@ -65,7 +65,7 @@ export function Home() {
   const students = useWondralStore((s) => s.students);
   const activeStudentId = useWondralStore((s) => s.activeStudentId);
   const openRoot = useWondralStore((s) => s.openRoot);
-  const requestUpgrade = useWondralStore((s) => s.requestUpgrade);
+  const openAsk = useWondralStore((s) => s.openAsk);
   const setView = useWondralStore((s) => s.setView);
   const setSelectedTier = useWondralStore((s) => s.setSelectedTier);
 
@@ -249,7 +249,7 @@ export function Home() {
     }
     if (missHero && rushMissId && isMissProgressTier(item)) {
       openRoot(rushMissId, { entry: 'remember' });
-    } else if (item.locked) requestUpgrade();
+    } else if (item.locked) openAsk();
     else {
       openTier(item.t);
     }
@@ -279,7 +279,7 @@ export function Home() {
       setIndexOpen(true);
       return;
     }
-    if (tap.kind === 'upgrade') requestUpgrade();
+    if (tap.kind === 'upgrade') openAsk();
     else openTier(tap.t);
   }
 
@@ -312,6 +312,10 @@ export function Home() {
   }
 
   function onBrowsePick(id: string, focusWord?: string) {
+    if (!isRootOpenable(id, entitled)) {
+      openAsk();
+      return;
+    }
     const recap = browseOpenForId(id, completed, focusWord);
     setIndexOpen(false);
     if (recap) openRoot(recap.id, { entry: recap.entry, focusWord: recap.focusWord });
@@ -437,6 +441,11 @@ export function Home() {
           onClose={() => setIndexOpen(false)}
         />
       ) : null}
+      <div className="ww-for-grownups">
+        <button type="button" onClick={() => setView('grownups')}>
+          For grown-ups
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useWondralStore } from '../app/store';
 import { useEntitledForDisplay } from '../app/hooks';
+import { AskGrownup } from './AskGrownup';
 import {
   ROOTS,
   ROOTS_BY_ID,
@@ -144,7 +145,7 @@ export function Deck() {
   const closeRoot = useWondralStore((s) => s.closeRoot);
   const dismissCelebration = useWondralStore((s) => s.dismissCelebration);
   const setView = useWondralStore((s) => s.setView);
-  const requestUpgrade = useWondralStore((s) => s.requestUpgrade);
+  const openAsk = useWondralStore((s) => s.openAsk);
   const deckEntry = useWondralStore((s) => s.deckEntry);
   const deckFocusWord = useWondralStore((s) => s.deckFocusWord);
   const correctAdvance = useWondralStore((s) => s.correctAdvance);
@@ -341,22 +342,9 @@ export function Deck() {
   const openable = isRootOpenable(id, entitled);
   const p = palOf(root);
 
-  // Guard: should never open a locked root, but if reached, never dead-end —
-  // show the upgrade path instead of the content.
+  // A locked root never opens the lesson and never opens checkout.
   if (!openable) {
-    return (
-      <div className="ww-center ww-stack">
-        <Badge variant="outline">🔒 Premium root</Badge>
-        <h1 className="text-gradient-hero">{root.root}</h1>
-        <p className="ww-muted">This root is part of the full curriculum. A grown-up can unlock it.</p>
-        <div className="ww-row">
-          <Button onClick={closeRoot}>Back</Button>
-          <Button variant="ghost" onClick={requestUpgrade}>
-            Ask a grown-up to unlock
-          </Button>
-        </div>
-      </div>
-    );
+    return <AskGrownup onBack={closeRoot} />;
   }
 
   const done = completed.has(id);
@@ -1178,6 +1166,10 @@ export function Deck() {
           )}
           onPick={(pickId, focusWord) => {
             if (!allowNextRootTap(useWondralStore.getState().correctAdvance, listening)) return;
+            if (!isRootOpenable(pickId, entitled)) {
+              openAsk();
+              return;
+            }
             const recap = browseOpenForId(pickId, completed, focusWord);
             setIndexOpen(false);
             if (recap) openRoot(recap.id, { entry: recap.entry, focusWord: recap.focusWord });

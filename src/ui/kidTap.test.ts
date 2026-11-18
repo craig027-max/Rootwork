@@ -27,6 +27,7 @@ describe('phone tap targets a kid can hit', () => {
     expect(css).toMatch(/\.ww-nav-btn\s*\{[^}]*width:\s*44px/);
     expect(css).toMatch(/\.ww-nav-btn\s*\{[^}]*height:\s*44px/);
     expect(css).toMatch(/\.ww-legal-links a\s*\{[^}]*min-height:\s*44px/);
+    expect(css).toMatch(/\.ww-for-grownups button\s*\{[^}]*min-height:\s*44px/);
   });
 
   it('lets a long card name shrink instead of squashing the nav buttons', () => {

@@ -33,6 +33,8 @@ describe('a kid cannot open an account or a purchase while playing', () => {
       entitlementLoaded: true,
       currentRootId: null,
       view: 'home',
+      askOpen: false,
+      parentGateAt: null,
     });
     host = document.createElement('div');
     document.body.appendChild(host);
@@ -62,50 +64,62 @@ describe('a kid cannot open an account or a purchase while playing', () => {
     });
   }
 
-  it('keeps sign-in on home and takes it off a card, Daily, and Root Rush', async () => {
-    expect(showAccountChrome('home')).toBe(true);
+  it('keeps account taps off home, a card, Daily, and Root Rush', async () => {
+    expect(showAccountChrome('home')).toBe(false);
     expect(showAccountChrome('deck')).toBe(false);
     expect(showAccountChrome('quiz')).toBe(false);
     expect(showAccountChrome('daily')).toBe(false);
     expect(showAccountChrome('paywall')).toBe(true);
+    expect(showAccountChrome('grownups')).toBe(true);
 
     await show(<App />);
-    expect(buttons().some((label) => label === 'Sign in')).toBe(true);
+    expect(buttons()).toContain('For grown-ups');
+    expect(buttons()).not.toContain('Sign in');
+    expect(buttons()).not.toContain('Go Premium');
 
     for (const view of ['deck', 'quiz', 'daily'] as const) {
-      useWondralStore.setState({ view, currentRootId: rootId(ROOTS[0]!) });
+      await act(async () => {
+        useWondralStore.setState({ view, currentRootId: rootId(ROOTS[0]!), askOpen: false });
+      });
       await show(<App />);
       const labels = buttons();
       expect(labels.some((label) => label === 'Sign in'), view).toBe(false);
       expect(labels.some((label) => label === 'Go Premium'), view).toBe(false);
       expect(labels.some((label) => label === 'Sign out'), view).toBe(false);
+      expect(labels.some((label) => label === 'Dashboard'), view).toBe(false);
+      expect(labels.some((label) => label === 'For grown-ups'), view).toBe(false);
       expect(labels.some((label) => /Wondral/.test(label)), view).toBe(true);
     }
   });
 
-  it('hides the parent dashboard while a signed-in kid is on a card', async () => {
+  it('hides the parent dashboard while a signed-in kid is on home or a card', async () => {
     useWondralStore.setState({
       authStatus: 'authenticated',
       authUser: { id: 'parent', email: 'parent@example.com', isAnonymous: false },
       view: 'home',
     });
     await show(<App />);
-    expect(buttons()).toContain('Dashboard');
-    expect(buttons()).toContain('Sign out');
+    expect(buttons()).not.toContain('Dashboard');
+    expect(buttons()).not.toContain('Sign out');
+    expect(buttons()).toContain('For grown-ups');
 
-    useWondralStore.setState({ view: 'deck', currentRootId: rootId(ROOTS[0]!) });
+    await act(async () => {
+      useWondralStore.setState({ view: 'deck', currentRootId: rootId(ROOTS[0]!) });
+    });
     await show(<App />);
     expect(buttons()).not.toContain('Dashboard');
     expect(buttons()).not.toContain('Sign out');
+    expect(buttons()).not.toContain('For grown-ups');
   });
 
-  it('makes Back the obvious tap on a premium root, and keeps the grown-up unlock', async () => {
+  it('shows Ask a grown-up on a premium root, with no purchase path', async () => {
     useWondralStore.setState({ currentRootId: rootId(paid), view: 'deck' });
     await show(<Deck />);
-    const labels = buttons();
-    expect(labels[0]).toBe('Back');
-    expect(labels).toContain('Ask a grown-up to unlock');
-    expect(labels).not.toContain('Go Premium');
-    expect(document.body.textContent).toContain('A grown-up can unlock it.');
+    const ask = document.querySelector('[data-screen="ask-grownup"]');
+    expect(ask).toBeTruthy();
+    expect(ask?.textContent).toContain('Ask a grown-up');
+    expect(ask?.textContent).toContain('Keep playing');
+    expect(ask?.textContent).not.toMatch(/\$|Choose|Sign in|Go Premium|mailto/);
+    expect(ask?.querySelector('a')).toBeNull();
   });
 });

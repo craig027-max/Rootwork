@@ -119,6 +119,7 @@ type Phase = 'start' | 'play' | 'result';
 export function RootRush() {
   const entitled = useEntitledForDisplay();
   const setView = useWondralStore((s) => s.setView);
+  const openAsk = useWondralStore((s) => s.openAsk);
   const openRoot = useWondralStore((s) => s.openRoot);
   const recordQuizRun = useWondralStore((s) => s.recordQuizRun);
   const rememberRushHit = useWondralStore((s) => s.rememberRushHit);
@@ -500,7 +501,13 @@ export function RootRush() {
                 <div className="q-chips">
                   {chips.map((c) =>
                     c.locked ? (
-                      <button key={c.label} className="q-chip locked" disabled aria-disabled="true" title="Unlock with Premium">
+                      <button
+                        key={c.label}
+                        type="button"
+                        className="q-chip locked"
+                        onClick={() => openAsk()}
+                        aria-label={`Ask a grown-up about ${c.label}`}
+                      >
                         🔒 {c.label}
                       </button>
                     ) : (
