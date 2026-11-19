@@ -88,7 +88,8 @@ export function RootIndex({
     .map((id) => ROOTS_BY_ID[id]?.root)
     .filter((name): name is string => Boolean(name));
   const searching = Boolean(cleanSearchQuery(query));
-  const sections = buildIndexBrowseSections({ query, missed });
+  const playedIds = completed ?? new Set<string>();
+  const sections = buildIndexBrowseSections({ query, missed, played: playedIds });
   const matchCount = indexMatchCount(sections);
   const heading = searching ? indexSearchHeading() : indexHeading(missNames);
   const sub = searching
@@ -181,8 +182,13 @@ export function RootIndex({
                   const locked = !isRootOpenable(id, entitled);
                   const owned = Boolean(completed?.has(id));
                   const kind = indexChipKind({ missed: missed.has(id), owned, locked });
-                  const match = indexRootMatch(root, query);
-                  const face = indexChipFace({ root: root.root, mean: root.mean, match });
+                  const match = indexRootMatch(root, query, { played: playedIds });
+                  const face = indexChipFace({
+                    root: root.root,
+                    mean: root.mean,
+                    match,
+                    played: owned,
+                  });
                   const wordHit = Boolean(face.word);
                   // A word hit opens that word. ✓ / ! would say the word is
                   // Remembered or Missed, and the tap is not that visit.
@@ -219,7 +225,7 @@ export function RootIndex({
                         ) : null}
                         {face.title} {locked ? '🔒' : ''}
                       </div>
-                      <div className="im">{face.sub}</div>
+                      {face.sub ? <div className="im">{face.sub}</div> : null}
                       {hint ? <div className="ih">{hint}</div> : null}
                     </button>
                   );

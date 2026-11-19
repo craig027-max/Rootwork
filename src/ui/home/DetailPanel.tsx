@@ -153,7 +153,7 @@ export function DetailPanel({
                   </span>
                 ) : null}
                 {s.asked ? <b>{s.asked}</b> : <b>{s.root}</b>}
-                <span>{s.mean}</span>
+                {s.mean ? <span>{s.mean}</span> : null}
               </>
             );
             const ariaName = s.asked || s.root;

@@ -249,7 +249,8 @@ describe('Home Daily tile: done-state recap after Daily is banked', () => {
     expect(vm.heroCta).toBeFalsy();
     expect(vm.sampleTap).toBe('remember');
     expect(vm.samples.some((s) => s.owned === true || s.owned === false)).toBe(true);
-    expect(vm.scene?.caption).toBe(`${secondBuilder.root} · ${secondBuilder.mean}`);
+    expect(vm.scene?.caption).toBe(secondBuilder.root);
+    expect(vm.scene?.caption).not.toContain(secondBuilder.mean);
   });
 
   it('keeps Play again as Daily\'s own tap once today\'s learn is done', () => {

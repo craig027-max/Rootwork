@@ -147,7 +147,8 @@ describe('Daily done is Continue {learn} / Keep going — not Play again over Ch
     });
     expect(unfinished.primary.label).toBe(`Continue ${secondBuilder.root} ›`);
     expect(unfinished.secondary?.label).toBe('Play again ›');
-    expect(unfinished.scene?.caption).toBe(`${secondBuilder.root} · ${secondBuilder.mean}`);
+    expect(unfinished.scene?.caption).toBe(secondBuilder.root);
+    expect(unfinished.scene?.caption).not.toContain(secondBuilder.mean);
     expect(homeSecondaryAction(dailyItem, { dailyDone: true, learnedToday: false })).toEqual({
       kind: 'daily',
     });

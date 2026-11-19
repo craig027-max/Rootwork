@@ -214,9 +214,11 @@ describe('Rush after Daily is Continue {learn} / Keep going — not Play again o
     });
     expect(unfinished.primary.label).toBe(`Continue ${secondBuilder.root} ›`);
     expect(unfinished.secondary?.label).toBe('Play again ›');
-    expect(unfinished.waiting).toBe(`${secondBuilder.root} · ${secondBuilder.mean}`);
+    expect(unfinished.waiting).toBe(secondBuilder.root);
+    expect(unfinished.waiting).not.toContain(secondBuilder.mean);
     expect(unfinished.heroCta).toBe(true);
-    expect(unfinished.scene?.caption).toBe(`${secondBuilder.root} · ${secondBuilder.mean}`);
+    expect(unfinished.scene?.caption).toBe(secondBuilder.root);
+    expect(unfinished.scene?.caption).not.toContain(secondBuilder.mean);
     expect(unfinished.primary.label).not.toMatch(/Play again|Remember |Browse roots/);
     expect(homeSecondaryAction(rushRow, { learnWaiting: true })).toEqual({ kind: 'rush' });
     expect(homeSecondaryAction(rushRow, { dailyResumeQi: 2, learnWaiting: true })).toEqual({

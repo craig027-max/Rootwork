@@ -28,6 +28,7 @@ import {
 } from '../../data/roots';
 import { recapOpenForId, type DeckEntry } from '../../core/deckFlow';
 import { dailyDoneMenuSub, dailyMenuNextLine } from '../../core/daily';
+import { withHeldMean } from '../../core/playedMean';
 import { endedStreakPhrase, gradeForPct, starsForPct } from '../../core/stats';
 import { missFacePeek, missPeekForNames } from './samplePeek';
 
@@ -205,7 +206,10 @@ export function tierTilePreview(
   const picked = opts.complete
     ? roots.filter((r) => completed.has(rootId(r)))
     : roots.filter((r) => isRootOpenable(rootId(r), entitled) && !completed.has(rootId(r)));
-  return picked.slice(0, count).map((r) => ({ root: r.root, mean: r.mean }));
+  return picked.slice(0, count).map((r) => ({
+    root: r.root,
+    mean: completed.has(rootId(r)) ? r.mean : '',
+  }));
 }
 
 /**
@@ -557,6 +561,7 @@ export function buildMenu(
   const missName = opts.rushMissName?.replace(/\s+/g, ' ').trim() || undefined;
   const missAlso = opts.rushMissAlso?.replace(/\s+/g, ' ').trim() || undefined;
   const missId = opts.rushMissId?.replace(/\s+/g, ' ').trim() || undefined;
+  const dailyLines = opts.dailyPreview ? withHeldMean(opts.dailyPreview, completed) : undefined;
   const missPreview = !missName
     ? []
     : missId
@@ -619,7 +624,7 @@ export function buildMenu(
           : opts.dailyStreak && opts.dailyStreak > 0
             ? `🔥 ${opts.dailyStreak}`
             : undefined,
-      preview: missPreview.length > 0 ? missPreview : opts.dailyPreview,
+      preview: missPreview.length > 0 ? missPreview : dailyLines,
       previewDone: Boolean(
         opts.dailyDone &&
           !missName &&
