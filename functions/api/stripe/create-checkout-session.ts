@@ -1,6 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { STATEMENT_DESCRIPTOR, assertStatementDescriptor } from './statementDescriptor';
 
 interface Env {
   STRIPE_SECRET_KEY: string;
@@ -98,7 +99,14 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       customer_creation: 'always',
       customer_email: user.email ?? undefined,
       metadata: { parent_id: user.id, tier: 'single' },
-      payment_intent_data: { metadata: { parent_id: user.id, tier: 'single' } },
+      payment_intent_data: {
+        metadata: { parent_id: user.id, tier: 'single' },
+        // Card charges reject statement_descriptor. The suffix is the field
+        // Checkout allows; the dashboard prefix is set in the go-live checklist.
+        statement_descriptor_suffix: assertStatementDescriptor(STATEMENT_DESCRIPTOR),
+        description:
+          'Wondral Words — 1-year single-student educational software subscription',
+      },
       success_url: `${origin}${env.CHECKOUT_SUCCESS_PATH ?? '/?checkout=success'}`,
       cancel_url: `${origin}${env.CHECKOUT_CANCEL_PATH ?? '/?checkout=cancel'}`,
     });

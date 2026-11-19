@@ -32,7 +32,7 @@ export function PrivacyPolicy() {
       <section>
         <h2>Who we are</h2>
         <p>
-          Wondral Words (words.wondral.app) is made by Thompson Education Apps LLC, the company
+          Wondral Words (words.wondral.app) is operated by Thompson Education Apps LLC, the company
           behind the Wondral family of learning apps. Questions about this policy or your data:{' '}
           <a href="mailto:support@wondral.app">support@wondral.app</a>.
         </p>

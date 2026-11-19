@@ -28,6 +28,10 @@ describe('receipt from a checkout record', () => {
     const text = textOf(receiptToPdf(buildReceipt(record())));
     expect(text).toContain(SELLER_LEGAL_NAME);
     expect(text).toContain(SELLER_BRAND);
+    expect(text).not.toMatch(/rootwork/i);
+    expect(SINGLE_STUDENT_ANNUAL_ITEM).toBe(
+      'Wondral Words — 1-year single-student educational software subscription',
+    );
     expect(text).toContain('Receipt RW-1001');
     expect(text).toContain(`Item ${SINGLE_STUDENT_ANNUAL_ITEM}`);
     expect(text).toContain('Purchase date 03/15/2026');
