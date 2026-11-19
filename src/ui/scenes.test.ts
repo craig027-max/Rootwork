@@ -151,6 +151,18 @@ describe('scene registry', () => {
     expect(byRoot.Plan).toBe('flat');
     expect(byRoot.Scend).toBe('climb');
     expect(byRoot.Cumul).toBe('heap');
+    expect(byRoot.Curr).toBe('run');
+    expect(byRoot.Ambul).toBe('walk');
+    expect(byRoot.Sult).toBe('leap');
+    expect(byRoot.Cad).toBe('tumble');
+    expect(byRoot.Laps).toBe('slip');
+    expect(byRoot.Err).toBe('stray');
+    expect(byRoot.Flect).toBe('bend');
+    expect(byRoot.Puls).toBe('drive');
+    expect(byRoot.Press).toBe('squeeze');
+    expect(byRoot.Sed).toBe('sit');
+    expect(byRoot.Cub).toBe('lie');
+    expect(byRoot.Clin).toBe('lean');
   });
 
   it('keeps breakx for break-roots only', () => {
