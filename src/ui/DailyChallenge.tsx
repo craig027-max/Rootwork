@@ -42,6 +42,7 @@ import {
 } from './modes/modeHandoff';
 import { learnedRootToday, listRushMissAsked, listRushMissRemember, rootLabel } from './home/todayProgress';
 import { samplePeekLabel } from './home/samplePeek';
+import { lessonPlayed, shownLineMean } from '../core/playedMean';
 
 type Phase = 'start' | 'play' | 'result';
 
@@ -451,16 +452,20 @@ export function DailyChallenge() {
                 ? `${resumeQi} of ${deal.length} already yours. ${dailyResumeSentence(
                     resumeRoot,
                     boot.beat ? dailyNextPeekFace(resumeRoot, boot.beat) : null,
+                    { revealMean: lessonPlayed(rootId(resumeRoot), completed) },
                   )}`
                 : dailyFreshStartLead(deal.length, day, stats)}
             </p>
             <div className="q-daily-chips">
-              {(resumeQi != null ? deal.slice(resumeQi) : deal).map((r) => (
-                <span className="q-daily-chip" key={r.root}>
-                  {r.root}
-                  <em>{r.mean}</em>
-                </span>
-              ))}
+              {(resumeQi != null ? deal.slice(resumeQi) : deal).map((r) => {
+                const mean = shownLineMean(r.root, r.mean, completed);
+                return (
+                  <span className="q-daily-chip" key={r.root}>
+                    {r.root}
+                    {mean ? <em>{mean}</em> : null}
+                  </span>
+                );
+              })}
             </div>
             <button className="q-go" onClick={startRun}>
               {resumeQi != null

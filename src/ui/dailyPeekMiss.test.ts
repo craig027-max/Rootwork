@@ -266,7 +266,7 @@ describe('Daily peek after a miss is Remember — not today\'s five ✓ over Geo
 
   it('wires Daily list / detail / overlay — Missed Geo, not today\'s five ✓', () => {
     expect(menu).toContain('missPeekForNames(missName, missAlso)');
-    expect(menu).toContain('missPreview.length > 0 ? missPreview : opts.dailyPreview');
+    expect(menu).toContain('missPreview.length > 0 ? missPreview : dailyLines');
     expect(menu).toContain('!missName');
     expect(detail).toContain('askedMissSamples(miss)');
     expect(detail).toContain('miss ? missSamples');

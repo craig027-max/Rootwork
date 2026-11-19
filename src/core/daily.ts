@@ -570,11 +570,14 @@ export function dailyMenuNextLine(name: string, mean?: string): string {
 export function dailyResumeSentence(
   root: { root: string; mean: string },
   face?: { name: string; mean?: string } | null,
+  opts: { revealMean?: boolean } = {},
 ): string {
   const name = face?.name?.replace(/\s+/g, ' ').trim() || root.root;
   const spoken = face?.mean?.replace(/\s+/g, ' ').trim() ?? '';
   const asked = /^(from|in) /.test(spoken) || name.includes('+') || name.toLowerCase() !== root.root.toLowerCase();
-  if (!asked) return `Next is ${root.root} — ${root.mean}.`;
+  const reveal = opts.revealMean !== false;
+  const mean = root.mean.replace(/\s+/g, ' ').trim();
+  if (!asked) return reveal && mean ? `Next is ${root.root} — ${mean}.` : `Next is ${root.root}.`;
   if (spoken) return `Next is ${name} — ${spoken}.`;
   return `Next is ${name}.`;
 }
@@ -583,11 +586,14 @@ export function dailyResumeSentence(
 export function dailyResumeCaption(
   root: { root: string; mean: string },
   face?: { name: string; mean?: string } | null,
+  opts: { revealMean?: boolean } = {},
 ): string {
   const name = face?.name?.replace(/\s+/g, ' ').trim() || root.root;
   const spoken = face?.mean?.replace(/\s+/g, ' ').trim() ?? '';
   const asked = /^(from|in) /.test(spoken) || name.includes('+') || name.toLowerCase() !== root.root.toLowerCase();
-  if (!asked) return `${root.root} · ${root.mean}`;
+  const reveal = opts.revealMean !== false;
+  const mean = root.mean.replace(/\s+/g, ' ').trim();
+  if (!asked) return reveal && mean ? `${root.root} · ${mean}` : root.root;
   return spoken ? `${name} · ${spoken}` : name;
 }
 

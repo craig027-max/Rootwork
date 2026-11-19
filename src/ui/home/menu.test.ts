@@ -371,8 +371,8 @@ describe('tierTilePreview — returning dashboard peek', () => {
     expect(second.root).toBe('Geo');
     expect(peek.map((p) => p.root)).not.toContain('Bio');
     expect(peek.map((p) => p.root)[0]).not.toBe('Bio');
-    expect(peek[0]?.mean).toBe(second.mean);
-    expect(peek[0]?.mean.length).toBeGreaterThan(0);
+    expect(peek[0]?.mean).toBe('');
+    expect(peek[0]?.mean).not.toBe(second.mean);
     expect(entryRootName(1, owned, false)).toBe('Geo');
   });
 

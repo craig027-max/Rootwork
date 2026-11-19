@@ -212,7 +212,8 @@ describe('Home after a miss is Remember — not start / Geo · earth over Geo', 
       rememberMissName: geo.root,
     });
     expect(learnOpen.waitingMiss).toBeFalsy();
-    expect(learnOpen.scene?.caption).toBe(`${secondBuilder.root} · ${secondBuilder.mean}`);
+    expect(learnOpen.scene?.caption).toBe(secondBuilder.root);
+    expect(learnOpen.scene?.caption).not.toContain(secondBuilder.mean);
     expect(learnOpen.scene?.caption).not.toMatch(/^Missed /);
   });
 
@@ -233,10 +234,11 @@ describe('Home after a miss is Remember — not start / Geo · earth over Geo', 
     expect(tierMenu).not.toContain('aria-label="Choose what to play"');
     expect(detail).toContain('export function detailSceneCaption');
     expect(detail).toContain('Missed ${name}');
-    expect(detail).toContain('{ missed: missHero, name: missHero ? miss?.name : undefined }');
+    expect(detail).toContain('missed: missHero');
+    expect(detail).toContain('name: missHero ? miss?.name : undefined');
     expect(detail).toContain('missed: Boolean(miss)');
     expect(detail).toContain('name: miss?.name');
-    expect(detail).toContain('dailyResumeCaption(nextDaily, extra.dailyNextFace)');
+    expect(detail).toContain('dailyResumeCaption(nextDaily, extra.dailyNextFace,');
     expect(panel).toContain('ww-detail-scene-cap${vm.waitingMiss ? \' is-miss\' : \'\'}');
     expect(css).toMatch(/\.ww-panel-label \.s\.is-miss/);
     expect(css).toMatch(/\.ww-detail-scene-cap\.is-miss/);

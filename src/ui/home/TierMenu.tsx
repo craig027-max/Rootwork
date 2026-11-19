@@ -133,7 +133,7 @@ export function TierMenu({
                       </span>
                     ) : null}
                     {p.asked ? <b>{p.asked}</b> : <b>{p.root}</b>}
-                    <span>{p.mean}</span>
+                    {p.mean ? <span>{p.mean}</span> : null}
                   </span>
                 );
               })}

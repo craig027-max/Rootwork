@@ -129,6 +129,21 @@ export interface IndexMatch {
   hint?: string;
 }
 
+/** Pass `played` from the profile so an unplayed meaning cannot confirm a root. */
+export interface IndexSearchOpts {
+  /**
+   * Lesson-owned root ids. When set, meaning and gloss (`mean` / `alt`)
+   * match only those roots. Root name, school word, and pronunciation
+   * still match every root. Omit it only for catalog checks that are
+   * not a kid's Browse.
+   */
+  played?: ReadonlySet<string>;
+}
+
+function meaningOpen(root: Root, opts?: IndexSearchOpts): boolean {
+  return !opts?.played || opts.played.has(rootId(root));
+}
+
 /**
  * Why this root matches the query. Empty query matches everything as a
  * catalog row (no hint). Origin / lead / definitions / breakdowns stay
@@ -136,16 +151,22 @@ export interface IndexMatch {
  * One or two letters are a root-name typeahead (A → Aqua, or → Ortho).
  * They must not light every chip that merely contains those letters
  * (Port / Form for "or").
+ * An unplayed root is not findable by its meaning or gloss.
  */
-export function indexRootMatch(root: Root, query: string): IndexMatch | null {
+export function indexRootMatch(
+  root: Root,
+  query: string,
+  opts?: IndexSearchOpts,
+): IndexMatch | null {
   const q = cleanSearchQuery(query);
   if (!q) return { why: 'root' };
   if (q.length < 3) {
     return compact(root.root).startsWith(compact(q)) ? { why: 'root' } : null;
   }
   if (fieldHas(root.root, q)) return { why: 'root' };
-  if (fieldHas(root.mean, q)) return { why: 'mean' };
-  if (fieldHas(root.alt, q)) return { why: 'alt' };
+  const reveal = meaningOpen(root, opts);
+  if (reveal && fieldHas(root.mean, q)) return { why: 'mean' };
+  if (reveal && fieldHas(root.alt, q)) return { why: 'alt' };
   if (fieldHas(root.say, q)) return { why: 'say', hint: root.say };
   for (const word of root.words) {
     if (fieldHas(word.w, q) || wordFormHas(word.w, q)) return { why: 'word', hint: word.w };
@@ -178,20 +199,27 @@ export interface IndexChipFace {
   word: string | null;
 }
 
-/** Giant name on a find chip — Biology, not Bio over the word they typed. */
+/**
+ * Giant name on a find chip — Biology, not Bio over the word they typed.
+ * `played: false` keeps the school-word line as "from Bio" with no gloss.
+ * Omit `played` only when the caller already decided the meaning may show.
+ */
 export function indexChipFace(opts: {
   root: string;
   mean: string;
   match: IndexMatch | null;
+  played?: boolean;
 }): IndexChipFace {
   const root = opts.root.replace(/\s+/g, ' ').trim();
   const mean = opts.mean.replace(/\s+/g, ' ').trim();
+  const showMean = opts.played !== false;
   const word = indexFocusWord(opts.match);
   if (word) {
-    const from = root && mean ? `from ${root} · ${mean}` : root ? `from ${root}` : mean;
+    const from =
+      root && showMean && mean ? `from ${root} · ${mean}` : root ? `from ${root}` : showMean ? mean : '';
     return { title: word, sub: from, word };
   }
-  return { title: root, sub: mean, word: null };
+  return { title: root, sub: showMean ? mean : '', word: null };
 }
 
 /** Photosynthesis-length titles wrap instead of clipping the school word. */
@@ -214,32 +242,41 @@ export function indexChipAria(opts: {
   return indexChipLabel(opts.root, opts.kind);
 }
 
-export function filterIndexRoots<T extends Root>(roots: readonly T[], query: string): T[] {
+export function filterIndexRoots<T extends Root>(
+  roots: readonly T[],
+  query: string,
+  opts?: IndexSearchOpts,
+): T[] {
   if (!cleanSearchQuery(query)) return [...roots];
-  return roots.filter((root) => indexRootMatch(root, query) != null);
+  return roots.filter((root) => indexRootMatch(root, query, opts) != null);
 }
 
-function matchScore(root: Root, query: string): number {
+function matchScore(root: Root, query: string, opts?: IndexSearchOpts): number {
   const q = cleanSearchQuery(query);
   if (!q) return 0;
   const name = root.root.toLowerCase();
   const tightName = compact(root.root);
   const tightQ = compact(q);
+  const reveal = meaningOpen(root, opts);
   if (name === q || tightName === tightQ) return 100;
   if (name.startsWith(q) || tightName.startsWith(tightQ)) return 80;
   if (fieldHas(root.root, q)) return 60;
-  if (fieldHas(root.mean, q)) return 50;
-  if (fieldHas(root.alt, q)) return 40;
+  if (reveal && fieldHas(root.mean, q)) return 50;
+  if (reveal && fieldHas(root.alt, q)) return 40;
   if (root.words.some((word) => fieldHas(word.w, q) || wordFormHas(word.w, q))) return 30;
   if (fieldHas(root.say, q)) return 20;
   return 10;
 }
 
 /** Exact / prefix root names lead; catalog order is the tie-break. */
-export function rankIndexMatches<T extends Root>(roots: readonly T[], query: string): T[] {
+export function rankIndexMatches<T extends Root>(
+  roots: readonly T[],
+  query: string,
+  opts?: IndexSearchOpts,
+): T[] {
   if (!cleanSearchQuery(query)) return [...roots];
   return [...roots].sort((a, b) => {
-    const diff = matchScore(b, query) - matchScore(a, query);
+    const diff = matchScore(b, query, opts) - matchScore(a, query, opts);
     if (diff !== 0) return diff;
     return 0;
   });
@@ -254,15 +291,16 @@ export function arrangeIndexRoots<T extends Root>(
   missed: ReadonlySet<string>,
   query: string,
   idOf: (root: T) => string,
+  opts?: IndexSearchOpts,
 ): T[] {
-  const matched = filterIndexRoots(roots, query);
+  const matched = filterIndexRoots(roots, query, opts);
   const ordered = indexRootsMissFirst(matched, missed, idOf);
   if (!cleanSearchQuery(query) || missed.size === 0) {
-    return rankIndexMatches(ordered, query);
+    return rankIndexMatches(ordered, query, opts);
   }
   const miss = ordered.filter((root) => missed.has(idOf(root)));
   const rest = ordered.filter((root) => !missed.has(idOf(root)));
-  return [...miss, ...rankIndexMatches(rest, query)];
+  return [...miss, ...rankIndexMatches(rest, query, opts)];
 }
 
 export interface IndexBrowseSection {
@@ -277,14 +315,16 @@ export interface IndexBrowseSection {
 export function buildIndexBrowseSections(opts: {
   query?: string;
   missed?: Iterable<string>;
+  played?: ReadonlySet<string>;
 }): IndexBrowseSection[] {
   const query = opts.query ?? '';
   const missed = new Set(
     [...(opts.missed ?? [])].filter((id): id is string => typeof id === 'string' && id.length > 0),
   );
+  const search = opts.played ? { played: opts.played } : undefined;
   const sections = TIERS.map((tier, ti) => {
     const t = (ti + 1) as TierNum;
-    const roots = arrangeIndexRoots(rootsInTier(t), missed, query, rootId);
+    const roots = arrangeIndexRoots(rootsInTier(t), missed, query, rootId, search);
     const missNames = roots.filter((root) => missed.has(rootId(root))).map((root) => root.root);
     return { t, name: tier.n, sub: tier.sub, roots, missNames };
   }).filter((section) => section.roots.length > 0);

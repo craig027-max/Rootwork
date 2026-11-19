@@ -57,15 +57,14 @@ describe('Home tier tile: mid-Starter peek (Bio owned)', () => {
   const row = starterRow(bioOwned, false);
   const peek = tierTilePreview(1, bioOwned, false);
 
-  it('does not lead with Bio — it peeks the next unlearned (Geo…) + meaning', () => {
+  it('does not lead with Bio — it peeks the next unlearned (Geo) without the meaning', () => {
     expect(first.root).toBe('Bio');
     expect(second.root).toBe('Geo');
     expect(peek[0]?.root).toBe('Geo');
     expect(peek.map((p) => p.root)).not.toEqual(['Bio', 'Geo', 'Photo', 'Aqua']);
     expect(peek.map((p) => p.root)[0]).not.toBe('Bio');
-    expect(peek[0]?.mean).toBe(second.mean);
-    expect(peek[0]?.mean.length).toBeGreaterThan(0);
-    expect(peek[0]?.mean).not.toMatch(/\n/);
+    expect(peek[0]?.mean).toBe('');
+    expect(peek[0]?.mean).not.toBe(second.mean);
 
     const vm = buildDetailVM(row, {
       ...extraBase,
@@ -77,7 +76,9 @@ describe('Home tier tile: mid-Starter peek (Bio owned)', () => {
     expect(vm.samples[0]?.root).toBe('Geo');
     expect(vm.samples.map((s) => s.root)[0]).not.toBe('Bio');
     expect(vm.samples.map((s) => s.root)).not.toEqual(starter.slice(0, 4).map((r) => r.root));
-    expect(vm.samples[0]?.mean).toBe(second.mean);
+    expect(vm.samples[0]?.mean).toBe('');
+    expect(vm.scene?.caption).toBe(second.root);
+    expect(vm.scene?.caption).not.toContain(second.mean);
     expect(vm.sampleLines).toBe(true);
     expect(vm.samplesDone).toBeFalsy();
     expect(vm.scene?.caption).toMatch(/^Geo/);

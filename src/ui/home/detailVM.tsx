@@ -33,6 +33,7 @@ import {
 } from '../../core/rushRecap';
 import { missFacePeek, samplePeekTap } from './samplePeek';
 import { keepGoingLabel } from './todayProgress';
+import { lessonPlayed, withHeldMean } from '../../core/playedMean';
 import type { DetailVM } from './DetailPanel';
 
 /** Preview scene caption — Missed Geo, not Geo · earth / Root Rush over Remember. */
@@ -50,10 +51,14 @@ export function detailSceneCaption(opts: {
   return opts.fallback;
 }
 
+function playedRoot(root: Root | undefined, completed: ReadonlySet<string>): boolean {
+  return lessonPlayed(root ? rootId(root) : undefined, completed);
+}
+
 function sceneFrom(
   root: Root | undefined,
   fallback: { key: string; palKey: string; caption: string },
-  opts: { missed?: boolean; name?: string; caption?: string } = {},
+  opts: { missed?: boolean; name?: string; caption?: string; played?: boolean } = {},
 ) {
   const palKey = root?.pal ?? fallback.palKey;
   const p = PALETTES[palKey] ?? PALETTES.green!;
@@ -68,7 +73,7 @@ function sceneFrom(
         : detailSceneCaption({
             missed: opts.missed,
             root: shown,
-            mean: opts.name ? undefined : root?.mean,
+            mean: opts.name || !opts.played ? undefined : root?.mean,
             fallback: fallback.caption,
           }),
   };
@@ -309,15 +314,24 @@ export function buildDetailVM(
           : miss
             ? todayMissRecap(miss.name, miss.also)
             : learn
-              ? [learn.rootName, learnRoot?.mean.replace(/\s+/g, ' ').trim()]
-                  .filter((part): part is string => Boolean(part?.trim()))
+              ? [
+                  learn.rootName,
+                  learnRoot && lessonPlayed(rootId(learnRoot), extra.completed)
+                    ? learnRoot.mean.replace(/\s+/g, ' ').trim()
+                    : '',
+                ]
+                  .filter((part) => Boolean(part?.trim()))
                   .join(' · ')
               : waiting,
         waitingMiss: missHero,
         scene: sceneFrom(
           missRoot ?? learnRoot,
           { key: 'heat', palKey: 'fire', caption: 'Root Rush' },
-          { missed: missHero, name: missHero ? miss?.name : undefined },
+          {
+            missed: missHero,
+            name: missHero ? miss?.name : undefined,
+            played: playedRoot(missRoot ?? learnRoot, extra.completed),
+          },
         ),
         heroCta: Boolean(learn || missHero),
       };
@@ -325,17 +339,20 @@ export function buildDetailVM(
     const dailyResume =
       extra.dailyResumeQi != null && extra.dailyResumeQi >= 1 ? extra.dailyResumeQi : null;
     const nextDaily = dailyNextRoot(extra.dailyRoots, dailyResume);
-    const dailySamples = applyDailyPendingPreview(
-      applyDailyAskedPreview(
-        extra.dailyDone
-          ? dailyTilePreview(extra.dailyRoots)
-          : dailyResume != null
-            ? dailyResumePreview(extra.dailyRoots, dailyResume)
-            : dailyTilePreview(extra.dailyRoots),
-        extra.dailyAsked,
+    const dailySamples = withHeldMean(
+      applyDailyPendingPreview(
+        applyDailyAskedPreview(
+          extra.dailyDone
+            ? dailyTilePreview(extra.dailyRoots)
+            : dailyResume != null
+              ? dailyResumePreview(extra.dailyRoots, dailyResume)
+              : dailyTilePreview(extra.dailyRoots),
+          extra.dailyAsked,
+        ),
+        nextDaily?.root,
+        extra.dailyDone ? null : extra.dailyNextFace,
       ),
-      nextDaily?.root,
-      extra.dailyDone ? null : extra.dailyNextFace,
+      extra.completed,
     );
     const remainingAfterPeek =
       extra.dailyDone || dailyResume == null
@@ -355,7 +372,9 @@ export function buildDetailVM(
       ? `Five fresh roots every day. ${endedPhrase} — today's five start a new one.`
       : `${keepPitch}${streakLine}`;
     const midLead = nextDaily
-      ? `${dailyResumeSentence(nextDaily, extra.dailyNextFace)} ${dailyResume} of ${extra.dailyRoots.length} already yours.`
+      ? `${dailyResumeSentence(nextDaily, extra.dailyNextFace, {
+          revealMean: lessonPlayed(rootId(nextDaily), extra.completed),
+        })} ${dailyResume} of ${extra.dailyRoots.length} already yours.`
       : endedPhrase
         ? freshLead
         : keepPitch;
@@ -449,7 +468,16 @@ export function buildDetailVM(
         {
           missed: Boolean(miss),
           name: miss?.name,
-          caption: !miss && nextDaily ? dailyResumeCaption(nextDaily, extra.dailyNextFace) : undefined,
+          played: playedRoot(
+            missRoot ?? nextLearnRoot ?? nextDaily ?? extra.dailyRoots[0],
+            extra.completed,
+          ),
+          caption:
+            !miss && nextDaily
+              ? dailyResumeCaption(nextDaily, extra.dailyNextFace, {
+                  revealMean: lessonPlayed(rootId(nextDaily), extra.completed),
+                })
+              : undefined,
         },
       ),
       // Mid-run: park Continue Daily · N of 5 under the next-root scene —
@@ -508,11 +536,16 @@ export function buildDetailVM(
       big: name,
       locked: true,
       lead: leadWithNames(`${name} unlocks the full curriculum — roots like `, teaser.slice(0, 3)),
-      samples: teaser.map((r) => ({ root: r.root, mean: r.mean })),
+      samples: teaser.map((r) => ({
+        root: r.root,
+        mean: lessonPlayed(rootId(r), extra.completed) ? r.mean : '',
+      })),
       sampleTap: samplePeekTap({ locked: true, sampleCount: teaser.length }),
       moreCount: Math.max(0, item.total - teaser.length),
       primary: { label: '🔓 Ask a grown-up to unlock' },
-      scene: sceneFrom(teaser[0], { key: 'dna', palKey: item.jewel, caption: name }),
+      scene: sceneFrom(teaser[0], { key: 'dna', palKey: item.jewel, caption: name }, {
+        played: playedRoot(teaser[0], extra.completed),
+      }),
     };
   }
 
@@ -612,7 +645,11 @@ export function buildDetailVM(
     scene: sceneFrom(
       sceneRoot,
       { key: 'dna', palKey: item.jewel, caption: name },
-      { missed: missHero, name: missHero ? miss?.name : undefined },
+      {
+        missed: missHero,
+        name: missHero ? miss?.name : undefined,
+        played: playedRoot(sceneRoot, extra.completed),
+      },
     ),
     heroCta: firstPlay || resumeNow || missHero,
   };
