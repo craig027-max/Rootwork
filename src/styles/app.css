@@ -232,6 +232,7 @@
 /* Profile band */
 .ww-profile {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: clamp(16px, 2.4vw, 26px);
   padding: clamp(20px, 2.6vw, 30px);
@@ -279,7 +280,8 @@
   box-shadow: var(--shadow-glow-gold);
 }
 .ww-pinfo {
-  min-width: 0;
+  min-width: min-content;
+  flex: 1 1 auto;
 }
 .ww-hello {
   font-family: var(--font-mono);
@@ -350,6 +352,7 @@
 }
 .ww-stats {
   margin-left: auto;
+  flex: none;
   display: grid;
   grid-auto-flow: column;
   gap: clamp(12px, 2vw, 26px);
