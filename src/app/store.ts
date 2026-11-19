@@ -554,7 +554,7 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   setQueuedStudyRecall: (queued) => set({ queuedStudyRecall: queued }),
   openRoot: (id, opts) =>
     set((s) => {
-      if (!isRootOpenable(id, displayEntitled(s))) return { askOpen: true };
+      if (!isRootOpenable(id, displayEntitled(s), s.completedRoots)) return { askOpen: true };
       const entry = deckEntryForOpen(opts);
       return {
         currentRootId: id,

@@ -8,9 +8,10 @@ actions (Craig) — the app code is already wired to consume them via env vars.
 > Never reuse a project, key, or price id from Orbital (Wondral Chemistry) or Piano Surge, and never
 > cross data between them.
 
-The app degrades gracefully with **no backend configured** (free Tier 1 works, the "Go Premium" CTA
+The app degrades gracefully with **no backend configured** (the free starter set works, the "Go Premium" CTA
 hides, gated taps land on a calm "accounts coming soon" screen — never an error), so you can deploy
-the static app first and wire the backend incrementally.
+the static app first and wire the backend incrementally. Checkout stays off until `VITE_CHECKOUT_ENABLED`
+and `CHECKOUT_ENABLED` are the string `true`. See `docs/go-live-checkout.md`.
 
 ---
 
@@ -44,19 +45,18 @@ the static app first and wire the backend incrementally.
 
 ## 2. Stripe (new prices + webhook)
 
-1. **Create two products / prices** (test mode while building) in the Stripe Dashboard — one-time
-   annual model, matching the two tiers:
-   - `Single Scholar` — one learner (recurring **annual** or one-time; the app treats it as a 1-year grant)
-   - `Family` — up to 10 students
-   Copy each **price id** (`price_…`).
+1. **Create one product / price** (test mode while building) in the Stripe Dashboard — one-time
+   annual model:
+   - `Single Scholar` — one student, $49 for one year (the app grants access for 1 year)
+   Copy the **price id** (`price_…`).
 2. **Webhook endpoint:** Developers → Webhooks → Add endpoint:
    - URL: `https://words.wondral.app/api/stripe/webhook`
    - Events: `checkout.session.completed`, `charge.refunded`, `charge.dispute.created`
      (the last two revoke the entitlement — without them a refunded or disputed purchase
      stays unlocked for the full year)
    - Copy the **Signing secret** (`whsec_…`).
-   *Note:* the paywall copy in `src/ui/Paywall.tsx` hardcodes “$49 / year” and “$79 / year” —
-   if the Stripe price amounts ever change, change them together.
+   *Note:* the paywall copy in `src/ui/Paywall.tsx` hardcodes “$49 / year” —
+   if the Stripe price amount ever changes, change them together.
 3. Put the Stripe values into `.dev.vars` locally (copy from `.dev.vars.example`) and into the
    Cloudflare Pages env (step 3 below).
 
@@ -81,7 +81,8 @@ the static app first and wire the backend incrementally.
    | `STRIPE_SECRET_KEY` | Production + Preview · **Secret** | `sk_…` |
    | `STRIPE_WEBHOOK_SECRET` | Production + Preview | `whsec_…` |
    | `STRIPE_PRICE_SINGLE` | Production + Preview | `price_…` |
-   | `STRIPE_PRICE_MULTI` | Production + Preview | `price_…` |
+   | `CHECKOUT_ENABLED` | Production + Preview | `true` only when Stripe is ready; otherwise omit |
+   | `VITE_CHECKOUT_ENABLED` | Production + Preview | `true` only on the same build; otherwise omit |
 3. **Custom domain** (the project → Custom domains → Set up a domain):
    - Add **`words.wondral.app`**. Cloudflare auto-creates the CNAME because `wondral.app` DNS is on
      the same account. Subdomain (not a path) — same choice as `chemistry.wondral.app`.
@@ -93,7 +94,7 @@ the static app first and wire the backend incrementally.
 
 The PianoSurge App Store lesson: walk every monetization/consent entry point in each gated state.
 
-- [ ] **Logged-out:** Tier 1 roots open and animate; paid tiers show 🔒.
+- [ ] **Logged-out:** the free starter set opens and animates; other roots show as locked.
 - [ ] **"Go Premium" (signed-out):** routes to sign-up (the purchase is the consent) — never an error.
 - [ ] **Offline:** put the device in airplane mode → free roots still work; the Go Premium CTA is
       hidden / the paywall shows a calm offline notice (no broken checkout).

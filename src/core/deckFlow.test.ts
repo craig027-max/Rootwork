@@ -183,7 +183,9 @@ describe('afterCorrectRecall', () => {
   it('success line is one kid-safe sentence', () => {
     expect(successLine(bio)).toBe('Yes — Bio means life.');
     expect(successLine(bio).toLowerCase()).not.toMatch(/wrong|fail|shame|stupid|nope|loser/);
-    expect(starterDoneLine().toLowerCase()).toContain('starter done');
+    expect(starterDoneLine()).toBe(
+      'You finished the free set — ask a grown-up to unlock more.',
+    );
   });
 
   it('Remember Bio holds the meaning then Home — Geo does not open', () => {

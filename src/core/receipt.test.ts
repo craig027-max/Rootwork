@@ -2,8 +2,6 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-  ADDRESS_TODO,
-  EIN_TODO,
   PAID_IN_FULL,
   SELLER_BRAND,
   SELLER_LEGAL_NAME,
@@ -43,8 +41,7 @@ describe('receipt from a checkout record', () => {
     expect(text).toContain(PAID_IN_FULL);
     expect(text).toContain('Student name Ada');
     expect(text).toContain(`Contact ${SUPPORT_EMAIL}`);
-    expect(text).toContain(ADDRESS_TODO);
-    expect(text).toContain(EIN_TODO);
+    expect(text).not.toMatch(/mailing address|EIN/);
     expect(text).not.toMatch(/\d{5,}/);
   });
 

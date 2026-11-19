@@ -72,10 +72,14 @@ describe('learnNextAction', () => {
     expect(next.label).not.toMatch(/Play again|Back to learning/);
   });
 
-  it('names Play Auto after Starter, Continue after they start Builder (entitled)', () => {
-    expect(learnNextAction(starterDone, false)).toMatchObject({
+  it('names Play Auto after Starter when entitled, and stops when the free set is done', () => {
+    expect(learnNextAction(starterDone, true)).toMatchObject({
       rootName: firstBuilder.root,
       label: `Play ${firstBuilder.root} ›`,
+    });
+    expect(learnNextAction(starterDone, false)).toMatchObject({
+      kind: 'home',
+      label: 'Back to learning',
     });
     expect(learnNextAction(startedBuilder, true)).toMatchObject({
       rootName: secondBuilder.root,

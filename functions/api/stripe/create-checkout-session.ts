@@ -5,9 +5,10 @@ import { createClient } from '@supabase/supabase-js';
 interface Env {
   STRIPE_SECRET_KEY: string;
   STRIPE_PRICE_SINGLE: string;
-  STRIPE_PRICE_MULTI: string;
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
+  /** The string "true" turns checkout on. Anything else refuses. */
+  CHECKOUT_ENABLED?: string;
   CHECKOUT_SUCCESS_PATH?: string;
   CHECKOUT_CANCEL_PATH?: string;
   APP_BASE_URL?: string;
@@ -21,18 +22,21 @@ const json = (data: unknown, status = 200): Response =>
 
 /**
  * POST /api/stripe/create-checkout-session
- *   Body: { tier: 'single' | 'multi' }
+ *   Body: ignored. The only plan is the single-student annual price.
  *   Auth: Authorization: Bearer <supabase access token>
  *
  * Verifies the caller's Supabase JWT SERVER-SIDE and derives parent_id from it —
  * it never trusts a client-supplied id, so a user can only ever buy for their own
- * account. Refuses with 409 'already_entitled' if the parent already holds an
+ * account. Refuses with 403 'checkout_disabled' unless CHECKOUT_ENABLED is the
+ * string "true". Refuses with 409 'already_entitled' if the parent already holds an
  * active entitlement (double-purchase guard). Otherwise mints a one-time
- * ('payment') Checkout Session for the chosen tier and stamps parent_id into both
- * the session metadata and client_reference_id so the webhook can grant the
- * entitlement to exactly this parent.
+ * ('payment') Checkout Session for the single-student price and stamps parent_id
+ * into both the session metadata and client_reference_id so the webhook can grant
+ * the entitlement to exactly this parent.
  */
 export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
+  if (env.CHECKOUT_ENABLED !== 'true') return json({ error: 'checkout_disabled' }, 403);
+
   const token = (request.headers.get('Authorization') ?? '')
     .replace(/^Bearer\s+/i, '')
     .trim();
@@ -55,8 +59,6 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   // Double-purchase guard: a second tab or a stale paywall must not let a parent
   // pay twice. Any currently-active entitlement → 409 (the client maps it to a
   // friendly "already unlocked" state). An expired/refunded row may buy again.
-  // Tier upgrades (single → multi mid-year) are deliberately not a thing yet —
-  // when they are, this guard is where the exception goes.
   const { data: existing, error: entErr } = await supabase
     .from('entitlements')
     .select('status, expires_at')
@@ -64,8 +66,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     .maybeSingle();
   if (entErr) {
     // Fail OPEN: blocking checkout on a flaky read would stop ALL purchases; the
-    // worst case of proceeding is the pre-guard behavior (a duplicate charge,
-    // which support can refund).
+    // worst case of proceeding is the pre-guard behavior (a duplicate charge).
     console.error('[stripe] entitlement pre-check failed (proceeding)', entErr);
   } else if (
     existing &&
@@ -75,15 +76,7 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return json({ error: 'already_entitled' }, 409);
   }
 
-  let tier: 'single' | 'multi' = 'single';
-  try {
-    const body = (await request.json()) as { tier?: string } | null;
-    if (body?.tier === 'multi') tier = 'multi';
-  } catch {
-    // empty / invalid body → default to single
-  }
-
-  const price = tier === 'multi' ? env.STRIPE_PRICE_MULTI : env.STRIPE_PRICE_SINGLE;
+  const price = env.STRIPE_PRICE_SINGLE;
   if (!price) return json({ error: 'price_not_configured' }, 500);
 
   const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
@@ -104,8 +97,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
       client_reference_id: user.id,
       customer_creation: 'always',
       customer_email: user.email ?? undefined,
-      metadata: { parent_id: user.id, tier },
-      payment_intent_data: { metadata: { parent_id: user.id, tier } },
+      metadata: { parent_id: user.id, tier: 'single' },
+      payment_intent_data: { metadata: { parent_id: user.id, tier: 'single' } },
       success_url: `${origin}${env.CHECKOUT_SUCCESS_PATH ?? '/?checkout=success'}`,
       cancel_url: `${origin}${env.CHECKOUT_CANCEL_PATH ?? '/?checkout=cancel'}`,
     });

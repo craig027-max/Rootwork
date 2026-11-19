@@ -50,7 +50,7 @@ import { samplePeekLabel } from './home/samplePeek';
  * Root Rush — the full-screen jewel-themed quiz overlay, ported from the design
  * package (rootwork/ui_kits/rootwork-app/roots-quiz.js). Three question types,
  * combo scoring up to 8×, per-question jewel re-theming, and a graded result
- * screen. Runs only over roots the learner can actually open (Tier 1 free;
+ * screen. Runs only over roots the learner can actually open (the free starter set;
  * everything once entitled) and banks stars / accuracy / XP / streak via the
  * store (core/stats) exactly once per finished run.
  *
@@ -149,9 +149,12 @@ export function RootRush() {
   const [retriedMiss, setRetriedMiss] = useState(false);
   const recordedRunRef = useRef(-1); // runSeed of the last banked run
 
-  // Every root the learner may open (Tier 1 free; all once entitled) — the
+  // Every root the learner may open (free starter set, plus owned; all once entitled) — the
   // quiz never touches locked content, for prompts or distractors.
-  const pool = useMemo(() => ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)), [entitled]);
+  const pool = useMemo(
+    () => ROOTS.filter((r) => isRootOpenable(rootId(r), entitled, completed)),
+    [entitled, completed],
+  );
   const avail = useMemo(() => (tier > 0 ? pool.filter((r) => r.t === tier) : pool), [pool, tier]);
   const day = localDayKey();
   const dailyRoots = useMemo(

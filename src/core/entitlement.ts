@@ -34,8 +34,8 @@ export function isEntitlementActive(
 /**
  * How many student profiles the parent may have. This is the client-side
  * enforcement of `entitlement.seats`, which the Stripe webhook grants as
- * single=1 / multi(family)=10. No active entitlement (free tier, or an expired /
- * refunded purchase) → 1: free play is "one learner", matching the paywall copy.
+ * New purchases grant 1 seat. A stored row may still say tier "multi" with more
+ * seats, and those seats keep working. No active entitlement → 1.
  * Pure so the cap rule is unit-testable; `nowMs` injectable like
  * isEntitlementActive.
  */

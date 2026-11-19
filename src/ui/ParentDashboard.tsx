@@ -24,14 +24,11 @@ export function ParentDashboard() {
   const setView = useWondralStore((s) => s.setView);
   const signOut = useWondralStore((s) => s.signOut);
   const entitlement = useWondralStore((s) => s.entitlement);
-  const requestUpgrade = useWondralStore((s) => s.requestUpgrade);
 
-  // Seat cap from the plan (single=1, family=10, free=1). At the cap the add
-  // form is REPLACED by a calm upgrade card — never a submit-then-error.
+  // New purchases are one student. A stored row can still carry more seats
+  // (an older multi grant). At the cap the add form is replaced by a notice.
   const seats = seatLimit(entitlement);
   const atSeatCap = students.length >= seats;
-  // The family plan is the top tier — at ITS cap there is nothing to upgrade to.
-  const canUpgradeForMore = seats < 10;
 
   const [counts, setCounts] = useState<Record<string, number>>({});
   const [nickname, setNickname] = useState('');
@@ -161,15 +158,10 @@ export function ParentDashboard() {
         <Card className="ww-stack">
           <p className="ww-eyebrow">Add a student</p>
           <div className="ww-notice" role="status">
-            {canUpgradeForMore
-              ? `Your plan includes ${seats} student profile${seats === 1 ? '' : 's'}, and ${
-                  seats === 1 ? 'it is' : 'all of them are'
-                } in use. Upgrade to the Family plan for up to 10 learners.`
-              : 'Your Family plan is full — all 10 student profiles are in use. Remove a profile to make room for a new learner.'}
+            {seats === 1
+              ? 'This plan includes one student profile, and it is in use. Remove a profile to add a different learner.'
+              : `This plan includes ${seats} student profiles, and all of them are in use. Remove a profile to make room for a new learner.`}
           </div>
-          {canUpgradeForMore ? (
-            <Button onClick={requestUpgrade}>Upgrade to add more learners</Button>
-          ) : null}
         </Card>
       ) : (
         <Card className="ww-stack">

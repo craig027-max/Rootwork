@@ -212,7 +212,7 @@ describe('Continue after a miss is Remember — not Continue {learn} / Next · A
     expect(detail).toContain("'Keep going is just for fun.'");
     expect(detail).toContain('keepGoingLabel(rootName)');
     expect(menu).toContain('missHere ? `Missed ${missName} · remember`');
-    expect(menu).toContain('resumeNow && !missName ? entryRootName');
+    expect(menu).toContain('resumeNow && !missName && !entryDone');
     expect(tierMenu).toContain('!it.missName');
     expect(home).toContain('missHero && rushMissId && isMissProgressTier(item)');
     expect(home).toContain("openRoot(rushMissId, { entry: 'remember' })");

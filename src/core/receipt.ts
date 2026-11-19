@@ -16,11 +16,6 @@ export const SELLER_LEGAL_NAME = 'Thompson Education Apps LLC';
 export const SELLER_BRAND = 'Wondral Words / Rootwork';
 export const SUPPORT_EMAIL = 'support@wondral.app';
 
-/** Not in the repo. Left blank on purpose so a real address is never invented. */
-export const ADDRESS_TODO = 'TODO: mailing address (Craig to provide)';
-/** Not in the repo. Left blank on purpose so an EIN is never invented. */
-export const EIN_TODO = 'TODO: EIN (Craig to provide if it should appear)';
-
 export const SINGLE_STUDENT_ANNUAL_ITEM =
   'Wondral Words (Rootwork) — 1-year single-student educational software subscription';
 
@@ -55,8 +50,6 @@ export interface Receipt {
   seller: typeof SELLER_LEGAL_NAME;
   brand: typeof SELLER_BRAND;
   supportEmail: typeof SUPPORT_EMAIL;
-  addressPlaceholder: typeof ADDRESS_TODO;
-  einPlaceholder: typeof EIN_TODO;
   receiptNumber: string;
   item: string;
   purchaseDate: string;
@@ -149,8 +142,6 @@ export function buildReceipt(record: CheckoutRecord): Receipt {
     seller: SELLER_LEGAL_NAME,
     brand: SELLER_BRAND,
     supportEmail: SUPPORT_EMAIL,
-    addressPlaceholder: ADDRESS_TODO,
-    einPlaceholder: EIN_TODO,
     receiptNumber: number,
     item,
     purchaseDate: formatMMDDYYYY(record.purchasedAt),
@@ -185,7 +176,5 @@ export function receiptLines(receipt: Receipt): string[] {
     receipt.paidInFull,
     `Student name ${receipt.studentName ?? ''}`,
     `Contact ${receipt.supportEmail}`,
-    receipt.addressPlaceholder,
-    receipt.einPlaceholder,
   ];
 }

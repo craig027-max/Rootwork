@@ -179,7 +179,7 @@ export function RootIndex({
               <div className="ww-igrid">
                 {shownRoots.map((root) => {
                   const id = rootId(root);
-                  const locked = !isRootOpenable(id, entitled);
+                  const locked = !isRootOpenable(id, entitled, completed);
                   const owned = Boolean(completed?.has(id));
                   const kind = indexChipKind({ missed: missed.has(id), owned, locked });
                   const match = indexRootMatch(root, query, { played: playedIds });

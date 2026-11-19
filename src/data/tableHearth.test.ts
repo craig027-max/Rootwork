@@ -63,7 +63,7 @@ const SCENES: Record<(typeof TABLE_HEARTH)[number], string> = {
 describe('Table & Hearth starter set', () => {
   const by = Object.fromEntries(ROOTS.map((r) => [r.root, r]));
 
-  it('adds twelve free roots after Corn and before Auto', () => {
+  it('adds twelve Starter roots after Corn and before Auto', () => {
     expect(TABLE_HEARTH).toHaveLength(12);
     const corn = ROOTS.findIndex((r) => r.root === 'Corn');
     const auto = ROOTS.findIndex((r) => r.root === 'Auto');
@@ -74,7 +74,7 @@ describe('Table & Hearth starter set', () => {
       const root = by[name];
       expect(root, name).toBeDefined();
       expect(root!.t, name).toBe(1);
-      expect(isRootFree(rootId(root!)), name).toBe(true);
+      expect(isRootFree(rootId(root!)), name).toBe(name === 'Sal');
       expect(root!.mean, name).toBe(MEANINGS[name]);
       expect(root!.scene, name).toBe(SCENES[name]);
       expect(root!.words, name).toHaveLength(3);

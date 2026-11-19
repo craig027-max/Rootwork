@@ -12,7 +12,7 @@ import { useWondralStore } from '../app/store';
 import { PARENT_GATE_MS } from '../core/parentGate';
 import { EMPTY_STATS } from '../core/stats';
 import type { Entitlement } from '../core/supabase';
-import { ROOTS, rootId } from '../data/roots';
+import { ROOTS, isRootFree, rootId } from '../data/roots';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -125,6 +125,16 @@ describe('hybrid gate: kids ask, grown-ups pass a check', () => {
     });
   }
 
+  it('tells a kid they finished the free set, with no store and no links', async () => {
+    const trial = new Set(ROOTS.filter((r) => isRootFree(rootId(r))).map((r) => rootId(r)));
+    useWondralStore.setState({ completedRoots: trial, view: 'home' });
+    await show();
+    const done = screen('free-set-done');
+    expect(done.textContent).toContain('You finished the free set — ask a grown-up to unlock more');
+    expectNoStore(done);
+    expect(done.querySelector('a')).toBeNull();
+  });
+
   it('opens Ask a grown-up from a locked tier, with no store and no account', async () => {
     useWondralStore.setState({
       completedRoots: starterDone,
@@ -211,9 +221,12 @@ describe('hybrid gate: kids ask, grown-ups pass a check', () => {
     await click([...fresh.querySelectorAll('button')].find((b) => b.textContent === 'Continue') ?? null);
     expect(document.querySelector('[data-screen="parent-gate"]')).toBeNull();
     expect(document.body.textContent).toContain('$49');
-    expect(document.body.textContent).toContain('Choose Single Scholar');
-    expect(document.body.textContent).toContain('$79');
-    expect(document.body.textContent).toContain('Choose Family');
+    expect(document.body.textContent).toContain('Single Scholar');
+    expect(document.body.textContent).toContain('Purchases aren’t open yet');
+    expect(document.body.textContent).toContain('Paid plans are nonrefundable');
+    expect(document.body.textContent).not.toContain('Choose');
+    expect(document.body.textContent).not.toContain('$79');
+    expect(document.body.textContent).not.toContain('Family');
   });
 
   it('blocks sign-in until the gate is passed, then opens the account form', async () => {

@@ -19,6 +19,7 @@ import {
   ROOTS,
   ROOTS_BY_ID,
   TIERS,
+  isRootFree,
   isRootOpenable,
   resumeRootId,
   rootsInTier,
@@ -117,37 +118,42 @@ export function hasChosenMode(stats: { runs: number; lastDailyDay: string | null
   return stats.runs > 0 || stats.lastDailyDay != null;
 }
 
+/** A free-starter root they have not learned yet. */
+export function freeTrialRemaining(completed: Set<string>): boolean {
+  return ROOTS.some((r) => isRootFree(rootId(r)) && !completed.has(rootId(r)));
+}
+
 /**
- * The root the fat Play button should open: first unlearned openable root,
- * or — just after Starter, before they start the next tier — the first
- * next-tier root even if it is still paywalled (Play Auto, not a locked store).
+ * The free set is done and they are not entitled. Home shows the finished
+ * screen instead of a locked Play button.
+ */
+export function freeSetFinished(completed: Set<string>, entitled: boolean): boolean {
+  return !entitled && completed.size > 0 && !freeTrialRemaining(completed);
+}
+
+/**
+ * The root the fat Play button should open: the first unlearned root they
+ * can actually play. A locked root is never offered.
  */
 export function nextPlayRoot(completed: Set<string>, entitled: boolean): Root | undefined {
-  const openable = ROOTS.find(
-    (r) => isRootOpenable(rootId(r), entitled) && !completed.has(rootId(r)),
+  return ROOTS.find(
+    (r) => isRootOpenable(rootId(r), entitled, completed) && !completed.has(rootId(r)),
   );
-  if (openable) return openable;
-  if (!rootsInTier(1).some((r) => !completed.has(rootId(r))) && !hasStartedPostStarter(completed)) {
-    return ROOTS.find((r) => !completed.has(rootId(r)));
-  }
-  return undefined;
 }
 
 /**
  * One fat next Play — hide Rush / Daily / locked tiers.
  *
- * True through Starter (#29: any Tier 1 root still unlearned). Stays true
- * after Starter while a next root can be offered (openable, or the first
- * next-tier root) and they have not yet chosen a mode or started that
- * next tier. False on the returning-dashboard threshold — not the instant
- * the last Starter root is owned.
+ * True while any free-starter root is still unlearned. After that, true only
+ * when the next root is one they can open and they have not chosen a mode or
+ * started a later tier.
  */
 export function isNextPlayHome(
   completed: Set<string>,
   entitled: boolean = false,
   opts: { choseMode?: boolean } = {},
 ): boolean {
-  if (rootsInTier(1).some((r) => !completed.has(rootId(r)))) return true;
+  if (freeTrialRemaining(completed)) return true;
   if (opts.choseMode || hasStartedPostStarter(completed)) return false;
   return nextPlayRoot(completed, entitled) != null;
 }
@@ -176,7 +182,8 @@ export function pickCurrentTier(completed: Set<string>, entitled: boolean): Tier
 export function tierEntryRoot(t: TierNum, completed: Set<string>, entitled: boolean) {
   const roots = rootsInTier(t);
   return (
-    roots.find((r) => isRootOpenable(rootId(r), entitled) && !completed.has(rootId(r))) ?? roots[0]
+    roots.find((r) => isRootOpenable(rootId(r), entitled, completed) && !completed.has(rootId(r))) ??
+    roots[0]
   );
 }
 
@@ -205,7 +212,7 @@ export function tierTilePreview(
   const roots = rootsInTier(t);
   const picked = opts.complete
     ? roots.filter((r) => completed.has(rootId(r)))
-    : roots.filter((r) => isRootOpenable(rootId(r), entitled) && !completed.has(rootId(r)));
+    : roots.filter((r) => isRootOpenable(rootId(r), entitled, completed) && !completed.has(rootId(r)));
   return picked.slice(0, count).map((r) => ({
     root: r.root,
     mean: completed.has(rootId(r)) ? r.mean : '',
@@ -411,10 +418,12 @@ export function tierPrimaryLabel(opts: {
   empty?: boolean;
   /** Today ✓ — extra play, not an unfinished Continue. */
   keepGoing?: boolean;
+  /** The named root is already owned, and nothing left in the tier is openable. */
+  owned?: boolean;
 }): string {
   if (opts.keepGoing) return `Keep going · ${opts.rootName} ›`;
   if (opts.nextPlay || opts.empty) return `Play ${opts.rootName} ›`;
-  if (opts.complete) return `Remember ${opts.rootName} ›`;
+  if (opts.complete || opts.owned) return `Remember ${opts.rootName} ›`;
   return `Continue ${opts.rootName} ›`;
 }
 
@@ -646,9 +655,12 @@ export function buildMenu(
     const t = (i + 1) as TierNum;
     const meta = TIER_META[i]!;
     const { done, total, pct } = tierStats(t, completed);
-    const locked = t !== 1 && !entitled;
+    const locked =
+      t !== 1 && !entitled && !rootsInTier(t).some((r) => completed.has(rootId(r)));
     const current = !locked && t === opts.currentTier;
     const resumeNow = current && pct < 100;
+    const entry = tierEntryRoot(t, completed, entitled);
+    const entryDone = Boolean(entry && completed.has(rootId(entry)));
     const missHere = Boolean(missName);
     return {
       kind: 'tier',
@@ -665,7 +677,9 @@ export function buildMenu(
       stars: starsForPct(pct),
       current,
       resumeName:
-        resumeNow && !missName ? entryRootName(t, completed, entitled) : undefined,
+        resumeNow && !missName && !entryDone
+          ? entryRootName(t, completed, entitled)
+          : undefined,
       missName: missHere ? missName : undefined,
     };
   });

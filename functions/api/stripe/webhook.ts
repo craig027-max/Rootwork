@@ -9,9 +9,9 @@ interface Env {
   SUPABASE_SERVICE_ROLE_KEY: string;
 }
 
-// Student-seat cap per tier. Soft cap enforced by the dashboard's add-student
-// flow; kept here so the webhook is the single source of the grant.
-const SEATS: Record<'single' | 'multi', number> = { single: 1, multi: 10 };
+// New purchases are one student. A row already stored as tier "multi" is not
+// rewritten by a later read — seatLimit uses the seats column on that row.
+const SINGLE_SEATS = 1;
 
 /**
  * POST /api/stripe/webhook — Stripe event handler.
@@ -82,14 +82,12 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
       const parentId = session.metadata?.parent_id ?? session.client_reference_id ?? null;
-      const tier: 'single' | 'multi' = session.metadata?.tier === 'multi' ? 'multi' : 'single';
       const earned =
         session.payment_status === 'paid' ||
         session.payment_status === 'no_payment_required';
       if (parentId && earned) {
         await grantEntitlement(supabase, {
           parentId,
-          tier,
           paymentIntentId:
             typeof session.payment_intent === 'string' ? session.payment_intent : null,
           customerId: typeof session.customer === 'string' ? session.customer : null,
@@ -133,7 +131,6 @@ async function grantEntitlement(
   supabase: SupabaseClient,
   args: {
     parentId: string;
-    tier: 'single' | 'multi';
     paymentIntentId: string | null;
     customerId: string | null;
   },
@@ -145,8 +142,8 @@ async function grantEntitlement(
   const ent = await supabase.from('entitlements').upsert(
     {
       parent_id: args.parentId,
-      tier: args.tier,
-      seats: SEATS[args.tier],
+      tier: 'single',
+      seats: SINGLE_SEATS,
       status: 'active',
       source: 'stripe',
       stripe_customer_id: args.customerId,

@@ -320,7 +320,7 @@ export function rememberAskedTeach(
 }
 
 export function starterDoneLine(): string {
-  return 'Starter done. Nice work.';
+  return 'You finished the free set — ask a grown-up to unlock more.';
 }
 
 export function allDoneLine(): string {
@@ -352,6 +352,8 @@ export function afterCorrectRecall(
     /** Which-word beat — Yes names that school word, not the root. */
     word?: string;
     wordSplit?: string;
+    /** Roots this profile already owns, so Next can land on them. */
+    owned?: ReadonlySet<string>;
   },
 ): AfterCorrectRecall {
   const root = ROOTS_BY_ID[fromId];
@@ -377,7 +379,7 @@ export function afterCorrectRecall(
   if (opts?.entry === 'remember') {
     return { kind: 'home', line };
   }
-  const next = neighborOpenable(fromId, 1, entitled);
+  const next = neighborOpenable(fromId, 1, entitled, opts?.owned);
   if (next) {
     return { kind: 'next', id: next, line };
   }

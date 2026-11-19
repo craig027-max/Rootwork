@@ -65,7 +65,7 @@ export function PrivacyPolicy() {
       <section>
         <h2>Trying it without an account</h2>
         <p>
-          The free tier works with no account at all. Progress is saved in your browser and, when
+          The free starter set works with no account at all. Progress is saved in your browser and, when
           online, under a random anonymous ID so it can survive a page reload — with no email, name,
           or anything else that identifies you attached to it.
         </p>

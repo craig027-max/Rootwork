@@ -141,11 +141,8 @@ describe('webhook: idempotency', () => {
 });
 
 describe('webhook: checkout.session.completed (grant)', () => {
-  it('grants an active entitlement with the right seats for each tier', async () => {
-    for (const [tier, seats] of [
-      ['single', 1],
-      ['multi', 10],
-    ] as const) {
+  it('grants one seat even when an old session says multi', async () => {
+    for (const tier of ['single', 'multi'] as const) {
       vi.clearAllMocks();
       db = makeDb();
       createClientMock.mockImplementation(() => db.client);
@@ -162,8 +159,8 @@ describe('webhook: checkout.session.completed (grant)', () => {
       const upsert = callsFor(db.calls, 'entitlements').find((c) => c.method === 'upsert');
       expect(upsert?.args[0]).toMatchObject({
         parent_id: 'parent_1',
-        tier,
-        seats,
+        tier: 'single',
+        seats: 1,
         status: 'active',
         source: 'stripe',
         stripe_payment_intent_id: 'pi_1',

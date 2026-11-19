@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
+  FREE_TRIAL_ROOTS,
   isRootFree,
+  isRootOpenable,
   rootLockReason,
   isRootAccessible,
   resumeRootId,
@@ -17,8 +19,8 @@ const ordered = orderedRoots();
 const first = firstRoot();
 if (!first) throw new Error('fixture: expected at least one root');
 
-const freeRoots = ordered.filter((r) => r.t === 1);
-const paidRoots = ordered.filter((r) => r.t !== 1);
+const freeRoots = ordered.filter((r) => isRootFree(rootId(r)));
+const paidRoots = ordered.filter((r) => !isRootFree(rootId(r)));
 
 const firstId = rootId(first);
 
@@ -39,12 +41,17 @@ const NONE = new Set<RootId>();
 const priorDone = new Set<RootId>([rootId(priorToFirstPaid)]);
 
 describe('isRootFree', () => {
-  it('is true for every root in Tier 1 (the free sample)', () => {
-    for (const r of freeRoots) expect(isRootFree(rootId(r)), r.root).toBe(true);
+  it('is exactly the starter trial, including Bio, Geo, Photo, and Sal', () => {
+    expect(freeRoots.map((r) => r.root)).toEqual([...FREE_TRIAL_ROOTS]);
+    expect(freeRoots).toHaveLength(26);
+    for (const name of ['Bio', 'Geo', 'Photo', 'Sal']) {
+      expect(isRootFree(name.toLowerCase()), name).toBe(true);
+    }
   });
 
-  it('is false for every root in Tiers 2+', () => {
+  it('is false for every other root, including the rest of Tier 1', () => {
     for (const r of paidRoots) expect(isRootFree(rootId(r)), r.root).toBe(false);
+    expect(paidRoots.some((r) => r.t === 1)).toBe(true);
   });
 
   it('is false for an unknown root id', () => {
@@ -77,6 +84,20 @@ describe('rootLockReason precedence (entitlement before completion)', () => {
   it("a free, non-first root with prior incomplete → 'completion'", () => {
     expect(rootLockReason(secondFreeId, NONE, false)).toBe('completion');
     expect(rootLockReason(secondFreeId, NONE, true)).toBe('completion');
+  });
+
+  it('skips a locked Tier 1 root when unlocking the next free one', () => {
+    const tri = rootId(ordered.find((r) => r.root === 'Tri')!);
+    const trans = rootId(ordered.find((r) => r.root === 'Trans')!);
+    expect(isRootFree('multi')).toBe(false);
+    expect(rootLockReason(trans, new Set([tri]), false)).toBeNull();
+  });
+
+  it('keeps a completed root playable after it leaves the free set', () => {
+    expect(isRootFree('multi')).toBe(false);
+    expect(isRootOpenable('multi', false)).toBe(false);
+    expect(isRootOpenable('multi', false, new Set(['multi']))).toBe(true);
+    expect(rootLockReason('multi', new Set(['multi']), false)).toBeNull();
   });
 });
 
@@ -115,8 +136,10 @@ describe('resumeRootId (boot-time resume target)', () => {
     expect(resumeRootId(freeAllDone, false)).toBeNull();
   });
 
-  it('resumes into the first paid root once the free tier is done AND entitled', () => {
-    expect(resumeRootId(freeAllDone, true)).toBe(firstPaidId);
+  it('resumes into the first unlearned root once the trial is done AND entitled', () => {
+    const next = ordered.find((r) => !freeAllDone.has(rootId(r)));
+    expect(next).toBeTruthy();
+    expect(resumeRootId(freeAllDone, true)).toBe(rootId(next!));
   });
 
   it('returns null when the whole curriculum is complete → nothing to resume', () => {

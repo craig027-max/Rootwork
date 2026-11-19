@@ -195,7 +195,7 @@ function routeResume(): void {
   });
   const day = localDayKey();
   const deal = pickDailyRoots(
-    ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
+    ROOTS.filter((r) => isRootOpenable(rootId(r), entitled, store.completedRoots)),
     dailySeed(day, store.activeStudentId),
   );
   const nextRootId = resumeRootId(store.completedRoots, entitled);

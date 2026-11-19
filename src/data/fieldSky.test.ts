@@ -59,7 +59,7 @@ const SCENES: Record<(typeof FIELD_SKY)[number], string> = {
 describe('Field & Sky starter set', () => {
   const by = Object.fromEntries(ROOTS.map((r) => [r.root, r]));
 
-  it('adds twelve free roots after Post and before Auto', () => {
+  it('adds twelve Starter roots after Post and before Auto', () => {
     expect(FIELD_SKY).toHaveLength(12);
     const post = ROOTS.findIndex((r) => r.root === 'Post');
     const auto = ROOTS.findIndex((r) => r.root === 'Auto');
@@ -70,7 +70,7 @@ describe('Field & Sky starter set', () => {
       const root = by[name];
       expect(root, name).toBeDefined();
       expect(root!.t, name).toBe(1);
-      expect(isRootFree(rootId(root!)), name).toBe(true);
+      expect(isRootFree(rootId(root!)), name).toBe(name === 'Flor' || name === 'Avi');
       expect(root!.mean, name).toBe(MEANINGS[name]);
       expect(root!.scene, name).toBe(SCENES[name]);
       expect(root!.words, name).toHaveLength(3);

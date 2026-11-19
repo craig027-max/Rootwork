@@ -53,25 +53,74 @@ export function moduleIdOfRoot(id: RootId): TierId {
 }
 
 /**
- * Linear unlock: a root is unlocked if it's the first, OR the previous root in
- * the ordered sequence is completed.
+ * The free starter set is the trial. About two dozen teachable roots, not all
+ * of Tier 1. Order is catalog order. Bio, Geo, Photo, and Sal stay in it.
  */
-export function isRootUnlocked(id: RootId, completed: Set<RootId>): boolean {
-  const i = ROOTS.findIndex((r) => rootId(r) === id);
-  if (i <= 0) return true;
-  const prev = ROOTS[i - 1];
-  return prev ? completed.has(rootId(prev)) : true;
-}
+export const FREE_TRIAL_ROOTS = [
+  'Bio',
+  'Geo',
+  'Photo',
+  'Aqua',
+  'Tele',
+  'Therm',
+  'Graph',
+  'Scope',
+  'Phon',
+  'Port',
+  'Dict',
+  'Struct',
+  'Uni',
+  'Bi',
+  'Tri',
+  'Trans',
+  'Sub',
+  'Ped',
+  'Pre',
+  'Re',
+  'Anim',
+  'Dec',
+  'Flor',
+  'Avi',
+  'Digit',
+  'Sal',
+] as const;
+
+export const FREE_TRIAL_IDS: ReadonlySet<RootId> = new Set(
+  FREE_TRIAL_ROOTS.map((name) => name.toLowerCase()),
+);
+
+/** Roots a profile already owns. Completed progress is that record. */
+export type OwnedRoots = ReadonlySet<string>;
 
 /**
- * The free try-before-buy sample: every root in Tier 1 (Starter). Everything
- * after requires an active entitlement. This is the free/paid line — config, not
- * structure. To move the paywall, change what this returns.
+ * Linear unlock along the roots this learner can open. An entitled learner
+ * walks the catalog. A free learner walks the trial plus anything they already
+ * own, so a locked root in between does not block the next free one.
  */
+export function isRootUnlocked(
+  id: RootId,
+  completed: Set<RootId>,
+  entitled: boolean = true,
+  owned?: OwnedRoots,
+): boolean {
+  const prev = previousOpenable(id, entitled, owned ?? completed);
+  if (!prev) return true;
+  return completed.has(rootId(prev));
+}
+
+function previousOpenable(id: RootId, entitled: boolean, owned: OwnedRoots): Root | null {
+  const i = ROOTS.findIndex((r) => rootId(r) === id);
+  if (i <= 0) return null;
+  for (let j = i - 1; j >= 0; j--) {
+    const prev = ROOTS[j];
+    if (prev && isRootOpenable(rootId(prev), entitled, owned)) return prev;
+  }
+  return null;
+}
+
+/** True only for the free starter set. The rest of Tier 1 is paid. */
 export function isRootFree(id: RootId): boolean {
-  const root = ROOTS_BY_ID[id];
-  if (!root) return false;
-  return root.t === 1;
+  return FREE_TRIAL_IDS.has(id);
 }
 
 /** Why a root can't be opened: it needs the prior root, or needs a purchase. */
@@ -87,9 +136,11 @@ export function rootLockReason(
   id: RootId,
   completed: Set<RootId>,
   entitled: boolean,
+  owned?: OwnedRoots,
 ): LockReason | null {
-  if (!entitled && !isRootFree(id)) return 'entitlement';
-  if (!isRootUnlocked(id, completed)) return 'completion';
+  if (completed.has(id)) return null;
+  if (!isRootOpenable(id, entitled, owned ?? completed)) return 'entitlement';
+  if (!isRootUnlocked(id, completed, entitled, owned ?? completed)) return 'completion';
   return null;
 }
 
@@ -110,8 +161,9 @@ export function isRootAccessible(
  * `isRootAccessible` (which also enforces linear completion) still drives
  * boot-time resume, so "Continue" lands on the next unfinished root.
  */
-export function isRootOpenable(id: RootId, entitled: boolean): boolean {
-  return isRootFree(id) || entitled;
+export function isRootOpenable(id: RootId, entitled: boolean, owned?: OwnedRoots): boolean {
+  if (entitled || isRootFree(id)) return true;
+  return owned?.has(id) ?? false;
 }
 
 /**
@@ -119,12 +171,19 @@ export function isRootOpenable(id: RootId, entitled: boolean): boolean {
  * ones. Shared by the deck Next/Prev buttons and the post-Yes next tap
  * so they can never drift apart.
  */
-export function neighborOpenable(fromId: RootId, dir: 1 | -1, entitled: boolean): RootId | null {
+export function neighborOpenable(
+  fromId: RootId,
+  dir: 1 | -1,
+  entitled: boolean,
+  owned?: OwnedRoots,
+): RootId | null {
   const i = ROOTS.findIndex((r) => rootId(r) === fromId);
   if (i < 0) return null;
   for (let j = i + dir; j >= 0 && j < ROOTS.length; j += dir) {
-    const id = rootId(ROOTS[j]!);
-    if (isRootOpenable(id, entitled)) return id;
+    const root = ROOTS[j];
+    if (!root) continue;
+    const id = rootId(root);
+    if (isRootOpenable(id, entitled, owned)) return id;
   }
   return null;
 }
@@ -135,12 +194,19 @@ export function neighborOpenable(fromId: RootId, dir: 1 | -1, entitled: boolean)
  * only when the next incomplete root is actually accessible — a locked next root
  * returns null so the learner lands on home and sees the Unlock/Continue CTA.
  */
-export function resumeRootId(completed: Set<RootId>, entitled: boolean): RootId | null {
+export function resumeRootId(
+  completed: Set<RootId>,
+  entitled: boolean,
+  owned?: OwnedRoots,
+): RootId | null {
   if (!ROOTS.some((r) => completed.has(rootId(r)))) return null;
-  const next = ROOTS.find((r) => !completed.has(rootId(r)));
+  const kept = owned ?? completed;
+  const next = ROOTS.find(
+    (r) => !completed.has(rootId(r)) && isRootOpenable(rootId(r), entitled, kept),
+  );
   if (!next) return null;
   const id = rootId(next);
-  return isRootAccessible(id, completed, entitled) ? id : null;
+  return rootLockReason(id, completed, entitled, kept) === null ? id : null;
 }
 
 /** Roots belonging to a given tier number. */

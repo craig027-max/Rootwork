@@ -30,7 +30,7 @@ describe('Remember {root}: one-beat visit, then Home', () => {
     expect(home).toContain('onSample={vm.sampleTap ? onSamplePick : undefined}');
     expect(home).not.toContain("onRemember={(id) => openRoot(id, { entry: 'recall' })}");
     expect(deck).toContain('isRecallEntry(deckEntry)');
-    expect(deck).toContain('afterCorrectRecall(id, entitled, { entry: deckEntry })');
+    expect(deck).toContain('afterCorrectRecall(id, entitled, { entry: deckEntry, owned: completed })');
     expect(deck).toContain("deckEntry === 'remember'");
     expect(deck).toContain('deckCaption');
     expect(deck).toContain('deckEyebrow');
