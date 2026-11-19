@@ -1,9 +1,8 @@
 import { supabase } from './supabase';
+import { checkoutEnabled } from './checkoutEnabled';
 import { getEntitlement, isEntitlementActive } from './entitlement';
 import { getProfile } from './profile';
 import { useWondralStore } from '../app/store';
-
-export type CheckoutTier = 'single' | 'multi';
 
 /**
  * Kick off Stripe Checkout for a tier. POSTs to the create-checkout-session
@@ -12,7 +11,8 @@ export type CheckoutTier = 'single' | 'multi';
  * page. On success the browser navigates away, so this never resolves with a
  * value; on failure it returns an error code for the caller to surface.
  */
-export async function startCheckout(tier: CheckoutTier): Promise<{ error: string } | void> {
+export async function startCheckout(): Promise<{ error: string } | void> {
+  if (!checkoutEnabled()) return { error: 'checkout_disabled' };
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
   if (!token) return { error: 'account_required' };
@@ -22,7 +22,7 @@ export async function startCheckout(tier: CheckoutTier): Promise<{ error: string
     res = await fetch('/api/stripe/create-checkout-session', {
       method: 'POST',
       headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
-      body: JSON.stringify({ tier }),
+      body: JSON.stringify({ tier: 'single' }),
     });
   } catch {
     return { error: 'network' };

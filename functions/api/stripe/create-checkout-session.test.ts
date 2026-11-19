@@ -43,7 +43,7 @@ function stubSupabase(entitlement: EntitlementRow, entitlementError: { message: 
 const ENV = {
   STRIPE_SECRET_KEY: 'sk_test_1',
   STRIPE_PRICE_SINGLE: 'price_single_test',
-  STRIPE_PRICE_MULTI: 'price_multi_test',
+  CHECKOUT_ENABLED: 'true',
   SUPABASE_URL: 'https://example.supabase.co',
   SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',
 };
@@ -148,7 +148,15 @@ describe('create-checkout-session: double-purchase guard', () => {
 });
 
 describe('create-checkout-session: session creation', () => {
-  it('creates a session for the requested tier price and returns its url', async () => {
+  it('refuses when checkout is not explicitly enabled', async () => {
+    signedInUser();
+    const res = await invoke(makeRequest({ tier: 'single' }), { ...ENV, CHECKOUT_ENABLED: '' });
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({ error: 'checkout_disabled' });
+    expect(sessionsCreate).not.toHaveBeenCalled();
+  });
+
+  it('creates a single-student session and ignores a multi body', async () => {
     signedInUser();
     const res = await invoke(makeRequest({ tier: 'multi' }));
     expect(res.status).toBe(200);
@@ -156,9 +164,9 @@ describe('create-checkout-session: session creation', () => {
     expect(sessionsCreate).toHaveBeenCalledWith(
       expect.objectContaining({
         mode: 'payment',
-        line_items: [{ price: 'price_multi_test', quantity: 1 }],
+        line_items: [{ price: 'price_single_test', quantity: 1 }],
         client_reference_id: 'parent_1',
-        metadata: { parent_id: 'parent_1', tier: 'multi' },
+        metadata: { parent_id: 'parent_1', tier: 'single' },
       }),
     );
   });

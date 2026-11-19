@@ -238,7 +238,8 @@ describe('Home tier tile: empty unlocked tier invites Play', () => {
 
 describe('Home tier tile: locked paid teaser stays a teaser', () => {
   it('keeps the catalog unlock peek and the grown-up CTA', () => {
-    const { tucked } = buildMenu(startedBuilder, false, { currentTier: 2, nextPlay: false });
+    const beforeBuilder = new Set(rootsInTier(1).map((r) => rootId(r)));
+    const { tucked } = buildMenu(beforeBuilder, false, { currentTier: 1, nextPlay: false });
     const locked = tucked.find((it) => it.t === 2);
     if (!locked) throw new Error('fixture: locked Builder missing');
     expect(locked.locked).toBe(true);
@@ -246,7 +247,7 @@ describe('Home tier tile: locked paid teaser stays a teaser', () => {
     const vm = buildDetailVM(locked, {
       ...extraBase,
       nextPlay: false,
-      completed: startedBuilder,
+      completed: beforeBuilder,
     });
     expect(vm.locked).toBe(true);
     expect(vm.samples.map((s) => s.root)).toEqual(builder.slice(0, 4).map((r) => r.root));

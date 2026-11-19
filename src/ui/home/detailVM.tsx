@@ -492,6 +492,7 @@ export function buildDetailVM(
   const name = TIERS[item.t - 1]?.n ?? 'Starter';
   const rootName = entryRootName(item.t, extra.completed, extra.entitled);
   const entry = tierEntryRoot(item.t, extra.completed, extra.entitled);
+  const reviewing = Boolean(entry && extra.completed.has(rootId(entry)));
 
   const miss = rushMissRememberReady(extra.completed, extra.entitled, {
     dailyDone: extra.dailyDone,
@@ -596,7 +597,9 @@ export function buildDetailVM(
           ? `${item.sub} — every root owned.`
           : empty
             ? `Play to meet ${rootName}.`
-            : leadWithNames(`${item.sub} — next up `, peek),
+            : reviewing
+              ? `${item.sub}.`
+              : leadWithNames(`${item.sub} — next up `, peek),
     ring: firstPlay || missHero ? undefined : { pct: item.pct, label: complete ? '✓' : `${item.pct}%` },
     pmA: firstPlay || missHero ? undefined : `${item.done} of ${item.total} roots owned`,
     pmB:
@@ -626,6 +629,7 @@ export function buildDetailVM(
             complete,
             rootName,
             empty,
+            owned: reviewing && !complete,
             keepGoing: Boolean(extra.pathDone && resumeNow),
           }),
     },

@@ -132,6 +132,7 @@ describe('what the kid sees on a new card', () => {
       currentRootId: rootId(vest),
       deckEntry: 'find',
       deckFocusWord: 'Invest',
+      authStatus: 'loading',
     });
     await show();
 
@@ -167,6 +168,7 @@ describe('what the kid sees on a new card', () => {
       currentRootId: rootId(gel),
       deckEntry: 'find',
       deckFocusWord: 'Gelato',
+      authStatus: 'loading',
     });
     await show();
 
@@ -198,7 +200,11 @@ describe('what the kid sees on a new card', () => {
   });
 
   it('shows a new Mont intro before any question', async () => {
-    useWondralStore.setState({ currentRootId: rootId(mont), deckEntry: 'teach' });
+    useWondralStore.setState({
+      currentRootId: rootId(mont),
+      deckEntry: 'teach',
+      authStatus: 'loading',
+    });
     await show();
 
     const intro = bodyText();
@@ -226,7 +232,11 @@ describe('what the kid sees on a new card', () => {
   });
 
   it('shows a new Tex intro before any question', async () => {
-    useWondralStore.setState({ currentRootId: rootId(tex), deckEntry: 'teach' });
+    useWondralStore.setState({
+      currentRootId: rootId(tex),
+      deckEntry: 'teach',
+      authStatus: 'loading',
+    });
     await show();
 
     const intro = bodyText();

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useWondralStore } from '../app/store';
-import { startCheckout, type CheckoutTier } from '../core/checkout';
+import { startCheckout } from '../core/checkout';
+import { checkoutEnabled } from '../core/checkoutEnabled';
 import { getEntitlement } from '../core/entitlement';
 import { useOnline, hasSupabaseConfig } from '../app/hooks';
 import { Button } from './components/Button';
@@ -8,27 +9,15 @@ import { Card } from './components/Card';
 import { LegalLink } from './components/LegalLink';
 import { ROOTS } from '../data/roots';
 
-// PRICE SOURCE OF TRUTH: the amounts actually charged come from the Stripe price
-// objects behind STRIPE_PRICE_SINGLE / STRIPE_PRICE_MULTI (Cloudflare Pages env —
-// see DEPLOYMENT.md §2). The strings below are display copy only; if a price
-// changes in the Stripe Dashboard, update them together or buyers will see one
-// number here and another on the Stripe Checkout page.
-const TIERS: Array<{ id: CheckoutTier; name: string; price: string; blurb: string; jewel: string }> = [
-  {
-    id: 'single',
-    name: 'Single Scholar',
-    price: '$49 / year',
-    blurb: `One learner. All ${ROOTS.length} roots across every tier, plus the full Root Rush quiz.`,
-    jewel: 'jade',
-  },
-  {
-    id: 'multi',
-    name: 'Family',
-    price: '$79 / year',
-    blurb: 'Up to 10 student profiles under one parent account — track each child separately.',
-    jewel: 'violet',
-  },
-];
+// PRICE SOURCE OF TRUTH: the amount actually charged comes from the Stripe price
+// behind STRIPE_PRICE_SINGLE (Cloudflare Pages env — see DEPLOYMENT.md). The
+// string below is display copy only.
+const PLAN = {
+  name: 'Single Scholar',
+  price: '$49 / year',
+  blurb: `One student. All ${ROOTS.length} roots across every tier, plus the full Root Rush quiz.`,
+  jewel: 'jade',
+};
 
 function messageFor(code: string): string {
   switch (code) {
@@ -36,6 +25,8 @@ function messageFor(code: string): string {
       return "Couldn't reach checkout. Check your connection and try again.";
     case 'no_url':
       return 'Checkout is temporarily unavailable. Please try again shortly.';
+    case 'checkout_disabled':
+      return "Purchases aren't open yet.";
     case 'price_not_configured':
     case 'stripe_error':
       return 'Payments are being set up. Please try again later.';
@@ -53,18 +44,19 @@ function messageFor(code: string): string {
 export function Paywall() {
   const setView = useWondralStore((s) => s.setView);
   const online = useOnline();
-  const [busy, setBusy] = useState<CheckoutTier | null>(null);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+  const purchasesOpen = checkoutEnabled();
 
   const unavailable = !hasSupabaseConfig || !online;
 
-  async function buy(tier: CheckoutTier) {
+  async function buy() {
     setError(null);
     setInfo(null);
-    setBusy(tier);
-    const res = await startCheckout(tier);
-    setBusy(null);
+    setBusy(true);
+    const res = await startCheckout();
+    setBusy(false);
     if (res && 'error' in res) {
       // The purchase IS the COPPA consent — an anonymous user must sign up first.
       if (res.error === 'account_required') {
@@ -98,16 +90,20 @@ export function Paywall() {
         <p className="ww-eyebrow">Unlock everything</p>
         <h1 className="text-gradient-hero">Go Premium</h1>
         <p className="ww-muted">
-          Tier 1 (Starter) is always free. A one-time annual unlock opens every tier and the
-          full quiz. Your purchase is also the verified parental consent for your child's account.
+          Try the free starter set first. Paid plans are nonrefundable. Single Scholar is one
+          student for one year.
         </p>
       </div>
 
-      {unavailable ? (
+      {!purchasesOpen ? (
+        <div className="ww-notice" role="status">
+          Purchases aren’t open yet.
+        </div>
+      ) : unavailable ? (
         <div className="ww-notice" role="status">
           {online
-            ? 'Purchasing isn’t available in this preview build (no payment backend configured). Everything in the free tier still works.'
-            : 'You’re offline. Reconnect to upgrade — the free Tier 1 roots keep working in the meantime.'}
+            ? 'Purchasing isn’t available in this preview build (no payment backend configured). The free starter set still works.'
+            : 'You’re offline. Reconnect to upgrade — the free starter set keeps working in the meantime.'}
         </div>
       ) : null}
 
@@ -124,32 +120,24 @@ export function Paywall() {
       ) : null}
 
       <div className="ww-paywall-tiers">
-        {TIERS.map((t) => (
-          <Card key={t.id} jewel={t.jewel} className="ww-stack" interactive>
-            <p className="ww-eyebrow">{t.name}</p>
-            <h2 className="text-gradient">{t.price}</h2>
-            <p className="ww-muted" style={{ minHeight: 60 }}>
-              {t.blurb}
-            </p>
-            <Button
-              jewel={t.jewel}
-              block
-              disabled={unavailable || busy !== null}
-              onClick={() => void buy(t.id)}
-            >
-              {busy === t.id ? 'Starting checkout…' : `Choose ${t.name}`}
+        <Card jewel={PLAN.jewel} className="ww-stack" interactive>
+          <p className="ww-eyebrow">{PLAN.name}</p>
+          <h2 className="text-gradient">{PLAN.price}</h2>
+          <p className="ww-muted" style={{ minHeight: 60 }}>
+            {PLAN.blurb}
+          </p>
+          {purchasesOpen ? (
+            <Button jewel={PLAN.jewel} block disabled={unavailable || busy} onClick={() => void buy()}>
+              {busy ? 'Starting checkout…' : `Choose ${PLAN.name}`}
             </Button>
-          </Card>
-        ))}
+          ) : null}
+        </Card>
       </div>
 
-      {/* Stripe requires the refund policy to be stated where the purchase starts. */}
       <p className="ww-muted ww-legal-links">
-        <strong>30-day money-back guarantee.</strong> One-time purchase — no auto-renewal, nothing
-        to cancel; access simply ends after a year unless you buy again. Not right for your family?
-        Email <a href="mailto:support@wondral.app">support@wondral.app</a> within 30 days for a
-        full refund, no questions asked. By purchasing you agree to the <LegalLink page="terms" />{' '}
-        and <LegalLink page="privacy" />.
+        <strong>Try the free starter set first. Paid plans are nonrefundable.</strong> One-time
+        payment for one year of access. It ends automatically. There is no renewal. By purchasing
+        you agree to the <LegalLink page="terms" /> and <LegalLink page="privacy" />.
       </p>
 
       <div className="ww-row">

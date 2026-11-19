@@ -20,9 +20,9 @@ export function TermsOfService() {
       <section>
         <h2>The short version</h2>
         <ul>
-          <li>A parent or guardian (18+) creates the account; kids learn under student profiles.</li>
-          <li>Premium is a one-time annual purchase — <strong>no auto-renewing subscription</strong>, so you'll never be surprised by a charge.</li>
-          <li>30-day full refund, no questions asked.</li>
+          <li>A parent or guardian (18+) creates the account; kids learn under a student profile.</li>
+          <li>Premium is a one-time payment for one year of access for one student. It ends automatically. There is no renewal.</li>
+          <li>Try the free starter set first. Paid plans are nonrefundable.</li>
         </ul>
       </section>
 
@@ -48,37 +48,30 @@ export function TermsOfService() {
       <section>
         <h2>Free tier and Premium</h2>
         <p>
-          Tier 1 (Starter) is free, with or without an account. Premium is a <strong>one-time
-          annual purchase</strong>: Single Scholar ($49/year, one learner) or Family ($79/year, up
-          to 10 student profiles). Prices are shown at checkout and may change for future
-          purchases, never for one you've already made. Access lasts one year from purchase and
-          then simply ends unless you choose to buy again — there is no auto-renewal and nothing to
-          cancel. Payments are processed by Stripe on Stripe's own site. Your purchase also serves
-          as verifiable parental consent under COPPA (see the <LegalLink page="privacy" />).
+          The free starter set works with or without an account. Premium is a <strong>one-time
+          annual purchase</strong>: Single Scholar ($49/year, one student). The price is shown
+          before you pay and may change for future purchases, never for one you've already made.
+          Access lasts one year from purchase and then ends automatically. There is no renewal.
+          Payments are processed by Stripe on Stripe's own site. Your purchase also serves as
+          verifiable parental consent under COPPA (see the <LegalLink page="privacy" />).
         </p>
       </section>
 
       <section>
-        <h2>Refund &amp; cancellation policy</h2>
+        <h2>Refunds</h2>
         <ul>
           <li>
-            <strong>30-day full refund, no questions asked.</strong> If Wondral Words isn't right
-            for your family, email <a href="mailto:support@wondral.app">support@wondral.app</a>{' '}
-            within 30 days of purchase for a full refund.
+            <strong>Try the free starter set first. Paid plans are nonrefundable.</strong>
           </li>
           <li>
-            <strong>Early-access honesty.</strong> Wondral Words is actively being built and we add
-            content over time. If something you were counting on isn't there yet, tell us — we'll
-            either help, or refund you.
+            <strong>One year, then it ends.</strong> A purchase is a one-time payment for one year
+            of access for one student. Access runs through the end of that year and then ends
+            automatically. There is no renewal.
           </li>
           <li>
-            <strong>How to cancel.</strong> There's nothing to cancel: access ends automatically at
-            the end of the year. To delete your account and all associated data at any time, use
-            the parent dashboard or email <a href="mailto:support@wondral.app">support@wondral.app</a>.
-          </li>
-          <li>
-            <strong>Refund method &amp; timing.</strong> Refunds go back to your original payment
-            method, typically within 5–10 business days.
+            <strong>Questions.</strong> Email{' '}
+            <a href="mailto:support@wondral.app">support@wondral.app</a>. To delete your account
+            and the data that goes with it, use the parent dashboard or that same address.
           </li>
         </ul>
       </section>
@@ -104,7 +97,8 @@ export function TermsOfService() {
         <h2>Service changes</h2>
         <p>
           We're actively building: lessons and features are added and improved over time. If a
-          change removes something you bought Premium for, the refund policy above applies.
+          change removes something you were counting on, email{' '}
+          <a href="mailto:support@wondral.app">support@wondral.app</a>.
         </p>
       </section>
 
@@ -122,9 +116,7 @@ export function TermsOfService() {
         <h2>Termination</h2>
         <p>
           You can delete your account at any time from the parent dashboard or by emailing us. We
-          may suspend or terminate accounts that violate these terms; if we ever discontinue the
-          service or terminate your account for any other reason, we'll refund the unused portion
-          of your purchase.
+          may suspend or terminate accounts that violate these terms. Paid plans are nonrefundable.
         </p>
       </section>
 

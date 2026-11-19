@@ -62,7 +62,7 @@ const SCENES: Record<(typeof HERD_MYTH)[number], string> = {
 describe('Herd & Myth starter set', () => {
   const by = Object.fromEntries(ROOTS.map((r) => [r.root, r]));
 
-  it('adds twelve free roots after San and before Auto', () => {
+  it('adds twelve Starter roots after San and before Auto', () => {
     expect(HERD_MYTH).toHaveLength(12);
     const san = ROOTS.findIndex((r) => r.root === 'San');
     const auto = ROOTS.findIndex((r) => r.root === 'Auto');
@@ -73,7 +73,7 @@ describe('Herd & Myth starter set', () => {
       const root = by[name];
       expect(root, name).toBeDefined();
       expect(root!.t, name).toBe(1);
-      expect(isRootFree(rootId(root!)), name).toBe(true);
+      expect(isRootFree(rootId(root!)), name).toBe(false);
       expect(root!.mean, name).toBe(MEANINGS[name]);
       expect(root!.scene, name).toBe(SCENES[name]);
       expect(root!.words, name).toHaveLength(3);

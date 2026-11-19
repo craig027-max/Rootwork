@@ -62,7 +62,7 @@ const SCENES: Record<(typeof HOME_KIN)[number], string> = {
 describe('Home & Kin starter set', () => {
   const by = Object.fromEntries(ROOTS.map((r) => [r.root, r]));
 
-  it('adds twelve free roots after Pod and before Auto', () => {
+  it('adds twelve Starter roots after Pod and before Auto', () => {
     expect(HOME_KIN).toHaveLength(12);
     const pod = ROOTS.findIndex((r) => r.root === 'Pod');
     const auto = ROOTS.findIndex((r) => r.root === 'Auto');
@@ -73,7 +73,7 @@ describe('Home & Kin starter set', () => {
       const root = by[name];
       expect(root, name).toBeDefined();
       expect(root!.t, name).toBe(1);
-      expect(isRootFree(rootId(root!)), name).toBe(true);
+      expect(isRootFree(rootId(root!)), name).toBe(false);
       expect(root!.mean, name).toBe(MEANINGS[name]);
       expect(root!.scene, name).toBe(SCENES[name]);
       expect(root!.words, name).toHaveLength(3);

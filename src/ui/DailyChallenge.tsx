@@ -111,8 +111,8 @@ export function DailyChallenge() {
   const doneToday = stats.lastDailyDay === day;
 
   const pool = useMemo(
-    () => ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
-    [entitled],
+    () => ROOTS.filter((r) => isRootOpenable(rootId(r), entitled, completed)),
+    [entitled, completed],
   );
   const deal = useMemo(
     () => pickDailyRoots(pool, dailySeed(day, studentId)),

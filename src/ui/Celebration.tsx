@@ -84,6 +84,7 @@ export function Celebration() {
   const dismiss = useWondralStore((s) => s.dismissCelebration);
   const openRoot = useWondralStore((s) => s.openRoot);
   const entitled = useEntitledForDisplay();
+  const completed = useWondralStore((s) => s.completedRoots);
 
   const root = celebration ? ROOTS_BY_ID[celebration.rootId] : undefined;
 
@@ -99,7 +100,7 @@ export function Celebration() {
   if (!celebration || !root) return null;
 
   const p = PALETTES[root.pal] ?? PALETTES.green!;
-  const next = neighborOpenable(celebration.rootId, 1, entitled);
+  const next = neighborOpenable(celebration.rootId, 1, entitled, completed);
 
   return (
     <div

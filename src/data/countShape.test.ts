@@ -41,7 +41,7 @@ const MEANINGS: Record<(typeof COUNT_SHAPE)[number], string> = {
 describe('Count & Shape starter set', () => {
   const by = Object.fromEntries(ROOTS.map((r) => [r.root, r]));
 
-  it('adds twelve free roots between Sect and Auto', () => {
+  it('adds twelve Starter roots between Sect and Auto', () => {
     expect(COUNT_SHAPE).toHaveLength(12);
     const sect = ROOTS.findIndex((r) => r.root === 'Sect');
     const auto = ROOTS.findIndex((r) => r.root === 'Auto');
@@ -51,7 +51,7 @@ describe('Count & Shape starter set', () => {
       const root = by[name];
       expect(root, name).toBeDefined();
       expect(root!.t, name).toBe(1);
-      expect(isRootFree(rootId(root!)), name).toBe(true);
+      expect(isRootFree(rootId(root!)), name).toBe(name === 'Dec');
       expect(root!.mean, name).toBe(MEANINGS[name]);
       expect(root!.words, name).toHaveLength(3);
       const i = ROOTS.findIndex((r) => r.root === name);

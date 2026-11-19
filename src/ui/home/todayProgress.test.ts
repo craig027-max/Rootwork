@@ -172,9 +172,9 @@ describe('buildTodayProgress — returning dashboard', () => {
       nextPlay: false,
       dailyDone: false,
       completed: starterDone,
-      entitled: false,
+      entitled: true,
     });
-    expect(learnNextAction(starterDone, false).label).toBe(`Play ${firstBuilder.root} ›`);
+    expect(learnNextAction(starterDone, true).label).toBe(`Play ${firstBuilder.root} ›`);
     expect(vm.items.find((i) => i.key === 'learn')?.label).toBe(`Play ${firstBuilder.root}`);
     expect(vm.cta?.label).toBe(`Play ${firstBuilder.root} ›`);
   });

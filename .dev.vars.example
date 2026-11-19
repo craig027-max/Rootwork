@@ -14,7 +14,9 @@
 STRIPE_SECRET_KEY=sk_test_xxx
 STRIPE_WEBHOOK_SECRET=whsec_xxx
 STRIPE_PRICE_SINGLE=price_xxx_single_annual
-STRIPE_PRICE_MULTI=price_xxx_multi_annual
+
+# Checkout stays off unless this is exactly the string true.
+# CHECKOUT_ENABLED=true
 
 # Supabase (NEW Wondral Words project). The service-role key bypasses RLS — it is
 # the webhook's authority to write entitlements + consent evidence. Keep it

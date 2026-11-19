@@ -61,13 +61,12 @@ describe('isNextPlayHome', () => {
     expect(isNextPlayHome(new Set<RootId>([firstId, rootId(second)]))).toBe(true);
   });
 
-  it('stays true just after Starter — next Play is the first next-tier root', () => {
-    expect(isNextPlayHome(starterDone)).toBe(true);
-    expect(isNextPlayHome(starterDone, false)).toBe(true);
+  it('after Starter, an entitled learner plays Auto and a free learner does not', () => {
     expect(isNextPlayHome(starterDone, true)).toBe(true);
     expect(nextPlayRoot(starterDone, true)?.root).toBe(firstBuilder.root);
-    expect(nextPlayRoot(starterDone, false)?.root).toBe(firstBuilder.root);
     expect(firstBuilder.root).toBe('Auto');
+    expect(isNextPlayHome(starterDone, false)).toBe(false);
+    expect(nextPlayRoot(starterDone, false)).toBeUndefined();
   });
 
   it('is false after they start the next tier or choose a mode', () => {
@@ -158,8 +157,8 @@ describe('buildMenu — 1 learned Bio (Play Geo)', () => {
   });
 });
 
-describe('buildMenu — Starter just finished (Play Auto)', () => {
-  const { items, tucked } = buildMenu(starterDone, false, { currentTier: 2 });
+describe('buildMenu — Starter just finished and entitled (Play Auto)', () => {
+  const { items, tucked } = buildMenu(starterDone, true, { currentTier: 2 });
 
   it('keeps one fat next Play for the first next-tier root — no Rush / Daily / locked dump', () => {
     expect(keysOf(items)).toEqual(['tier-2']);
@@ -196,13 +195,13 @@ describe('buildMenu — started next tier (returning dashboard)', () => {
   const { items, tucked } = buildMenu(startedBuilder, false, { currentTier: 2 });
 
   it('reveals Root Rush and Daily after they start the next tier', () => {
-    expect(keysOf(items)).toEqual(['rush', 'daily', 'tier-1']);
+    expect(keysOf(items)).toEqual(['rush', 'daily', 'tier-1', 'tier-2']);
     expect(items.map((it) => it.title)).toContain('Root Rush');
     expect(items.map((it) => it.title)).toContain('Daily Challenge');
   });
 
-  it('tucks locked paid tiers under More tiers once past first-run', () => {
-    expect(keysOf(tucked)).toEqual(['tier-2', 'tier-3', 'tier-4', 'tier-5']);
+  it('keeps an owned paid tier open and tucks the rest', () => {
+    expect(keysOf(tucked)).toEqual(['tier-3', 'tier-4', 'tier-5']);
     expect(tucked.every((t) => t.locked)).toBe(true);
     expect(tuckedSummary(tucked)).toBe('More tiers 🔒');
   });

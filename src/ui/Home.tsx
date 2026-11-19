@@ -26,6 +26,7 @@ import {
   homeSecondaryAction,
   homeSelectedIndex,
   isDailyResumeItem,
+  freeSetFinished,
   isNextPlayHome,
   isResumeTier,
   isMissProgressTier,
@@ -75,7 +76,7 @@ export function Home() {
   const rushBest = rushBestLabel(stats);
   const day = localDayKey();
   const dailyDone = stats.lastDailyDay === day;
-  const dailyPool = ROOTS.filter((r) => isRootOpenable(rootId(r), entitled));
+  const dailyPool = ROOTS.filter((r) => isRootOpenable(rootId(r), entitled, completed));
   const dailyRoots = pickDailyRoots(dailyPool, dailySeed(day, activeStudentId));
   const dailyResumeQi = liveDailyResumeQi(
     dailyRun,
@@ -312,7 +313,7 @@ export function Home() {
   }
 
   function onBrowsePick(id: string, focusWord?: string) {
-    if (!isRootOpenable(id, entitled)) {
+    if (!isRootOpenable(id, entitled, completed)) {
       openAsk();
       return;
     }
@@ -360,6 +361,12 @@ export function Home() {
 
   return (
     <div className={`ww-home${nextPlay ? ' is-first' : ''}${resumeNow ? ' is-resume' : ''}`}>
+      {freeSetFinished(completed, entitled) ? (
+        <p className="ww-notice" data-screen="free-set-done" role="status">
+          You finished the free set — ask a grown-up to unlock more.
+        </p>
+      ) : null}
+
       <ProfileBand
         name={name}
         avatar={avatar}

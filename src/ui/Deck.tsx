@@ -172,8 +172,8 @@ export function Deck() {
     pinnedAsk?: boolean;
   } | null>(null);
   const pool = useMemo(
-    () => ROOTS.filter((r) => isRootOpenable(rootId(r), entitled)),
-    [entitled],
+    () => ROOTS.filter((r) => isRootOpenable(rootId(r), entitled, completed)),
+    [entitled, completed],
   );
   const poolRef = useRef(pool);
   // Latest openable pool for the layout effect. An effect write would be stale
@@ -339,7 +339,7 @@ export function Deck() {
   }
 
   const id = rootId(root);
-  const openable = isRootOpenable(id, entitled);
+  const openable = isRootOpenable(id, entitled, completed);
   const p = palOf(root);
 
   // A locked root never opens the lesson and never opens checkout.
@@ -543,7 +543,7 @@ export function Deck() {
     if (dir === 1 && !allowNextRootTap(useWondralStore.getState().correctAdvance, listening)) {
       return;
     }
-    const next = neighborOpenable(id, dir, entitled);
+    const next = neighborOpenable(id, dir, entitled, completed);
     if (next) openRoot(next);
     else if (dir === 1) closeRoot();
   }
@@ -551,7 +551,7 @@ export function Deck() {
   function onWinNext() {
     if (!allowWinNextTap(useWondralStore.getState().correctAdvance, listening)) return;
     const live = useWondralStore.getState().correctAdvance;
-    const dest = live?.dest ?? afterCorrectRecall(id, entitled, { entry: deckEntry });
+    const dest = live?.dest ?? afterCorrectRecall(id, entitled, { entry: deckEntry, owned: completed });
     fireAdvance(dest);
   }
 
@@ -636,6 +636,7 @@ export function Deck() {
       const wordBeat = recall.beat.kind === 'word';
       const dest = afterCorrectRecall(id, entitled, {
         entry: deckEntry,
+        owned: completed,
         findWord: findWord ?? undefined,
         findDef: findDef ?? undefined,
         glossWord: glossBeat ? recall.beat.word : undefined,
@@ -924,7 +925,7 @@ export function Deck() {
               {finding && alsoRoots.length > 0 ? (
                 <div className="ww-word-also">
                   {alsoRoots.map((half) =>
-                    isRootOpenable(half.id, entitled) ? (
+                    isRootOpenable(half.id, entitled, completed) ? (
                       <button
                         key={half.id}
                         type="button"
@@ -1068,7 +1069,8 @@ export function Deck() {
                 className={missRemember ? 'is-miss' : ''}
               >
                 {afterYesNextLabel(
-                  correctAdvance?.dest ?? afterCorrectRecall(id, entitled, { entry: deckEntry }),
+                  correctAdvance?.dest ??
+                    afterCorrectRecall(id, entitled, { entry: deckEntry, owned: completed }),
                   deckEntry,
                   { missed: missRemember },
                 )}
@@ -1166,7 +1168,7 @@ export function Deck() {
           )}
           onPick={(pickId, focusWord) => {
             if (!allowNextRootTap(useWondralStore.getState().correctAdvance, listening)) return;
-            if (!isRootOpenable(pickId, entitled)) {
+            if (!isRootOpenable(pickId, entitled, completed)) {
               openAsk();
               return;
             }
