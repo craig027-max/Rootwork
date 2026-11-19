@@ -167,8 +167,16 @@ describe('create-checkout-session: session creation', () => {
         line_items: [{ price: 'price_single_test', quantity: 1 }],
         client_reference_id: 'parent_1',
         metadata: { parent_id: 'parent_1', tier: 'single' },
+        payment_intent_data: {
+          metadata: { parent_id: 'parent_1', tier: 'single' },
+          statement_descriptor_suffix: 'WONDRAL WORDS',
+          description:
+            'Wondral Words — 1-year single-student educational software subscription',
+        },
       }),
     );
+    const arg = sessionsCreate.mock.calls[0]?.[0] as { payment_intent_data?: object };
+    expect(arg.payment_intent_data).not.toHaveProperty('statement_descriptor');
   });
 
   it('defaults an unknown/missing tier to single', async () => {

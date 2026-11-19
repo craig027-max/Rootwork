@@ -13,11 +13,11 @@
  */
 
 export const SELLER_LEGAL_NAME = 'Thompson Education Apps LLC';
-export const SELLER_BRAND = 'Wondral Words / Rootwork';
+export const SELLER_BRAND = 'Wondral Words';
 export const SUPPORT_EMAIL = 'support@wondral.app';
 
 export const SINGLE_STUDENT_ANNUAL_ITEM =
-  'Wondral Words (Rootwork) — 1-year single-student educational software subscription';
+  'Wondral Words — 1-year single-student educational software subscription';
 
 export const PAID_IN_FULL = 'Paid in full';
 

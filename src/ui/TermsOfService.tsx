@@ -29,7 +29,7 @@ export function TermsOfService() {
       <section>
         <h2>The service</h2>
         <p>
-          Wondral Words (words.wondral.app) is an interactive word-roots learning app made by
+          Wondral Words (words.wondral.app) is an interactive word-roots learning app operated by
           Thompson Education Apps LLC. By creating an account or making a purchase you agree to
           these terms and to our <LegalLink page="privacy" />.
         </p>
