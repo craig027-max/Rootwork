@@ -256,7 +256,7 @@ describe('Home after a miss is Remember — not start / Geo · earth over Geo', 
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(279);
+    expect(ROOTS.length).toBe(291);
     expect(first.root).toBe('Bio');
   });
 });

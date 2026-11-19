@@ -54,7 +54,7 @@ const salary = sal.words.find((w) => w.w === 'Salary')!;
 
 describe('a new card gives context before the questions', () => {
   it('keeps the catalog and the on-card pronunciations', () => {
-    expect(ROOTS.length).toBe(279);
+    expect(ROOTS.length).toBe(291);
     expect(bio.say).toBe('BY-oh');
     expect(geo.say).toBe('JEE-oh');
     expect(photo.say).toBe('FOH-toh');

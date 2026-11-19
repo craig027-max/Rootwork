@@ -131,7 +131,7 @@ describe('Thread & Fold starter set', () => {
       expect(i, name).toBeLessThan(auto);
       prev = i;
     }
-    expect(ROOTS.length).toBe(279);
+    expect(ROOTS.length).toBe(291);
   });
 
   it('keeps the classical origins and the shared piece names', () => {

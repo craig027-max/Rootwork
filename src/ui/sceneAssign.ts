@@ -2773,3 +2773,191 @@ export const heap: SceneFn = (x, W, H, t, pal) => {
   }
   glow(x, W * 0.5, base - 24, 18, p0(pal), 0.14);
 };
+
+/** A figure dashing with speed lines — a run, not a stroll. */
+export const run: SceneFn = (x, W, H, t, pal) => {
+  const ground = H * 0.78;
+  x.strokeStyle = `rgba(${p0(pal)},0.35)`;
+  x.lineWidth = 2;
+  line(x, W * 0.08, ground, W * 0.92, ground);
+  const p = (t * 0.55) % 1;
+  const px = W * 0.15 + p * W * 0.7;
+  person(x, px, ground, p1(pal), t * 8);
+  x.strokeStyle = `rgba(${p0(pal)},0.7)`;
+  x.lineWidth = 2;
+  for (let i = 0; i < 3; i++) {
+    const ly = ground - 28 - i * 10;
+    line(x, px - 28 - i * 8, ly, px - 14, ly);
+  }
+  glow(x, px, ground - 30, 14, p1(pal), 0.16);
+};
+
+/** Footprints landing one after another — a walk, not a dash. */
+export const walk: SceneFn = (x, W, H, t, pal) => {
+  const ground = H * 0.74;
+  x.strokeStyle = `rgba(${p0(pal)},0.3)`;
+  x.lineWidth = 2;
+  line(x, W * 0.1, ground, W * 0.9, ground);
+  const step = Math.floor(t * 1.4) % 4;
+  for (let i = 0; i <= step; i++) {
+    const fx = W * 0.22 + i * W * 0.16;
+    const fy = ground - 6 + (i % 2) * 10;
+    x.fillStyle = `rgba(${i % 2 ? p1(pal) : p0(pal)},0.9)`;
+    x.beginPath();
+    x.ellipse(fx, fy, 10, 6, i % 2 ? 0.4 : -0.4, 0, TAU);
+    x.fill();
+  }
+  person(x, W * 0.22 + step * W * 0.16, ground - 4, p1(pal), t * 2);
+};
+
+/** A figure on a jumping arc — a leap, not a step. */
+export const leap: SceneFn = (x, W, H, t, pal) => {
+  const ground = H * 0.8;
+  x.strokeStyle = `rgba(${p0(pal)},0.3)`;
+  x.lineWidth = 2;
+  line(x, W * 0.08, ground, W * 0.92, ground);
+  const p = (t * 0.45) % 1;
+  const px = W * 0.2 + p * W * 0.6;
+  const arc = Math.sin(p * Math.PI);
+  const py = ground - arc * H * 0.42;
+  x.strokeStyle = `rgba(${p0(pal)},0.45)`;
+  x.lineWidth = 2;
+  x.beginPath();
+  x.moveTo(W * 0.2, ground);
+  x.quadraticCurveTo(W * 0.5, ground - H * 0.48, W * 0.8, ground);
+  x.stroke();
+  person(x, px, py, p1(pal), t * 3);
+  glow(x, px, py - 20, 12, p1(pal), 0.18);
+};
+
+/** A stone dropping — a fall, not rain. */
+export const tumble: SceneFn = (x, W, H, t, pal) => {
+  const ground = H * 0.82;
+  x.strokeStyle = `rgba(${p0(pal)},0.35)`;
+  x.lineWidth = 2;
+  line(x, W * 0.12, ground, W * 0.88, ground);
+  const p = (t * 0.5) % 1;
+  const py = H * 0.16 + p * (ground - H * 0.28);
+  const spin = t * 3;
+  x.save();
+  x.translate(W * 0.5, py);
+  x.rotate(spin);
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  x.fillRect(-10, -10, 20, 20);
+  x.restore();
+  glow(x, W * 0.5, py, 12, p0(pal), 0.15);
+};
+
+/** Feet skidding on a slant — a slip, not a climb. */
+export const slip: SceneFn = (x, W, H, t, pal) => {
+  x.strokeStyle = `rgba(${p0(pal)},0.85)`;
+  x.lineWidth = 4;
+  line(x, W * 0.12, H * 0.28, W * 0.88, H * 0.78);
+  const p = (t * 0.35) % 1;
+  const px = W * 0.2 + p * W * 0.55;
+  const py = H * 0.32 + p * H * 0.4;
+  person(x, px, py, p1(pal), t * 6);
+  x.strokeStyle = `rgba(${p1(pal)},0.7)`;
+  x.lineWidth = 2;
+  line(x, px - 16, py + 4, px + 18, py + 8);
+  glow(x, px, py - 16, 12, p1(pal), 0.14);
+};
+
+/** A path leaving the straight line — a stray, not a road. */
+export const stray: SceneFn = (x, W, H, t, pal) => {
+  x.strokeStyle = `rgba(${p0(pal)},0.35)`;
+  x.lineWidth = 3;
+  line(x, W * 0.1, H * 0.55, W * 0.9, H * 0.55);
+  const p = (t * 0.3) % 1;
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 3;
+  x.beginPath();
+  x.moveTo(W * 0.12, H * 0.55);
+  x.quadraticCurveTo(W * 0.4, H * 0.55, W * 0.48, H * 0.55 - p * H * 0.28);
+  x.stroke();
+  disc(x, W * 0.48, H * 0.55 - p * H * 0.28, 6, `rgba(${p1(pal)},0.95)`);
+  glow(x, W * 0.48, H * 0.4, 14, p1(pal), 0.12);
+};
+
+/** A bar curving — a bend, not a straight edge. */
+export const bend: SceneFn = (x, W, H, t, pal) => {
+  const bow = 18 + Math.sin(t * 1.4) * 16;
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 6;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.moveTo(W * 0.22, H * 0.72);
+  x.quadraticCurveTo(W * 0.5, H * 0.5 - bow, W * 0.78, H * 0.72);
+  x.stroke();
+  glow(x, W * 0.5, H * 0.48, 16, p0(pal), 0.16);
+};
+
+/** An arrow shoving a block — a drive, not a pull. */
+export const drive: SceneFn = (x, W, H, t, pal) => {
+  const p = (t * 0.4) % 1;
+  const bx = W * 0.28 + p * W * 0.4;
+  x.fillStyle = `rgba(${p0(pal)},0.9)`;
+  rr(x, bx, H * 0.4, 36, 36, 4);
+  x.fill();
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 4;
+  line(x, bx - 28, H * 0.58, bx - 4, H * 0.58);
+  line(x, bx - 12, H * 0.5, bx - 4, H * 0.58);
+  line(x, bx - 12, H * 0.66, bx - 4, H * 0.58);
+  glow(x, bx + 18, H * 0.58, 14, p1(pal), 0.16);
+};
+
+/** Two bars closing on a round — a squeeze, not a hug of air. */
+export const squeeze: SceneFn = (x, W, H, t, pal) => {
+  const gap = 28 + Math.sin(t * 1.6) * 14;
+  const cy = H * 0.52;
+  disc(x, W * 0.5, cy, 16, `rgba(${p1(pal)},0.9)`);
+  x.fillStyle = `rgba(${p0(pal)},0.92)`;
+  rr(x, W * 0.5 - gap - 14, cy - 28, 14, 56, 3);
+  x.fill();
+  rr(x, W * 0.5 + gap, cy - 28, 14, 56, 3);
+  x.fill();
+  glow(x, W * 0.5, cy, 18, p1(pal), 0.14);
+};
+
+/** A figure on a seat — a sit, not a stand. */
+export const sit: SceneFn = (x, W, H, t, pal) => {
+  const bob = Math.sin(t * 1.2) * 2;
+  const seat = H * 0.58;
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 4;
+  line(x, W * 0.32, seat, W * 0.68, seat);
+  line(x, W * 0.36, seat, W * 0.36, H * 0.82);
+  line(x, W * 0.64, seat, W * 0.64, H * 0.82);
+  line(x, W * 0.64, seat, W * 0.64, H * 0.34);
+  person(x, W * 0.48, seat + 6 + bob, p1(pal), 0.4);
+  glow(x, W * 0.48, seat - 10, 14, p1(pal), 0.12);
+};
+
+/** A figure stretched flat — a lie, not a seat. */
+export const lie: SceneFn = (x, W, H, t, pal) => {
+  const y = H * 0.58 + Math.sin(t * 0.8) * 3;
+  x.strokeStyle = `rgba(${p0(pal)},0.4)`;
+  x.lineWidth = 2;
+  line(x, W * 0.12, H * 0.7, W * 0.88, H * 0.7);
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  line(x, W * 0.28, y, W * 0.72, y);
+  disc(x, W * 0.26, y, 7, `rgba(${p1(pal)},0.95)`);
+  glow(x, W * 0.5, y, 14, p0(pal), 0.12);
+};
+
+/** A figure tilted on a wall — a lean, not a fall. */
+export const lean: SceneFn = (x, W, H, t, pal) => {
+  const sway = Math.sin(t * 0.9) * 4;
+  x.strokeStyle = `rgba(${p0(pal)},0.85)`;
+  x.lineWidth = 6;
+  line(x, W * 0.72, H * 0.22, W * 0.72, H * 0.82);
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  line(x, W * 0.72, H * 0.62, W * 0.42 + sway, H * 0.28);
+  disc(x, W * 0.4 + sway, H * 0.24, 7, `rgba(${p1(pal)},0.95)`);
+  glow(x, W * 0.55, H * 0.45, 14, p1(pal), 0.12);
+};
