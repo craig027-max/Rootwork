@@ -3,7 +3,7 @@ import { Button } from './components/Button';
 import { REFUND_POLICY } from './refundPolicyCopy';
 
 /**
- * Draft refund and cancellation page for Craig to review.
+ * Draft refund page for Craig to review.
  * Same kind of route as the privacy and terms pages.
  * Nothing in the live app links here. Do not merge until Craig accepts the wording.
  */
@@ -26,8 +26,8 @@ export function RefundPolicy() {
       </section>
 
       <section>
-        <h2>Cancellation and renewal</h2>
-        <p>{REFUND_POLICY.renewal}</p>
+        <h2>When access ends</h2>
+        <p>{REFUND_POLICY.term}</p>
       </section>
 
       <section>

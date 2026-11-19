@@ -32,7 +32,9 @@ describe('refund policy draft', () => {
     expect(text).toContain(REFUND_POLICY.title);
     expect(text).toContain(REFUND_POLICY.seller);
     expect(text).toContain(REFUND_POLICY.prepaid);
-    expect(text).toContain(REFUND_POLICY.renewal);
+    expect(text).toContain(REFUND_POLICY.term);
+    expect(text.toLowerCase()).not.toContain('cancel');
+    expect(text.toLowerCase()).not.toContain('stops the next');
     expect(text).toContain(REFUND_POLICY.contact);
     expect(text).toContain('Draft for review');
     expect(container.querySelector('a[href="mailto:support@wondral.app"]')).not.toBeNull();
