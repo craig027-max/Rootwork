@@ -55,6 +55,7 @@ ROW = re.compile(r"\{\s*t:(\d+)\s*,\s*root:'([^']+)'\s*,\s*say:'([^']+)'")
 # Keep in lockstep with SPEAKABLE_SYLLABLES in src/core/speak.ts.
 SPEAKABLE_SYLLABLES = {
     "ag": "agg",
+    "aug": "awg",
     "awd": "awed",
     "by": "bye",
     "dont": "dahnt",

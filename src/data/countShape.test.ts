@@ -58,7 +58,7 @@ describe('Count & Shape starter set', () => {
       expect(i, name).toBeGreaterThan(sect);
       expect(i, name).toBeLessThan(auto);
     }
-    expect(ROOTS.length).toBe(291);
+    expect(ROOTS.length).toBe(303);
   });
 
   it('keeps the classical origins and the shape-word breakdowns', () => {

@@ -170,10 +170,10 @@ describe('Daily hold: peek the next question, then Next — Home lands on that p
         expect(face.name.toLowerCase(), pick.word).not.toBe(pick.word.toLowerCase());
       }
     }
-    expect(ROOTS.length).toBe(291);
+    expect(ROOTS.length).toBe(303);
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(291);
+    expect(ROOTS.length).toBe(303);
   });
 });

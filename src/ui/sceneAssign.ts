@@ -2961,3 +2961,164 @@ export const lean: SceneFn = (x, W, H, t, pal) => {
   disc(x, W * 0.4 + sway, H * 0.24, 7, `rgba(${p1(pal)},0.95)`);
   glow(x, W * 0.55, H * 0.45, 14, p1(pal), 0.12);
 };
+
+/** A shoot rising from the ground — growth, not a finished plant. */
+export const grow: SceneFn = (x, W, H, t, pal) => {
+  const h = 18 + ((t * 0.35) % 1) * (H * 0.42);
+  x.strokeStyle = `rgba(${p0(pal)},0.55)`;
+  x.lineWidth = 3;
+  line(x, W * 0.18, H * 0.78, W * 0.82, H * 0.78);
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  line(x, W * 0.5, H * 0.78, W * 0.5, H * 0.78 - h);
+  disc(x, W * 0.5, H * 0.78 - h, 6, `rgba(${p1(pal)},0.95)`);
+  glow(x, W * 0.5, H * 0.78 - h, 16, p1(pal), 0.16);
+};
+
+/** A bar stretching sideways — length being added. */
+export const length: SceneFn = (x, W, H, t, pal) => {
+  const w = 28 + ((t * 0.4) % 1) * (W * 0.55);
+  const y = H * 0.5;
+  x.strokeStyle = `rgba(${p0(pal)},0.4)`;
+  x.lineWidth = 2;
+  line(x, W * 0.16, y, W * 0.84, y);
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 8;
+  x.lineCap = 'round';
+  line(x, W * 0.16, y, W * 0.16 + w, y);
+  disc(x, W * 0.16 + w, y, 5, `rgba(${p1(pal)},0.95)`);
+  glow(x, W * 0.16 + w, y, 14, p1(pal), 0.14);
+};
+
+/** A stub that stays short while a longer guide is clipped away. */
+export const short: SceneFn = (x, W, H, t, pal) => {
+  const clip = 0.35 + 0.25 * Math.sin(t * 1.4);
+  const y = H * 0.5;
+  x.strokeStyle = `rgba(${p0(pal)},0.28)`;
+  x.lineWidth = 6;
+  x.lineCap = 'round';
+  line(x, W * 0.18, y, W * 0.82, y);
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 8;
+  line(x, W * 0.18, y, W * (0.18 + clip), y);
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 3;
+  line(x, W * (0.18 + clip), y - 16, W * (0.18 + clip) + 10, y + 16);
+  line(x, W * (0.18 + clip) + 10, y - 16, W * (0.18 + clip), y + 16);
+};
+
+/** A streak racing across — swift, with no walking figure. */
+export const swift: SceneFn = (x, W, H, t, pal) => {
+  const p = (t * 0.7) % 1;
+  const cx = W * (0.12 + p * 0.76);
+  x.strokeStyle = `rgba(${p0(pal)},0.35)`;
+  x.lineWidth = 3;
+  x.lineCap = 'round';
+  line(x, cx - 48, H * 0.5, cx - 8, H * 0.5);
+  disc(x, cx, H * 0.5, 7, `rgba(${p1(pal)},0.95)`);
+  glow(x, cx, H * 0.5, 18, p1(pal), 0.2);
+};
+
+/** A small shape creeping — slow, barely moving. */
+export const slow: SceneFn = (x, W, H, t, pal) => {
+  const p = (t * 0.08) % 1;
+  const cx = W * (0.2 + p * 0.6);
+  x.strokeStyle = `rgba(${p0(pal)},0.4)`;
+  x.lineWidth = 2;
+  line(x, W * 0.12, H * 0.68, W * 0.88, H * 0.68);
+  rr(x, cx - 16, H * 0.48, 32, 18, 9);
+  disc(x, cx + 10, H * 0.46, 4, `rgba(${p1(pal)},0.9)`);
+  glow(x, cx, H * 0.55, 12, p1(pal), 0.1);
+};
+
+/** A platform bowing under a weight — heavy. */
+export const heavy: SceneFn = (x, W, H, t, pal) => {
+  const sag = 10 + Math.sin(t * 1.2) * 4;
+  x.strokeStyle = `rgba(${p0(pal)},0.85)`;
+  x.lineWidth = 5;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.moveTo(W * 0.16, H * 0.62);
+  x.quadraticCurveTo(W * 0.5, H * 0.62 + sag, W * 0.84, H * 0.62);
+  x.stroke();
+  disc(x, W * 0.5, H * 0.62 + sag - 16, 14, `rgba(${p1(pal)},0.95)`);
+  glow(x, W * 0.5, H * 0.62 + sag - 16, 18, p1(pal), 0.14);
+};
+
+/** A sun climbing off the horizon — a day beginning. */
+export const day: SceneFn = (x, W, H, t, pal) => {
+  const p = (Math.sin(t * 0.5) + 1) / 2;
+  const cx = W * (0.28 + p * 0.2);
+  const cy = H * (0.72 - p * 0.4);
+  x.strokeStyle = `rgba(${p0(pal)},0.7)`;
+  x.lineWidth = 3;
+  line(x, W * 0.1, H * 0.74, W * 0.9, H * 0.74);
+  disc(x, cx, cy, 12, `rgba(${p1(pal)},0.95)`);
+  glow(x, cx, cy, 22, p1(pal), 0.18);
+};
+
+/** A block that stays put while marks around it fade — lasting. */
+export const lasting: SceneFn = (x, W, H, t, pal) => {
+  rr(x, W * 0.38, H * 0.38, W * 0.24, H * 0.28, 6);
+  const fade = 0.15 + 0.35 * (0.5 + 0.5 * Math.sin(t * 1.6));
+  disc(x, W * 0.22, H * 0.32, 5, `rgba(${p0(pal)},${fade})`);
+  disc(x, W * 0.78, H * 0.3, 4, `rgba(${p0(pal)},${1 - fade})`);
+  disc(x, W * 0.74, H * 0.72, 5, `rgba(${p0(pal)},${fade * 0.6})`);
+  glow(x, W * 0.5, H * 0.52, 16, p1(pal), 0.12);
+};
+
+/** A fence the traveler stops at — a border. */
+export const border: SceneFn = (x, W, H, t, pal) => {
+  const bob = Math.sin(t * 1.1) * 2;
+  x.strokeStyle = `rgba(${p0(pal)},0.85)`;
+  x.lineWidth = 4;
+  for (let i = 0; i < 5; i++) {
+    const px = W * (0.48 + i * 0.09);
+    line(x, px, H * 0.28, px, H * 0.78);
+  }
+  line(x, W * 0.48, H * 0.4, W * 0.84, H * 0.4);
+  line(x, W * 0.48, H * 0.62, W * 0.84, H * 0.62);
+  person(x, W * 0.28, H * 0.78 + bob, p1(pal), 0);
+  glow(x, W * 0.66, H * 0.5, 14, p0(pal), 0.1);
+};
+
+/** A cup filling to the brim — full. */
+export const full: SceneFn = (x, W, H, t, pal) => {
+  const level = 0.25 + ((t * 0.3) % 1) * 0.5;
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 4;
+  x.lineJoin = 'round';
+  x.beginPath();
+  x.moveTo(W * 0.32, H * 0.28);
+  x.lineTo(W * 0.38, H * 0.78);
+  x.lineTo(W * 0.62, H * 0.78);
+  x.lineTo(W * 0.68, H * 0.28);
+  x.stroke();
+  x.fillStyle = `rgba(${p1(pal)},0.85)`;
+  const top = H * (0.78 - level * 0.46);
+  x.fillRect(W * 0.4, top, W * 0.2, H * 0.78 - top);
+  glow(x, W * 0.5, top, 12, p1(pal), 0.14);
+};
+
+/** Color spreading over one fruit — ripe. */
+export const ripe: SceneFn = (x, W, H, t, pal) => {
+  const blush = 0.35 + 0.45 * (0.5 + 0.5 * Math.sin(t * 0.8));
+  disc(x, W * 0.5, H * 0.52, 28, `rgba(${p0(pal)},0.55)`);
+  disc(x, W * 0.56, H * 0.48, 16, `rgba(${p1(pal)},${blush})`);
+  x.strokeStyle = `rgba(${p1(pal)},0.8)`;
+  x.lineWidth = 3;
+  line(x, W * 0.5, H * 0.24, W * 0.5, H * 0.34);
+  glow(x, W * 0.5, H * 0.52, 20, p1(pal), 0.12);
+};
+
+/** The sun overhead with a short shadow — noon, not sunrise. */
+export const noon: SceneFn = (x, W, H, t, pal) => {
+  const bob = Math.sin(t * 0.7) * 2;
+  disc(x, W * 0.5, H * 0.28 + bob, 14, `rgba(${p1(pal)},0.95)`);
+  glow(x, W * 0.5, H * 0.28 + bob, 24, p1(pal), 0.16);
+  x.strokeStyle = `rgba(${p0(pal)},0.7)`;
+  x.lineWidth = 3;
+  line(x, W * 0.12, H * 0.78, W * 0.88, H * 0.78);
+  rr(x, W * 0.46, H * 0.62, 16, 16, 2);
+};
