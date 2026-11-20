@@ -1149,7 +1149,7 @@ describe('buildRecall', () => {
     expect(word).not.toContain(dissect);
     for (const label of word) expect(glossSaysMean('word', label), label).toBe(false);
 
-    const life = pickGlossDistractors('life', 'Biography', glossOf('Bio', 'Biography'), [ROOTS], 800, mulberry32(1));
+    const life = pickGlossDistractors('life', 'Biography', glossOf('Bio', 'Biography'), [ROOTS], 2000, mulberry32(1));
     const bicycle = [rolls, wheels].filter((label) => life.includes(label));
     expect(bicycle).toHaveLength(1);
     expect(life).toContain(magnificent);

@@ -25,6 +25,7 @@ export function letterNames(root: string): string {
  */
 export const SPEAKABLE_SYLLABLES: Readonly<Record<string, string>> = {
   ag: 'agg',
+  aug: 'awg',
   awd: 'awed',
   by: 'bye',
   dont: 'dahnt',

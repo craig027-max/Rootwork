@@ -82,6 +82,6 @@ describe('Find leftover: teach the school word, then back to Find', () => {
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(291);
+    expect(ROOTS.length).toBe(303);
   });
 });

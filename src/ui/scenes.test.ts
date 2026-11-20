@@ -163,6 +163,18 @@ describe('scene registry', () => {
     expect(byRoot.Sed).toBe('sit');
     expect(byRoot.Cub).toBe('lie');
     expect(byRoot.Clin).toBe('lean');
+    expect(byRoot.Aug).toBe('grow');
+    expect(byRoot.Long).toBe('length');
+    expect(byRoot.Brev).toBe('short');
+    expect(byRoot.Celer).toBe('swift');
+    expect(byRoot.Tard).toBe('slow');
+    expect(byRoot.Grav).toBe('heavy');
+    expect(byRoot.Journ).toBe('day');
+    expect(byRoot.Dur).toBe('lasting');
+    expect(byRoot.Termin).toBe('border');
+    expect(byRoot.Plen).toBe('full');
+    expect(byRoot.Matur).toBe('ripe');
+    expect(byRoot.Merid).toBe('noon');
   });
 
   it('keeps breakx for break-roots only', () => {

@@ -220,6 +220,6 @@ describe('Home Rush names the question — not Bio / life over Biography', () =>
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(291);
+    expect(ROOTS.length).toBe(303);
   });
 });
