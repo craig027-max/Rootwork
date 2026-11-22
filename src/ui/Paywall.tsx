@@ -8,13 +8,14 @@ import { Button } from './components/Button';
 import { Card } from './components/Card';
 import { LegalLink } from './components/LegalLink';
 import { ROOTS } from '../data/roots';
+import { SINGLE_SCHOLAR } from '../core/singleScholar';
 
-// PRICE SOURCE OF TRUTH: the amount actually charged comes from the Stripe price
-// behind STRIPE_PRICE_SINGLE (Cloudflare Pages env — see DEPLOYMENT.md). The
-// string below is display copy only.
+// Display copy for the only plan. The charged amount is the Stripe Price behind
+// STRIPE_PRICE_SINGLE, and checkout refuses that Price unless it matches
+// SINGLE_SCHOLAR (one-time $49). See docs/go-live-checkout.md.
 const PLAN = {
-  name: 'Single Scholar',
-  price: '$49 / year',
+  name: SINGLE_SCHOLAR.name,
+  price: SINGLE_SCHOLAR.displayPrice,
   blurb: `One student. All ${ROOTS.length} roots across every tier, plus the full Root Rush quiz.`,
   jewel: 'jade',
 };

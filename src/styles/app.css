@@ -3604,3 +3604,34 @@ button.ww-schip:focus-visible {
   margin: 0 auto;
 }
 
+.ww-receipt {
+  display: grid;
+  grid-template-columns: minmax(8rem, 11rem) 1fr;
+  gap: 8px 16px;
+  margin: 0;
+}
+.ww-receipt dt {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+.ww-receipt dd {
+  margin: 0;
+  font-family: var(--font-body);
+}
+.ww-receipt-label {
+  font-family: var(--font-body);
+  font-size: var(--fs-sm);
+}
+.ww-receipt .ww-input {
+  min-height: 44px;
+}
+.ww-receipt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.ww-receipt-actions .btn {
+  min-height: 44px;
+}
+

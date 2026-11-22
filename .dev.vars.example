@@ -13,6 +13,8 @@
 # Stripe (test mode while building; swap for live keys at launch)
 STRIPE_SECRET_KEY=sk_test_xxx
 STRIPE_WEBHOOK_SECRET=whsec_xxx
+# Test-mode price id only. Checkout refuses this Price unless it is active,
+# one-time, usd, and 4900 cents (Single Scholar). Do not create a live price.
 STRIPE_PRICE_SINGLE=price_xxx_single_annual
 
 # Checkout stays off unless this is exactly the string true.

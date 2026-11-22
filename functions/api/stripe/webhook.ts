@@ -1,6 +1,11 @@
 /// <reference types="@cloudflare/workers-types" />
 import Stripe from 'stripe';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import {
+  receiptInsertFromPaidSession,
+  type ReceiptInsert,
+} from '../../../src/core/checkoutRecord';
+import { SINGLE_SCHOLAR } from '../../../src/core/singleScholar';
 
 interface Env {
   STRIPE_SECRET_KEY: string;
@@ -9,18 +14,15 @@ interface Env {
   SUPABASE_SERVICE_ROLE_KEY: string;
 }
 
-// New purchases are one student. A row already stored as tier "multi" is not
-// rewritten by a later read — seatLimit uses the seats column on that row.
-const SINGLE_SEATS = 1;
-
 /**
  * POST /api/stripe/webhook — Stripe event handler.
  *
  * Verifies the Stripe signature with Web Crypto (Workers have no Node crypto, so
  * the async constructEventAsync + SubtleCryptoProvider is required), dedupes via
  * the stripe_events table, then:
- *   - checkout.session.completed (PAID) → grants the parent's entitlement and
- *     records the charge as COPPA VPC evidence;
+ *   - checkout.session.completed (PAID) → grants the parent's entitlement,
+ *     stores one receipt row (amounts, card brand, last 4), and records the
+ *     charge as COPPA VPC evidence;
  *   - charge.refunded (full refund) / charge.dispute.created → flips the
  *     entitlement to 'refunded' so access ends with the money.
  * The Stripe endpoint must be subscribed to all three event types (DEPLOYMENT.md).
@@ -86,12 +88,21 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
         session.payment_status === 'paid' ||
         session.payment_status === 'no_payment_required';
       if (parentId && earned) {
+        const now = new Date();
+        const paymentIntentId = paymentIntentIdOf(session);
+        // Build the receipt before granting. A paid session with the wrong
+        // amount or no card throws, the claim is released, and Stripe retries.
+        const receipt =
+          session.payment_status === 'paid'
+            ? await receiptForPaidSession(stripe, session, parentId, paymentIntentId)
+            : null;
         await grantEntitlement(supabase, {
           parentId,
-          paymentIntentId:
-            typeof session.payment_intent === 'string' ? session.payment_intent : null,
+          paymentIntentId,
           customerId: typeof session.customer === 'string' ? session.customer : null,
+          now,
         });
+        if (receipt) await storeReceipt(supabase, receipt);
       }
     } else if (event.type === 'charge.refunded') {
       // Fires for partial refunds too; `charge.refunded` is only true once the
@@ -127,23 +138,86 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   return new Response('ok', { status: 200 });
 };
 
+function paymentIntentIdOf(session: Stripe.Checkout.Session): string | null {
+  const pi = session.payment_intent;
+  if (typeof pi === 'string') return pi;
+  if (pi && typeof pi === 'object') return pi.id;
+  return null;
+}
+
+function cardFromPaymentIntent(pi: Stripe.PaymentIntent): { brand: string; last4: string } {
+  const latest = pi.latest_charge;
+  if (!latest || typeof latest === 'string') throw new Error('paid session has no charge');
+  const card = latest.payment_method_details?.card;
+  if (!card?.brand || !card.last4) throw new Error('paid session has no card');
+  return { brand: card.brand, last4: card.last4 };
+}
+
+async function receiptForPaidSession(
+  stripe: Stripe,
+  session: Stripe.Checkout.Session,
+  parentId: string,
+  paymentIntentId: string | null,
+): Promise<ReceiptInsert> {
+  if (!session.id) throw new Error('paid session has no id');
+  if (!paymentIntentId) throw new Error('paid session has no payment intent');
+  const pi = await stripe.paymentIntents.retrieve(paymentIntentId, {
+    expand: ['latest_charge'],
+  });
+  const card = cardFromPaymentIntent(pi);
+  return receiptInsertFromPaidSession({
+    parentId,
+    sessionId: session.id,
+    paymentIntentId,
+    createdUnix: session.created,
+    currency: session.currency,
+    amountSubtotal: session.amount_subtotal,
+    amountDiscount: session.total_details?.amount_discount ?? 0,
+    amountTax: session.total_details?.amount_tax ?? 0,
+    amountShipping: session.total_details?.amount_shipping ?? 0,
+    amountTotal: session.amount_total,
+    cardBrand: card.brand,
+    cardLast4: card.last4,
+  });
+}
+
+/**
+ * Insert the receipt once. A unique conflict on this checkout session is the
+ * retry of a write that already landed — ack it. A conflict that is not this
+ * session (receipt-number collision) throws so Stripe retries.
+ */
+async function storeReceipt(supabase: SupabaseClient, row: ReceiptInsert): Promise<void> {
+  const inserted = await supabase.from('receipts').insert(row);
+  if (!inserted.error) return;
+  if (inserted.error.code !== '23505') throw new Error(`receipt insert: ${inserted.error.message}`);
+  const existing = await supabase
+    .from('receipts')
+    .select('checkout_session_id')
+    .eq('checkout_session_id', row.checkout_session_id)
+    .maybeSingle();
+  if (existing.error) throw new Error(`receipt lookup: ${existing.error.message}`);
+  if (existing.data) return;
+  throw new Error('receipt number collision');
+}
+
 async function grantEntitlement(
   supabase: SupabaseClient,
   args: {
     parentId: string;
     paymentIntentId: string | null;
     customerId: string | null;
+    now?: Date;
   },
 ): Promise<void> {
-  const now = new Date();
+  const now = args.now ?? new Date();
   const expires = new Date(now);
   expires.setFullYear(expires.getFullYear() + 1); // one-time annual model
 
   const ent = await supabase.from('entitlements').upsert(
     {
       parent_id: args.parentId,
-      tier: 'single',
-      seats: SINGLE_SEATS,
+      tier: SINGLE_SCHOLAR.tier,
+      seats: SINGLE_SCHOLAR.seats,
       status: 'active',
       source: 'stripe',
       stripe_customer_id: args.customerId,
