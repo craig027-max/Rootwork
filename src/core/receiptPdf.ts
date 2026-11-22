@@ -5,6 +5,16 @@ import { receiptLines, type Receipt } from './receipt';
 
 const SAMPLE_BANNER = 'SAMPLE — NOT A REAL PURCHASE. Fake example data. Not a charge.';
 
+/** True when every character can be drawn in the receipt's WinAnsi font. */
+export function receiptTextOk(text: string): boolean {
+  for (const ch of text) {
+    if (ch === '—' || ch === '’') continue;
+    const cp = ch.codePointAt(0) ?? 0;
+    if (cp < 32 || cp > 126) return false;
+  }
+  return true;
+}
+
 function pdfLiteral(text: string): string {
   let out = '(';
   for (const ch of text) {

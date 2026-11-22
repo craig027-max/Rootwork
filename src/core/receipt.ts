@@ -1,23 +1,21 @@
 /**
  * Receipt built from a checkout record.
  *
- * This is not mounted in the app. The Stripe webhook writes an entitlement
- * (tier, seats, status, customer id, payment-intent id, granted_at, expires_at)
- * and a stripe_events row (event id, type, received_at). It does not store a
- * receipt number, amount, discount, tax, fee, card brand, or last 4, and there
- * is no receipts table. Wire this into the parent area only after those fields
- * exist. Until then, the labeled sample in receiptSample.ts is the preview.
+ * The webhook stores one receipts row per paid Checkout session (receipt
+ * number, amounts, card brand, last 4). The parent dashboard prints that row.
+ * The labeled sample in receiptSample.ts stays off every screen.
  *
- * There is no monthly plan in the repo. The primary item is the annual
- * single-student subscription.
+ * There is no monthly plan. The item is the annual single-student subscription.
+ * Seller lines are the company name and the support address — never a mailing
+ * address or an EIN.
  */
+import { SINGLE_SCHOLAR } from './singleScholar';
 
 export const SELLER_LEGAL_NAME = 'Thompson Education Apps LLC';
 export const SELLER_BRAND = 'Wondral Words';
 export const SUPPORT_EMAIL = 'support@wondral.app';
 
-export const SINGLE_STUDENT_ANNUAL_ITEM =
-  'Wondral Words — 1-year single-student educational software subscription';
+export const SINGLE_STUDENT_ANNUAL_ITEM = SINGLE_SCHOLAR.item;
 
 export const PAID_IN_FULL = 'Paid in full';
 

@@ -29,7 +29,7 @@ and `CHECKOUT_ENABLED` are the string `true`. See `docs/go-live-checkout.md`.
    supabase db push
    ```
    *Why:* applies `supabase/migrations/*.sql` (profiles + auto-create trigger, student_profiles,
-   lesson_progress with per-student RLS, entitlements, stripe_events) to the new DB.
+   lesson_progress with per-student RLS, entitlements, stripe_events, receipts) to the new DB.
    *Alternative (no CLI):* paste each file in `supabase/migrations/` into the SQL Editor in order.
 4. **Auth URL config** (Authentication → URL Configuration):
    - **Site URL:** `https://words.wondral.app`
@@ -55,8 +55,11 @@ and `CHECKOUT_ENABLED` are the string `true`. See `docs/go-live-checkout.md`.
      (the last two revoke the entitlement — without them a refunded or disputed purchase
      stays unlocked for the full year)
    - Copy the **Signing secret** (`whsec_…`).
-   *Note:* the paywall copy in `src/ui/Paywall.tsx` hardcodes “$49 / year” —
-   if the Stripe price amount ever changes, change them together.
+   *Note:* the paywall reads `$49 / year` from `src/core/singleScholar.ts`. Checkout
+   refuses `STRIPE_PRICE_SINGLE` unless that Price is an active one-time USD charge
+   of 4900 cents. A paid session also writes a `receipts` row (see
+   `supabase/migrations/20261122000001_receipts.sql`) which the parent dashboard shows.
+   Do not put a mailing address or EIN on that receipt.
 3. Put the Stripe values into `.dev.vars` locally (copy from `.dev.vars.example`) and into the
    Cloudflare Pages env (step 3 below).
 

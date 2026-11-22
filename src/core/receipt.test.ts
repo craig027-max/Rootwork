@@ -102,9 +102,11 @@ describe('sample preview', () => {
     expect(lines.join('\n')).not.toMatch(/month/i);
   });
 
-  it('is not imported by any screen', () => {
-    const files = sourceFiles('src').filter((file) => !file.includes(`${join('src', 'core', 'receipt')}`));
-    const linked = files.filter((file) => /receiptSample|receiptToPdf|from ['"][^'"]*receipt/.test(readFileSync(file, 'utf8')));
+  it('stays off every screen — only a stored receipt is shown', () => {
+    const files = sourceFiles('src').filter((file) => !file.endsWith('receiptSample.ts'));
+    const linked = files.filter((file) =>
+      /from ['"][^'"]*receiptSample['"]|sampleReceiptPdf\(/.test(readFileSync(file, 'utf8')),
+    );
     expect(linked).toEqual([]);
   });
 });

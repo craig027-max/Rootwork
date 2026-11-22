@@ -121,8 +121,14 @@ export function App() {
       return;
     }
     setCheckoutNotice('unlocking');
-    void ret.unlocked.then((ok) => setCheckoutNotice(ok ? 'unlocked' : 'pending'));
-  }, [setCheckoutNotice]);
+    void ret.unlocked.then((ok) => {
+      setCheckoutNotice(ok ? 'unlocked' : 'pending');
+      // The purchase is the parent conversion: land in the grown-up area
+      // (the gate, then the dashboard) so they can add their one student
+      // and open the receipt. A kid still cannot see the price from here.
+      if (ok) setView('dashboard');
+    });
+  }, [setCheckoutNotice, setView]);
 
   function retryUnlock() {
     setCheckoutNotice('unlocking');

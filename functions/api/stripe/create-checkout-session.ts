@@ -1,6 +1,7 @@
 /// <reference types="@cloudflare/workers-types" />
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { SINGLE_SCHOLAR, matchesSingleScholarPrice } from '../../../src/core/singleScholar';
 import { STATEMENT_DESCRIPTOR, assertStatementDescriptor } from './statementDescriptor';
 
 interface Env {
@@ -77,8 +78,8 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
     return json({ error: 'already_entitled' }, 409);
   }
 
-  const price = env.STRIPE_PRICE_SINGLE;
-  if (!price) return json({ error: 'price_not_configured' }, 500);
+  const priceId = env.STRIPE_PRICE_SINGLE;
+  if (!priceId) return json({ error: 'price_not_configured' }, 500);
 
   const stripe = new Stripe(env.STRIPE_SECRET_KEY, {
     httpClient: Stripe.createFetchHttpClient(),
@@ -89,23 +90,37 @@ export const onRequestPost: PagesFunction<Env> = async ({ request, env }) => {
   // post-checkout redirect off-site.
   const origin = env.APP_BASE_URL ?? new URL(request.url).origin;
   try {
+    // Refuse a Price that is not the one-time $49 Single Scholar charge, so a
+    // wrong test-mode price id cannot check out. This does not create a price.
+    const price = await stripe.prices.retrieve(priceId);
+    if (
+      !matchesSingleScholarPrice({
+        active: price.active,
+        type: price.type,
+        currency: price.currency,
+        unit_amount: price.unit_amount,
+      })
+    ) {
+      console.error('[stripe] STRIPE_PRICE_SINGLE is not the Single Scholar one-time $49 price');
+      return json({ error: 'price_not_configured' }, 500);
+    }
+
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       // Card-only: keeps settlement synchronous so a session is never 'completed'
       // while still 'unpaid' (which would strand the buyer — no async grant path).
       payment_method_types: ['card'],
-      line_items: [{ price, quantity: 1 }],
+      line_items: [{ price: priceId, quantity: 1 }],
       client_reference_id: user.id,
       customer_creation: 'always',
       customer_email: user.email ?? undefined,
-      metadata: { parent_id: user.id, tier: 'single' },
+      metadata: { parent_id: user.id, tier: SINGLE_SCHOLAR.tier },
       payment_intent_data: {
-        metadata: { parent_id: user.id, tier: 'single' },
+        metadata: { parent_id: user.id, tier: SINGLE_SCHOLAR.tier },
         // Card charges reject statement_descriptor. The suffix is the field
         // Checkout allows; the dashboard prefix is set in the go-live checklist.
         statement_descriptor_suffix: assertStatementDescriptor(STATEMENT_DESCRIPTOR),
-        description:
-          'Wondral Words — 1-year single-student educational software subscription',
+        description: SINGLE_SCHOLAR.item,
       },
       success_url: `${origin}${env.CHECKOUT_SUCCESS_PATH ?? '/?checkout=success'}`,
       cancel_url: `${origin}${env.CHECKOUT_CANCEL_PATH ?? '/?checkout=cancel'}`,

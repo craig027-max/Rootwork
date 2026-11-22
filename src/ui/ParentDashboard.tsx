@@ -3,11 +3,13 @@ import { useWondralStore } from '../app/store';
 import { seatLimit } from '../core/entitlement';
 import { hydrateActiveStudent } from '../core/hydrate';
 import { getAllStudentProgress } from '../core/progress';
+import { getLatestReceipt, type StoredReceipt } from '../core/receipts';
 import { AVATARS, DEFAULT_AVATAR } from '../data/avatars';
 import { Card } from './components/Card';
 import { Button } from './components/Button';
 import { Badge } from './components/Badge';
 import { Chip } from './components/Chip';
+import { ReceiptPanel } from './ReceiptPanel';
 
 /**
  * Parent dashboard — the roster of student profiles. Add / rename / remove
@@ -24,6 +26,8 @@ export function ParentDashboard() {
   const setView = useWondralStore((s) => s.setView);
   const signOut = useWondralStore((s) => s.signOut);
   const entitlement = useWondralStore((s) => s.entitlement);
+  const authUser = useWondralStore((s) => s.authUser);
+  const [receipt, setReceipt] = useState<StoredReceipt | null>(null);
 
   // New purchases are one student. A stored row can still carry more seats
   // (an older multi grant). At the cap the add form is replaced by a notice.
@@ -35,6 +39,22 @@ export function ParentDashboard() {
   const [avatar, setAvatar] = useState<string>(DEFAULT_AVATAR);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authUser || authUser.isAnonymous) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const row = await getLatestReceipt(authUser.id);
+        if (!cancelled) setReceipt(row);
+      } catch (err) {
+        console.warn('[receipt] load failed', err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authUser]);
 
   useEffect(() => {
     let cancelled = false;
@@ -190,6 +210,8 @@ export function ParentDashboard() {
           </Button>
         </Card>
       )}
+
+      {receipt ? <ReceiptPanel row={receipt} onSaved={setReceipt} /> : null}
 
       <div className="ww-row">
         <Button variant="ghost" onClick={() => void signOut()}>

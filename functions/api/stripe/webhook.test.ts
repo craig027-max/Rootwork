@@ -4,14 +4,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // SDK (signature verification) and the Supabase client (a chainable recorder),
 // then drive it with real Request objects — the same shape Pages hands it.
 
-const { constructEventAsync, createClientMock } = vi.hoisted(() => ({
+const { constructEventAsync, paymentIntentsRetrieve, createClientMock } = vi.hoisted(() => ({
   constructEventAsync: vi.fn(),
+  paymentIntentsRetrieve: vi.fn(),
   createClientMock: vi.fn(),
 }));
 
 vi.mock('stripe', () => {
   class FakeStripe {
     webhooks = { constructEventAsync };
+    paymentIntents = { retrieve: paymentIntentsRetrieve };
     static createFetchHttpClient = vi.fn(() => ({}));
     static createSubtleCryptoProvider = vi.fn(() => ({}));
   }
@@ -75,10 +77,34 @@ function callsFor(calls: DbCall[], table: string) {
 
 let db: ReturnType<typeof makeDb>;
 
+const PAID_AT = Math.floor(Date.parse('2026-03-15T00:00:00.000Z') / 1000);
+
+function paidSession(extra: Record<string, unknown> = {}) {
+  return {
+    id: 'cs_test_1',
+    created: PAID_AT,
+    currency: 'usd',
+    amount_subtotal: 4900,
+    amount_total: 4900,
+    total_details: { amount_discount: 0, amount_tax: 0, amount_shipping: 0 },
+    metadata: { parent_id: 'parent_1', tier: 'single' },
+    payment_status: 'paid',
+    payment_intent: 'pi_1',
+    customer: 'cus_1',
+    ...extra,
+  };
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   db = makeDb();
   createClientMock.mockImplementation(() => db.client);
+  paymentIntentsRetrieve.mockResolvedValue({
+    id: 'pi_1',
+    latest_charge: {
+      payment_method_details: { card: { brand: 'visa', last4: '4242' } },
+    },
+  });
 });
 
 describe('webhook: request validation', () => {
@@ -124,14 +150,7 @@ describe('webhook: idempotency', () => {
   it('releases the event claim and returns 500 when processing fails (so Stripe retries)', async () => {
     db = makeDb({ entitlements: { error: { message: 'db down' } } });
     createClientMock.mockImplementation(() => db.client);
-    constructEventAsync.mockResolvedValue(
-      stripeEvent('checkout.session.completed', {
-        metadata: { parent_id: 'parent_1', tier: 'single' },
-        payment_status: 'paid',
-        payment_intent: 'pi_1',
-        customer: 'cus_1',
-      }),
-    );
+    constructEventAsync.mockResolvedValue(stripeEvent('checkout.session.completed', paidSession()));
     const res = await invoke();
     expect(res.status).toBe(500);
     const eventCalls = callsFor(db.calls, 'stripe_events');
@@ -144,15 +163,16 @@ describe('webhook: checkout.session.completed (grant)', () => {
   it('grants one seat even when an old session says multi', async () => {
     for (const tier of ['single', 'multi'] as const) {
       vi.clearAllMocks();
+      paymentIntentsRetrieve.mockResolvedValue({
+        id: 'pi_1',
+        latest_charge: {
+          payment_method_details: { card: { brand: 'visa', last4: '4242' } },
+        },
+      });
       db = makeDb();
       createClientMock.mockImplementation(() => db.client);
       constructEventAsync.mockResolvedValue(
-        stripeEvent('checkout.session.completed', {
-          metadata: { parent_id: 'parent_1', tier },
-          payment_status: 'paid',
-          payment_intent: 'pi_1',
-          customer: 'cus_1',
-        }),
+        stripeEvent('checkout.session.completed', paidSession({ metadata: { parent_id: 'parent_1', tier } })),
       );
       const res = await invoke();
       expect(res.status).toBe(200);
@@ -165,6 +185,20 @@ describe('webhook: checkout.session.completed (grant)', () => {
         source: 'stripe',
         stripe_payment_intent_id: 'pi_1',
       });
+      const receipt = callsFor(db.calls, 'receipts').find((c) => c.method === 'insert');
+      expect(receipt?.args[0]).toMatchObject({
+        parent_id: 'parent_1',
+        checkout_session_id: 'cs_test_1',
+        base_cents: 4900,
+        discount_cents: 0,
+        tax_cents: 0,
+        fee_cents: 0,
+        total_paid_cents: 4900,
+        card_brand: 'Visa',
+        card_last4: '4242',
+        student_name: null,
+      });
+      expect(paymentIntentsRetrieve).toHaveBeenCalledWith('pi_1', { expand: ['latest_charge'] });
     }
   });
 

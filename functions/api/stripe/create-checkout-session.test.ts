@@ -3,8 +3,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // Stub-tests the (request, env) handler: Stripe's sessions.create and the
 // Supabase auth/entitlement reads are mocked; requests are real Request objects.
 
-const { sessionsCreate, getUser, createClientMock } = vi.hoisted(() => ({
+const { sessionsCreate, pricesRetrieve, getUser, createClientMock } = vi.hoisted(() => ({
   sessionsCreate: vi.fn(),
+  pricesRetrieve: vi.fn(),
   getUser: vi.fn(),
   createClientMock: vi.fn(),
 }));
@@ -12,6 +13,7 @@ const { sessionsCreate, getUser, createClientMock } = vi.hoisted(() => ({
 vi.mock('stripe', () => {
   class FakeStripe {
     checkout = { sessions: { create: sessionsCreate } };
+    prices = { retrieve: pricesRetrieve };
     static createFetchHttpClient = vi.fn(() => ({}));
   }
   return { default: FakeStripe };
@@ -76,6 +78,13 @@ const PAST = '2020-01-01T00:00:00.000Z';
 beforeEach(() => {
   vi.clearAllMocks();
   sessionsCreate.mockResolvedValue({ url: 'https://checkout.stripe.com/pay/cs_test' });
+  pricesRetrieve.mockResolvedValue({
+    id: 'price_single_test',
+    active: true,
+    type: 'one_time',
+    currency: 'usd',
+    unit_amount: 4900,
+  });
   stubSupabase(null);
 });
 
@@ -196,6 +205,24 @@ describe('create-checkout-session: session creation', () => {
     const res = await invoke(makeRequest({ tier: 'single' }), { ...ENV, STRIPE_PRICE_SINGLE: '' });
     expect(res.status).toBe(500);
     expect(await res.json()).toEqual({ error: 'price_not_configured' });
+    expect(pricesRetrieve).not.toHaveBeenCalled();
+  });
+
+  it('refuses a Price that is not the one-time $49 Single Scholar charge', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    signedInUser();
+    pricesRetrieve.mockResolvedValue({
+      id: 'price_wrong',
+      active: true,
+      type: 'recurring',
+      currency: 'usd',
+      unit_amount: 7900,
+    });
+    const res = await invoke();
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'price_not_configured' });
+    expect(sessionsCreate).not.toHaveBeenCalled();
+    consoleError.mockRestore();
   });
 
   it('returns a generic 502 stripe_error when Stripe fails (no detail leaked)', async () => {
