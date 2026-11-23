@@ -63,5 +63,21 @@ Do these in order. Do not flip the flags until a real test-mode purchase works. 
     - [x] Refund page was not edited and was not merged.
 
 11. **Kids category.** This is a website, not an app-store listing. Before any store work later, review the kids-category rules. Do not add a store listing, a native wrapper, or in-app purchase as part of turning this flag on.
-    - [x] No store listing, wrapper, or catalog added.
-    - [ ] Craig: revisit only if a store listing is ever proposed. Not part of turning checkout on.
+   - [x] No store listing, wrapper, or catalog added.
+   - [ ] Craig: revisit only if a store listing is ever proposed. Not part of turning checkout on.
+
+12. **Upgrade return.** A grown-up who taps Go Premium, then still has to sign in or give consent, comes back to the Single Scholar paywall. The paywall stays behind the grown-up gate. With the checkout flags off it still says purchases aren’t open and shows no buy button. Back to learning, the logo, and sign-out drop the request. A plain Sign in does not open the paywall. The test-mode price id stays in `STRIPE_PRICE_SINGLE` (no live price id is hard-coded). The webhook, Pages Functions, and the on-screen receipt from a mocked test purchase were already in the repo.
+    - [x] Code and a screen test. Checkout flags stay unset.
+    - [ ] Craig: nothing new to set for this step. It does not turn checkout on.
+
+## Still only Craig
+
+The code steps above are done. Checkout stays off. This environment has no Stripe account, no test price id, and no Supabase project credentials, so none of these were done from here:
+
+- Create the Stripe account (step 1) and the test-mode $49 one-time Price (step 2). Put that `price_…` id in `STRIPE_PRICE_SINGLE`.
+- Set the shortened statement descriptor to `WW` (step 3).
+- Set the Pages secrets in step 4. Leave `CHECKOUT_ENABLED` and `VITE_CHECKOUT_ENABLED` unset.
+- Add the test-mode webhook endpoint and save `whsec_…` (step 5).
+- Apply `supabase/migrations/` to the Wondral Words project (step 6).
+- After a real test-card purchase works on `words.wondral.app` (step 9), set both flags to the string `true` and redeploy (step 8).
+- Re-read Privacy and Terms on the live site (step 10).

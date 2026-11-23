@@ -126,7 +126,10 @@ export function App() {
       // The purchase is the parent conversion: land in the grown-up area
       // (the gate, then the dashboard) so they can add their one student
       // and open the receipt. A kid still cannot see the price from here.
-      if (ok) setView('dashboard');
+      if (ok) {
+        useWondralStore.getState().clearPendingUpgrade();
+        setView('dashboard');
+      }
     });
   }, [setCheckoutNotice, setView]);
 

@@ -32,7 +32,9 @@ export function Consent() {
       });
       const refreshed = await getProfile(authUser.id);
       setProfile(refreshed);
-      setView('dashboard');
+      // Go Premium continues to the plan. A plain sign-up still opens the dashboard.
+      const continued = useWondralStore.getState().resumePendingUpgrade();
+      if (!continued) setView('dashboard');
     } catch (err) {
       setError((err as Error).message || 'Could not record consent. Please try again.');
     } finally {

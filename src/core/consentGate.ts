@@ -58,3 +58,25 @@ export function resolveEntryView(s: EntryState): EntryView {
   // Authenticated, consented parent who simply hasn't bought → the paywall.
   return 'paywall';
 }
+
+/**
+ * What to do with a Go Premium request after sign-in or consent.
+ * `hold` means the parent still has to sign in or consent. `plan` means the
+ * paywall is the next screen. `done` means they already have access, so the
+ * request should be dropped and ordinary landing can run.
+ */
+export type UpgradeResume =
+  | { kind: 'idle' }
+  | { kind: 'wait' }
+  | { kind: 'hold'; view: 'auth' | 'consent' }
+  | { kind: 'plan' }
+  | { kind: 'done' };
+
+export function resumeUpgrade(pending: boolean, s: Omit<EntryState, 'intent'>): UpgradeResume {
+  if (!pending) return { kind: 'idle' };
+  const view = resolveEntryView({ ...s, intent: 'upgrade' });
+  if (view === 'loading') return { kind: 'wait' };
+  if (view === 'auth' || view === 'consent') return { kind: 'hold', view };
+  if (view === 'paywall') return { kind: 'plan' };
+  return { kind: 'done' };
+}
