@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { resolveEntryView, type EntryState, type EntryView } from './consentGate';
+import { resolveEntryView, resumeUpgrade, type EntryState, type EntryView } from './consentGate';
 import type { AuthStatus } from '../app/store';
 import type { ProfileRole } from './supabase';
 
@@ -63,6 +63,32 @@ describe('resolveEntryView — upgrade flow never dead-ends', () => {
     expect(resolveEntryView(state({ role: 'parent', consentAt: '2026-06-01', entitled: false }))).toBe(
       'paywall',
     );
+  });
+});
+
+describe('resumeUpgrade — Go Premium survives sign-in and consent', () => {
+  it('does nothing when the parent did not ask to upgrade', () => {
+    expect(resumeUpgrade(false, state())).toEqual({ kind: 'idle' });
+  });
+
+  it('waits while auth is still settling', () => {
+    expect(resumeUpgrade(true, state({ authStatus: 'loading' }))).toEqual({ kind: 'wait' });
+  });
+
+  it('holds on sign-in, then consent, then the plan', () => {
+    expect(resumeUpgrade(true, state({ authStatus: 'signed-out', role: null, consentAt: null }))).toEqual({
+      kind: 'hold',
+      view: 'auth',
+    });
+    expect(resumeUpgrade(true, state({ role: null, consentAt: null }))).toEqual({
+      kind: 'hold',
+      view: 'consent',
+    });
+    expect(resumeUpgrade(true, state({ entitled: false }))).toEqual({ kind: 'plan' });
+  });
+
+  it('drops the request once the account is already entitled', () => {
+    expect(resumeUpgrade(true, state({ entitled: true }))).toEqual({ kind: 'done' });
   });
 });
 

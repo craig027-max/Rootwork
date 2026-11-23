@@ -21,6 +21,7 @@ type Mode = 'sign-in' | 'sign-up' | 'forgot';
 export function AuthScreen() {
   const setView = useWondralStore((s) => s.setView);
   const passwordRecovery = useWondralStore((s) => s.passwordRecovery);
+  const pendingUpgrade = useWondralStore((s) => s.pendingUpgrade);
   const endPasswordRecovery = useWondralStore((s) => s.endPasswordRecovery);
 
   const [mode, setMode] = useState<Mode>('sign-in');
@@ -29,6 +30,12 @@ export function AuthScreen() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [info, setInfo] = useState<string | null>(null);
+
+  function leaveAuth() {
+    // Home would drop a Go Premium request. The profile load continues it.
+    if (useWondralStore.getState().pendingUpgrade) return;
+    setView('home');
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -53,12 +60,13 @@ export function AuthScreen() {
           setInfo('Account created — check your email to confirm, then sign in.');
           return;
         }
-        // Session present (e.g. confirmations off): hydrate routes to consent.
-        setView('home');
+        // Session present (e.g. confirmations off): hydrate routes to consent,
+        // or back to the plan when this sign-up started from Go Premium.
+        leaveAuth();
         return;
       }
       await signIn({ email, password });
-      setView('home');
+      leaveAuth();
     } catch (err) {
       setError((err as Error).message || 'Something went wrong. Please try again.');
     } finally {
@@ -93,6 +101,11 @@ export function AuthScreen() {
     <form className="ww-form" onSubmit={(e) => void submit(e)}>
       <p className="ww-eyebrow">Parent account</p>
       <h1 className="text-gradient-hero">{title}</h1>
+      {pendingUpgrade && !passwordRecovery ? (
+        <p className="ww-muted" data-screen="upgrade-return">
+          After you sign in, we’ll bring you back to the plan.
+        </p>
+      ) : null}
 
       {!passwordRecovery && mode !== 'forgot' ? (
         <p className="ww-muted">

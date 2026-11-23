@@ -118,11 +118,14 @@ async function loadProfileIntoStore(userId?: string): Promise<void> {
         store.setEntitlement(null);
         console.warn('[entitlement] load failed (treating as none)', err);
       }
+      // Go Premium continues to consent or the plan instead of the dashboard.
+      if (store.resumePendingUpgrade()) return;
       routeParentLanding(students);
       return;
     }
 
     store.setEntitlement(null);
+    if (useWondralStore.getState().resumePendingUpgrade()) return;
 
     // A real (non-anonymous) account that hasn't completed onboarding needs to be
     // routed to consent. We surface the screen; the consent flow assigns the role.
@@ -148,6 +151,13 @@ async function loadProfileIntoStore(userId?: string): Promise<void> {
   }
 }
 
+/** Load the account already on the client, then continue a pending Go Premium request. */
+export async function loadAccountAfterSignIn(): Promise<void> {
+  const id = useWondralStore.getState().authUser?.id;
+  if (!id) return;
+  await loadProfileIntoStore(id);
+}
+
 /**
  * Decide where a parent lands once their roster is known. The routing decision is
  * the pure, unit-tested `resolveParentLanding` — including the ghost case where
@@ -158,6 +168,7 @@ function routeParentLanding(students: StudentProfile[]): void {
   if (
     store.view === 'auth' ||
     store.view === 'consent' ||
+    store.view === 'paywall' || // a later profile load must not pull them off the plan
     store.view === 'deck' ||
     store.view === 'quiz' ||
     store.view === 'privacy' ||

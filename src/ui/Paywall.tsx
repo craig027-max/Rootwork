@@ -61,6 +61,7 @@ export function Paywall() {
     if (res && 'error' in res) {
       // The purchase IS the COPPA consent — an anonymous user must sign up first.
       if (res.error === 'account_required') {
+        useWondralStore.getState().holdUpgrade();
         setView('auth');
         return;
       }
@@ -86,7 +87,7 @@ export function Paywall() {
   }
 
   return (
-    <div className="ww-stack" style={{ maxWidth: 760, margin: '0 auto' }}>
+    <div className="ww-stack" data-screen="paywall" style={{ maxWidth: 760, margin: '0 auto' }}>
       <div>
         <p className="ww-eyebrow">Unlock everything</p>
         <h1 className="text-gradient-hero">Go Premium</h1>

@@ -3,7 +3,7 @@ import type { User } from '@supabase/supabase-js';
 import { initialView } from './routes';
 import { isRootOpenable, moduleIdOfRoot } from '../data/roots';
 import { signOut as libSignOut } from '../core/auth';
-import { resolveEntryView } from '../core/consentGate';
+import { resolveEntryView, resumeUpgrade, type EntryState } from '../core/consentGate';
 import { canAddStudent, gateEntitled, isEntitlementActive } from '../core/entitlement';
 import { isGrownupArea } from '../core/parentGate';
 import {
@@ -137,6 +137,41 @@ function completedIdSet(p: RootProgress): Set<string> {
 
 function isOffline(): boolean {
   return typeof navigator !== 'undefined' && navigator.onLine === false;
+}
+
+/** Survives a refresh on the sign-in screen. Cleared when the request is finished or dropped. */
+export const PENDING_UPGRADE_KEY = 'wondral:pendingUpgrade:v1';
+
+function readPendingUpgrade(): boolean {
+  try {
+    return globalThis.sessionStorage?.getItem(PENDING_UPGRADE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function writePendingUpgrade(on: boolean): void {
+  try {
+    if (!globalThis.sessionStorage) return;
+    if (on) sessionStorage.setItem(PENDING_UPGRADE_KEY, '1');
+    else sessionStorage.removeItem(PENDING_UPGRADE_KEY);
+  } catch {
+    // private mode / blocked storage
+  }
+}
+
+function upgradeEntry(s: {
+  authStatus: AuthStatus;
+  profile: Profile | null;
+  entitlement: Entitlement | null;
+}): Omit<EntryState, 'intent'> {
+  return {
+    authStatus: s.authStatus,
+    role: s.profile?.role ?? null,
+    consentAt: s.profile?.consent_at ?? null,
+    entitled: isEntitlementActive(s.entitlement),
+    offline: isOffline(),
+  };
 }
 
 /** Same display rule as useEntitledForDisplay, so a locked tap matches the UI. */
@@ -303,6 +338,16 @@ interface WondralStore {
    */
   requestUpgrade: () => void;
   /**
+   * True while Go Premium is waiting on sign-in or consent. Session-only.
+   * Home, the logo, and sign-out drop it. The plan itself ends it.
+   */
+  pendingUpgrade: boolean;
+  /** Continue a pending upgrade once the profile is known. True when it chose the next screen. */
+  resumePendingUpgrade: () => boolean;
+  clearPendingUpgrade: () => void;
+  /** Keep the request when checkout has to send the parent to sign in first. */
+  holdUpgrade: () => void;
+  /**
    * When the parent gate was passed, in epoch ms. Null when locked.
    * In-memory only: a reload locks it, leaving the grown-up area locks it,
    * and a few minutes locks it even if they stay.
@@ -405,10 +450,13 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   setView: (v) => {
     const s = get();
     const keepGate = isGrownupArea(s.view) && isGrownupArea(v);
+    const pendingUpgrade = v === 'home' ? false : s.pendingUpgrade;
+    if (v === 'home') writePendingUpgrade(false);
     set({
       view: v,
       askOpen: false,
       parentGateAt: keepGate ? s.parentGateAt : null,
+      pendingUpgrade,
     });
   },
 
@@ -448,18 +496,47 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
   closeAsk: () => set({ askOpen: false }),
   checkoutNotice: null,
   setCheckoutNotice: (n) => set({ checkoutNotice: n }),
+  pendingUpgrade: readPendingUpgrade(),
   requestUpgrade: () => {
     const s = get();
-    const view = resolveEntryView({
-      authStatus: s.authStatus,
-      role: s.profile?.role ?? null,
-      consentAt: s.profile?.consent_at ?? null,
-      entitled: isEntitlementActive(s.entitlement),
-      offline: isOffline(),
-      intent: 'upgrade',
-    });
+    const entry = upgradeEntry(s);
+    const view = resolveEntryView({ ...entry, intent: 'upgrade' });
     if (view === 'loading') return;
+    const pending = resumeUpgrade(true, entry).kind === 'hold';
+    writePendingUpgrade(pending);
+    set({ pendingUpgrade: pending });
     get().setView(view);
+  },
+  resumePendingUpgrade: () => {
+    const s = get();
+    if (!s.pendingUpgrade || s.authStatus !== 'authenticated') return false;
+    // Legal pages stay put. The request is still there when they come back.
+    if (s.view === 'privacy' || s.view === 'terms') return false;
+    const step = resumeUpgrade(true, upgradeEntry(s));
+    if (step.kind === 'idle' || step.kind === 'wait') return false;
+    if (step.kind === 'done') {
+      writePendingUpgrade(false);
+      set({ pendingUpgrade: false });
+      const view = get().view;
+      if (view === 'auth' || view === 'consent') get().setView('home');
+      return false;
+    }
+    if (step.kind === 'plan') {
+      writePendingUpgrade(false);
+      set({ pendingUpgrade: false });
+      get().setView('paywall');
+      return true;
+    }
+    get().setView(step.view);
+    return true;
+  },
+  clearPendingUpgrade: () => {
+    writePendingUpgrade(false);
+    set({ pendingUpgrade: false });
+  },
+  holdUpgrade: () => {
+    writePendingUpgrade(true);
+    set({ pendingUpgrade: true });
   },
   signOut: async () => {
     await libSignOut();
@@ -487,7 +564,9 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       queuedStudyRecall: null,
       askOpen: false,
       parentGateAt: null,
+      pendingUpgrade: false,
     });
+    writePendingUpgrade(false);
   },
 
   students: [],
@@ -566,7 +645,8 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
         askOpen: false,
       };
     }),
-  closeRoot: () =>
+  closeRoot: () => {
+    writePendingUpgrade(false);
     set({
       currentRootId: null,
       view: 'home',
@@ -577,7 +657,9 @@ export const useWondralStore = create<WondralStore>((set, get) => ({
       queuedStudyRecall: null,
       askOpen: false,
       parentGateAt: null,
-    }),
+      pendingUpgrade: false,
+    });
+  },
   beginCorrectAdvance: (fromId, dest) => set({ correctAdvance: { fromId, dest } }),
   clearCorrectAdvance: () => set({ correctAdvance: null }),
   progress: INITIAL_PROGRESS,
