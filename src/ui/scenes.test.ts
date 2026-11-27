@@ -175,6 +175,18 @@ describe('scene registry', () => {
     expect(byRoot.Plen).toBe('full');
     expect(byRoot.Matur).toBe('ripe');
     expect(byRoot.Merid).toBe('noon');
+    expect(byRoot.Val).toBe('worth');
+    expect(byRoot.Labor).toBe('exertion');
+    expect(byRoot.Cur).toBe('care');
+    expect(byRoot.Culp).toBe('blame');
+    expect(byRoot.Don).toBe('give');
+    expect(byRoot.Merc).toBe('trade');
+    expect(byRoot.Numer).toBe('number');
+    expect(byRoot.Part).toBe('share');
+    expect(byRoot.Vac).toBe('void');
+    expect(byRoot.Mut).toBe('shift');
+    expect(byRoot.Clar).toBe('clear');
+    expect(byRoot.Clam).toBe('shout');
   });
 
   it('keeps breakx for break-roots only', () => {

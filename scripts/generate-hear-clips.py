@@ -147,6 +147,13 @@ SPEAKABLE_SYLLABLES = {
     "tekt": "tect",
     "punkt": "punct",
     "lig": "ligg",
+    "kyoor": "cure",
+    "vak": "vack",
+    "klar": "klahr",
+    "klam": "clam",
+    "myoot": "mute",
+    "noo": "new",
+    "merk": "murk",
 }
 
 

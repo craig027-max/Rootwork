@@ -216,6 +216,6 @@ describe('Home Daily after a miss is Remember — not Daily / DONE / Done for to
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(303);
+    expect(ROOTS.length).toBe(315);
   });
 });

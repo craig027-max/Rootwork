@@ -172,7 +172,7 @@ describe('Daily Home ghost after a miss is Remember — not Home over Geo', () =
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(303);
+    expect(ROOTS.length).toBe(315);
     expect(first.root).toBe('Bio');
   });
 });
