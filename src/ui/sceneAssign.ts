@@ -3122,3 +3122,154 @@ export const noon: SceneFn = (x, W, H, t, pal) => {
   line(x, W * 0.12, H * 0.78, W * 0.88, H * 0.78);
   rr(x, W * 0.46, H * 0.62, 16, 16, 2);
 };
+
+/** A coin climbing a mark — worth, not a level scale. */
+export const worth: SceneFn = (x, W, H, t, pal) => {
+  const rise = ((t * 0.35) % 1) * (H * 0.4);
+  x.strokeStyle = `rgba(${p0(pal)},0.45)`;
+  x.lineWidth = 3;
+  line(x, W * 0.28, H * 0.78, W * 0.28, H * 0.28);
+  for (let i = 0; i < 4; i++) line(x, W * 0.28, H * 0.7 - i * 18, W * 0.36, H * 0.7 - i * 18);
+  disc(x, W * 0.58, H * 0.72 - rise, 16, `rgba(${p1(pal)},0.95)`);
+  disc(x, W * 0.58, H * 0.72 - rise, 8, `rgba(${p0(pal)},0.9)`);
+  glow(x, W * 0.58, H * 0.72 - rise, 18, p1(pal), 0.16);
+};
+
+/** A hammer coming down — exertion, not a finished building. */
+export const exertion: SceneFn = (x, W, H, t, pal) => {
+  const hit = Math.max(0, Math.sin(t * 2.2));
+  const headY = H * 0.28 + hit * H * 0.28;
+  x.strokeStyle = `rgba(${p0(pal)},0.85)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  line(x, W * 0.62, headY + 8, W * 0.48, H * 0.62);
+  rr(x, W * 0.5, headY, 36, 12, 3);
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  x.fill();
+  rr(x, W * 0.22, H * 0.7, W * 0.36, 16, 3);
+  x.fill();
+  glow(x, W * 0.4, H * 0.7, 12, p1(pal), 0.08 + hit * 0.2);
+};
+
+/** Two arcs cupped around a small life — care. */
+export const care: SceneFn = (x, W, H, t, pal) => {
+  const cup = 8 + Math.sin(t * 1.4) * 4;
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 5;
+  x.lineCap = 'round';
+  x.beginPath();
+  x.arc(W * 0.38, H * 0.58, 36, 0.4, Math.PI - 0.2);
+  x.stroke();
+  x.beginPath();
+  x.arc(W * 0.62, H * 0.58, 36, 0.2, Math.PI - 0.4);
+  x.stroke();
+  disc(x, W * 0.5, H * 0.46 - cup * 0.15, 8, `rgba(${p1(pal)},0.95)`);
+  glow(x, W * 0.5, H * 0.46, 16, p1(pal), 0.18);
+};
+
+/** A stamp landing on an X — blame, not a finger point. */
+export const blame: SceneFn = (x, W, H, t, pal) => {
+  const drop = Math.max(0, Math.sin(t * 1.8)) * 24;
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  line(x, W * 0.38, H * 0.62, W * 0.62, H * 0.82);
+  line(x, W * 0.62, H * 0.62, W * 0.38, H * 0.82);
+  rr(x, W * 0.4, H * 0.22 + drop, 48, 22, 4);
+  x.fillStyle = `rgba(${p0(pal)},0.9)`;
+  x.fill();
+  glow(x, W * 0.5, H * 0.72, 14, p1(pal), 0.12);
+};
+
+/** A parcel moving from one figure to the other — give. */
+export const give: SceneFn = (x, W, H, t, pal) => {
+  const p = (t * 0.28) % 1;
+  person(x, W * 0.28, H * 0.78, p0(pal), t);
+  person(x, W * 0.74, H * 0.78, p1(pal), t + 1);
+  rr(x, W * (0.3 + p * 0.28), H * 0.42, 22, 16, 3);
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  x.fill();
+  glow(x, W * (0.4 + p * 0.28), H * 0.48, 12, p1(pal), 0.14);
+};
+
+/** Two parcels crossing — trade. */
+export const trade: SceneFn = (x, W, H, t, pal) => {
+  const p = (t * 0.3) % 1;
+  rr(x, W * (0.18 + p * 0.46), H * 0.34, 26, 18, 3);
+  x.fillStyle = `rgba(${p0(pal)},0.9)`;
+  x.fill();
+  rr(x, W * (0.64 - p * 0.46), H * 0.58, 26, 18, 3);
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  x.fill();
+  x.strokeStyle = `rgba(${p0(pal)},0.35)`;
+  x.lineWidth = 2;
+  line(x, W * 0.2, H * 0.78, W * 0.8, H * 0.78);
+};
+
+/** Dots stacking into a count — number. */
+export const number: SceneFn = (x, W, H, t, pal) => {
+  const n = 1 + Math.floor(((t * 0.8) % 1) * 4);
+  for (let i = 0; i < n; i++) {
+    disc(x, W * (0.32 + (i % 3) * 0.16), H * (0.62 - Math.floor(i / 3) * 0.22), 10, `rgba(${i % 2 ? p1(pal) : p0(pal)},0.95)`);
+  }
+  glow(x, W * 0.5, H * 0.5, 20, p1(pal), 0.1);
+};
+
+/** One disc splitting into two — share. */
+export const share: SceneFn = (x, W, H, t, pal) => {
+  const p = (t * 0.25) % 1;
+  const spread = p * W * 0.22;
+  disc(x, W * 0.5 - spread, H * 0.5, 16, `rgba(${p0(pal)},0.9)`);
+  disc(x, W * 0.5 + spread, H * 0.5, 16, `rgba(${p1(pal)},0.9)`);
+  glow(x, W * 0.5, H * 0.5, 18, p1(pal), 0.12);
+};
+
+/** A cup whose fill drops away — a void. */
+export const voidScene: SceneFn = (x, W, H, t, pal) => {
+  const level = 0.7 - ((t * 0.22) % 1) * 0.45;
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  line(x, W * 0.34, H * 0.28, W * 0.3, H * 0.74);
+  line(x, W * 0.66, H * 0.28, W * 0.7, H * 0.74);
+  line(x, W * 0.3, H * 0.74, W * 0.7, H * 0.74);
+  x.fillStyle = `rgba(${p1(pal)},0.75)`;
+  x.fillRect(W * 0.34, H * (0.74 - level * 0.4), W * 0.32, H * level * 0.4);
+  glow(x, W * 0.5, H * 0.5, 14, p1(pal), 0.1);
+};
+
+/** A square softening into a disc — a shift. */
+export const shift: SceneFn = (x, W, H, t, pal) => {
+  const p = (t * 0.3) % 1;
+  const r = 4 + p * 28;
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  rr(x, W * 0.5 - 28, H * 0.5 - 28, 56, 56, r);
+  x.fill();
+  glow(x, W * 0.5, H * 0.5, 20, p0(pal), 0.12);
+};
+
+/** Fog strokes fading off a sharp disc — clear. */
+export const clear: SceneFn = (x, W, H, t, pal) => {
+  const fade = 0.15 + 0.35 * (0.5 + 0.5 * Math.sin(t * 1.1));
+  x.strokeStyle = `rgba(${p0(pal)},${fade})`;
+  x.lineWidth = 8;
+  x.lineCap = 'round';
+  for (let i = 0; i < 4; i++) line(x, W * 0.18, H * (0.3 + i * 0.14), W * 0.82, H * (0.26 + i * 0.14));
+  disc(x, W * 0.5, H * 0.5, 14, `rgba(${p1(pal)},0.95)`);
+  glow(x, W * 0.5, H * 0.5, 22, p1(pal), 0.2);
+};
+
+/** Arcs bursting from a head — a shout. */
+export const shout: SceneFn = (x, W, H, t, pal) => {
+  const pulse = 0.6 + 0.4 * Math.sin(t * 3);
+  disc(x, W * 0.38, H * 0.55, 12, `rgba(${p0(pal)},0.9)`);
+  x.strokeStyle = `rgba(${p1(pal)},${0.4 + pulse * 0.5})`;
+  x.lineWidth = 3;
+  x.lineCap = 'round';
+  for (let i = 1; i <= 3; i++) {
+    x.beginPath();
+    x.arc(W * 0.42, H * 0.52, 14 + i * 12 * pulse, -0.8, 0.8);
+    x.stroke();
+  }
+  glow(x, W * 0.55, H * 0.5, 16, p1(pal), 0.12);
+};

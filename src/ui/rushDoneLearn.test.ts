@@ -289,6 +289,6 @@ describe('Rush after Daily is Continue {learn} / Keep going — not Play again o
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(303);
+    expect(ROOTS.length).toBe(315);
   });
 });

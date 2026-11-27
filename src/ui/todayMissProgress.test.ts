@@ -293,6 +293,6 @@ describe('Today ✓ waits for Remember after a Rush miss — not Nice work over 
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(303);
+    expect(ROOTS.length).toBe(315);
   });
 });

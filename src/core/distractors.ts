@@ -46,6 +46,7 @@ import { GLOSS_TILE_MAX, quizGloss } from './wordDef';
  * Cold is not heat, fire is not heat, and lift is not light.
  * Kinship and worship end in -ship, a condition, not a boat.
  * Head is not brain. Close is not shut — "up close" is still near.
+ * Given and gave are give.
  * Power is not rule, and a beginning is not a ruler.
  * A safe level is not equal, and self is not same. Higher is not lift.
  * Those stay different tiles. Spirit is mind, not life.
@@ -139,6 +140,7 @@ const SYNONYM_GROUPS: string[][] = [
   ['middle', 'center'],
   ['healthy', 'health'],
   ['sea', 'ocean'],
+  ['give', 'given', 'gave'],
 ];
 
 const SYNONYM_CANON = new Map<string, string>();
@@ -220,6 +222,7 @@ function meanIdeas(mean: string): readonly string[] {
  * "At home" says house. "A household" says family. "An elder" says old.
  * "Youth" says young. "A route" says road. "The center" says middle.
  * "In health" says healthy. "The ocean" says sea.
+ * "Given" and "gave" say give.
  */
 export function glossSaysMean(mean: string, label: string): boolean {
   const ideas = meanIdeas(mean);

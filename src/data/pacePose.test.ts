@@ -143,7 +143,7 @@ describe('Pace & Pose starter set', () => {
       expect(i, name).toBeLessThan(auto);
       prev = i;
     }
-    expect(ROOTS.length).toBe(303);
+    expect(ROOTS.length).toBe(315);
   });
 
   it('keeps the classical origins and the shared piece names', () => {
