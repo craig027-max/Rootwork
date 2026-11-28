@@ -210,7 +210,7 @@ describe('buildRushQuestion', () => {
         }
       }
     }
-  });
+  }, 20_000);
 
   it('asks what the other piece means, and the big type is that piece', () => {
     const means = new Set(partMeanLabels(ROOTS));

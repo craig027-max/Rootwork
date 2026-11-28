@@ -80,7 +80,7 @@ describe('Body & Sense starter set', () => {
       expect(i, name).toBeLessThan(auto);
       prev = i;
     }
-    expect(ROOTS.length).toBe(327);
+    expect(ROOTS.length).toBe(339);
   });
 
   it('keeps the classical origins and the shared breakdowns', () => {

@@ -141,6 +141,8 @@ const SYNONYM_GROUPS: string[][] = [
   ['healthy', 'health'],
   ['sea', 'ocean'],
   ['give', 'given', 'gave'],
+  ['leaf', 'leaves'],
+  ['weep', 'wept'],
 ];
 
 const SYNONYM_CANON = new Map<string, string>();
@@ -223,6 +225,7 @@ function meanIdeas(mean: string): readonly string[] {
  * "Youth" says young. "A route" says road. "The center" says middle.
  * "In health" says healthy. "The ocean" says sea.
  * "Given" and "gave" say give.
+ * "Leaves" says leaf. "Wept" says weep.
  */
 export function glossSaysMean(mean: string, label: string): boolean {
   const ideas = meanIdeas(mean);
