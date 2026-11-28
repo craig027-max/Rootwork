@@ -3273,3 +3273,164 @@ export const shout: SceneFn = (x, W, H, t, pal) => {
   }
   glow(x, W * 0.55, H * 0.5, 16, p1(pal), 0.12);
 };
+
+/** Bars sliding apart so a figure can step through — liberty. */
+export const liberty: SceneFn = (x, W, H, t, pal) => {
+  const open = 10 + ((t * 0.25) % 1) * 28;
+  x.fillStyle = `rgba(${p0(pal)},0.85)`;
+  x.fillRect(W * 0.18, H * 0.28, 10, H * 0.48);
+  x.fillRect(W * 0.18 + open, H * 0.28, 10, H * 0.48);
+  person(x, W * 0.22 + open * 0.35, H * 0.78, p1(pal), t);
+  glow(x, W * 0.4, H * 0.5, 16, p1(pal), 0.12);
+};
+
+/** A tray moving from one figure to the other — serve. */
+export const serve: SceneFn = (x, W, H, t, pal) => {
+  const p = (t * 0.3) % 1;
+  person(x, W * 0.28, H * 0.8, p0(pal), t);
+  person(x, W * 0.74, H * 0.8, p1(pal), t + 1);
+  rr(x, W * (0.32 + p * 0.22), H * 0.46, 28, 8, 2);
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  x.fill();
+  disc(x, W * (0.46 + p * 0.22), H * 0.44, 5, `rgba(${p0(pal)},0.9)`);
+};
+
+/** Three points of a crown — a crown, not a palace wall. */
+export const crown: SceneFn = (x, W, H, t, pal) => {
+  const bob = Math.sin(t * 1.2) * 3;
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  x.beginPath();
+  x.moveTo(W * 0.28, H * 0.62 + bob);
+  x.lineTo(W * 0.36, H * 0.38 + bob);
+  x.lineTo(W * 0.5, H * 0.54 + bob);
+  x.lineTo(W * 0.64, H * 0.34 + bob);
+  x.lineTo(W * 0.72, H * 0.62 + bob);
+  x.closePath();
+  x.fill();
+  disc(x, W * 0.5, H * 0.58 + bob, 4, `rgba(${p0(pal)},0.95)`);
+  glow(x, W * 0.5, H * 0.48, 18, p1(pal), 0.16);
+};
+
+/** A cup filling to a mark, then holding — enough. */
+export const enough: SceneFn = (x, W, H, t, pal) => {
+  const p = Math.min(1, (t * 0.35) % 1.4);
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  line(x, W * 0.34, H * 0.28, W * 0.3, H * 0.74);
+  line(x, W * 0.66, H * 0.28, W * 0.7, H * 0.74);
+  line(x, W * 0.3, H * 0.74, W * 0.7, H * 0.74);
+  x.strokeStyle = `rgba(${p1(pal)},0.45)`;
+  line(x, W * 0.32, H * 0.4, W * 0.68, H * 0.4);
+  x.fillStyle = `rgba(${p1(pal)},0.8)`;
+  const top = H * (0.74 - p * 0.34);
+  x.fillRect(W * 0.34, top, W * 0.32, H * 0.74 - top);
+  glow(x, W * 0.5, H * 0.4, 12, p1(pal), 0.12);
+};
+
+/** A bow toward the other figure — thanks. */
+export const thanks: SceneFn = (x, W, H, t, pal) => {
+  const bow = 8 + Math.sin(t * 1.6) * 6;
+  person(x, W * 0.68, H * 0.8, p1(pal), t);
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 3;
+  x.lineCap = 'round';
+  disc(x, W * 0.36, H * 0.42 + bow, 7, `rgba(${p0(pal)},0.9)`);
+  line(x, W * 0.36, H * 0.5 + bow, W * 0.42, H * 0.72);
+  line(x, W * 0.42, H * 0.72, W * 0.32, H * 0.84);
+  line(x, W * 0.42, H * 0.72, W * 0.52, H * 0.84);
+  glow(x, W * 0.52, H * 0.48, 12, p1(pal), 0.14);
+};
+
+/** A spark climbing toward a star — a wish. */
+export const wish: SceneFn = (x, W, H, t, pal) => {
+  const rise = ((t * 0.28) % 1) * H * 0.36;
+  disc(x, W * 0.62, H * 0.28, 8, `rgba(${p1(pal)},0.95)`);
+  glow(x, W * 0.62, H * 0.28, 16, p1(pal), 0.18);
+  disc(x, W * 0.4, H * 0.72 - rise, 5, `rgba(${p0(pal)},0.95)`);
+  glow(x, W * 0.4, H * 0.72 - rise, 10, p0(pal), 0.16);
+};
+
+/** A figure leaning back from a jagged flash — alarm. */
+export const alarm: SceneFn = (x, W, H, t, pal) => {
+  const flash = 0.35 + 0.65 * Math.max(0, Math.sin(t * 4));
+  person(x, W * 0.64, H * 0.8, p0(pal), t);
+  x.strokeStyle = `rgba(${p1(pal)},${flash})`;
+  x.lineWidth = 3;
+  x.lineCap = 'round';
+  line(x, W * 0.28, H * 0.3, W * 0.36, H * 0.46);
+  line(x, W * 0.36, H * 0.46, W * 0.3, H * 0.58);
+  line(x, W * 0.3, H * 0.58, W * 0.4, H * 0.7);
+  glow(x, W * 0.34, H * 0.5, 14, p1(pal), 0.08 + flash * 0.16);
+};
+
+/** A shaking fist with heat lines — wrath, not a flame. */
+export const wrath: SceneFn = (x, W, H, t, pal) => {
+  const shake = Math.sin(t * 6) * 4;
+  disc(x, W * 0.48 + shake, H * 0.46, 14, `rgba(${p1(pal)},0.95)`);
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  line(x, W * 0.48 + shake, H * 0.58, W * 0.48, H * 0.78);
+  x.strokeStyle = `rgba(${p1(pal)},0.7)`;
+  x.lineWidth = 2;
+  line(x, W * 0.66, H * 0.36, W * 0.74, H * 0.28);
+  line(x, W * 0.7, H * 0.48, W * 0.8, H * 0.42);
+  glow(x, W * 0.48, H * 0.46, 16, p1(pal), 0.14);
+};
+
+/** A figure on a step with an arc overhead — honor. */
+export const honor: SceneFn = (x, W, H, t, pal) => {
+  const bob = Math.sin(t * 1.1) * 2;
+  rr(x, W * 0.34, H * 0.7, W * 0.32, 12, 2);
+  x.fillStyle = `rgba(${p0(pal)},0.85)`;
+  x.fill();
+  person(x, W * 0.5, H * 0.7 + bob, p1(pal), t);
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 3;
+  x.beginPath();
+  x.arc(W * 0.5, H * 0.34, 18, Math.PI * 0.15, Math.PI * 0.85);
+  x.stroke();
+  glow(x, W * 0.5, H * 0.32, 12, p1(pal), 0.14);
+};
+
+/** A check landing on a page — proof. */
+export const proof: SceneFn = (x, W, H, t, pal) => {
+  const draw = Math.min(1, (t * 0.4) % 1.3);
+  rr(x, W * 0.3, H * 0.22, W * 0.4, H * 0.56, 4);
+  x.strokeStyle = `rgba(${p0(pal)},0.8)`;
+  x.lineWidth = 2;
+  x.stroke();
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  if (draw > 0.05) line(x, W * 0.4, H * 0.52, W * 0.4 + 10 * Math.min(1, draw * 2), H * 0.52 + 12 * Math.min(1, draw * 2));
+  if (draw > 0.45) line(x, W * 0.5, H * 0.62, W * 0.5 + 22 * Math.min(1, (draw - 0.45) * 2), H * 0.62 - 18 * Math.min(1, (draw - 0.45) * 2));
+  glow(x, W * 0.55, H * 0.5, 14, p1(pal), 0.1);
+};
+
+/** A scroll unrolling line by line — a statute. */
+export const statute: SceneFn = (x, W, H, t, pal) => {
+  const n = 1 + Math.floor(((t * 0.5) % 1) * 4);
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 6;
+  x.lineCap = 'round';
+  line(x, W * 0.28, H * 0.24, W * 0.28, H * 0.76);
+  line(x, W * 0.72, H * 0.24, W * 0.72, H * 0.76);
+  x.strokeStyle = `rgba(${p1(pal)},0.85)`;
+  x.lineWidth = 2;
+  for (let i = 0; i < n; i++) line(x, W * 0.36, H * (0.34 + i * 0.1), W * 0.64, H * (0.34 + i * 0.1));
+  glow(x, W * 0.5, H * 0.5, 14, p1(pal), 0.1);
+};
+
+/** Bars standing in rising order — rank, not a heap. */
+export const rank: SceneFn = (x, W, H, t, pal) => {
+  const pulse = 0.85 + 0.15 * Math.sin(t * 1.4);
+  const heights = [0.28, 0.42, 0.58];
+  heights.forEach((h, i) => {
+    x.fillStyle = `rgba(${i === 2 ? p1(pal) : p0(pal)},0.9)`;
+    const bh = H * h * (i === 2 ? pulse : 1);
+    x.fillRect(W * (0.26 + i * 0.16), H * 0.78 - bh, W * 0.1, bh);
+  });
+  glow(x, W * 0.66, H * 0.28, 12, p1(pal), 0.12);
+};
