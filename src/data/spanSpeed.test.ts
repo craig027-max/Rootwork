@@ -142,7 +142,7 @@ describe('Span & Speed starter set', () => {
       expect(i, name).toBeLessThan(auto);
       prev = i;
     }
-    expect(ROOTS.length).toBe(315);
+    expect(ROOTS.length).toBe(327);
   });
 
   it('keeps the classical origins and the shared piece names', () => {
