@@ -223,6 +223,6 @@ describe('Daily done is Continue {learn} / Keep going — not Play again over Ch
   });
 
   it('does not expand the catalog', () => {
-    expect(ROOTS.length).toBe(327);
+    expect(ROOTS.length).toBe(339);
   });
 });

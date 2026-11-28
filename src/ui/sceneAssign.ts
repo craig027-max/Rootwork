@@ -3434,3 +3434,188 @@ export const rank: SceneFn = (x, W, H, t, pal) => {
   });
   glow(x, W * 0.66, H * 0.28, 12, p1(pal), 0.12);
 };
+
+/** An open book with a page turning — a tale, not a blank sheet. */
+export const tale: SceneFn = (x, W, H, t, pal) => {
+  const turn = ((t * 0.25) % 1) * 0.7;
+  x.fillStyle = `rgba(${p0(pal)},0.9)`;
+  rr(x, W * 0.22, H * 0.28, W * 0.56, H * 0.46, 4);
+  x.fill();
+  x.strokeStyle = `rgba(${p1(pal)},0.9)`;
+  x.lineWidth = 2;
+  line(x, W * 0.5, H * 0.3, W * 0.5, H * 0.7);
+  x.beginPath();
+  x.moveTo(W * 0.5, H * 0.32);
+  x.quadraticCurveTo(W * (0.62 + turn * 0.12), H * 0.42, W * (0.5 + turn * 0.2), H * 0.68);
+  x.stroke();
+  glow(x, W * 0.4, H * 0.48, 12, p1(pal), 0.12);
+};
+
+/** A tall banner with a star — a legend, not a plain book. */
+export const legend: SceneFn = (x, W, H, t, pal) => {
+  const wave = Math.sin(t * 1.4) * 4;
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  x.beginPath();
+  x.moveTo(W * 0.34, H * 0.26);
+  x.lineTo(W * 0.7, H * 0.34 + wave);
+  x.lineTo(W * 0.34, H * 0.46);
+  x.closePath();
+  x.fill();
+  disc(x, W * 0.5, H * 0.36 + wave * 0.3, 4, `rgba(${p0(pal)},0.95)`);
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 4;
+  line(x, W * 0.34, H * 0.24, W * 0.34, H * 0.78);
+  glow(x, W * 0.52, H * 0.36, 14, p1(pal), 0.14);
+};
+
+/** Hands lifted in a clap — praise, not a bow of thanks. */
+export const praise: SceneFn = (x, W, H, t, pal) => {
+  const clap = Math.abs(Math.sin(t * 3)) * 16;
+  person(x, W * 0.5, H * 0.82, p0(pal), t);
+  disc(x, W * 0.5 - 10 - clap, H * 0.42, 7, `rgba(${p1(pal)},0.95)`);
+  disc(x, W * 0.5 + 10 + clap, H * 0.42, 7, `rgba(${p1(pal)},0.95)`);
+  glow(x, W * 0.5, H * 0.4, 14, p1(pal), 0.1 + (16 - clap) * 0.01);
+};
+
+/** Drops falling from a bowed head — weep, not rain on a field. */
+export const weep: SceneFn = (x, W, H, t, pal) => {
+  const drop = (t * 0.45) % 1;
+  person(x, W * 0.48, H * 0.84, p0(pal), t * 0.4);
+  disc(x, W * 0.42, H * (0.4 + drop * 0.28), 3, `rgba(${p1(pal)},${0.95 - drop * 0.5})`);
+  disc(x, W * 0.54, H * (0.44 + drop * 0.22), 2.5, `rgba(${p1(pal)},${0.8 - drop * 0.4})`);
+  glow(x, W * 0.48, H * 0.42, 10, p1(pal), 0.1);
+};
+
+/** A dotted path ending at a flag — a search, not a road. */
+export const search: SceneFn = (x, W, H, t, pal) => {
+  const step = Math.floor(t * 2) % 5;
+  x.strokeStyle = `rgba(${p0(pal)},0.85)`;
+  x.lineWidth = 3;
+  x.setLineDash([2, 8]);
+  line(x, W * 0.18, H * 0.7, W * 0.72, H * 0.38);
+  x.setLineDash([]);
+  disc(x, W * (0.22 + step * 0.1), H * (0.66 - step * 0.06), 4, `rgba(${p1(pal)},0.95)`);
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 2;
+  line(x, W * 0.74, H * 0.22, W * 0.74, H * 0.42);
+  x.fillStyle = `rgba(${p1(pal)},0.9)`;
+  x.beginPath();
+  x.moveTo(W * 0.74, H * 0.24);
+  x.lineTo(W * 0.88, H * 0.3);
+  x.lineTo(W * 0.74, H * 0.36);
+  x.fill();
+  glow(x, W * 0.78, H * 0.3, 12, p1(pal), 0.12);
+};
+
+/** A folded note traveling between two figures — a message. */
+export const message: SceneFn = (x, W, H, t, pal) => {
+  const p = (t * 0.3) % 1;
+  person(x, W * 0.24, H * 0.82, p0(pal), t);
+  person(x, W * 0.78, H * 0.82, p1(pal), t + 1);
+  const nx = W * (0.32 + p * 0.28);
+  x.fillStyle = `rgba(${p1(pal)},0.95)`;
+  rr(x, nx, H * 0.4, 22, 16, 2);
+  x.fill();
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 1.5;
+  line(x, nx, H * 0.4, nx + 11, H * 0.48);
+  line(x, nx + 22, H * 0.4, nx + 11, H * 0.48);
+  glow(x, nx + 11, H * 0.48, 10, p1(pal), 0.12);
+};
+
+/** One figure waving — a greeting, not a hand held still. */
+export const greeting: SceneFn = (x, W, H, t, pal) => {
+  const wave = Math.sin(t * 3) * 0.5;
+  person(x, W * 0.42, H * 0.82, p0(pal), t * 0.3);
+  person(x, W * 0.72, H * 0.82, p1(pal), t + 0.5);
+  x.save();
+  x.translate(W * 0.5, H * 0.42);
+  x.rotate(wave);
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 3;
+  x.lineCap = 'round';
+  line(x, 0, 8, 0, -16);
+  disc(x, 0, -20, 5, `rgba(${p1(pal)},0.95)`);
+  x.restore();
+  glow(x, W * 0.5, H * 0.36, 12, p1(pal), 0.12);
+};
+
+/** Two matching shapes, one echoing the other — a likeness. */
+export const likeness: SceneFn = (x, W, H, t, pal) => {
+  const bob = Math.sin(t * 1.2) * 3;
+  x.fillStyle = `rgba(${p0(pal)},0.9)`;
+  rr(x, W * 0.22, H * 0.34 + bob, 36, 44, 8);
+  x.fill();
+  x.fillStyle = `rgba(${p1(pal)},0.75)`;
+  rr(x, W * 0.52, H * 0.34 - bob, 36, 44, 8);
+  x.fill();
+  glow(x, W * 0.5, H * 0.5, 16, p1(pal), 0.1);
+};
+
+/** Rungs on two rails — a ladder, not a staircase. */
+export const ladder: SceneFn = (x, W, H, t, pal) => {
+  const climb = (t * 0.2) % 1;
+  x.strokeStyle = `rgba(${p0(pal)},0.95)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  line(x, W * 0.38, H * 0.2, W * 0.38, H * 0.82);
+  line(x, W * 0.62, H * 0.2, W * 0.62, H * 0.82);
+  x.lineWidth = 3;
+  for (let i = 0; i < 5; i++) line(x, W * 0.38, H * (0.3 + i * 0.1), W * 0.62, H * (0.3 + i * 0.1));
+  disc(x, W * 0.5, H * (0.72 - climb * 0.4), 6, `rgba(${p1(pal)},0.95)`);
+  glow(x, W * 0.5, H * 0.4, 12, p1(pal), 0.1);
+};
+
+/** A key turning in a lock — a key, not a closed door. */
+export const key: SceneFn = (x, W, H, t, pal) => {
+  const spin = Math.sin(t * 1.5) * 0.4;
+  x.save();
+  x.translate(W * 0.48, H * 0.48);
+  x.rotate(spin);
+  x.strokeStyle = `rgba(${p1(pal)},0.95)`;
+  x.lineWidth = 4;
+  x.lineCap = 'round';
+  disc(x, -16, 0, 10, `rgba(${p0(pal)},0)`);
+  x.beginPath();
+  x.arc(-16, 0, 10, 0, TAU);
+  x.stroke();
+  line(x, -6, 0, 22, 0);
+  line(x, 14, 0, 14, 8);
+  line(x, 22, 0, 22, 10);
+  x.restore();
+  glow(x, W * 0.48, H * 0.48, 14, p1(pal), 0.12);
+};
+
+/** One leaf drifting — a leaf, not a whole tree. */
+export const leafScene: SceneFn = (x, W, H, t, pal) => {
+  const drift = Math.sin(t * 1.1) * 10;
+  const spin = Math.sin(t * 0.8) * 0.4;
+  x.save();
+  x.translate(W * 0.5 + drift, H * 0.48);
+  x.rotate(spin);
+  x.fillStyle = `rgba(${p1(pal)},0.92)`;
+  x.beginPath();
+  x.moveTo(0, -28);
+  x.quadraticCurveTo(26, -8, 0, 28);
+  x.quadraticCurveTo(-26, -8, 0, -28);
+  x.fill();
+  x.strokeStyle = `rgba(${p0(pal)},0.9)`;
+  x.lineWidth = 2;
+  line(x, 0, -22, 0, 22);
+  x.restore();
+  glow(x, W * 0.5, H * 0.48, 16, p1(pal), 0.12);
+};
+
+/** A block overhead and a dark pool under a figure — shade, not night. */
+export const shade: SceneFn = (x, W, H, t, pal) => {
+  const sway = Math.sin(t * 0.8) * 8;
+  x.fillStyle = `rgba(${p0(pal)},0.85)`;
+  rr(x, W * 0.28, H * 0.22, W * 0.44, 10, 2);
+  x.fill();
+  x.fillStyle = `rgba(${p0(pal)},0.35)`;
+  x.beginPath();
+  x.ellipse(W * 0.5 + sway, H * 0.74, 36, 10, 0, 0, TAU);
+  x.fill();
+  person(x, W * 0.5 + sway * 0.3, H * 0.74, p1(pal), t);
+  glow(x, W * 0.5, H * 0.28, 12, p1(pal), 0.1);
+};

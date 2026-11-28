@@ -199,6 +199,18 @@ describe('scene registry', () => {
     expect(byRoot.Prob).toBe('proof');
     expect(byRoot.Leg).toBe('statute');
     expect(byRoot.Ord).toBe('rank');
+    expect(byRoot.Narr).toBe('tale');
+    expect(byRoot.Fab).toBe('legend');
+    expect(byRoot.Laud).toBe('praise');
+    expect(byRoot.Plor).toBe('weep');
+    expect(byRoot.Quer).toBe('search');
+    expect(byRoot.Nunci).toBe('message');
+    expect(byRoot.Salut).toBe('greeting');
+    expect(byRoot.Simil).toBe('likeness');
+    expect(byRoot.Scal).toBe('ladder');
+    expect(byRoot.Clav).toBe('key');
+    expect(byRoot.Foli).toBe('leaf');
+    expect(byRoot.Umbra).toBe('shade');
   });
 
   it('keeps breakx for break-roots only', () => {

@@ -65,7 +65,7 @@ describe('meanings stay hidden until the lesson is played', () => {
   });
 
   it('shows no meaning on Home, Daily, or Browse for a fresh profile — whole catalog', () => {
-    expect(ROOTS.length).toBe(327);
+    expect(ROOTS.length).toBe(339);
 
     const first = tierRow(fresh, true);
     expect(first.samples).toEqual([]);
